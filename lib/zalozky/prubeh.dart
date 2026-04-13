@@ -10,6 +10,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 
@@ -364,6 +365,152 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  // ZFINÁLNĚNÁ METODA: Správný zápis do 'maily' včetně message.from a message.replyTo
+  Future<void> _odeslatKNaceneni(BuildContext context, Map<String, dynamic> data) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Odeslat nacenění zákazníkovi?'),
+        content: const Text(
+          'Aplikace vygeneruje PDF s rozpočtem a odešle jej přímo na e-mail zákazníka v příloze.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ZRUŠIT'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'ODESLAT',
+              style: TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user == null) return;
+
+        // 1. Získání údajů servisu pro e-mail
+        String sNazev = 'Servis';
+        String sIco = '';
+        String sEmail = '';
+        final docNast = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(user.uid).get();
+        if (docNast.exists) {
+          sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
+          sIco = docNast.data()?['ico_servisu'] ?? '';
+          sEmail = docNast.data()?['email_servisu'] ?? ''; 
+        }
+
+        // Získání e-mailu zákazníka
+        final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
+        final zakaznikEmail = zakaznik['email']?.toString() ?? '';
+
+        // 2. Generování PDF (Typ: zakazkovyList upravený pro rozpočet)
+        final pdfBytes = await GlobalPdfGenerator.generateDocument(
+          data: data,
+          servisNazev: sNazev,
+          servisIco: sIco,
+          typ: PdfTyp.naceneni,
+        );
+
+        // 3. Nahrání na Storage (jen jako záloha pro zobrazení v aplikaci)
+        String fileName = 'naceneni_${widget.zakazkaId}.pdf';
+        Reference ref = FirebaseStorage.instance.ref().child('servisy/${user.uid}/zakazky/${widget.zakazkaId}/$fileName');
+        await ref.putData(pdfBytes, SettableMetadata(contentType: 'application/pdf'));
+        String downloadUrl = await ref.getDownloadURL();
+
+        // 4. Update Firestore zakázky
+        await FirebaseFirestore.instance
+            .collection('zakazky')
+            .doc(widget.documentId)
+            .update({
+          'stav_zakazky': 'K nacenění',
+          'nabidka_url': downloadUrl,
+        });
+
+        // 5. ODESLÁNÍ E-MAILU (Kolekce 'maily')
+        if (context.mounted) {
+          Navigator.pop(context); // Zavřít loading
+          
+          if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
+            
+            // Převedeme vygenerované PDF rovnou do Base64 textu pro neprůstřelnou přílohu
+            String base64Pdf = base64Encode(pdfBytes);
+
+            // Vytvoříme objekt message (Nodemailer v extenzi čte hodnoty odsud!)
+            Map<String, dynamic> messageData = {
+              'subject': 'Cenová nabídka - Zakázka ${widget.zakazkaId} ($sNazev)',
+              'html': '''
+                <p>Dobrý den,</p>
+                <p>v příloze tohoto e-mailu Vám zasíláme cenovou nabídku pro Vaši zakázku <b>${widget.zakazkaId}</b> v servisu $sNazev.</p>
+                <p>Prosíme o informaci, zda s rozpočtem souhlasíte, abychom mohli začít pracovat.</p>
+                <br>
+                <p>S pozdravem,<br><b>$sNazev</b></p>
+              ''',
+              'attachments': [
+                {
+                  'filename': 'Cenova_nabidka_${widget.zakazkaId}.pdf',
+                  'content': base64Pdf,
+                  'encoding': 'base64'
+                }
+              ]
+            };
+
+            // OPRAVA DISPLAY NAME a REPLY TO: 
+            // Vložíme je přímo do objektu message, přesně jak to vyžaduje Nodemailer
+            if (sEmail.isNotEmpty && sEmail.contains('@')) {
+              messageData['from'] = '$sNazev <$sEmail>';
+              messageData['replyTo'] = sEmail;
+            } else {
+              // Pokud email chybí, nastavíme alespoň název jako odesílatele (extenze si dosadí default email)
+              messageData['from'] = sNazev;
+            }
+
+            // Finální zápis do databáze
+            await FirebaseFirestore.instance.collection('maily').add({
+              'to': zakaznikEmail,
+              'message': messageData
+            });
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Nacenění odesláno na: $zakaznikEmail (s PDF v příloze)'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            // ZÁKAZNÍK NEMÁ EMAIL -> Manuální sdílení
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Zákazník nemá e-mail. Nacenění uloženo, nyní ho můžete sdílet.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            await Printing.sharePdf(bytes: pdfBytes, filename: 'Naceneni_${widget.zakazkaId}.pdf');
+          }
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.pop(context); // Zavřít loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _stornovatZakazku(BuildContext context) async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -391,7 +538,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         try {
-          // 1. Změna stavu faktury (pokud existuje)
           String cisloIba = widget.zakazkaId.replaceAll(RegExp(r'[^0-9]'), '');
           String cisloFaktury = 'FAK$cisloIba';
           final fakturaRef = FirebaseFirestore.instance
@@ -403,7 +549,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             await fakturaRef.update({'stav_platby': 'Stornováno'});
           }
 
-          // 2. Odemknutí zakázky
           await FirebaseFirestore.instance
               .collection('zakazky')
               .doc(widget.documentId)
@@ -413,7 +558,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             'forma_uhrady': FieldValue.delete(),
             'splatnost_dny': FieldValue.delete(),
             'cas_ukonceni': FieldValue.delete(),
-            // Necháváme vystupni_protokol_url, pokud by se chtěl zákazník podívat na stornovaný doklad
           });
 
           if (context.mounted) {
@@ -675,7 +819,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           data: data,
           servisNazev: odesilatelJmeno,
           servisIco: odesilatelIco,
-          typ: PdfTyp.faktura,
+          typ: PdfTyp.faktura, 
         );
 
         Reference pdfRef = FirebaseStorage.instance.ref().child(
@@ -798,6 +942,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
           final bool isCompleted = aktualniStav == 'Dokončeno';
 
+          List<String> dostupneStavy = stavyZakazky.where((s) => s != 'Dokončeno').toList();
+          if (!dostupneStavy.contains(aktualniStav) && !isCompleted) {
+            dostupneStavy.add(aktualniStav);
+          }
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -811,17 +960,17 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 child: Row(
                   children: [
                     const Text(
-                      'Stav zakázky: ',
+                      'Stav: ',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: 5),
                     Expanded(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 12),
+                            horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
                           color: getStatusColor(aktualniStav).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
@@ -842,8 +991,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                   dropdownColor: isDark
                                       ? const Color(0xFF2C2C2C)
                                       : Colors.white,
-                                  items: stavyZakazky
-                                      .where((s) => s != 'Dokončeno')
+                                  items: dostupneStavy 
                                       .map(
                                         (s) => DropdownMenuItem(
                                           value: s,
@@ -865,11 +1013,22 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               ),
                       ),
                     ),
+                    const SizedBox(width: 5),
+                    if (!isCompleted)
+                      IconButton(
+                        icon: const Icon(
+                          Icons.request_quote,
+                          color: Colors.purple,
+                        ),
+                        tooltip: 'Generovat nabídku a odeslat e-mailem',
+                        onPressed: () => _odeslatKNaceneni(context, data),
+                      ),
                     IconButton(
                       icon: const Icon(
                         Icons.picture_as_pdf,
                         color: Colors.redAccent,
                       ),
+                      tooltip: 'Zobrazit zakázkový protokol',
                       onPressed: () {
                         Navigator.push(
                           context,
@@ -899,7 +1058,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     data: data,
                                     servisNazev: sNazev,
                                     servisIco: sIco,
-                                    typ: PdfTyp.faktura,
+                                    typ: PdfTyp.protokol, 
                                   );
                                 },
                                 allowSharing: true,
@@ -914,7 +1073,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                           ),
                         );
                       },
-                      tooltip: 'Zobrazit PDF',
                     ),
                   ],
                 ),
@@ -1179,7 +1337,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            // PŘIDANÁ MOŽNOST SMAZAT POŽADAVEK A SKRYTÍ POKUD JE HOTOVO
                             trailing: isCompleted
                                 ? null
                                 : Row(
@@ -1426,7 +1583,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 ),
               ),
 
-              // ZMĚNA: SPODNÍ LIŠTA PRO ZAMČENOU ZAKÁZKU (STORNO)
+              // SPODNÍ LIŠTA PRO ZAMČENOU ZAKÁZKU (STORNO)
               if (isCompleted)
                 Container(
                   width: double.infinity,
@@ -1465,7 +1622,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   ),
                 ),
 
-              // ZMĚNA: SPODNÍ LIŠTA PRO AKTIVNÍ ZAKÁZKU
+              // SPODNÍ LIŠTA PRO AKTIVNÍ ZAKÁZKU
               if (!isCompleted)
                 Container(
                   width: double.infinity,
@@ -1491,6 +1648,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                             label: const Text(
                               'UKONČIT A VYDAT',
                               style: TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.orange,
@@ -1510,6 +1668,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                             label: const Text(
                               'PŘIDAT ÚKON',
                               style: TextStyle(fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'main_screen.dart';
-import 'onboarding.dart';
+import 'onboarding.dart'; // Sem načítáme tvůj onboarding.dart, kde je SetupWizardScreen
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -47,9 +47,11 @@ class _AuthScreenState extends State<AuthScreen> {
 
     try {
       if (_isLogin) {
+        // PŘIHLÁŠENÍ
         final userCredential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: email, password: password);
 
+        // Zkontrolujeme, jestli si tento uživatel už někdy nastavil servis
         final doc = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
             .doc(userCredential.user!.uid)
@@ -57,11 +59,13 @@ class _AuthScreenState extends State<AuthScreen> {
 
         if (mounted) {
           if (doc.exists && doc.data()?['prvni_spusteni_dokonceno'] == true) {
+            // Má nastaveno -> Jde normálně do aplikace (příjem, zakázky...)
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const MainScreen()),
             );
           } else {
+            // Nemá nastaveno -> Jde do průvodce nastavením
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -71,12 +75,14 @@ class _AuthScreenState extends State<AuthScreen> {
           }
         }
       } else {
+        // REGISTRACE NOVÉHO ÚČTU
         await FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
 
         if (mounted) {
+          // Po úspěšné registraci jde vždycky na Onboarding (SetupWizard)
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const SetupWizardScreen()),
@@ -334,7 +340,6 @@ class _AuthScreenState extends State<AuthScreen> {
             : null,
         filled: true,
         fillColor: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5),
-        // MÍSTO BorderSide.none POUŽIJEME PROSTĚ OutlineInputBorder BEZ PARAMETRŮ
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(width: 0, style: BorderStyle.none),
