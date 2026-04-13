@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'main_screen.dart'; // Ujisti se, že cesta k MainScreen je správná
+import 'main_screen.dart'; 
 
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
@@ -22,16 +22,17 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   final _nazevController = TextEditingController();
   final _icoController = TextEditingController();
   final _registraceController = TextEditingController();
-
-  // --- NOVÉ: Přepínač pro defaultní odesílání e-mailů ---
-  bool _defaultOdeslatEmaily = true;
+  final _emailServisuController = TextEditingController(); 
 
   // KROK 2: Fakturace a Ceny
   final _sazbaController = TextEditingController();
   final _bankaController = TextEditingController();
   final _dicController = TextEditingController();
-  final _prefixController = TextEditingController(text: 'ZAK');
+  final _prefixZakazkaController = TextEditingController(text: 'ZAK'); // NOVÉ: Prefix Zakázek
+  final _prefixFakturaController = TextEditingController(text: 'FAK'); // NOVÉ: Prefix Faktur
+  
   bool _jePlatceDph = false;
+  bool _defaultOdeslatEmaily = true; // NOVÉ: Přepínač pro defaultní odesílání e-mailů
 
   // KROK 3: Předpřipravené úkony
   final List<TextEditingController> _ukonyControllers = [];
@@ -59,10 +60,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     _nazevController.dispose();
     _icoController.dispose();
     _registraceController.dispose();
+    _emailServisuController.dispose();
     _sazbaController.dispose();
     _bankaController.dispose();
     _dicController.dispose();
-    _prefixController.dispose();
+    _prefixZakazkaController.dispose();
+    _prefixFakturaController.dispose();
     for (var c in _ukonyControllers) {
       c.dispose();
     }
@@ -135,19 +138,20 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           'nazev_servisu': _nazevController.text.trim(),
           'ico_servisu': _icoController.text.trim(),
           'registrace_servisu': _registraceController.text.trim(),
-
-          // --- NOVÉ: Uložení preference do databáze ---
+          'email_servisu': _emailServisuController.text.trim(),
           'default_odesilat_emaily': _defaultOdeslatEmaily,
-
           'hodinova_sazba':
               double.tryParse(_sazbaController.text.replaceAll(',', '.')) ??
                   0.0,
           'platce_dph': _jePlatceDph,
           'dic_servisu': _dicController.text.trim(),
           'banka_servisu': _bankaController.text.trim(),
-          'prefix_zakazky': _prefixController.text.trim().isEmpty
+          'prefix_zakazky': _prefixZakazkaController.text.trim().isEmpty
               ? 'ZAK'
-              : _prefixController.text.trim().toUpperCase(),
+              : _prefixZakazkaController.text.trim().toUpperCase(),
+          'prefix_faktury': _prefixFakturaController.text.trim().isEmpty
+              ? 'FAK'
+              : _prefixFakturaController.text.trim().toUpperCase(),
           'rychle_ukony': finalniUkony,
           'prvni_spusteni_dokonceno': true,
           'vytvoreno': FieldValue.serverTimestamp(),
@@ -381,13 +385,31 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ),
           ),
 
-          // --- NOVÉ: Otázka na e-maily ---
           const SizedBox(height: 30),
           const Divider(),
           const SizedBox(height: 20),
           const Text('Komunikace se zákazníky',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
+          
+          const Text('E-mailová adresa (z níž budou odcházet e-maily zákazníkům)',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _emailServisuController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              hintText: 'Např. info@autoservis.cz',
+              prefixIcon: const Icon(Icons.email, color: Colors.blue),
+              filled: true,
+              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+            ),
+          ),
+          const SizedBox(height: 15),
+
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
@@ -396,17 +418,16 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 border: Border.all(
                     color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             child: SwitchListTile(
-              title: const Text('Zasílat protokoly e-mailem',
+              title: const Text('Automaticky zasílat e-maily',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: const Text(
-                  'Zákazníkům bude po příjmu nebo vydání automaticky odeslán PDF protokol (lze změnit u každé zakázky).',
+                  'Zákazníkům bude v nabídkách a při ukončení předzaškrtnuta možnost odeslání PDF e-mailem.',
                   style: TextStyle(fontSize: 12)),
               value: _defaultOdeslatEmaily,
               activeColor: Colors.blue,
               onChanged: (val) => setState(() => _defaultOdeslatEmaily = val),
             ),
           ),
-          // ------------------------------------
         ],
       ),
     );
@@ -485,7 +506,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ),
           ],
           const SizedBox(height: 20),
-          const Text('Bankovní účet',
+          const Text('Bankovní účet (pro QR platbu)',
               style:
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
@@ -502,24 +523,55 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text('Prefix pro čísla zakázek',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _prefixController,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: 'ZAK',
-              prefixIcon: const Icon(Icons.tag, color: Colors.blue),
-              filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Prefix pro zakázky',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _prefixZakazkaController,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: InputDecoration(
+                        hintText: 'ZAK',
+                        prefixIcon: const Icon(Icons.build, color: Colors.blue),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Prefix pro faktury',
+                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _prefixFakturaController,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: InputDecoration(
+                        hintText: 'FAK',
+                        prefixIcon: const Icon(Icons.receipt, color: Colors.green),
+                        filled: true,
+                        fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 5),
-          const Text('Zakázky se budou číslovat např. ZAK-240410-0001.',
+          const Text('Např. ZAK-240410-0001 nebo FAK-240410-0001.',
               style: TextStyle(fontSize: 12, color: Colors.grey)),
         ],
       ),
@@ -527,65 +579,62 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   }
 
   Widget _buildStep3(bool isDark) {
-    return SingleChildScrollView(
+    return ListView(
       padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-                color: Colors.deepOrange.withOpacity(0.1),
-                shape: BoxShape.circle),
-            child: const Icon(Icons.playlist_add_check_circle,
-                color: Colors.deepOrange, size: 40),
-          ),
-          const SizedBox(height: 20),
-          const Text('Nejčastější úkony',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          const Text(
-              'Připravili jsme pro vás seznam typických úkonů. Můžete je libovolně přepsat, smazat nebo si přidat další. Budou se vám nabízet pro rychlé přidání při příjmu vozu.',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
-          const SizedBox(height: 30),
-          ...List.generate(_ukonyControllers.length, (index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _ukonyControllers[index],
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor:
-                            isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: BorderSide.none),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 15, vertical: 15),
-                      ),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+              color: Colors.deepOrange.withOpacity(0.1),
+              shape: BoxShape.circle),
+          child: const Icon(Icons.playlist_add_check_circle,
+              color: Colors.deepOrange, size: 40),
+        ),
+        const SizedBox(height: 20),
+        const Text('Nejčastější úkony',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        const Text(
+            'Připravili jsme pro vás seznam typických úkonů. Můžete je libovolně přepsat, smazat nebo si přidat další. Budou se vám nabízet pro rychlé přidání při příjmu vozu.',
+            style: TextStyle(fontSize: 14, color: Colors.grey)),
+        const SizedBox(height: 30),
+        ...List.generate(_ukonyControllers.length, (index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _ukonyControllers[index],
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 15),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red),
-                    onPressed: () => _odebratUkon(index),
-                    tooltip: 'Smazat úkon',
-                  )
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 10),
-          TextButton.icon(
-              onPressed: _pridatPrazdnyUkon,
-              icon: const Icon(Icons.add),
-              label: const Text('Přidat další úkon',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-          const SizedBox(height: 20),
-        ],
-      ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  onPressed: () => _odebratUkon(index),
+                  tooltip: 'Smazat úkon',
+                )
+              ],
+            ),
+          );
+        }),
+        const SizedBox(height: 10),
+        TextButton.icon(
+            onPressed: _pridatPrazdnyUkon,
+            icon: const Icon(Icons.add),
+            label: const Text('Přidat další úkon',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }

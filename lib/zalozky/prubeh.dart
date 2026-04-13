@@ -365,14 +365,14 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
-  // ZFINÁLNĚNÁ METODA: Správný zápis do 'maily' včetně message.from a message.replyTo
+  // OPRAVA EMAILOVÉ STRUKTURY: POUŽITA LOGIKA Z PRIJEM_VOZIDLA
   Future<void> _odeslatKNaceneni(BuildContext context, Map<String, dynamic> data) async {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Odeslat nacenění zákazníkovi?'),
         content: const Text(
-          'Aplikace vygeneruje PDF s rozpočtem a odešle jej přímo na e-mail zákazníka v příloze.',
+          'Aplikace vygeneruje PDF s rozpočtem a odešle jej na e-mail zákazníka.',
         ),
         actions: [
           TextButton(
@@ -401,7 +401,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         final user = FirebaseAuth.instance.currentUser;
         if (user == null) return;
 
-        // 1. Získání údajů servisu pro e-mail
         String sNazev = 'Servis';
         String sIco = '';
         String sEmail = '';
@@ -412,11 +411,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           sEmail = docNast.data()?['email_servisu'] ?? ''; 
         }
 
-        // Získání e-mailu zákazníka
         final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
         final zakaznikEmail = zakaznik['email']?.toString() ?? '';
 
-        // 2. Generování PDF (Typ: zakazkovyList upravený pro rozpočet)
         final pdfBytes = await GlobalPdfGenerator.generateDocument(
           data: data,
           servisNazev: sNazev,
@@ -424,13 +421,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           typ: PdfTyp.naceneni,
         );
 
-        // 3. Nahrání na Storage (jen jako záloha pro zobrazení v aplikaci)
         String fileName = 'naceneni_${widget.zakazkaId}.pdf';
         Reference ref = FirebaseStorage.instance.ref().child('servisy/${user.uid}/zakazky/${widget.zakazkaId}/$fileName');
         await ref.putData(pdfBytes, SettableMetadata(contentType: 'application/pdf'));
         String downloadUrl = await ref.getDownloadURL();
 
-        // 4. Update Firestore zakázky
         await FirebaseFirestore.instance
             .collection('zakazky')
             .doc(widget.documentId)
@@ -439,58 +434,45 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           'nabidka_url': downloadUrl,
         });
 
-        // 5. ODESLÁNÍ E-MAILU (Kolekce 'maily')
         if (context.mounted) {
-          Navigator.pop(context); // Zavřít loading
+          Navigator.pop(context); 
           
           if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
-            
-            // Převedeme vygenerované PDF rovnou do Base64 textu pro neprůstřelnou přílohu
-            String base64Pdf = base64Encode(pdfBytes);
-
-            // Vytvoříme objekt message (Nodemailer v extenzi čte hodnoty odsud!)
-            Map<String, dynamic> messageData = {
-              'subject': 'Cenová nabídka - Zakázka ${widget.zakazkaId} ($sNazev)',
-              'html': '''
-                <p>Dobrý den,</p>
-                <p>v příloze tohoto e-mailu Vám zasíláme cenovou nabídku pro Vaši zakázku <b>${widget.zakazkaId}</b> v servisu $sNazev.</p>
-                <p>Prosíme o informaci, zda s rozpočtem souhlasíte, abychom mohli začít pracovat.</p>
-                <br>
-                <p>S pozdravem,<br><b>$sNazev</b></p>
-              ''',
-              'attachments': [
-                {
-                  'filename': 'Cenova_nabidka_${widget.zakazkaId}.pdf',
-                  'content': base64Pdf,
-                  'encoding': 'base64'
-                }
-              ]
+            // ZDE JE KLÍČOVÁ OPRAVA STRUCTURY EMAILU
+            Map<String, dynamic> mailDoc = {
+              'to': zakaznikEmail,
+              'from': '$sNazev (přes Torkis) <jan.svihalek00@gmail.com>', // Pevný funkční formát
+              'message': {
+                'subject': 'Cenová nabídka - Zakázka ${widget.zakazkaId} ($sNazev)',
+                'html': '''
+                  <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
+                    <p>zasíláme Vám cenovou nabídku k nahlédnutí pro Vaši zakázku <b>${widget.zakazkaId}</b> v servisu $sNazev.</p>
+                    <p>Celý dokument si můžete prohlédnout zde:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                      <a href="$downloadUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit nacenění (PDF)</a>
+                    </div>
+                    <p>Prosíme o informaci, zda s rozpočtem souhlasíte, abychom mohli začít pracovat.</p>
+                    <br>
+                    <p>S pozdravem,<br><b>$sNazev</b></p>
+                  </div>
+                '''
+              }
             };
 
-            // OPRAVA DISPLAY NAME a REPLY TO: 
-            // Vložíme je přímo do objektu message, přesně jak to vyžaduje Nodemailer
             if (sEmail.isNotEmpty && sEmail.contains('@')) {
-              messageData['from'] = '$sNazev <$sEmail>';
-              messageData['replyTo'] = sEmail;
-            } else {
-              // Pokud email chybí, nastavíme alespoň název jako odesílatele (extenze si dosadí default email)
-              messageData['from'] = sNazev;
+              mailDoc['replyTo'] = sEmail;
             }
 
-            // Finální zápis do databáze
-            await FirebaseFirestore.instance.collection('maily').add({
-              'to': zakaznikEmail,
-              'message': messageData
-            });
+            await FirebaseFirestore.instance.collection('maily').add(mailDoc);
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Nacenění odesláno na: $zakaznikEmail (s PDF v příloze)'),
+                content: Text('Nacenění odesláno na: $zakaznikEmail'),
                 backgroundColor: Colors.green,
               ),
             );
           } else {
-            // ZÁKAZNÍK NEMÁ EMAIL -> Manuální sdílení
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Zákazník nemá e-mail. Nacenění uloženo, nyní ho můžete sdílet.'),
@@ -502,7 +484,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         }
       } catch (e) {
         if (context.mounted) {
-          Navigator.pop(context); // Zavřít loading
+          Navigator.pop(context); 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red),
           );
@@ -602,6 +584,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         TextEditingController(text: _vychoziSplatnost.toString());
     bool isFinishing = false;
 
+    String emailZakaznika = zakaznik['email']?.toString() ?? '';
+    bool odeslatEmail = emailZakaznika.isNotEmpty && emailZakaznika.contains('@');
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -611,142 +596,165 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             'Ukončení a vyúčtování',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (isFinishing)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 15),
-                        Text(
-                          'Zpracovávám...',
-                          style: TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isFinishing)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 15),
+                          Text(
+                            'Zpracovávám...',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                  )
+                else ...[
+                  const Text(
+                    'Způsob úhrady:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.withOpacity(0.5)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: vybranaPlatba,
+                        isExpanded: true,
+                        items: moznostiPlatby
+                            .map(
+                              (p) => DropdownMenuItem<String>(
+                                  value: p, child: Text(p)),
+                            )
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setDialogState(() {
+                              vybranaPlatba = val;
+                              if (val == 'Hotově' || val == 'Kartou') {
+                                splatnostController.text = '0';
+                              } else {
+                                splatnostController.text =
+                                    _vychoziSplatnost.toString();
+                              }
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
-                )
-              else ...[
-                const Text(
-                  'Způsob úhrady:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 5),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
+                  const SizedBox(height: 15),
+                  const Text(
+                    'Splatnost faktury (ve dnech):',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: vybranaPlatba,
-                      isExpanded: true,
-                      items: moznostiPlatby
-                          .map(
-                            (p) => DropdownMenuItem<String>(
-                                value: p, child: Text(p)),
-                          )
-                          .toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setDialogState(() {
-                            vybranaPlatba = val;
-                            if (val == 'Hotově' || val == 'Kartou') {
-                              splatnostController.text = '0';
-                            } else {
-                              splatnostController.text =
-                                  _vychoziSplatnost.toString();
-                            }
-                          });
-                        }
-                      },
+                  const SizedBox(height: 5),
+                  TextField(
+                    controller: splatnostController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                     ),
                   ),
-                ),
-                const SizedBox(height: 15),
-                const Text(
-                  'Splatnost faktury (ve dnech):',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 5),
-                TextField(
-                  controller: splatnostController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
+                  const SizedBox(height: 15),
+                  
+                  CheckboxListTile(
+                    title: const Text('Odeslat fakturu zákazníkovi na e-mail', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                    subtitle: emailZakaznika.isEmpty 
+                        ? const Text('Zákazník nemá vyplněný e-mail', style: TextStyle(color: Colors.red, fontSize: 12)) 
+                        : Text(emailZakaznika, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    value: odeslatEmail,
+                    activeColor: Colors.blue,
+                    onChanged: emailZakaznika.isEmpty ? null : (bool? value) {
+                      setDialogState(() {
+                        odeslatEmail = value ?? false;
+                      });
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
                   ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Zakázka se přesune do Historie. Zákazníkovi se automaticky vygeneruje a odešle PDF vyúčtování.',
-                  style: TextStyle(fontSize: 12),
-                ),
-                const SizedBox(height: 15),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    setDialogState(() => isFinishing = true);
-                    int customSplatnost =
-                        int.tryParse(splatnostController.text) ?? 14;
-                    await _zpracovatUkonceni(
-                      context,
-                      'faktura',
-                      vybranaPlatba,
-                      customSplatnost,
-                      data,
-                      stav,
-                      zakaznik,
-                      imageUrls,
-                    );
-                  },
-                  icon: const Icon(Icons.receipt_long),
-                  label: const Text('Dokončit a předat k platbě'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Zakázka se přesune do Historie. Vygeneruje se PDF vyúčtování.',
+                    style: TextStyle(fontSize: 12),
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextButton.icon(
-                  onPressed: () async {
-                    setDialogState(() => isFinishing = true);
-                    await _zpracovatUkonceni(
-                      context,
-                      'zruseno',
-                      '',
-                      0,
-                      data,
-                      stav,
-                      zakaznik,
-                      imageUrls,
-                      zruseno: true,
-                    );
-                  },
-                  icon: const Icon(Icons.cancel, color: Colors.red),
-                  label: const Text(
-                    'Nerealizuje se (Zrušit)',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(height: 15),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      setDialogState(() => isFinishing = true);
+                      int customSplatnost =
+                          int.tryParse(splatnostController.text) ?? 14;
+                      await _zpracovatUkonceni(
+                        context,
+                        'faktura',
+                        vybranaPlatba,
+                        customSplatnost,
+                        data,
+                        stav,
+                        zakaznik,
+                        imageUrls,
+                        odeslatEmail: odeslatEmail, 
+                      );
+                    },
+                    icon: const Icon(Icons.receipt_long),
+                    label: const Text('Dokončit a předat k platbě'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
                     ),
                   ),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: () async {
+                      setDialogState(() => isFinishing = true);
+                      await _zpracovatUkonceni(
+                        context,
+                        'zruseno',
+                        '',
+                        0,
+                        data,
+                        stav,
+                        zakaznik,
+                        imageUrls,
+                        zruseno: true,
+                        odeslatEmail: false, 
+                      );
+                    },
+                    icon: const Icon(Icons.cancel, color: Colors.red),
+                    label: const Text(
+                      'Nerealizuje se (Zrušit)',
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
           actions: [
             if (!isFinishing)
@@ -760,6 +768,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
+  // OPRAVA EMAILOVÉ STRUKTURY PRO FAKTURU
   Future<void> _zpracovatUkonceni(
     BuildContext context,
     String zpusob,
@@ -770,6 +779,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     Map<String, dynamic> zakaznik,
     Map<String, dynamic> imageUrls, {
     bool zruseno = false,
+    bool odeslatEmail = false, 
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -800,10 +810,12 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
       String cisloIba = widget.zakazkaId.replaceAll(RegExp(r'[^0-9]'), '');
       String cisloFaktury = 'FAK$cisloIba';
+      
+      String odesilatelJmeno = 'Servis';
+      String odesilatelIco = '';
+      String odesilatelEmail = '';
 
       if (!zruseno) {
-        String odesilatelJmeno = 'Servis';
-        String odesilatelIco = '';
         final docNastaveni = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
             .doc(user.uid)
@@ -811,6 +823,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         if (docNastaveni.exists) {
           odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
           odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
+          odesilatelEmail = docNastaveni.data()?['email_servisu'] ?? ''; 
         }
 
         data['splatnost_dny'] = splatnostDny;
@@ -858,6 +871,39 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             'provedene_prace': data['provedene_prace'] ?? [],
             'vytvoreno': FieldValue.serverTimestamp(),
           });
+
+          if (odeslatEmail) {
+            String zakaznikEmail = zakaznik['email']?.toString() ?? '';
+            if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
+
+              // KLÍČOVÁ OPRAVA: SPRÁVNÁ STRUKTURA DLE PRIJEM_VOZIDLA
+              Map<String, dynamic> mailDoc = {
+                'to': zakaznikEmail,
+                'from': '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>', // Pevný funkční formát
+                'message': {
+                  'subject': 'Faktura - Zakázka ${widget.zakazkaId} ($odesilatelJmeno)',
+                  'html': '''
+                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                      <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
+                      <p>v příloze Vám zasíláme fakturu za provedené servisní práce na Vašem vozidle <b>${data['spz']}</b> v našem servisu.</p>
+                      <div style="text-align: center; margin: 30px 0;">
+                        <a href="$pdfUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit a stáhnout fakturu</a>
+                      </div>
+                      <p>Děkujeme za využití našich služeb. V případě jakýchkoliv dotazů na tento e-mail jednoduše odpovězte, zpráva nám bude doručena.</p>
+                      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                      <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerován automaticky systémem <b>Torkis.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
+                    </div>
+                  '''
+                }
+              };
+
+              if (odesilatelEmail.isNotEmpty && odesilatelEmail.contains('@')) {
+                mailDoc['replyTo'] = odesilatelEmail;
+              }
+
+              await FirebaseFirestore.instance.collection('maily').add(mailDoc);
+            }
+          }
         }
       }
 
@@ -878,8 +924,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         Navigator.of(context).pop();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Zakázka úspěšně ukončena.'),
+          SnackBar(
+            content: Text(odeslatEmail && !zruseno ? 'Zakázka ukončena a faktura odeslána.' : 'Zakázka úspěšně ukončena.'),
             backgroundColor: Colors.green,
           ),
         );
