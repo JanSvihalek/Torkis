@@ -4,12 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
-import 'dart:io';
-import 'dart:typed_data';
-import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 
 import 'zakaznici.dart';

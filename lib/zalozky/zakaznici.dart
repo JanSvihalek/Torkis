@@ -2,12 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
-import '../core/constants.dart';
 import 'vozidla.dart';
 import '../core/pdf_generator.dart'; // NÁŠ NOVÝ IMPORT
-import 'dart:html' as html;
 
 class ZakazniciPage extends StatefulWidget {
   const ZakazniciPage({super.key});

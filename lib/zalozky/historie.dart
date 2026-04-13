@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:printing/printing.dart';
-import '../core/pdf_generator.dart';
 import 'prubeh.dart'; // Importujeme ActiveJobScreen, abychom ho mohli znovu použít
 
 class HistoryPage extends StatefulWidget {
