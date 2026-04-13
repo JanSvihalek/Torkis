@@ -153,7 +153,7 @@ class _FakturacePageState extends State<FakturacePage> {
           context,
           MaterialPageRoute(builder: (context) => const ManualInvoiceScreen()),
         ),
-        label: const Text('MANUÁLNÍ FAKTURA'),
+        label: const Text('NOVÁ FAKTURA'),
         icon: const Icon(Icons.add_shopping_cart),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
@@ -714,7 +714,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                 }
                               },
                               icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text('ZOBRAZIT DOKLAD'),
+                              label: const Text('ZOBRAZIT PDF'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blueAccent,
                                 foregroundColor: Colors.white,
