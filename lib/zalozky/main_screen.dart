@@ -142,7 +142,7 @@ class MenuPage extends StatelessWidget {
             children: [
               _buildMenuCard(
                 context,
-                'Klienti',
+                'Databáze zákazníků',
                 Icons.people_alt,
                 Colors.blue,
                 const ZakazniciPage(),
