@@ -651,9 +651,10 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
           // Ošetření pro manuální fakturu
           final bool isManual = fData['cislo_zakazky'] == 'PRODEJ';
 
-          return FutureBuilder<DocumentSnapshot>(
+          // ZDE JE TA HLAVNÍ OPRAVA (FutureBuilder<DocumentSnapshot?>)
+          return FutureBuilder<DocumentSnapshot?>(
             future: isManual
-                ? Future.value(null)
+                ? Future<DocumentSnapshot?>.value(null)
                 : FirebaseFirestore.instance
                     .collection('zakazky')
                     .doc('${user?.uid}_${widget.zakazkaId}')
@@ -1796,7 +1797,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // Data zákazníka
-  Map<String, dynamic>? _vybranyZakaznik; // Pokud vybereme z dropdownu
+  Map<String, dynamic>? _vybranyZakaznik;
   final _jmenoController = TextEditingController();
   final _telefonController = TextEditingController();
   final _emailController = TextEditingController();
@@ -1804,22 +1805,19 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
   final _icoController = TextEditingController();
   final _dicController = TextEditingController();
 
-  final List<Map<String, dynamic>> _polozky = [];
+  final List<PolozkaInput> _polozkyInputs = [];
+
   String _formaUhrady = 'Převodem';
   int _splatnostDny = 14;
   bool _isSaving = false;
+  double _hodinovaSazba = 0.0;
   bool _jePlatceDph = false;
+  double _celkovaCenaSDph = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _polozky.add({
-      'nazev': '',
-      'mnozstvi': 1.0,
-      'cena_s_dph': 0.0,
-      'jednotka': 'ks',
-      'typ': 'Materiál'
-    });
+    _polozkyInputs.add(PolozkaInput());
     _nactiNastaveni();
   }
 
@@ -1831,6 +1829,9 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
     _adresaController.dispose();
     _icoController.dispose();
     _dicController.dispose();
+    for (var p in _polozkyInputs) {
+      p.dispose();
+    }
     super.dispose();
   }
 
@@ -1845,17 +1846,31 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         setState(() {
           _splatnostDny = doc.data()?['splatnost_dny'] ?? 14;
           _jePlatceDph = doc.data()?['platce_dph'] ?? false;
+          _hodinovaSazba = (doc.data()?['hodinova_sazba'] ?? 0.0).toDouble();
         });
       }
     }
   }
 
-  double get _celkem {
-    double total = 0;
-    for (var p in _polozky) {
-      total += (p['mnozstvi'] ?? 1.0) * (p['cena_s_dph'] ?? 0.0);
+  void _prepocitatCelkem() {
+    double celkem = 0.0;
+    for (var p in _polozkyInputs) {
+      double pocet =
+          double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
+      double cenaKs =
+          double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0;
+      celkem += (pocet * cenaKs);
     }
-    return total;
+    setState(() {
+      _celkovaCenaSDph = celkem;
+    });
+  }
+
+  void _prepocitatDphPolozky(PolozkaInput p, String bezDphText) {
+    double bezDph = double.tryParse(bezDphText.replaceAll(',', '.')) ?? 0.0;
+    double sDph = _jePlatceDph ? (bezDph * 1.21) : bezDph;
+    p.cenaSDph.text = sDph.toStringAsFixed(2);
+    _prepocitatCelkem();
   }
 
   Future<void> _ulozitFakturu() async {
@@ -1864,7 +1879,17 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
           content: Text('Zadejte prosím jméno nebo název zákazníka.')));
       return;
     }
-    if (_polozky.any((p) => p['nazev'].toString().isEmpty)) {
+
+    // Zkontrolujeme, zda mají všechny položky název
+    bool maChybu = false;
+    for (var p in _polozkyInputs) {
+      if (p.nazev.text.trim().isEmpty) {
+        maChybu = true;
+        break;
+      }
+    }
+
+    if (maChybu) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Vyplňte názvy u všech položek.')));
       return;
@@ -1888,6 +1913,26 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         'dic': _dicController.text.trim(),
       };
 
+      // Zpracování položek ze složitého formuláře do formátu pro DB
+      List<Map<String, dynamic>> zpracovanePolozky = _polozkyInputs
+          .map(
+            (p) => {
+              'typ': p.typ,
+              'cislo': p.cislo.text.trim(),
+              'nazev': p.nazev.text.trim(),
+              'mnozstvi':
+                  double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 1.0,
+              'jednotka': p.jednotka,
+              'cena_bez_dph':
+                  double.tryParse(p.cenaBezDph.text.replaceAll(',', '.')) ??
+                      0.0,
+              'cena_s_dph':
+                  double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
+            },
+          )
+          .where((d) => d['nazev'].toString().isNotEmpty)
+          .toList();
+
       // Generování čísla faktury
       String timestamp = ted.millisecondsSinceEpoch.toString().substring(7);
       String cisloFaktury = 'MAN-$timestamp';
@@ -1902,7 +1947,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         'provedene_prace': [
           {
             'nazev': 'Prodej / Služby',
-            'polozky': _polozky,
+            'polozky': zpracovanePolozky,
             'cas': Timestamp.fromDate(ted),
           }
         ],
@@ -1941,13 +1986,12 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         'cislo_faktury': cisloFaktury,
         'zakaznik_id': finalCustomerData['id_zakaznika'],
         'zakaznik_jmeno': finalCustomerData['jmeno'],
-        'zakaznik':
-            finalCustomerData, // Uložení plných dat zákazníka pro detail
+        'zakaznik': finalCustomerData,
         'cislo_zakazky': 'PRODEJ',
         'datum_vystaveni': Timestamp.fromDate(ted),
         'datum_splatnosti': Timestamp.fromDate(splatnost),
         'forma_uhrady': _formaUhrady,
-        'celkova_castka': _celkem,
+        'celkova_castka': _celkovaCenaSDph,
         'stav_platby': (_formaUhrady == 'Hotově' || _formaUhrady == 'Kartou')
             ? 'Uhrazeno'
             : 'Čeká na platbu',
@@ -1987,7 +2031,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 10),
 
-              // Dropdown pro výběr existujícího
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('zakaznici')
@@ -2029,7 +2072,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
 
                         setState(() {
                           _vybranyZakaznik = data;
-                          // Předvyplníme pole
                           _jmenoController.text =
                               data['jmeno']?.toString() ?? '';
                           _telefonController.text =
@@ -2048,7 +2090,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
               ),
               const SizedBox(height: 15),
 
-              // Formulářová pole pro data
               Card(
                 elevation: 0,
                 color: isDark ? Colors.grey[900] : Colors.grey[50],
@@ -2116,81 +2157,267 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
               ),
               const SizedBox(height: 30),
 
-              // POLOŽKY
-              const Text('Položky faktury',
+              // POLOŽKY V DETAILNÍM FORMÁTU
+              const Text('Položky dokladu',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 10),
-              ..._polozky.asMap().entries.map((entry) {
-                int idx = entry.key;
-                Map<String, dynamic> p = entry.value;
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: TextField(
-                                decoration: const InputDecoration(
-                                    labelText: 'Název dílu / práce *'),
-                                onChanged: (v) => p['nazev'] = v,
+
+              ...List.generate(_polozkyInputs.length, (index) {
+                final polozka = _polozkyInputs[index];
+                double dPocet = double.tryParse(
+                      polozka.mnozstvi.text.replaceAll(',', '.'),
+                    ) ??
+                    0.0;
+                double dCena = double.tryParse(
+                      polozka.cenaSDph.text.replaceAll(',', '.'),
+                    ) ??
+                    0.0;
+                double rCelkem = dPocet * dCena;
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 15),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: DropdownButtonFormField<String>(
+                              value: polozka.typ,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
+                              items: ['Práce', 'Materiál']
+                                  .map(
+                                    (t) => DropdownMenuItem(
+                                      value: t,
+                                      child: Text(
+                                        t,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    polozka.typ = val;
+                                    if (val == 'Práce') {
+                                      polozka.jednotka = 'h';
+                                      if (_hodinovaSazba > 0) {
+                                        polozka.cenaBezDph.text =
+                                            _hodinovaSazba.toStringAsFixed(2);
+                                        _prepocitatDphPolozky(
+                                          polozka,
+                                          polozka.cenaBezDph.text,
+                                        );
+                                      }
+                                    }
+                                    if (val == 'Materiál')
+                                      polozka.jednotka = 'ks';
+                                  });
+                                }
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Typ',
+                                labelStyle: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                                filled: true,
+                                fillColor: isDark
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 10,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () =>
-                                  setState(() => _polozky.removeAt(idx)),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 4,
+                            child: _buildTextField(
+                              polozka.cislo,
+                              'Číslo dílu',
+                              isDark,
+                              compact: true,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Colors.red,
+                              size: 20,
+                            ),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                polozka.dispose();
+                                _polozkyInputs.removeAt(index);
+                                _prepocitatCelkem();
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      _buildTextField(
+                        polozka.nazev,
+                        'Název položky *',
+                        isDark,
+                        compact: true,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: _buildTextField(
+                              polozka.mnozstvi,
+                              'Mn.',
+                              isDark,
+                              isNumber: true,
+                              compact: true,
+                              onChanged: (v) => _prepocitatCelkem(),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            flex: 3,
+                            child: DropdownButtonFormField<String>(
+                              value: polozka.jednotka,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white : Colors.black,
+                              ),
+                              items: [
+                                'ks',
+                                'h',
+                                'min',
+                                'l',
+                                'm',
+                                'bal',
+                                'sada',
+                                'úkon',
+                              ]
+                                  .map(
+                                    (j) => DropdownMenuItem(
+                                      value: j,
+                                      child: Text(
+                                        j,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (val) {
+                                if (val != null)
+                                  setState(
+                                    () => polozka.jednotka = val,
+                                  );
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Jedn.',
+                                labelStyle: const TextStyle(
+                                  fontSize: 12,
+                                ),
+                                filled: true,
+                                fillColor: isDark
+                                    ? const Color(0xFF1E1E1E)
+                                    : Colors.white,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 10,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTextField(
+                              polozka.cenaBezDph,
+                              _jePlatceDph ? 'Bez DPH' : 'Cena',
+                              isDark,
+                              isNumber: true,
+                              compact: true,
+                              onChanged: (v) =>
+                                  _prepocitatDphPolozky(polozka, v),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTextField(
+                              polozka.cenaSDph,
+                              _jePlatceDph ? 'S DPH' : 'Konečná',
+                              isDark,
+                              isNumber: true,
+                              compact: true,
+                              onChanged: (v) => _prepocitatCelkem(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            const Text(
+                              'Celkem za položku: ',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 12,
+                              ),
+                            ),
+                            Text(
+                              '${rCelkem.toStringAsFixed(2)} Kč',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blue,
+                                fontSize: 14,
+                              ),
                             ),
                           ],
                         ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                decoration: const InputDecoration(
-                                    labelText: 'Množství'),
-                                keyboardType: TextInputType.number,
-                                controller: TextEditingController(
-                                    text: p['mnozstvi'].toString()),
-                                onChanged: (v) => setState(() => p['mnozstvi'] =
-                                    double.tryParse(v.replaceAll(',', '.')) ??
-                                        1.0),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: TextField(
-                                decoration: InputDecoration(
-                                    labelText: _jePlatceDph
-                                        ? 'Cena s DPH/ks'
-                                        : 'Cena/ks'),
-                                keyboardType: TextInputType.number,
-                                onChanged: (v) => setState(() =>
-                                    p['cena_s_dph'] = double.tryParse(
-                                            v.replaceAll(',', '.')) ??
-                                        0.0),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 );
               }),
               TextButton.icon(
-                onPressed: () => setState(() => _polozky.add({
-                      'nazev': '',
-                      'mnozstvi': 1.0,
-                      'cena_s_dph': 0.0,
-                      'jednotka': 'ks',
-                      'typ': 'Materiál'
-                    })),
+                onPressed: () =>
+                    setState(() => _polozkyInputs.add(PolozkaInput())),
                 icon: const Icon(Icons.add),
-                label: const Text('Přidat položku'),
+                label: const Text('Přidat další položku'),
               ),
               const Divider(height: 40),
 
@@ -2240,7 +2467,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                     const Text('CELKEM K ÚHRADĚ',
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 18)),
-                    Text('${_celkem.toStringAsFixed(2)} Kč',
+                    Text('${_celkovaCenaSDph.toStringAsFixed(2)} Kč',
                         style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 22,
@@ -2270,6 +2497,43 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint,
+    bool isDark, {
+    bool isNumber = false,
+    bool isBold = false,
+    bool compact = false,
+    int maxLines = 1,
+    Function(String)? onChanged,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: isNumber
+          ? const TextInputType.numberWithOptions(decimal: true)
+          : TextInputType.text,
+      maxLines: maxLines,
+      onChanged: onChanged,
+      style: TextStyle(
+        fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+        fontSize: compact ? 12 : (isBold ? 16 : 14),
+      ),
+      decoration: InputDecoration(
+        labelText: hint,
+        labelStyle: TextStyle(fontSize: compact ? 12 : 14),
+        filled: true,
+        fillColor: isDark
+            ? (compact ? const Color(0xFF1E1E1E) : const Color(0xFF2C2C2C))
+            : Colors.white,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: compact ? 10 : 15,
+          vertical: compact ? 10 : 15,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
