@@ -42,7 +42,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyDUQflnV2GaXGZVlO59LGy7zNH27AzdMtg',
-    appId: '1:283147372379:web:c93cab5b81ded6e8e67c7e',
+    appId: '1:283147372379:web:4bed6764149d487be67c7e',
     messagingSenderId: '283147372379',
     projectId: 'visto-51cb7',
     authDomain: 'visto-51cb7.firebaseapp.com',
@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDR7MA7yYBIdlyxS_-lm9yTGjyd3tBY3VE',
-    appId: '1:283147372379:android:b6485f91ea2163ade67c7e',
+    appId: '1:283147372379:android:46b7afdb9af8d7f1e67c7e',
     messagingSenderId: '283147372379',
     projectId: 'visto-51cb7',
     storageBucket: 'visto-51cb7.firebasestorage.app',
@@ -59,25 +59,25 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAcp6tdHtDCNi6IUbJ4Unv1XMlr50bR9ic',
-    appId: '1:283147372379:ios:3c8aa1809a604eace67c7e',
+    appId: '1:283147372379:ios:d1bbcabfc421d030e67c7e',
     messagingSenderId: '283147372379',
     projectId: 'visto-51cb7',
     storageBucket: 'visto-51cb7.firebasestorage.app',
-    iosBundleId: 'com.example.fascheck',
+    iosBundleId: 'com.example.torkis',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAcp6tdHtDCNi6IUbJ4Unv1XMlr50bR9ic',
-    appId: '1:283147372379:ios:3c8aa1809a604eace67c7e',
+    appId: '1:283147372379:ios:d1bbcabfc421d030e67c7e',
     messagingSenderId: '283147372379',
     projectId: 'visto-51cb7',
     storageBucket: 'visto-51cb7.firebasestorage.app',
-    iosBundleId: 'com.example.fascheck',
+    iosBundleId: 'com.example.torkis',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyDUQflnV2GaXGZVlO59LGy7zNH27AzdMtg',
-    appId: '1:283147372379:web:4bed6764149d487be67c7e',
+    appId: '1:283147372379:web:3b5a9461ff5c5231e67c7e',
     messagingSenderId: '283147372379',
     projectId: 'visto-51cb7',
     authDomain: 'visto-51cb7.firebaseapp.com',

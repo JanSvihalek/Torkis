@@ -301,6 +301,36 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
+  Future<void> _deletePozadavek(BuildContext context, String pozadavek) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Smazat požadavek?'),
+        content: const Text(
+          'Opravdu chcete tento požadavek zákazníka trvale odstranit?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ZRUŠIT'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('SMAZAT', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await FirebaseFirestore.instance
+          .collection('zakazky')
+          .doc(widget.documentId)
+          .update({
+        'pozadavky_zakaznika': FieldValue.arrayRemove([pozadavek]),
+      });
+    }
+  }
+
   Future<void> _deleteWork(
     BuildContext context,
     Map<String, dynamic> workItem,
@@ -331,6 +361,80 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           .update({
         'provedene_prace': FieldValue.arrayRemove([workItem]),
       });
+    }
+  }
+
+  Future<void> _stornovatZakazku(BuildContext context) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Stornovat a znovu otevřít?'),
+        content: const Text(
+          'Tato akce označí původní fakturu jako "Stornováno" (dobropis) a vrátí zakázku do stavu "Přijato". Zakázku tak budete moci znovu upravovat a posléze vygenerovat novou fakturu.\n\nOpravdu chcete zakázku odemknout?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ZRUŠIT'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('STORNOVAT',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        try {
+          // 1. Změna stavu faktury (pokud existuje)
+          String cisloIba = widget.zakazkaId.replaceAll(RegExp(r'[^0-9]'), '');
+          String cisloFaktury = 'FAK$cisloIba';
+          final fakturaRef = FirebaseFirestore.instance
+              .collection('faktury')
+              .doc('${user.uid}_$cisloFaktury');
+          final fakturaSnap = await fakturaRef.get();
+
+          if (fakturaSnap.exists) {
+            await fakturaRef.update({'stav_platby': 'Stornováno'});
+          }
+
+          // 2. Odemknutí zakázky
+          await FirebaseFirestore.instance
+              .collection('zakazky')
+              .doc(widget.documentId)
+              .update({
+            'stav_zakazky': 'Přijato',
+            'zpusob_ukonceni': FieldValue.delete(),
+            'forma_uhrady': FieldValue.delete(),
+            'splatnost_dny': FieldValue.delete(),
+            'cas_ukonceni': FieldValue.delete(),
+            // Necháváme vystupni_protokol_url, pokud by se chtěl zákazník podívat na stornovaný doklad
+          });
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Faktura stornována a zakázka znovu otevřena.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Chyba při stornování: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      }
     }
   }
 
@@ -631,7 +735,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Zakázka úspěšně ukončena. Faktura vystavena.'),
+            content: Text('Zakázka úspěšně ukončena.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -692,6 +796,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             imageUrlsByCategoryRaw['ostatni'] = rawUrls;
           }
 
+          final bool isCompleted = aktualniStav == 'Dokončeno';
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -714,41 +820,49 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     const SizedBox(width: 15),
                     Expanded(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 12),
                         decoration: BoxDecoration(
                           color: getStatusColor(aktualniStav).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: aktualniStav,
-                            isExpanded: true,
-                            dropdownColor:
-                                isDark ? const Color(0xFF2C2C2C) : Colors.white,
-                            // TADY JE TA OPRAVA: Schováme to jen když to ještě není Dokončeno
-                            items: stavyZakazky
-                                .where((s) =>
-                                    s != 'Dokončeno' ||
-                                    aktualniStav == 'Dokončeno')
-                                .map(
-                                  (s) => DropdownMenuItem(
-                                    value: s,
-                                    child: Text(
-                                      s,
-                                      style: TextStyle(
-                                        color: getStatusColor(s),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (novyStav) {
-                              if (novyStav != null)
-                                _zmenitStav(context, novyStav);
-                            },
-                          ),
-                        ),
+                        child: isCompleted
+                            ? Text(
+                                'Dokončeno (Uzamčeno)',
+                                style: TextStyle(
+                                  color: getStatusColor(aktualniStav),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              )
+                            : DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: aktualniStav,
+                                  isExpanded: true,
+                                  dropdownColor: isDark
+                                      ? const Color(0xFF2C2C2C)
+                                      : Colors.white,
+                                  items: stavyZakazky
+                                      .where((s) => s != 'Dokončeno')
+                                      .map(
+                                        (s) => DropdownMenuItem(
+                                          value: s,
+                                          child: Text(
+                                            s,
+                                            style: TextStyle(
+                                              color: getStatusColor(s),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                  onChanged: (novyStav) {
+                                    if (novyStav != null)
+                                      _zmenitStav(context, novyStav);
+                                  },
+                                ),
+                              ),
                       ),
                     ),
                     IconButton(
@@ -806,6 +920,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 ),
               ),
               const Divider(height: 1),
+
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(20),
@@ -839,7 +954,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // ZÁKAZNÍK (klikací - Otevírá detail)
                                 Expanded(
                                   child: Material(
                                     color: Colors.transparent,
@@ -912,14 +1026,12 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     ),
                                   ),
                                 ),
-                                // Oddělovač
                                 Container(
                                   width: 1,
                                   height: 80,
                                   color: Colors.grey.withOpacity(0.3),
                                   margin: const EdgeInsets.only(top: 10),
                                 ),
-                                // VOZIDLO (klikací - Otevírá detail)
                                 Expanded(
                                   child: Material(
                                     color: Colors.transparent,
@@ -1067,18 +1179,34 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            trailing: ElevatedButton.icon(
-                              icon: const Icon(Icons.build, size: 18),
-                              label: const Text('ZPRACOVAT'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                foregroundColor: Colors.white,
-                              ),
-                              onPressed: () => _openAddWorkDialog(
-                                context,
-                                initialTitle: p.toString(),
-                              ),
-                            ),
+                            // PŘIDANÁ MOŽNOST SMAZAT POŽADAVEK A SKRYTÍ POKUD JE HOTOVO
+                            trailing: isCompleted
+                                ? null
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline,
+                                            color: Colors.red),
+                                        tooltip: 'Smazat požadavek',
+                                        onPressed: () => _deletePozadavek(
+                                            context, p.toString()),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.build, size: 18),
+                                        label: const Text('ZPRACOVAT'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.orange,
+                                          foregroundColor: Colors.white,
+                                        ),
+                                        onPressed: () => _openAddWorkDialog(
+                                          context,
+                                          initialTitle: p.toString(),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                           ),
                         ),
                       ),
@@ -1179,27 +1307,29 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                         ),
                                       ),
                                     ),
-                                    IconButton(
-                                      onPressed: () => _openAddWorkDialog(
-                                        context,
-                                        existingWork: prace,
-                                        editIndex: trueIndex,
+                                    if (!isCompleted)
+                                      IconButton(
+                                        onPressed: () => _openAddWorkDialog(
+                                          context,
+                                          existingWork: prace,
+                                          editIndex: trueIndex,
+                                        ),
+                                        icon: const Icon(
+                                          Icons.edit,
+                                          color: Colors.blue,
+                                          size: 20,
+                                        ),
                                       ),
-                                      icon: const Icon(
-                                        Icons.edit,
-                                        color: Colors.blue,
-                                        size: 20,
+                                    if (!isCompleted)
+                                      IconButton(
+                                        onPressed: () =>
+                                            _deleteWork(context, prace),
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red,
+                                          size: 20,
+                                        ),
                                       ),
-                                    ),
-                                    IconButton(
-                                      onPressed: () =>
-                                          _deleteWork(context, prace),
-                                      icon: const Icon(
-                                        Icons.delete_outline,
-                                        color: Colors.red,
-                                        size: 20,
-                                      ),
-                                    ),
                                   ],
                                 ),
                                 Text(
@@ -1295,64 +1425,106 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   ],
                 ),
               ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -5),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _ukoncitZakazkuDialog(context, data,
-                              stav, zakaznik, imageUrlsByCategoryRaw),
-                          icon: const Icon(Icons.flag),
-                          label: const Text(
-                            'UKONČIT A VYDAT',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _openAddWorkDialog(context),
-                          icon: const Icon(Icons.add),
-                          label: const Text(
-                            'PŘIDAT ÚKON',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                        ),
+
+              // ZMĚNA: SPODNÍ LIŠTA PRO ZAMČENOU ZAKÁZKU (STORNO)
+              if (isCompleted)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -5),
                       ),
                     ],
                   ),
+                  child: SafeArea(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _stornovatZakazku(context),
+                        icon: const Icon(Icons.settings_backup_restore),
+                        label: const Text(
+                          'STORNOVAT FAKTURU A ZNOVU OTEVŘÍT ZAKÁZKU',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[50],
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red, width: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+
+              // ZMĚNA: SPODNÍ LIŠTA PRO AKTIVNÍ ZAKÁZKU
+              if (!isCompleted)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -5),
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _ukoncitZakazkuDialog(context,
+                                data, stav, zakaznik, imageUrlsByCategoryRaw),
+                            icon: const Icon(Icons.flag),
+                            label: const Text(
+                              'UKONČIT A VYDAT',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orange,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _openAddWorkDialog(context),
+                            icon: const Icon(Icons.add),
+                            label: const Text(
+                              'PŘIDAT ÚKON',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           );
         },
