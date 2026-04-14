@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 import '../core/pdf_generator.dart';
+import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO globalServisId
 
 import 'zakaznici.dart';
 import 'vozidla.dart';
@@ -17,8 +18,7 @@ Future<void> syncAndRegenerateFaktura(
   String zakazkaId,
   List<dynamic> updatedPrace,
 ) async {
-  final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
+  if (globalServisId == null) return; // <--- OCHRANA
 
   double celkovaSuma = 0.0;
   for (var prace in updatedPrace) {
@@ -42,7 +42,7 @@ Future<void> syncAndRegenerateFaktura(
 
   final zakazkaRef = FirebaseFirestore.instance
       .collection('zakazky')
-      .doc('${user.uid}_$zakazkaId');
+      .doc('${globalServisId}_$zakazkaId'); // <--- ZMĚNA ZDE
   final zakDoc = await zakazkaRef.get();
   if (!zakDoc.exists)
     throw Exception("Původní zakázka nenalezena pro přegenerování PDF.");
@@ -54,7 +54,7 @@ Future<void> syncAndRegenerateFaktura(
   String odesilatelIco = '';
   final docNastaveni = await FirebaseFirestore.instance
       .collection('nastaveni_servisu')
-      .doc(user.uid)
+      .doc(globalServisId) // <--- ZMĚNA ZDE
       .get();
   if (docNastaveni.exists) {
     odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
@@ -69,7 +69,7 @@ Future<void> syncAndRegenerateFaktura(
   );
 
   Reference pdfRef = FirebaseStorage.instance.ref().child(
-        'servisy/${user.uid}/zakazky/$zakazkaId/finalni_vyuctovani_$zakazkaId.pdf',
+        'servisy/$globalServisId/zakazky/$zakazkaId/finalni_vyuctovani_$zakazkaId.pdf', // <--- ZMĚNA ZDE
       );
   await pdfRef.putData(
     pdfBytes,
@@ -137,9 +137,10 @@ class _FakturacePageState extends State<FakturacePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) return const Center(child: Text("Nejste přihlášeni."));
+    if (globalServisId == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -196,7 +197,8 @@ class _FakturacePageState extends State<FakturacePage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('faktury')
-                  .where('servis_id', isEqualTo: user.uid)
+                  .where('servis_id',
+                      isEqualTo: globalServisId) // <--- ZMĚNA ZDE
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError)
@@ -612,7 +614,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -646,13 +647,13 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
           // Ošetření pro manuální fakturu
           final bool isManual = fData['cislo_zakazky'] == 'PRODEJ';
 
-          // ZDE JE TA HLAVNÍ OPRAVA (FutureBuilder<DocumentSnapshot?>)
           return FutureBuilder<DocumentSnapshot?>(
-            future: isManual
+            future: isManual || globalServisId == null
                 ? Future<DocumentSnapshot?>.value(null)
                 : FirebaseFirestore.instance
                     .collection('zakazky')
-                    .doc('${user?.uid}_${widget.zakazkaId}')
+                    .doc(
+                        '${globalServisId}_${widget.zakazkaId}') // <--- ZMĚNA ZDE
                     .get(),
             builder: (context, zakazkaSnap) {
               Map<String, dynamic> zakData = {};
@@ -760,7 +761,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                               : ''),
                                       onTap: () {
                                         final vozidloDocId =
-                                            '${user!.uid}_${fData['spz']}';
+                                            '${globalServisId}_${fData['spz']}'; // <--- ZMĚNA ZDE
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -780,7 +781,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                       value: '${fData['cislo_zakazky']}',
                                       onTap: () {
                                         final docId =
-                                            '${user!.uid}_${widget.zakazkaId}';
+                                            '${globalServisId}_${widget.zakazkaId}'; // <--- ZMĚNA ZDE
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -1200,11 +1201,10 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
   }
 
   Future<void> _nactiHodinovouSazbu() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(user.uid)
+          .doc(globalServisId) // <--- ZMĚNA ZDE
           .get();
       if (doc.exists) {
         setState(() {
@@ -1414,6 +1414,8 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                                     ? const Color(0xFF2C2C2C)
                                     : Colors.grey[50],
                                 borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: Colors.grey.withOpacity(0.2)),
                               ),
                               child: Column(
                                 children: [
@@ -1515,7 +1517,7 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                                   const SizedBox(height: 8),
                                   _buildTextField(
                                     polozka.nazev,
-                                    'Název položky',
+                                    'Název položky *',
                                     isDark,
                                     compact: true,
                                   ),
@@ -1831,11 +1833,10 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
   }
 
   Future<void> _nactiNastaveni() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(user.uid)
+          .doc(globalServisId) // <--- ZMĚNA ZDE
           .get();
       if (doc.exists) {
         setState(() {
@@ -1875,7 +1876,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
       return;
     }
 
-    // Zkontrolujeme, zda mají všechny položky název
     bool maChybu = false;
     for (var p in _polozkyInputs) {
       if (p.nazev.text.trim().isEmpty) {
@@ -1893,11 +1893,10 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      if (globalServisId == null) return;
       final ted = DateTime.now();
       final splatnost = ted.add(Duration(days: _splatnostDny));
 
-      // Sestavení dat zákazníka
       Map<String, dynamic> finalCustomerData = {
         'id_zakaznika': _vybranyZakaznik?['id_zakaznika'] ?? '',
         'jmeno': _jmenoController.text.trim(),
@@ -1908,7 +1907,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         'dic': _dicController.text.trim(),
       };
 
-      // Zpracování položek ze složitého formuláře do formátu pro DB
       List<Map<String, dynamic>> zpracovanePolozky = _polozkyInputs
           .map(
             (p) => {
@@ -1928,11 +1926,9 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
           .where((d) => d['nazev'].toString().isNotEmpty)
           .toList();
 
-      // Generování čísla faktury
       String timestamp = ted.millisecondsSinceEpoch.toString().substring(7);
       String cisloFaktury = 'MAN-$timestamp';
 
-      // Příprava dat pro PDF generátor
       Map<String, dynamic> invoiceData = {
         'zakaznik': finalCustomerData,
         'cislo_zakazky': 'PRODEJ',
@@ -1948,15 +1944,13 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         ],
       };
 
-      // Načtení info o servisu
       final docNast = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(user!.uid)
+          .doc(globalServisId) // <--- ZMĚNA ZDE
           .get();
       String sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
       String sIco = docNast.data()?['ico_servisu'] ?? '';
 
-      // Generování PDF
       final pdfBytes = await GlobalPdfGenerator.generateDocument(
         data: invoiceData,
         servisNazev: sNazev,
@@ -1964,20 +1958,17 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         typ: PdfTyp.faktura,
       );
 
-      // Upload PDF
-      Reference pdfRef = FirebaseStorage.instance
-          .ref()
-          .child('servisy/${user.uid}/faktury/$cisloFaktury.pdf');
+      Reference pdfRef = FirebaseStorage.instance.ref().child(
+          'servisy/$globalServisId/faktury/$cisloFaktury.pdf'); // <--- ZMĚNA ZDE
       await pdfRef.putData(
           pdfBytes, SettableMetadata(contentType: 'application/pdf'));
       String pdfUrl = await pdfRef.getDownloadURL();
 
-      // Uložení do Firestore
       await FirebaseFirestore.instance
           .collection('faktury')
-          .doc('${user.uid}_$cisloFaktury')
+          .doc('${globalServisId}_$cisloFaktury') // <--- ZMĚNA ZDE
           .set({
-        'servis_id': user.uid,
+        'servis_id': globalServisId, // <--- ZMĚNA ZDE
         'cislo_faktury': cisloFaktury,
         'zakaznik_id': finalCustomerData['id_zakaznika'],
         'zakaznik_jmeno': finalCustomerData['jmeno'],
@@ -2021,7 +2012,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // VÝBĚR NEBO ZADÁNÍ ZÁKAZNÍKA
               const Text('Zákazník (Odběratel)',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 10),
@@ -2030,7 +2020,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                 stream: FirebaseFirestore.instance
                     .collection('zakaznici')
                     .where('servis_id',
-                        isEqualTo: FirebaseAuth.instance.currentUser?.uid)
+                        isEqualTo: globalServisId) // <--- ZMĚNA ZDE
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData)
@@ -2152,7 +2142,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
               ),
               const SizedBox(height: 30),
 
-              // POLOŽKY V DETAILNÍM FORMÁTU
               const Text('Položky dokladu',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               const SizedBox(height: 10),

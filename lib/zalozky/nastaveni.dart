@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'auth_screen.dart'; // Přidán import pro přesměrování po odhlášení
-import '../core/constants.dart'; // <--- PŘIDÁNO PRO OKAMŽITOU ZMĚNU MOTIVU
+import 'auth_screen.dart';
+import '../core/constants.dart';
+import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -12,6 +13,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  // Kontroléry pro Admina
   final _nazevCtrl = TextEditingController();
   final _icoCtrl = TextEditingController();
   final _dicCtrl = TextEditingController();
@@ -29,9 +31,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _platceDph = false;
   bool _defaultEmail = true;
+
+  // Uživatelské nastavení (pro všechny)
   bool _tmavyRezim = false;
+
   bool _isLoading = true;
   bool _isSaving = false;
+
+  bool get _isAdmin => globalUserRole == 'admin';
 
   @override
   void initState() {
@@ -42,31 +49,44 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('nastaveni_servisu')
+      // 1. NAČTENÍ OSOBNÍHO NASTAVENÍ (Tmavý režim)
+      final userDoc = await FirebaseFirestore.instance
+          .collection('uzivatele')
           .doc(user.uid)
           .get();
-      if (doc.exists) {
-        final data = doc.data()!;
+      if (userDoc.exists) {
         setState(() {
-          _nazevCtrl.text = data['nazev_servisu'] ?? '';
-          _icoCtrl.text = data['ico_servisu'] ?? '';
-          _dicCtrl.text = data['dic_servisu'] ?? '';
-          _adresaCtrl.text = data['adresa_servisu'] ?? '';
-          _mestoCtrl.text = data['mesto_servisu'] ?? '';
-          _pscCtrl.text = data['psc_servisu'] ?? '';
-          _telefonCtrl.text = data['telefon_servisu'] ?? '';
-          _emailCtrl.text = data['email_servisu'] ?? '';
-          _bankaCtrl.text = data['banka_servisu'] ?? '';
-          _registraceCtrl.text = data['registrace_servisu'] ?? '';
-          _sazbaCtrl.text = (data['hodinova_sazba'] ?? 0).toString();
-          _splatnostCtrl.text = (data['splatnost_dny'] ?? 14).toString();
-          _prefixZakazkaCtrl.text = data['prefix_zakazky'] ?? 'ZAK';
-          _prefixFakturaCtrl.text = data['prefix_faktury'] ?? 'FAK';
-          _platceDph = data['platce_dph'] ?? false;
-          _defaultEmail = data['default_odesilat_emaily'] ?? true;
-          _tmavyRezim = data['tmavy_rezim'] ?? false;
+          _tmavyRezim = userDoc.data()!['tmavy_rezim'] ?? false;
         });
+      }
+
+      // 2. NAČTENÍ FIREMNÍHO NASTAVENÍ (Jen pro Admina)
+      if (_isAdmin && globalServisId != null) {
+        final doc = await FirebaseFirestore.instance
+            .collection('nastaveni_servisu')
+            .doc(globalServisId)
+            .get();
+        if (doc.exists) {
+          final data = doc.data()!;
+          setState(() {
+            _nazevCtrl.text = data['nazev_servisu'] ?? '';
+            _icoCtrl.text = data['ico_servisu'] ?? '';
+            _dicCtrl.text = data['dic_servisu'] ?? '';
+            _adresaCtrl.text = data['adresa_servisu'] ?? '';
+            _mestoCtrl.text = data['mesto_servisu'] ?? '';
+            _pscCtrl.text = data['psc_servisu'] ?? '';
+            _telefonCtrl.text = data['telefon_servisu'] ?? '';
+            _emailCtrl.text = data['email_servisu'] ?? '';
+            _bankaCtrl.text = data['banka_servisu'] ?? '';
+            _registraceCtrl.text = data['registrace_servisu'] ?? '';
+            _sazbaCtrl.text = (data['hodinova_sazba'] ?? 0).toString();
+            _splatnostCtrl.text = (data['splatnost_dny'] ?? 14).toString();
+            _prefixZakazkaCtrl.text = data['prefix_zakazky'] ?? 'ZAK';
+            _prefixFakturaCtrl.text = data['prefix_faktury'] ?? 'FAK';
+            _platceDph = data['platce_dph'] ?? false;
+            _defaultEmail = data['default_odesilat_emaily'] ?? true;
+          });
+        }
       }
     }
     setState(() => _isLoading = false);
@@ -77,37 +97,47 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
+        // 1. ULOŽENÍ OSOBNÍHO NASTAVENÍ DO PROFILU UŽIVATELE
         await FirebaseFirestore.instance
-            .collection('nastaveni_servisu')
+            .collection('uzivatele')
             .doc(user.uid)
             .set({
-          'nazev_servisu': _nazevCtrl.text.trim(),
-          'ico_servisu': _icoCtrl.text.trim(),
-          'dic_servisu': _dicCtrl.text.trim(),
-          'adresa_servisu': _adresaCtrl.text.trim(),
-          'mesto_servisu': _mestoCtrl.text.trim(),
-          'psc_servisu': _pscCtrl.text.trim(),
-          'telefon_servisu': _telefonCtrl.text.trim(),
-          'email_servisu': _emailCtrl.text.trim(),
-          'banka_servisu': _bankaCtrl.text.trim(),
-          'registrace_servisu': _registraceCtrl.text.trim(),
-          'prefix_zakazky': _prefixZakazkaCtrl.text.trim().toUpperCase(),
-          'prefix_faktury': _prefixFakturaCtrl.text.trim().toUpperCase(),
-          'hodinova_sazba':
-              double.tryParse(_sazbaCtrl.text.replaceAll(',', '.')) ?? 0.0,
-          'splatnost_dny': int.tryParse(_splatnostCtrl.text) ?? 14,
-          'platce_dph': _platceDph,
-          'default_odesilat_emaily': _defaultEmail,
           'tmavy_rezim': _tmavyRezim,
-          'zmeneno': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
-        // --- ZMĚNA VZHLEDU IHNED PO ULOŽENÍ ---
+        // 2. ULOŽENÍ FIREMNÍHO NASTAVENÍ (Jen pro Admina)
+        if (_isAdmin && globalServisId != null) {
+          await FirebaseFirestore.instance
+              .collection('nastaveni_servisu')
+              .doc(globalServisId)
+              .set({
+            'nazev_servisu': _nazevCtrl.text.trim(),
+            'ico_servisu': _icoCtrl.text.trim(),
+            'dic_servisu': _dicCtrl.text.trim(),
+            'adresa_servisu': _adresaCtrl.text.trim(),
+            'mesto_servisu': _mestoCtrl.text.trim(),
+            'psc_servisu': _pscCtrl.text.trim(),
+            'telefon_servisu': _telefonCtrl.text.trim(),
+            'email_servisu': _emailCtrl.text.trim(),
+            'banka_servisu': _bankaCtrl.text.trim(),
+            'registrace_servisu': _registraceCtrl.text.trim(),
+            'prefix_zakazky': _prefixZakazkaCtrl.text.trim().toUpperCase(),
+            'prefix_faktury': _prefixFakturaCtrl.text.trim().toUpperCase(),
+            'hodinova_sazba':
+                double.tryParse(_sazbaCtrl.text.replaceAll(',', '.')) ?? 0.0,
+            'splatnost_dny': int.tryParse(_splatnostCtrl.text) ?? 14,
+            'platce_dph': _platceDph,
+            'default_odesilat_emaily': _defaultEmail,
+            'zmeneno': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+        }
+
+        // Měníme motiv ihned po uložení
         themeNotifier.value = _tmavyRezim ? ThemeMode.dark : ThemeMode.light;
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Nastavení bylo úspěšně uloženo.'),
+              content: Text('Nastavení uloženo.'),
               backgroundColor: Colors.green));
         }
       }
@@ -127,9 +157,8 @@ class _SettingsPageState extends State<SettingsPage> {
         content: const Text('Opravdu se chcete odhlásit ze svého účtu?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('ZRUŠIT'),
-          ),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('ZRUŠIT')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('ODHLÁSIT',
@@ -144,10 +173,9 @@ class _SettingsPageState extends State<SettingsPage> {
       await FirebaseAuth.instance.signOut();
       if (mounted) {
         Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const AuthScreen()),
-          (route) => false,
-        );
+            context,
+            MaterialPageRoute(builder: (context) => const AuthScreen()),
+            (route) => false);
       }
     }
   }
@@ -156,9 +184,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     return Column(
       children: [
@@ -171,12 +197,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Úprava nastavení',
-                        style: TextStyle(
+                    Text(_isAdmin ? 'Firemní nastavení' : 'Můj profil',
+                        style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    const Text('Firemní údaje, ceník a chování.',
-                        style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    Text(
+                        _isAdmin
+                            ? 'Správa údajů servisu a ceníku.'
+                            : 'Základní nastavení vašeho účtu.',
+                        style:
+                            const TextStyle(color: Colors.grey, fontSize: 13)),
                   ],
                 ),
               ),
@@ -208,136 +238,145 @@ class _SettingsPageState extends State<SettingsPage> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              _buildCard(
-                title: 'Firemní údaje',
-                icon: Icons.business,
-                color: Colors.blue,
-                isDark: isDark,
-                children: [
-                  _buildInput(_nazevCtrl, 'Obchodní jméno / Název servisu',
-                      Icons.store, isDark),
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _buildInput(
-                              _icoCtrl, 'IČO', Icons.numbers, isDark)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                          child: _buildInput(
-                              _dicCtrl, 'DIČ', Icons.badge, isDark)),
-                    ],
-                  ),
-                  _buildInput(
-                      _registraceCtrl,
-                      'Zápis v rejstříku (spisová značka)',
-                      Icons.gavel,
-                      isDark),
-                ],
-              ),
-              _buildCard(
-                title: 'Sídlo a kontakt',
-                icon: Icons.location_on,
-                color: Colors.orange,
-                isDark: isDark,
-                children: [
-                  _buildInput(_adresaCtrl, 'Ulice a č.p.', Icons.map, isDark),
-                  Row(
-                    children: [
-                      Expanded(
-                          flex: 2,
-                          child: _buildInput(_mestoCtrl, 'Město',
-                              Icons.location_city, isDark)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                          flex: 1,
-                          child: _buildInput(_pscCtrl, 'PSČ',
-                              Icons.mark_email_unread, isDark)),
-                    ],
-                  ),
-                  _buildInput(
-                      _telefonCtrl, 'Telefon servisu', Icons.phone, isDark),
-                  _buildInput(
-                      _emailCtrl, 'E-mail pro komunikaci', Icons.email, isDark),
-                ],
-              ),
-              _buildCard(
-                title: 'Fakturace a ceny',
-                icon: Icons.receipt_long,
-                color: Colors.green,
-                isDark: isDark,
-                children: [
-                  _buildInput(_bankaCtrl, 'Bankovní účet',
-                      Icons.account_balance, isDark),
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _buildInput(
-                              _sazbaCtrl, 'Hodinová sazba', Icons.timer, isDark,
-                              isNum: true)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                          child: _buildInput(_splatnostCtrl, 'Splatnost (dny)',
-                              Icons.calendar_today, isDark,
-                              isNum: true)),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    decoration: BoxDecoration(
-                      color:
-                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
+              // ---------------------------------------------
+              // SEKCE PRO ADMINA (FIREMNÍ ÚDAJE)
+              // ---------------------------------------------
+              if (_isAdmin) ...[
+                _buildCard(
+                  title: 'Firemní údaje',
+                  icon: Icons.business,
+                  color: Colors.blue,
+                  isDark: isDark,
+                  children: [
+                    _buildInput(_nazevCtrl, 'Obchodní jméno / Název servisu',
+                        Icons.store, isDark),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: _buildInput(
+                                _icoCtrl, 'IČO', Icons.numbers, isDark)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: _buildInput(
+                                _dicCtrl, 'DIČ', Icons.badge, isDark)),
+                      ],
                     ),
-                    child: SwitchListTile(
-                      title: const Text('Plátce DPH',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      value: _platceDph,
-                      activeColor: Colors.blue,
-                      onChanged: (v) => setState(() => _platceDph = v),
+                    _buildInput(
+                        _registraceCtrl,
+                        'Zápis v rejstříku (spisová značka)',
+                        Icons.gavel,
+                        isDark),
+                  ],
+                ),
+                _buildCard(
+                  title: 'Sídlo a kontakt',
+                  icon: Icons.location_on,
+                  color: Colors.orange,
+                  isDark: isDark,
+                  children: [
+                    _buildInput(_adresaCtrl, 'Ulice a č.p.', Icons.map, isDark),
+                    Row(
+                      children: [
+                        Expanded(
+                            flex: 2,
+                            child: _buildInput(_mestoCtrl, 'Město',
+                                Icons.location_city, isDark)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            flex: 1,
+                            child: _buildInput(_pscCtrl, 'PSČ',
+                                Icons.mark_email_unread, isDark)),
+                      ],
                     ),
-                  ),
-                ],
-              ),
+                    _buildInput(
+                        _telefonCtrl, 'Telefon servisu', Icons.phone, isDark),
+                    _buildInput(_emailCtrl, 'E-mail pro komunikaci',
+                        Icons.email, isDark),
+                  ],
+                ),
+                _buildCard(
+                  title: 'Fakturace a ceny',
+                  icon: Icons.receipt_long,
+                  color: Colors.green,
+                  isDark: isDark,
+                  children: [
+                    _buildInput(_bankaCtrl, 'Bankovní účet',
+                        Icons.account_balance, isDark),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: _buildInput(_sazbaCtrl, 'Hodinová sazba',
+                                Icons.timer, isDark,
+                                isNum: true)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: _buildInput(_splatnostCtrl,
+                                'Splatnost (dny)', Icons.calendar_today, isDark,
+                                isNum: true)),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1E1E1E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10)),
+                      child: SwitchListTile(
+                        title: const Text('Plátce DPH',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        value: _platceDph,
+                        activeColor: Colors.blue,
+                        onChanged: (v) => setState(() => _platceDph = v),
+                      ),
+                    ),
+                  ],
+                ),
+                _buildCard(
+                  title: 'Číslování a automatizace',
+                  icon: Icons.settings_suggest,
+                  color: Colors.purple,
+                  isDark: isDark,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                            child: _buildInput(_prefixZakazkaCtrl,
+                                'Prefix zakázek', Icons.build, isDark)),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: _buildInput(_prefixFakturaCtrl,
+                                'Prefix faktur', Icons.receipt, isDark)),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1E1E1E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10)),
+                      child: SwitchListTile(
+                        title: const Text('Automaticky zasílat e-maily',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: const Text(
+                            'Přednastaví odesílání PDF nabídek a faktur.',
+                            style: TextStyle(fontSize: 12)),
+                        value: _defaultEmail,
+                        activeColor: Colors.blue,
+                        onChanged: (v) => setState(() => _defaultEmail = v),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+
+              // ---------------------------------------------
+              // SEKCE PRO VŠECHNY UŽIVATELE (VZHLED A ODHLÁŠENÍ)
+              // ---------------------------------------------
               _buildCard(
-                title: 'Číslování a automatizace',
-                icon: Icons.settings_suggest,
-                color: Colors.purple,
-                isDark: isDark,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _buildInput(_prefixZakazkaCtrl,
-                              'Prefix zakázek', Icons.build, isDark)),
-                      const SizedBox(width: 10),
-                      Expanded(
-                          child: _buildInput(_prefixFakturaCtrl,
-                              'Prefix faktur', Icons.receipt, isDark)),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    decoration: BoxDecoration(
-                      color:
-                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: SwitchListTile(
-                      title: const Text('Automaticky zasílat e-maily',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text(
-                          'Přednastaví odesílání PDF nabídek a faktur.',
-                          style: TextStyle(fontSize: 12)),
-                      value: _defaultEmail,
-                      activeColor: Colors.blue,
-                      onChanged: (v) => setState(() => _defaultEmail = v),
-                    ),
-                  ),
-                ],
-              ),
-              _buildCard(
-                title: 'Vzhled aplikace',
-                icon: Icons.palette,
+                title: 'Osobní nastavení',
+                icon: Icons.person,
                 color: Colors.pinkAccent,
                 isDark: isDark,
                 children: [
@@ -351,7 +390,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       title: const Text('Vynutit tmavý režim',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: const Text(
-                          'Aplikace bude tmavá bez ohledu na nastavení telefonu.',
+                          'Aplikace bude tmavá bez ohledu na systém.',
                           style: TextStyle(fontSize: 12)),
                       value: _tmavyRezim,
                       activeColor: Colors.blue,
@@ -360,7 +399,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 20),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -383,6 +424,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 50),
             ],
           ),
@@ -406,10 +448,9 @@ class _SettingsPageState extends State<SettingsPage> {
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 5)),
         ],
       ),
       child: Column(
@@ -418,21 +459,15 @@ class _SettingsPageState extends State<SettingsPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color),
-              ),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: color)),
               const SizedBox(width: 15),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 20),
@@ -458,19 +493,15 @@ class _SettingsPageState extends State<SettingsPage> {
           filled: true,
           fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: isDark ? const Color(0xFF424242) : Colors.grey[300]!,
-              width: 1,
-            ),
-          ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: isDark ? const Color(0xFF424242) : Colors.grey[300]!,
+                  width: 1)),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide(
-              color: isDark ? const Color(0xFF424242) : Colors.grey[300]!,
-              width: 1,
-            ),
-          ),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                  color: isDark ? const Color(0xFF424242) : Colors.grey[300]!,
+                  width: 1)),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         ),

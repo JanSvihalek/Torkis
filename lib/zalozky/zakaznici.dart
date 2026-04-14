@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
 import 'vozidla.dart';
 import 'prubeh.dart'; // Pro proklik na zakázku
 import 'fakturace.dart'; // Pro proklik na fakturu
-import '../core/pdf_generator.dart';
+import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO globalServisId
 
 class ZakazniciPage extends StatefulWidget {
   const ZakazniciPage({super.key});
@@ -21,9 +19,10 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) return const Center(child: Text("Nejste přihlášeni."));
+    if (globalServisId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +94,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('zakaznici')
-                .where('servis_id', isEqualTo: user.uid)
+                .where('servis_id', isEqualTo: globalServisId) // <--- ZMĚNA ZDE
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -180,8 +179,8 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ZakaznikDetailScreen(
-                              zakaznikData: data), // OPRAVA: Posíláme celá data
+                          builder: (context) =>
+                              ZakaznikDetailScreen(zakaznikData: data),
                         ),
                       ),
                     ),
@@ -197,8 +196,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
 }
 
 class ZakaznikDetailScreen extends StatelessWidget {
-  final Map<String, dynamic>
-      zakaznikData; // OPRAVA: Ponecháno jako Map, aby to ladilo s ostatními soubory
+  final Map<String, dynamic> zakaznikData;
 
   const ZakaznikDetailScreen({super.key, required this.zakaznikData});
 
@@ -373,19 +371,17 @@ class ZakaznikDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) {
-      return const Scaffold(body: Center(child: Text('Nejste přihlášeni')));
+    if (globalServisId == null) {
+      return const Scaffold(body: Center(child: Text('Zpracovávám data...')));
     }
 
     final zakaznikId = zakaznikData['id_zakaznika'] ?? '';
 
-    // StreamBuilder se připojuje pomocí 'id_zakaznika', takže získáme aktuální data i správné docId pro úpravy
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('zakaznici')
-          .where('servis_id', isEqualTo: user.uid)
+          .where('servis_id', isEqualTo: globalServisId) // <--- ZMĚNA ZDE
           .where('id_zakaznika', isEqualTo: zakaznikId)
           .limit(1)
           .snapshots(),
@@ -401,22 +397,21 @@ class ZakaznikDetailScreen extends StatelessWidget {
               body: const Center(child: CircularProgressIndicator()));
         }
 
-        // Pokud by náhodou záznam nebyl nalezen, zobrazíme alespoň původní data
         if (snapshot.data!.docs.isEmpty) {
           return _buildScreen(
-              context, isDark, zakaznikData, "UNKNOWN", user.uid);
+              context, isDark, zakaznikData, "UNKNOWN", globalServisId!);
         }
 
         final doc = snapshot.data!.docs.first;
         final aktualniData = doc.data() as Map<String, dynamic>;
         final docId = doc.id;
 
-        return _buildScreen(context, isDark, aktualniData, docId, user.uid);
+        return _buildScreen(
+            context, isDark, aktualniData, docId, globalServisId!);
       },
     );
   }
 
-  // Hlavní vykreslení obrazovky oddělené do metody, aby byl zachován čistý kód
   Widget _buildScreen(BuildContext context, bool isDark,
       Map<String, dynamic> aktualniData, String docId, String servisId) {
     final zakaznikId = aktualniData['id_zakaznika'] ?? '';
@@ -433,8 +428,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
           backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
           elevation: 0,
           actions: [
-            if (docId !=
-                "UNKNOWN") // Zobrazíme úpravu jen pokud známe Document ID
+            if (docId != "UNKNOWN")
               IconButton(
                 icon: const Icon(Icons.edit, color: Colors.blue),
                 tooltip: 'Upravit údaje',
@@ -455,13 +449,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
         ),
         body: TabBarView(
           children: [
-            // ZÁLOŽKA 1: INFO A VOZIDLA
             _buildInfoTab(context, isDark, aktualniData, zakaznikId, servisId),
-
-            // ZÁLOŽKA 2: ZAKÁZKY
             _buildZakazkyTab(context, isDark, zakaznikId, servisId),
-
-            // ZÁLOŽKA 3: FAKTURY
             _buildFakturyTab(context, isDark, zakaznikId, servisId),
           ],
         ),
@@ -656,7 +645,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
             );
           }
 
-          // Neprůstřelné filtrování podle zakaznikId
+          // Filtrování podle zakaznikId
           final docs = snapshot.data!.docs.where((doc) {
             final zData = doc.data() as Map<String, dynamic>;
             final zId1 = zData['zakaznik_id']?.toString() ?? '';
@@ -742,7 +731,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (context) => ActiveJobScreen(
                           documentId: doc.id,
-                          zakazkaId: zakazka['cislo_zakazky']?.toString() ?? '',
+                          zakazkaId: zakazka['cislo_zakazky'].toString(),
                           spz: zakazka['spz']?.toString() ?? '',
                         ),
                       ),
@@ -812,7 +801,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                             ),
                             Text(
                               '${celkovaCenaSDph.toStringAsFixed(2)} Kč',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.green,
                               ),
@@ -859,7 +848,6 @@ class ZakaznikDetailScreen extends StatelessWidget {
             );
           }
 
-          // Neprůstřelné filtrování podle zakaznikId
           final fakturyDocs = invoiceSnap.data!.docs.where((doc) {
             final fData = doc.data() as Map<String, dynamic>;
             final fId1 = fData['zakaznik_id']?.toString() ?? '';
@@ -914,8 +902,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                   side: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-                  ),
+                      color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(15),
@@ -962,10 +949,9 @@ class ZakaznikDetailScreen extends StatelessWidget {
                                   child: Text(
                                     stavPlatby,
                                     style: TextStyle(
-                                      color: platbaColor,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                        color: platbaColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 const SizedBox(width: 8),

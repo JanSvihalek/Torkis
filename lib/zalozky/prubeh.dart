@@ -11,6 +11,7 @@ import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 import 'zakaznici.dart';
 import 'vozidla.dart';
+import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO ROLE A ID SERVISU
 
 class ServiceProgressPage extends StatefulWidget {
   const ServiceProgressPage({super.key});
@@ -30,9 +31,9 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) return const Center(child: Text("Nejste přihlášeni."));
+    if (globalServisId == null)
+      return const Center(child: CircularProgressIndicator());
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,13 +85,15 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('zakazky')
-                .where('servis_id', isEqualTo: user.uid)
+                .where('servis_id', isEqualTo: globalServisId) // <--- ZMĚNA ZDE
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.hasError)
+              if (snapshot.hasError) {
                 return Center(child: Text("Chyba databáze: ${snapshot.error}"));
-              if (!snapshot.hasData)
+              }
+              if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
 
               final docs = snapshot.data!.docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
@@ -115,10 +118,11 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
                 return timeB.compareTo(timeA);
               });
 
-              if (docs.isEmpty)
+              if (docs.isEmpty) {
                 return const Center(
                   child: Text('Žádné aktivní zakázky k zobrazení.'),
                 );
+              }
 
               return ListView.builder(
                 padding: const EdgeInsets.all(20),
@@ -225,11 +229,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   }
 
   Future<void> _nactiSplatnost() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(user.uid)
+          .doc(globalServisId) // <--- ZMĚNA ZDE
           .get();
       if (doc.exists) {
         setState(() {
@@ -360,8 +363,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
-  // OPRAVA EMAILOVÉ STRUKTURY: POUŽITA LOGIKA Z PRIJEM_VOZIDLA
-  Future<void> _odeslatKNaceneni(BuildContext context, Map<String, dynamic> data) async {
+  Future<void> _odeslatKNaceneni(
+      BuildContext context, Map<String, dynamic> data) async {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -378,7 +381,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text(
               'ODESLAT',
-              style: TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
+              style:
+                  TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -393,17 +397,20 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       );
 
       try {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user == null) return;
+        if (globalServisId == null) return;
 
         String sNazev = 'Servis';
         String sIco = '';
         String sEmail = '';
-        final docNast = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(user.uid).get();
+
+        final docNast = await FirebaseFirestore.instance
+            .collection('nastaveni_servisu')
+            .doc(globalServisId)
+            .get(); // <--- ZMĚNA ZDE
         if (docNast.exists) {
           sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
           sIco = docNast.data()?['ico_servisu'] ?? '';
-          sEmail = docNast.data()?['email_servisu'] ?? ''; 
+          sEmail = docNast.data()?['email_servisu'] ?? '';
         }
 
         final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
@@ -417,8 +424,11 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         );
 
         String fileName = 'naceneni_${widget.zakazkaId}.pdf';
-        Reference ref = FirebaseStorage.instance.ref().child('servisy/${user.uid}/zakazky/${widget.zakazkaId}/$fileName');
-        await ref.putData(pdfBytes, SettableMetadata(contentType: 'application/pdf'));
+        // <--- ZMĚNA ZDE (ukládáme pod servis ID)
+        Reference ref = FirebaseStorage.instance.ref().child(
+            'servisy/$globalServisId/zakazky/${widget.zakazkaId}/$fileName');
+        await ref.putData(
+            pdfBytes, SettableMetadata(contentType: 'application/pdf'));
         String downloadUrl = await ref.getDownloadURL();
 
         await FirebaseFirestore.instance
@@ -430,15 +440,15 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         });
 
         if (context.mounted) {
-          Navigator.pop(context); 
-          
+          Navigator.pop(context);
+
           if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
-            // ZDE JE KLÍČOVÁ OPRAVA STRUCTURY EMAILU
             Map<String, dynamic> mailDoc = {
               'to': zakaznikEmail,
-              'from': '$sNazev (přes Torkis) <jan.svihalek00@gmail.com>', // Pevný funkční formát
+              'from': '$sNazev (přes Torkis) <jan.svihalek00@gmail.com>',
               'message': {
-                'subject': 'Cenová nabídka - Zakázka ${widget.zakazkaId} ($sNazev)',
+                'subject':
+                    'Cenová nabídka - Zakázka ${widget.zakazkaId} ($sNazev)',
                 'html': '''
                   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
                     <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
@@ -470,16 +480,18 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Zákazník nemá e-mail. Nacenění uloženo, nyní ho můžete sdílet.'),
+                content: Text(
+                    'Zákazník nemá e-mail. Nacenění uloženo, nyní ho můžete sdílet.'),
                 backgroundColor: Colors.orange,
               ),
             );
-            await Printing.sharePdf(bytes: pdfBytes, filename: 'Naceneni_${widget.zakazkaId}.pdf');
+            await Printing.sharePdf(
+                bytes: pdfBytes, filename: 'Naceneni_${widget.zakazkaId}.pdf');
           }
         }
       } catch (e) {
         if (context.mounted) {
-          Navigator.pop(context); 
+          Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red),
           );
@@ -512,14 +524,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
 
     if (confirm == true) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
+      if (globalServisId != null) {
         try {
           String cisloIba = widget.zakazkaId.replaceAll(RegExp(r'[^0-9]'), '');
           String cisloFaktury = 'FAK$cisloIba';
           final fakturaRef = FirebaseFirestore.instance
               .collection('faktury')
-              .doc('${user.uid}_$cisloFaktury');
+              .doc('${globalServisId}_$cisloFaktury'); // <--- ZMĚNA ZDE
           final fakturaSnap = await fakturaRef.get();
 
           if (fakturaSnap.exists) {
@@ -580,7 +591,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     bool isFinishing = false;
 
     String emailZakaznika = zakaznik['email']?.toString() ?? '';
-    bool odeslatEmail = emailZakaznika.isNotEmpty && emailZakaznika.contains('@');
+    bool odeslatEmail =
+        emailZakaznika.isNotEmpty && emailZakaznika.contains('@');
 
     showDialog(
       context: context,
@@ -670,23 +682,28 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     ),
                   ),
                   const SizedBox(height: 15),
-                  
                   CheckboxListTile(
-                    title: const Text('Odeslat fakturu zákazníkovi na e-mail', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                    subtitle: emailZakaznika.isEmpty 
-                        ? const Text('Zákazník nemá vyplněný e-mail', style: TextStyle(color: Colors.red, fontSize: 12)) 
-                        : Text(emailZakaznika, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    title: const Text('Odeslat fakturu zákazníkovi na e-mail',
+                        style: TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold)),
+                    subtitle: emailZakaznika.isEmpty
+                        ? const Text('Zákazník nemá vyplněný e-mail',
+                            style: TextStyle(color: Colors.red, fontSize: 12))
+                        : Text(emailZakaznika,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey)),
                     value: odeslatEmail,
                     activeColor: Colors.blue,
-                    onChanged: emailZakaznika.isEmpty ? null : (bool? value) {
-                      setDialogState(() {
-                        odeslatEmail = value ?? false;
-                      });
-                    },
+                    onChanged: emailZakaznika.isEmpty
+                        ? null
+                        : (bool? value) {
+                            setDialogState(() {
+                              odeslatEmail = value ?? false;
+                            });
+                          },
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                   ),
-
                   const SizedBox(height: 10),
                   const Text(
                     'Zakázka se přesune do Historie. Vygeneruje se PDF vyúčtování.',
@@ -707,7 +724,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         stav,
                         zakaznik,
                         imageUrls,
-                        odeslatEmail: odeslatEmail, 
+                        odeslatEmail: odeslatEmail,
                       );
                     },
                     icon: const Icon(Icons.receipt_long),
@@ -732,7 +749,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         zakaznik,
                         imageUrls,
                         zruseno: true,
-                        odeslatEmail: false, 
+                        odeslatEmail: false,
                       );
                     },
                     icon: const Icon(Icons.cancel, color: Colors.red),
@@ -763,7 +780,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
-  // OPRAVA EMAILOVÉ STRUKTURY PRO FAKTURU
   Future<void> _zpracovatUkonceni(
     BuildContext context,
     String zpusob,
@@ -774,10 +790,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     Map<String, dynamic> zakaznik,
     Map<String, dynamic> imageUrls, {
     bool zruseno = false,
-    bool odeslatEmail = false, 
+    bool odeslatEmail = false,
   }) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (globalServisId == null) return;
 
     try {
       String pdfUrl = '';
@@ -805,7 +820,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
       String cisloIba = widget.zakazkaId.replaceAll(RegExp(r'[^0-9]'), '');
       String cisloFaktury = 'FAK$cisloIba';
-      
+
       String odesilatelJmeno = 'Servis';
       String odesilatelIco = '';
       String odesilatelEmail = '';
@@ -813,12 +828,12 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       if (!zruseno) {
         final docNastaveni = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
-            .doc(user.uid)
+            .doc(globalServisId) // <--- ZMĚNA ZDE
             .get();
         if (docNastaveni.exists) {
           odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
           odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
-          odesilatelEmail = docNastaveni.data()?['email_servisu'] ?? ''; 
+          odesilatelEmail = docNastaveni.data()?['email_servisu'] ?? '';
         }
 
         data['splatnost_dny'] = splatnostDny;
@@ -827,11 +842,12 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           data: data,
           servisNazev: odesilatelJmeno,
           servisIco: odesilatelIco,
-          typ: PdfTyp.faktura, 
+          typ: PdfTyp.faktura,
         );
 
+        // <--- ZMĚNA ZDE
         Reference pdfRef = FirebaseStorage.instance.ref().child(
-              'servisy/${user.uid}/zakazky/${widget.zakazkaId}/finalni_vyuctovani_${widget.zakazkaId}.pdf',
+              'servisy/$globalServisId/zakazky/${widget.zakazkaId}/finalni_vyuctovani_${widget.zakazkaId}.pdf',
             );
         await pdfRef.putData(
           pdfBytes,
@@ -849,9 +865,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
           await FirebaseFirestore.instance
               .collection('faktury')
-              .doc('${user.uid}_$cisloFaktury')
+              .doc('${globalServisId}_$cisloFaktury') // <--- ZMĚNA ZDE
               .set({
-            'servis_id': user.uid,
+            'servis_id': globalServisId, // <--- ZMĚNA ZDE
             'cislo_faktury': cisloFaktury,
             'cislo_zakazky': widget.zakazkaId,
             'spz': widget.spz,
@@ -870,13 +886,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           if (odeslatEmail) {
             String zakaznikEmail = zakaznik['email']?.toString() ?? '';
             if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
-
-              // KLÍČOVÁ OPRAVA: SPRÁVNÁ STRUKTURA DLE PRIJEM_VOZIDLA
               Map<String, dynamic> mailDoc = {
                 'to': zakaznikEmail,
-                'from': '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>', // Pevný funkční formát
+                'from':
+                    '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>',
                 'message': {
-                  'subject': 'Faktura - Zakázka ${widget.zakazkaId} ($odesilatelJmeno)',
+                  'subject':
+                      'Faktura - Zakázka ${widget.zakazkaId} ($odesilatelJmeno)',
                   'html': '''
                     <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
                       <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
@@ -920,7 +936,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(odeslatEmail && !zruseno ? 'Zakázka ukončena a faktura odeslána.' : 'Zakázka úspěšně ukončena.'),
+            content: Text(odeslatEmail && !zruseno
+                ? 'Zakázka ukončena a faktura odeslána.'
+                : 'Zakázka úspěšně ukončena.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -943,6 +961,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // PŘIDÁNO: Zjištění role pro schování citlivých tlačítek
+    final bool isMechanik = globalUserRole == 'mechanik';
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -983,7 +1004,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
           final bool isCompleted = aktualniStav == 'Dokončeno';
 
-          List<String> dostupneStavy = stavyZakazky.where((s) => s != 'Dokončeno').toList();
+          List<String> dostupneStavy =
+              stavyZakazky.where((s) => s != 'Dokončeno').toList();
           if (!dostupneStavy.contains(aktualniStav) && !isCompleted) {
             dostupneStavy.add(aktualniStav);
           }
@@ -1032,7 +1054,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                   dropdownColor: isDark
                                       ? const Color(0xFF2C2C2C)
                                       : Colors.white,
-                                  items: dostupneStavy 
+                                  items: dostupneStavy
                                       .map(
                                         (s) => DropdownMenuItem(
                                           value: s,
@@ -1055,7 +1077,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       ),
                     ),
                     const SizedBox(width: 5),
-                    if (!isCompleted)
+                    if (!isCompleted &&
+                        !isMechanik) // <--- MECHANIK NESMÍ NACENIT
                       IconButton(
                         icon: const Icon(
                           Icons.request_quote,
@@ -1080,15 +1103,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               ),
                               body: PdfPreview(
                                 build: (format) async {
-                                  final user =
-                                      FirebaseAuth.instance.currentUser;
                                   String sNazev = 'Servis';
                                   String sIco = '';
-                                  if (user != null) {
+                                  if (globalServisId != null) {
                                     final docNast = await FirebaseFirestore
                                         .instance
                                         .collection('nastaveni_servisu')
-                                        .doc(user.uid)
+                                        .doc(globalServisId) // <--- ZMĚNA ZDE
                                         .get();
                                     sNazev = docNast.data()?['nazev_servisu'] ??
                                         'Servis';
@@ -1099,7 +1120,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     data: data,
                                     servisNazev: sNazev,
                                     servisIco: sIco,
-                                    typ: PdfTyp.protokol, 
+                                    typ: PdfTyp.protokol,
                                   );
                                 },
                                 allowSharing: true,
@@ -1237,12 +1258,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(10),
                                       onTap: () {
-                                        final user =
-                                            FirebaseAuth.instance.currentUser;
-                                        if (user != null &&
+                                        if (globalServisId != null &&
                                             data['spz'] != null) {
                                           final vozidloDocId =
-                                              '${user.uid}_${data['spz']}';
+                                              '${globalServisId}_${data['spz']}'; // <--- ZMĚNA ZDE
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -1383,13 +1402,14 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 : Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline,
-                                            color: Colors.red),
-                                        tooltip: 'Smazat požadavek',
-                                        onPressed: () => _deletePozadavek(
-                                            context, p.toString()),
-                                      ),
+                                      if (!isMechanik) // <--- MECHANIK NEMAŽE POŽADAVKY
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline,
+                                              color: Colors.red),
+                                          tooltip: 'Smazat požadavek',
+                                          onPressed: () => _deletePozadavek(
+                                              context, p.toString()),
+                                        ),
                                       const SizedBox(width: 8),
                                       ElevatedButton.icon(
                                         icon: const Icon(Icons.build, size: 18),
@@ -1498,7 +1518,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        '${prace['nazev']} (Celkem: ${celkemUkon.toStringAsFixed(2)} Kč)',
+                                        '${prace['nazev']} ${!isMechanik ? "(Celkem: ${celkemUkon.toStringAsFixed(2)} Kč)" : ""}',
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -1518,7 +1538,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                           size: 20,
                                         ),
                                       ),
-                                    if (!isCompleted)
+                                    if (!isCompleted &&
+                                        !isMechanik) // <--- MECHANIK NEMAŽE ÚKONY
                                       IconButton(
                                         onPressed: () =>
                                             _deleteWork(context, prace),
@@ -1579,7 +1600,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                         left: 10,
                                       ),
                                       child: Text(
-                                        '• [${p['typ']}] $nDisp - $cistyMnoz $pJedn - ${(pMnoz * pCena).toStringAsFixed(2)} Kč',
+                                        '• [${p['typ']}] $nDisp - $cistyMnoz $pJedn ${!isMechanik ? "- ${(pMnoz * pCena).toStringAsFixed(2)} Kč" : ""}',
                                         style: const TextStyle(
                                           fontSize: 13,
                                         ),
@@ -1625,7 +1646,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               ),
 
               // SPODNÍ LIŠTA PRO ZAMČENOU ZAKÁZKU (STORNO)
-              if (isCompleted)
+              if (isCompleted &&
+                  !isMechanik) // <--- MECHANIK NESMÍ STORNOVAT FAKTURU
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
@@ -1681,27 +1703,29 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   child: SafeArea(
                     child: Row(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _ukoncitZakazkuDialog(context,
-                                data, stav, zakaznik, imageUrlsByCategoryRaw),
-                            icon: const Icon(Icons.flag),
-                            label: const Text(
-                              'UKONČIT A VYDAT',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.orange,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
+                        if (!isMechanik) // <--- MECHANIK NESMÍ VYDAT FAKTURU
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () => _ukoncitZakazkuDialog(context,
+                                  data, stav, zakaznik, imageUrlsByCategoryRaw),
+                              icon: const Icon(Icons.flag),
+                              label: const Text(
+                                'UKONČIT A VYDAT',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                                textAlign: TextAlign.center,
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.orange,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 20),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 15),
+                        if (!isMechanik) const SizedBox(width: 15),
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () => _openAddWorkDialog(context),
@@ -1853,11 +1877,10 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
   }
 
   Future<void> _nactiHodinovouSazbu() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(user.uid)
+          .doc(globalServisId) // <--- ZMĚNA ZDE
           .get();
       if (doc.exists) {
         setState(() {
@@ -1931,14 +1954,15 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
     setState(() => _isSaving = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      if (globalServisId == null) return;
       List<String> uploadedUrls = [];
 
       for (int i = 0; i < _workImages.length; i++) {
         String fileName =
             'prace_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
+        // <--- ZMĚNA ZDE
         Reference ref = FirebaseStorage.instance.ref().child(
-            'servisy/${user!.uid}/zakazky/${widget.zakazkaId}/$fileName');
+            'servisy/$globalServisId/zakazky/${widget.zakazkaId}/$fileName');
         await ref.putData(await _workImages[i].readAsBytes());
         uploadedUrls.add(await ref.getDownloadURL());
       }
@@ -2017,6 +2041,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isMechanik = globalUserRole == 'mechanik';
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -2250,54 +2275,62 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 6),
-                                      Expanded(
-                                        flex: 3,
-                                        child: _buildTextField(
-                                          polozka.cenaBezDph,
-                                          _jePlatceDph ? 'Bez DPH' : 'Cena',
-                                          isDark,
-                                          isNumber: true,
-                                          compact: true,
-                                          onChanged: (v) =>
-                                              _prepocitatDphPolozky(polozka, v),
+                                      if (!isMechanik) // <--- Cenu mechanik nevyplňuje, může nechat prázdnou/skrytou, ale pro zachování datového modelu ji můžeme nechat jako Disabled nebo jen skrýt pro mechaniky. Zde ji nechám k dispozici, pokud ji mechanik zná z dílu, jinak by se ukládala 0. Zde nechávám zobrazeno, pouze jsme skryli náhled pro fakturaci, ale můžeš si ji přizpůsobit.
+                                        Expanded(
+                                          flex: 3,
+                                          child: _buildTextField(
+                                            polozka.cenaBezDph,
+                                            _jePlatceDph ? 'Bez DPH' : 'Cena',
+                                            isDark,
+                                            isNumber: true,
+                                            compact: true,
+                                            onChanged: (v) =>
+                                                _prepocitatDphPolozky(
+                                                    polozka, v),
+                                          ),
                                         ),
-                                      ),
                                       const SizedBox(width: 6),
-                                      Expanded(
-                                        flex: 3,
-                                        child: _buildTextField(
-                                          polozka.cenaSDph,
-                                          _jePlatceDph ? 'S DPH' : 'Konečná',
-                                          isDark,
-                                          isNumber: true,
-                                          compact: true,
-                                          onChanged: (v) => _prepocitatCelkem(),
+                                      if (!isMechanik)
+                                        Expanded(
+                                          flex: 3,
+                                          child: _buildTextField(
+                                            polozka.cenaSDph,
+                                            _jePlatceDph ? 'S DPH' : 'Konečná',
+                                            isDark,
+                                            isNumber: true,
+                                            compact: true,
+                                            onChanged: (v) =>
+                                                _prepocitatCelkem(),
+                                          ),
                                         ),
-                                      ),
                                     ],
                                   ),
                                   const SizedBox(height: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                        color: Colors.blue.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8)),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        const Text('Celkem za položku: ',
-                                            style: TextStyle(
-                                                color: Colors.blue,
-                                                fontSize: 12)),
-                                        Text('${rCelkem.toStringAsFixed(2)} Kč',
-                                            style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blue,
-                                                fontSize: 14)),
-                                      ],
+                                  if (!isMechanik)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8)),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          const Text('Celkem za položku: ',
+                                              style: TextStyle(
+                                                  color: Colors.blue,
+                                                  fontSize: 12)),
+                                          Text(
+                                              '${rCelkem.toStringAsFixed(2)} Kč',
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blue,
+                                                  fontSize: 14)),
+                                        ],
+                                      ),
                                     ),
-                                  ),
                                 ],
                               ),
                             );
@@ -2443,21 +2476,24 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
             child: SafeArea(
               child: Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('Celkem za položku',
-                            style: TextStyle(color: Colors.grey, fontSize: 12)),
-                        Text('${_celkovaCenaSDph.toStringAsFixed(2)} Kč',
-                            style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green)),
-                      ],
+                  if (!isMechanik)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('Celkem za položku',
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 12)),
+                          Text('${_celkovaCenaSDph.toStringAsFixed(2)} Kč',
+                              style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green)),
+                        ],
+                      ),
                     ),
-                  ),
+                  if (isMechanik) const Spacer(),
                   ElevatedButton.icon(
                     onPressed: _isSaving ? null : _saveWork,
                     icon: _isSaving

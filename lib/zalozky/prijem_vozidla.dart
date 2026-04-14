@@ -13,6 +13,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
+import 'auth_gate.dart';
 
 class MainWizardPage extends StatefulWidget {
   const MainWizardPage({super.key});
@@ -154,12 +155,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   Future<void> _nactiNastaveni() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    if (globalServisId != null) {
       try {
         final doc = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
-            .doc(user.uid)
+            .doc(globalServisId)
             .get();
         if (doc.exists) {
           final data = doc.data()!;
@@ -215,12 +215,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
     String prefixBase = 'ZAK';
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (globalServisId == null) return;
 
       final nastaveniDoc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(user.uid)
+          .doc(globalServisId)
           .get();
       if (nastaveniDoc.exists &&
           nastaveniDoc.data()!.containsKey('prefix_zakazky')) {
@@ -230,12 +229,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
 
       final todayPrefix = DateFormat('yyMMdd').format(DateTime.now());
-      // Odstraněny pomlčky pro čistší formát
       final prefix = '$prefixBase$todayPrefix';
 
       final querySnapshot = await FirebaseFirestore.instance
           .collection('zakazky')
-          .where('servis_id', isEqualTo: user.uid)
+          .where('servis_id', isEqualTo: globalServisId)
           .get();
 
       int nextNumber = 1;
@@ -287,11 +285,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
     setState(() => _isLoadingSpz = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
+      if (globalServisId == null) return;
 
       final vozidlaQuery = await FirebaseFirestore.instance
           .collection('vozidla')
-          .where('servis_id', isEqualTo: user!.uid)
+          .where('servis_id', isEqualTo: globalServisId)
           .get();
 
       final nalezenaVozidla = vozidlaQuery.docs.map((d) => d.data()).where((v) {
@@ -329,8 +327,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   Future<void> _aplikovatVybraneVozidlo(
     Map<String, dynamic> vozidloData,
   ) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (globalServisId == null) return;
 
     setState(() {
       _spzController.text = vozidloData['spz']?.toString() ?? '';
@@ -344,7 +341,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
       _rokVyrobyController.text = vozidloData['rok_vyroby']?.toString() ?? '';
       _motorizaceController.text = vozidloData['motorizace']?.toString() ?? '';
 
-      // Předvyplnění tachometru a STK z poslední návštěvy
       _tachometrController.text = vozidloData['tachometr']?.toString() ?? '';
       _stkMesicController.text = vozidloData['stk_mesic']?.toString() ?? '';
       _stkRokController.text = vozidloData['stk_rok']?.toString() ?? '';
@@ -363,7 +359,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (zakaznikId != null && zakaznikId.toString().isNotEmpty) {
       final zakQuery = await FirebaseFirestore.instance
           .collection('zakaznici')
-          .where('servis_id', isEqualTo: user.uid)
+          .where('servis_id', isEqualTo: globalServisId)
           .where('id_zakaznika', isEqualTo: zakaznikId)
           .get();
 
@@ -570,11 +566,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
             _emailZController.text = zakaznik['email'] ?? '';
           });
 
-          final user = FirebaseAuth.instance.currentUser;
-          if (user != null && _vybranyZakaznikId != null) {
+          if (globalServisId != null && _vybranyZakaznikId != null) {
             final vozidlaSnap = await FirebaseFirestore.instance
                 .collection('vozidla')
-                .where('servis_id', isEqualTo: user.uid)
+                .where('servis_id', isEqualTo: globalServisId)
                 .where('zakaznik_id', isEqualTo: _vybranyZakaznikId)
                 .get();
             setState(() {
@@ -605,11 +600,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
       setState(() => _isCheckingZakazka = true);
       try {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
+        if (globalServisId != null) {
           final docSnap = await FirebaseFirestore.instance
               .collection('zakazky')
-              .where('servis_id', isEqualTo: user.uid)
+              .where('servis_id', isEqualTo: globalServisId)
               .where('cislo_zakazky', isEqualTo: zadaneCislo)
               .get();
 
@@ -690,9 +684,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   Future<void> _uploadToFirebase() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('Nejste přihlášeni!');
+    if (globalServisId == null)
+      throw Exception('Nejste přiřazeni k žádnému servisu!');
 
+    final user = FirebaseAuth.instance.currentUser;
     final Map<String, List<String>> imageUrlsByCategory = {};
     String zakazkaId = _zakazkaController.text.trim();
 
@@ -705,7 +700,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         String fileName =
             '${categoryKey}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
         Reference ref = FirebaseStorage.instance.ref().child(
-              'servisy/${user.uid}/zakazky/$zakazkaId/$fileName',
+              'servisy/$globalServisId/zakazky/$zakazkaId/$fileName',
             );
         await ref.putData(await image.readAsBytes());
         String downloadUrl = await ref.getDownloadURL();
@@ -718,15 +713,56 @@ class _MainWizardPageState extends State<MainWizardPage> {
       final Uint8List? signatureBytes = await _signatureController.toPngBytes();
       if (signatureBytes != null) {
         Reference ref = FirebaseStorage.instance.ref().child(
-              'servisy/${user.uid}/zakazky/$zakazkaId/podpis_${DateTime.now().millisecondsSinceEpoch}.png',
+              'servisy/$globalServisId/zakazky/$zakazkaId/podpis_${DateTime.now().millisecondsSinceEpoch}.png',
             );
         await ref.putData(signatureBytes);
         podpisUrl = await ref.getDownloadURL();
       }
     }
 
-    String zakaznikId =
-        _vybranyZakaznikId ?? 'ZAK_${DateTime.now().millisecondsSinceEpoch}';
+    // --- OPRAVA DUPLICIT ZÁKAZNÍKŮ ---
+    // Priorita: vybraný zákazník přes lupu → telefon → IČO → nový zákazník
+    String zakaznikId = '';
+    if (_vybranyZakaznikId != null && _vybranyZakaznikId!.isNotEmpty) {
+      // Zákazník byl vybrán ručně z historie — použij jeho ID přímo
+      zakaznikId = _vybranyZakaznikId!;
+    } else {
+      final telefon = _telefonController.text.trim();
+      final ico = _icoController.text.trim();
+
+      QuerySnapshot? existujici;
+
+      // 1. Zkus najít podle telefonu (nejspolehlivější)
+      if (telefon.isNotEmpty) {
+        final snap = await FirebaseFirestore.instance
+            .collection('zakaznici')
+            .where('servis_id', isEqualTo: globalServisId)
+            .where('telefon', isEqualTo: telefon)
+            .limit(1)
+            .get();
+        if (snap.docs.isNotEmpty) existujici = snap;
+      }
+
+      // 2. Pokud telefon nenašel, zkus IČO
+      if (existujici == null && ico.isNotEmpty) {
+        final snap = await FirebaseFirestore.instance
+            .collection('zakaznici')
+            .where('servis_id', isEqualTo: globalServisId)
+            .where('ico', isEqualTo: ico)
+            .limit(1)
+            .get();
+        if (snap.docs.isNotEmpty) existujici = snap;
+      }
+
+      if (existujici != null && existujici.docs.isNotEmpty) {
+        // Zákazník nalezen — použij existující ID
+        zakaznikId = existujici.docs.first['id_zakaznika'];
+      } else {
+        // Skutečně nový zákazník
+        zakaznikId = 'ZAK_${DateTime.now().millisecondsSinceEpoch}';
+      }
+    }
+    // ----------------------------------
 
     String ulice = _uliceController.text.trim();
     String mesto = _mestoController.text.trim();
@@ -739,9 +775,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (_jmenoController.text.trim().isNotEmpty) {
       await FirebaseFirestore.instance
           .collection('zakaznici')
-          .doc('${user.uid}_$zakaznikId')
+          .doc('${globalServisId}_$zakaznikId')
           .set({
-        'servis_id': user.uid,
+        'servis_id': globalServisId,
         'id_zakaznika': zakaznikId,
         'jmeno': _jmenoController.text.trim(),
         'ico': _icoController.text.trim(),
@@ -759,9 +795,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (spz.isNotEmpty) {
       await FirebaseFirestore.instance
           .collection('vozidla')
-          .doc('${user.uid}_$spz')
+          .doc('${globalServisId}_$spz')
           .set({
-        'servis_id': user.uid,
+        'servis_id': globalServisId,
         'zakaznik_id': zakaznikId,
         'spz': spz,
         'vin': _vinController.text.trim().toUpperCase(),
@@ -784,7 +820,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
         .toList();
 
     Map<String, dynamic> zakazkaData = {
-      'servis_id': user.uid,
+      'servis_id': globalServisId,
+      'zakaznik_id': zakaznikId,
       'cislo_zakazky': zakazkaId,
       'spz': spz,
       'vin': _vinController.text.trim().toUpperCase(),
@@ -828,7 +865,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     await FirebaseFirestore.instance
         .collection('zakazky')
-        .doc('${user.uid}_$zakazkaId')
+        .doc('${globalServisId}_$zakazkaId')
         .set(zakazkaData);
 
     final emailZakanika = _emailZController.text.trim();
@@ -840,7 +877,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       String odesilatelIco = '';
       final docNastaveni = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(user.uid)
+          .doc(globalServisId)
           .get();
       if (docNastaveni.exists) {
         odesilatelJmeno =
@@ -856,7 +893,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       );
 
       Reference pdfRef = FirebaseStorage.instance.ref().child(
-            'servisy/${user.uid}/zakazky/$zakazkaId/protokol_$zakazkaId.pdf',
+            'servisy/$globalServisId/zakazky/$zakazkaId/protokol_$zakazkaId.pdf',
           );
       await pdfRef.putData(
         pdfBytes,
@@ -867,7 +904,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       await FirebaseFirestore.instance.collection('maily').add({
         'to': emailZakanika,
         'from': '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>',
-        'replyTo': user.email,
+        'replyTo': user?.email ?? '',
         'message': {
           'subject': 'Protokol o přijetí vozidla $spz - $odesilatelJmeno',
           'html': '''
@@ -2519,8 +2556,12 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
   String _hledanyText = '';
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    if (globalServisId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
@@ -2562,7 +2603,7 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('zakaznici')
-                  .where('servis_id', isEqualTo: user?.uid)
+                  .where('servis_id', isEqualTo: globalServisId)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {

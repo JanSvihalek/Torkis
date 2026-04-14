@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'prubeh.dart'; // Importujeme ActiveJobScreen, abychom ho mohli znovu použít
+import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO PŘÍSTUP K globalServisId
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -23,9 +24,11 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) return const Center(child: Text("Nejste přihlášeni."));
+    // Pokud neznáme servis, ukážeme kolečko (ochrana před pádem na null)
+    if (globalServisId == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,14 +87,17 @@ class _HistoryPageState extends State<HistoryPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('zakazky')
-                .where('servis_id', isEqualTo: user.uid)
+                .where('servis_id',
+                    isEqualTo: globalServisId) // <--- ZMĚNA NA globalServisId
                 .where('stav_zakazky', isEqualTo: 'Dokončeno')
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.hasError)
+              if (snapshot.hasError) {
                 return Center(child: Text("Chyba: ${snapshot.error}"));
-              if (!snapshot.hasData)
+              }
+              if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
 
               final docs = snapshot.data!.docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
@@ -129,7 +135,11 @@ class _HistoryPageState extends State<HistoryPage> {
                   final data = docs[index].data() as Map<String, dynamic>;
                   final docId = docs[index].id;
                   final casUkonceni = _formatDate(data['cas_ukonceni']);
-                  final celkovaCena = data['celkova_castka'] ?? 0.0;
+
+                  // Role-based kontrola - Mechanik by nemusel vidět ceny
+                  final bool isMechanik = globalUserRole == 'mechanik';
+                  final celkovaCena =
+                      isMechanik ? null : (data['celkova_castka'] ?? 0.0);
 
                   return Card(
                     color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -151,12 +161,15 @@ class _HistoryPageState extends State<HistoryPage> {
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 18),
                           ),
-                          Text(
-                            '${celkovaCena.toStringAsFixed(0)} Kč',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue),
-                          ),
+                          if (!isMechanik &&
+                              celkovaCena !=
+                                  null) // Zobrazení ceny jen pokud není mechanik
+                            Text(
+                              '${celkovaCena.toStringAsFixed(0)} Kč',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue),
+                            ),
                         ],
                       ),
                       subtitle: Column(
