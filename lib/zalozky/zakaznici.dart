@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-
+import 'package:printing/printing.dart';
 import 'vozidla.dart';
-import 'prubeh.dart'; // Pro proklik na detail zakázky (ActiveJobScreen)
-import 'fakturace.dart'; // Pro proklik na detail faktury (FakturaDetailScreen)
+import 'prubeh.dart'; // Pro proklik na zakázku
+import 'fakturace.dart'; // Pro proklik na fakturu
+import '../core/pdf_generator.dart';
 
 class ZakazniciPage extends StatefulWidget {
   const ZakazniciPage({super.key});
@@ -179,8 +180,8 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              ZakaznikDetailScreen(zakaznikData: data),
+                          builder: (context) => ZakaznikDetailScreen(
+                              zakaznikData: data), // OPRAVA: Posíláme celá data
                         ),
                       ),
                     ),
@@ -196,7 +197,8 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
 }
 
 class ZakaznikDetailScreen extends StatelessWidget {
-  final Map<String, dynamic> zakaznikData;
+  final Map<String, dynamic>
+      zakaznikData; // OPRAVA: Ponecháno jako Map, aby to ladilo s ostatními soubory
 
   const ZakaznikDetailScreen({super.key, required this.zakaznikData});
 
@@ -212,23 +214,233 @@ class ZakaznikDetailScreen extends StatelessWidget {
     return DateFormat('dd.MM.yyyy').format(dt);
   }
 
+  void _otevritEditaci(
+    BuildContext context,
+    String docId,
+    Map<String, dynamic> data,
+  ) {
+    final jmenoCtrl =
+        TextEditingController(text: data['jmeno']?.toString() ?? '');
+    final telCtrl =
+        TextEditingController(text: data['telefon']?.toString() ?? '');
+    final emailCtrl =
+        TextEditingController(text: data['email']?.toString() ?? '');
+    final adresaCtrl =
+        TextEditingController(text: data['adresa']?.toString() ?? '');
+    final icoCtrl = TextEditingController(text: data['ico']?.toString() ?? '');
+    final dicCtrl = TextEditingController(text: data['dic']?.toString() ?? '');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Úprava zákazníka',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: jmenoCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Jméno a Příjmení / Název firmy',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: telCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Telefon',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: TextField(
+                        controller: emailCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'E-mail',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: adresaCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Adresa',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: icoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'IČO',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: TextField(
+                        controller: dicCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'DIČ',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                    onPressed: () async {
+                      await FirebaseFirestore.instance
+                          .collection('zakaznici')
+                          .doc(docId)
+                          .update({
+                        'jmeno': jmenoCtrl.text.trim(),
+                        'telefon': telCtrl.text.trim(),
+                        'email': emailCtrl.text.trim(),
+                        'adresa': adresaCtrl.text.trim(),
+                        'ico': icoCtrl.text.trim(),
+                        'dic': dicCtrl.text.trim(),
+                      });
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    child: const Text(
+                      'ULOŽIT ZMĚNY',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final zakaznikId = zakaznikData['id_zakaznika'];
-    final servisId = zakaznikData['servis_id'];
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(body: Center(child: Text('Nejste přihlášeni')));
+    }
+
+    final zakaznikId = zakaznikData['id_zakaznika'] ?? '';
+
+    // StreamBuilder se připojuje pomocí 'id_zakaznika', takže získáme aktuální data i správné docId pro úpravy
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('zakaznici')
+          .where('servis_id', isEqualTo: user.uid)
+          .where('id_zakaznika', isEqualTo: zakaznikId)
+          .limit(1)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+              appBar: AppBar(),
+              body: Center(child: Text("Chyba: ${snapshot.error}")));
+        }
+        if (!snapshot.hasData) {
+          return Scaffold(
+              appBar: AppBar(),
+              body: const Center(child: CircularProgressIndicator()));
+        }
+
+        // Pokud by náhodou záznam nebyl nalezen, zobrazíme alespoň původní data
+        if (snapshot.data!.docs.isEmpty) {
+          return _buildScreen(
+              context, isDark, zakaznikData, "UNKNOWN", user.uid);
+        }
+
+        final doc = snapshot.data!.docs.first;
+        final aktualniData = doc.data() as Map<String, dynamic>;
+        final docId = doc.id;
+
+        return _buildScreen(context, isDark, aktualniData, docId, user.uid);
+      },
+    );
+  }
+
+  // Hlavní vykreslení obrazovky oddělené do metody, aby byl zachován čistý kód
+  Widget _buildScreen(BuildContext context, bool isDark,
+      Map<String, dynamic> aktualniData, String docId, String servisId) {
+    final zakaznikId = aktualniData['id_zakaznika'] ?? '';
 
     return DefaultTabController(
-      length: 3, // Máme 3 záložky
+      length: 3,
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
           title: Text(
-            zakaznikData['jmeno'] ?? 'Karta zákazníka',
+            aktualniData['jmeno'] ?? 'Karta zákazníka',
             style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
           elevation: 0,
+          actions: [
+            if (docId !=
+                "UNKNOWN") // Zobrazíme úpravu jen pokud známe Document ID
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.blue),
+                tooltip: 'Upravit údaje',
+                onPressed: () => _otevritEditaci(context, docId, aktualniData),
+              ),
+          ],
           bottom: const TabBar(
             labelColor: Colors.blue,
             unselectedLabelColor: Colors.grey,
@@ -244,7 +456,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
         body: TabBarView(
           children: [
             // ZÁLOŽKA 1: INFO A VOZIDLA
-            _buildInfoTab(context, isDark, zakaznikId, servisId),
+            _buildInfoTab(context, isDark, aktualniData, zakaznikId, servisId),
 
             // ZÁLOŽKA 2: ZAKÁZKY
             _buildZakazkyTab(context, isDark, zakaznikId, servisId),
@@ -261,7 +473,11 @@ class ZakaznikDetailScreen extends StatelessWidget {
   // ZÁLOŽKA 1: ZÁKLADNÍ INFO A VOZIDLA
   // =======================================================
   Widget _buildInfoTab(
-      BuildContext context, bool isDark, dynamic zakaznikId, dynamic servisId) {
+      BuildContext context,
+      bool isDark,
+      Map<String, dynamic> dataZakaznika,
+      dynamic zakaznikId,
+      dynamic servisId) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -291,16 +507,16 @@ class ZakaznikDetailScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              zakaznikData['jmeno'] ?? 'Neznámý',
+                              dataZakaznika['jmeno'] ?? 'Neznámý',
                               style: const TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            if (zakaznikData['ico'] != null &&
-                                zakaznikData['ico'].toString().isNotEmpty)
+                            if (dataZakaznika['ico'] != null &&
+                                dataZakaznika['ico'].toString().isNotEmpty)
                               Text(
-                                'IČO: ${zakaznikData['ico']}',
+                                'IČO: ${dataZakaznika['ico']}',
                                 style: const TextStyle(color: Colors.grey),
                               ),
                           ],
@@ -312,16 +528,22 @@ class ZakaznikDetailScreen extends StatelessWidget {
                   _buildInfoRow(
                     Icons.phone,
                     'Telefon',
-                    zakaznikData['telefon'],
+                    dataZakaznika['telefon'],
                   ),
                   const SizedBox(height: 10),
-                  _buildInfoRow(Icons.email, 'E-mail', zakaznikData['email']),
+                  _buildInfoRow(Icons.email, 'E-mail', dataZakaznika['email']),
                   const SizedBox(height: 10),
                   _buildInfoRow(
                     Icons.location_on,
                     'Adresa',
-                    zakaznikData['adresa'],
+                    dataZakaznika['adresa'],
                   ),
+                  if (dataZakaznika['dic'] != null &&
+                      dataZakaznika['dic'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _buildInfoRow(Icons.account_balance_wallet, 'DIČ',
+                        dataZakaznika['dic']),
+                  ],
                 ],
               ),
             ),
@@ -434,7 +656,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
             );
           }
 
-          // Neprůstřelné filtrování podle zakaznikId (i když je to zanořené)
+          // Neprůstřelné filtrování podle zakaznikId
           final docs = snapshot.data!.docs.where((doc) {
             final zData = doc.data() as Map<String, dynamic>;
             final zId1 = zData['zakaznik_id']?.toString() ?? '';

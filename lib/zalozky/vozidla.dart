@@ -4,8 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 import 'zakaznici.dart';
-import 'prubeh.dart'; // Odsud si bereme ActiveJobScreen pro VŠECHNY zakázky
-import 'fakturace.dart'; // Pro odkaz do detailu faktury
+import 'prubeh.dart';
+import 'fakturace.dart';
+import '../core/constants.dart'; // Předpokládám, že zde máte getStatusColor
 
 class VozidlaPage extends StatefulWidget {
   const VozidlaPage({super.key});
@@ -291,19 +292,22 @@ class VozidloDetailScreen extends StatelessWidget {
     String docId,
     Map<String, dynamic> data,
   ) {
-    final znackaCtrl = TextEditingController(
-      text: data['znacka']?.toString() ?? '',
-    );
-    final modelCtrl = TextEditingController(
-      text: data['model']?.toString() ?? '',
-    );
+    final spzCtrl = TextEditingController(text: data['spz']?.toString() ?? '');
+    final znackaCtrl =
+        TextEditingController(text: data['znacka']?.toString() ?? '');
+    final modelCtrl =
+        TextEditingController(text: data['model']?.toString() ?? '');
     final vinCtrl = TextEditingController(text: data['vin']?.toString() ?? '');
-    final rokCtrl = TextEditingController(
-      text: data['rok_vyroby']?.toString() ?? '',
-    );
-    final motorCtrl = TextEditingController(
-      text: data['motorizace']?.toString() ?? '',
-    );
+    final rokCtrl =
+        TextEditingController(text: data['rok_vyroby']?.toString() ?? '');
+    final motorCtrl =
+        TextEditingController(text: data['motorizace']?.toString() ?? '');
+    final tachoCtrl =
+        TextEditingController(text: data['tachometr']?.toString() ?? '');
+    final stkMCtrl =
+        TextEditingController(text: data['stk_mesic']?.toString() ?? '');
+    final stkRCtrl =
+        TextEditingController(text: data['stk_rok']?.toString() ?? '');
 
     String vybranaZnacka = znackaCtrl.text;
 
@@ -363,14 +367,21 @@ class VozidloDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Text(
-                        'Úprava vozidla: ${data['spz']}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      const Text(
+                        'Úprava vozidla',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 20),
+                      TextField(
+                        controller: spzCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'SPZ',
+                          border: OutlineInputBorder(),
+                        ),
+                        textCapitalization: TextCapitalization.characters,
+                      ),
+                      const SizedBox(height: 15),
                       LayoutBuilder(
                         builder: (context, constraints) {
                           return DropdownMenu<String>(
@@ -383,9 +394,8 @@ class VozidloDetailScreen extends StatelessWidget {
                               border: OutlineInputBorder(),
                             ),
                             dropdownMenuEntries: dostupneZnacky
-                                .map(
-                                  (z) => DropdownMenuEntry(value: z, label: z),
-                                )
+                                .map((z) =>
+                                    DropdownMenuEntry(value: z, label: z))
                                 .toList(),
                             onSelected: (val) {
                               setState(() {
@@ -409,9 +419,8 @@ class VozidloDetailScreen extends StatelessWidget {
                               border: OutlineInputBorder(),
                             ),
                             dropdownMenuEntries: dostupneModely
-                                .map(
-                                  (m) => DropdownMenuEntry(value: m, label: m),
-                                )
+                                .map((m) =>
+                                    DropdownMenuEntry(value: m, label: m))
                                 .toList(),
                           );
                         },
@@ -423,6 +432,7 @@ class VozidloDetailScreen extends StatelessWidget {
                           labelText: 'VIN',
                           border: OutlineInputBorder(),
                         ),
+                        textCapitalization: TextCapitalization.characters,
                       ),
                       const SizedBox(height: 15),
                       Row(
@@ -430,6 +440,7 @@ class VozidloDetailScreen extends StatelessWidget {
                           Expanded(
                             child: TextField(
                               controller: rokCtrl,
+                              keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 labelText: 'Rok výroby',
                                 border: OutlineInputBorder(),
@@ -448,7 +459,45 @@ class VozidloDetailScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 15),
+                      TextField(
+                        controller: tachoCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Tachometr (km)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      const Text('Platnost STK',
+                          style: TextStyle(fontSize: 12, color: Colors.grey)),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: stkMCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Měsíc (MM)',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: TextField(
+                              controller: stkRCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                labelText: 'Rok (YYYY)',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 25),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -456,19 +505,122 @@ class VozidloDetailScreen extends StatelessWidget {
                             backgroundColor: Colors.teal,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
                           ),
                           onPressed: () async {
-                            await FirebaseFirestore.instance
-                                .collection('vozidla')
-                                .doc(docId)
-                                .update({
+                            final user = FirebaseAuth.instance.currentUser;
+                            if (user == null) return;
+
+                            String oldSpz =
+                                data['spz'].toString().toUpperCase();
+                            String newSpz = spzCtrl.text.trim().toUpperCase();
+
+                            Map<String, dynamic> updatedData = {
+                              'spz': newSpz,
                               'znacka': znackaCtrl.text.trim(),
                               'model': modelCtrl.text.trim(),
-                              'vin': vinCtrl.text.trim(),
+                              'vin': vinCtrl.text.trim().toUpperCase(),
                               'rok_vyroby': rokCtrl.text.trim(),
                               'motorizace': motorCtrl.text.trim(),
-                            });
-                            if (context.mounted) Navigator.pop(context);
+                              'tachometr': tachoCtrl.text.trim(),
+                              'stk_mesic': stkMCtrl.text.trim(),
+                              'stk_rok': stkRCtrl.text.trim(),
+                            };
+
+                            if (oldSpz != newSpz) {
+                              // --- LOGIKA PŘEJMENOVÁNÍ DOKUMENTU ---
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (c) => const Center(
+                                    child: CircularProgressIndicator()),
+                              );
+
+                              try {
+                                String newDocId = '${user.uid}_$newSpz';
+
+                                // 1. Kontrola, zda nová SPZ už neexistuje
+                                final check = await FirebaseFirestore.instance
+                                    .collection('vozidla')
+                                    .doc(newDocId)
+                                    .get();
+                                if (check.exists) {
+                                  if (context.mounted) Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Vozidlo s touto SPZ již existuje!'),
+                                        backgroundColor: Colors.red),
+                                  );
+                                  return;
+                                }
+
+                                // 2. Vytvoření nového dokumentu
+                                await FirebaseFirestore.instance
+                                    .collection('vozidla')
+                                    .doc(newDocId)
+                                    .set({
+                                  ...data,
+                                  ...updatedData,
+                                });
+
+                                // 3. Aktualizace zakázek a faktur (migrace referencí)
+                                WriteBatch batch =
+                                    FirebaseFirestore.instance.batch();
+
+                                final zakSnap = await FirebaseFirestore.instance
+                                    .collection('zakazky')
+                                    .where('servis_id', isEqualTo: user.uid)
+                                    .where('spz', isEqualTo: oldSpz)
+                                    .get();
+                                for (var d in zakSnap.docs) {
+                                  batch.update(d.reference, {'spz': newSpz});
+                                }
+
+                                final fakSnap = await FirebaseFirestore.instance
+                                    .collection('faktury')
+                                    .where('servis_id', isEqualTo: user.uid)
+                                    .where('spz', isEqualTo: oldSpz)
+                                    .get();
+                                for (var d in fakSnap.docs) {
+                                  batch.update(d.reference, {'spz': newSpz});
+                                }
+
+                                // 4. Smazání starého dokumentu vozidla
+                                batch.delete(FirebaseFirestore.instance
+                                    .collection('vozidla')
+                                    .doc(docId));
+
+                                await batch.commit();
+
+                                if (context.mounted) {
+                                  Navigator.pop(context); // zavřít loader
+                                  Navigator.pop(context); // zavřít sheet
+                                  Navigator.pop(
+                                      context); // vrátit se na seznam (staré ID už neexistuje)
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(
+                                            'Vozidlo přejmenováno na $newSpz. Historie byla zachována.'),
+                                        backgroundColor: Colors.green),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text('Chyba při migraci: $e')));
+                              }
+                            } else {
+                              // Standardní aktualizace bez změny ID
+                              await FirebaseFirestore.instance
+                                  .collection('vozidla')
+                                  .doc(docId)
+                                  .update(updatedData);
+                              if (context.mounted) Navigator.pop(context);
+                            }
                           },
                           child: const Text(
                             'ULOŽIT ZMĚNY',
@@ -564,14 +716,9 @@ class VozidloDetailScreen extends StatelessWidget {
             ),
             body: TabBarView(
               children: [
-                // ZÁLOŽKA 1: INFO
                 _buildInfoTab(context, isDark, user, autoData, spz, zakaznikId,
                     znackaNazev, tacho, stkM, stkR),
-
-                // ZÁLOŽKA 2: ZAKÁZKY
                 _buildZakazkyTab(context, isDark, user, spz),
-
-                // ZÁLOŽKA 3: FAKTURY
                 _buildFakturyTab(context, isDark, user, spz),
               ],
             ),
@@ -600,7 +747,6 @@ class VozidloDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // --- VELKÁ HLAVIČKA S LOGEM NAD SPZ ---
           Column(
             children: [
               if (znackaNazev.isNotEmpty)
@@ -626,9 +772,7 @@ class VozidloDetailScreen extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 15),
                           child: Container(
                             height: 80,
-                            constraints: const BoxConstraints(
-                              maxWidth: 150,
-                            ),
+                            constraints: const BoxConstraints(maxWidth: 150),
                             child: Image.network(
                               nalezeneLogo,
                               fit: BoxFit.contain,
@@ -641,13 +785,9 @@ class VozidloDetailScreen extends StatelessWidget {
                     return const SizedBox(height: 20);
                   },
                 ),
-
-              // SPZ Rámeček
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 25,
-                  vertical: 10,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
                 decoration: BoxDecoration(
                   color: isDark ? Colors.black : Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -686,16 +826,11 @@ class VozidloDetailScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 30),
-
-          // --- DATA O VOZIDLE ---
           Card(
             color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
-              side: BorderSide(
-                color: Colors.teal.withOpacity(0.3),
-                width: 1.5,
-              ),
+              side: BorderSide(color: Colors.teal.withOpacity(0.3), width: 1.5),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -721,15 +856,10 @@ class VozidloDetailScreen extends StatelessWidget {
                   const SizedBox(height: 20),
                   Row(
                     children: [
+                      Expanded(child: _buildInfoColumn('VIN', autoData['vin'])),
                       Expanded(
-                        child: _buildInfoColumn('VIN', autoData['vin']),
-                      ),
-                      Expanded(
-                        child: _buildInfoColumn(
-                          'Rok výroby',
-                          autoData['rok_vyroby'],
-                        ),
-                      ),
+                          child: _buildInfoColumn(
+                              'Rok výroby', autoData['rok_vyroby'])),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -758,17 +888,12 @@ class VozidloDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 25),
-
-          // --- MAJITEL ---
           if (zakaznikId.isNotEmpty) ...[
             Align(
               alignment: Alignment.centerLeft,
               child: const Text(
                 'Majitel vozidla',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 10),
@@ -784,10 +909,8 @@ class VozidloDetailScreen extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (!zakaznikSnap.hasData || zakaznikSnap.data!.docs.isEmpty) {
-                  return const Text(
-                    'Zákazník nenalezen.',
-                    style: TextStyle(color: Colors.grey),
-                  );
+                  return const Text('Zákazník nenalezen.',
+                      style: TextStyle(color: Colors.grey));
                 }
 
                 final zakaznikData = zakaznikSnap.data!.docs.first.data()
@@ -797,9 +920,7 @@ class VozidloDetailScreen extends StatelessWidget {
                   color: isDark ? const Color(0xFF1E1E1E) : Colors.blueGrey[50],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
-                    side: BorderSide(
-                      color: Colors.blueGrey.withOpacity(0.3),
-                    ),
+                    side: BorderSide(color: Colors.blueGrey.withOpacity(0.3)),
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(15),
@@ -807,9 +928,8 @@ class VozidloDetailScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ZakaznikDetailScreen(
-                            zakaznikData: zakaznikData,
-                          ),
+                          builder: (context) =>
+                              ZakaznikDetailScreen(zakaznikData: zakaznikData),
                         ),
                       );
                     },
@@ -823,18 +943,12 @@ class VozidloDetailScreen extends StatelessWidget {
                       title: Text(
                         zakaznikData['jmeno'] ?? 'Neznámý zákazník',
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                            fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       subtitle: Text(
-                        '${zakaznikData['telefon'] ?? ''}\n${zakaznikData['email'] ?? ''}'
-                            .trim(),
-                      ),
-                      trailing: const Icon(
-                        Icons.arrow_forward_ios,
-                        size: 16,
-                      ),
+                          '${zakaznikData['telefon'] ?? ''}\n${zakaznikData['email'] ?? ''}'
+                              .trim()),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     ),
                   ),
                 );
@@ -868,10 +982,8 @@ class VozidloDetailScreen extends StatelessWidget {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(20.0),
-                child: Text(
-                  'Vozidlo zatím nemá žádné zakázky.',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                child: Text('Vozidlo zatím nemá žádné zakázky.',
+                    style: TextStyle(color: Colors.grey)),
               ),
             );
           }
@@ -896,32 +1008,19 @@ class VozidloDetailScreen extends StatelessWidget {
               double celkovaCena = 0.0;
               final prace = zakazka['provedene_prace'] as List<dynamic>? ?? [];
               for (var p in prace) {
-                celkovaCena += (p['cena_s_dph'] ?? 0.0).toDouble();
-                final dily = p['pouzite_dily'] as List<dynamic>? ?? [];
-                for (var dil in dily) {
-                  double pocet = (dil['pocet'] ?? 1.0).toDouble();
-                  double cenaSDph = (dil['cena_s_dph'] ?? 0.0).toDouble();
-                  celkovaCena += (pocet * cenaSDph);
+                final polozky = p['polozky'] as List<dynamic>?;
+                if (polozky != null) {
+                  for (var item in polozky) {
+                    double mnoz =
+                        double.tryParse(item['mnozstvi'].toString()) ?? 1.0;
+                    double cena =
+                        double.tryParse(item['cena_s_dph'].toString()) ?? 0.0;
+                    celkovaCena += (mnoz * cena);
+                  }
                 }
               }
 
-              Color barvaStavu;
-              switch (stav) {
-                case 'Přijato':
-                  barvaStavu = Colors.blue;
-                  break;
-                case 'V řešení':
-                  barvaStavu = Colors.orange;
-                  break;
-                case 'Čeká na díly':
-                  barvaStavu = Colors.purple;
-                  break;
-                case 'Dokončeno':
-                  barvaStavu = Colors.green;
-                  break;
-                default:
-                  barvaStavu = Colors.grey;
-              }
+              Color barvaStavu = getStatusColor(stav);
 
               return Card(
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -929,8 +1028,7 @@ class VozidloDetailScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                   side: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-                  ),
+                      color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(15),
@@ -957,32 +1055,25 @@ class VozidloDetailScreen extends StatelessWidget {
                             Text(
                               '${zakazka['cislo_zakazky']}',
                               style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                                  fontWeight: FontWeight.bold, fontSize: 16),
                             ),
                             Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
+                                      horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: barvaStavu.withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: barvaStavu,
-                                      width: 0.5,
-                                    ),
+                                        color: barvaStavu, width: 0.5),
                                   ),
                                   child: Text(
                                     stav,
                                     style: TextStyle(
-                                      color: barvaStavu,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                        color: barvaStavu,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -995,26 +1086,22 @@ class VozidloDetailScreen extends StatelessWidget {
                         const SizedBox(height: 5),
                         Text(
                           _formatDate(zakazka['cas_prijeti']),
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 13,
-                          ),
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
                         const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '${prace.length} úkonů',
-                              style: const TextStyle(fontSize: 13),
-                            ),
+                            Text('${prace.length} úkonů',
+                                style: const TextStyle(fontSize: 13)),
                             Text(
                               '${celkovaCena.toStringAsFixed(2)} Kč',
                               style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color:
-                                    isDark ? Colors.greenAccent : Colors.green,
-                              ),
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? Colors.greenAccent
+                                      : Colors.green),
                             ),
                           ],
                         ),
@@ -1051,10 +1138,8 @@ class VozidloDetailScreen extends StatelessWidget {
             return const Center(
               child: Padding(
                 padding: EdgeInsets.all(20.0),
-                child: Text(
-                  'K tomuto vozidlu neevidujeme žádné faktury.',
-                  style: TextStyle(color: Colors.grey),
-                ),
+                child: Text('K tomuto vozidlu neevidujeme žádné faktury.',
+                    style: TextStyle(color: Colors.grey)),
               ),
             );
           }
@@ -1092,8 +1177,7 @@ class VozidloDetailScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                   side: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
-                  ),
+                      color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(15),
@@ -1140,10 +1224,9 @@ class VozidloDetailScreen extends StatelessWidget {
                                   child: Text(
                                     stavPlatby,
                                     style: TextStyle(
-                                      color: platbaColor,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                        color: platbaColor,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                                 const SizedBox(width: 8),
