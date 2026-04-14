@@ -531,180 +531,489 @@ class VozidloDetailScreen extends StatelessWidget {
         final stkM = autoData['stk_mesic']?.toString() ?? '';
         final stkR = autoData['stk_rok']?.toString() ?? '';
 
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          appBar: AppBar(
-            title: const Text(
-              'Karta vozidla',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-            elevation: 1,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.teal),
-                tooltip: 'Upravit údaje',
-                onPressed: () =>
-                    _otevritEditaci(context, vozidloDocId, autoData),
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            appBar: AppBar(
+              title: const Text(
+                'Karta vozidla',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            ],
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              elevation: 0,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.teal),
+                  tooltip: 'Upravit údaje',
+                  onPressed: () =>
+                      _otevritEditaci(context, vozidloDocId, autoData),
+                ),
+              ],
+              bottom: const TabBar(
+                labelColor: Colors.teal,
+                unselectedLabelColor: Colors.grey,
+                indicatorColor: Colors.teal,
+                indicatorWeight: 3,
+                tabs: [
+                  Tab(icon: Icon(Icons.info_outline), text: 'Info'),
+                  Tab(icon: Icon(Icons.build), text: 'Zakázky'),
+                  Tab(icon: Icon(Icons.receipt_long), text: 'Faktury'),
+                ],
+              ),
+            ),
+            body: TabBarView(
               children: [
-                // --- VELKÁ HLAVIČKA S LOGEM NAD SPZ ---
-                Column(
-                  children: [
-                    if (znackaNazev.isNotEmpty)
-                      FutureBuilder<QuerySnapshot>(
-                        future: FirebaseFirestore.instance
-                            .collection('znacka')
-                            .get(),
-                        builder: (context, snap) {
-                          if (snap.hasData) {
-                            String nalezeneLogo = '';
-                            for (var doc in snap.data!.docs) {
-                              final d = doc.data() as Map<String, dynamic>;
-                              final dbNazev = (d['nazev']?.toString() ?? doc.id)
-                                  .trim()
-                                  .toLowerCase();
-                              if (dbNazev == znackaNazev.toLowerCase()) {
-                                nalezeneLogo = d['logo']?.toString() ??
-                                    d['logo_url']?.toString() ??
-                                    '';
-                                break;
-                              }
-                            }
-                            if (nalezeneLogo.isNotEmpty) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 15),
-                                child: Container(
-                                  height: 80, // Větší logo
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 150,
-                                  ),
-                                  child: Image.network(
-                                    nalezeneLogo,
-                                    fit: BoxFit.contain,
-                                    errorBuilder: (c, e, s) => const SizedBox(),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                          return const SizedBox(height: 20);
-                        },
-                      ),
+                // ZÁLOŽKA 1: INFO
+                _buildInfoTab(context, isDark, user, autoData, spz, zakaznikId,
+                    znackaNazev, tacho, stkM, stkR),
 
-                    // SPZ Rámeček
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 25,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.black : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isDark ? Colors.grey[600]! : Colors.black87,
-                          width: 2.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 14,
-                            height: 24,
-                            color: Colors.blue[700],
-                            margin: const EdgeInsets.only(right: 12),
-                          ),
-                          Text(
-                            spz.toUpperCase(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 32,
-                              letterSpacing: 2,
+                // ZÁLOŽKA 2: ZAKÁZKY
+                _buildZakazkyTab(context, isDark, user, spz),
+
+                // ZÁLOŽKA 3: FAKTURY
+                _buildFakturyTab(context, isDark, user, spz),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // =======================================================
+  // ZÁLOŽKA 1: INFO A ZÁKAZNÍK
+  // =======================================================
+  Widget _buildInfoTab(
+      BuildContext context,
+      bool isDark,
+      User user,
+      Map<String, dynamic> autoData,
+      String spz,
+      String zakaznikId,
+      String znackaNazev,
+      String tacho,
+      String stkM,
+      String stkR) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // --- VELKÁ HLAVIČKA S LOGEM NAD SPZ ---
+          Column(
+            children: [
+              if (znackaNazev.isNotEmpty)
+                FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance.collection('znacka').get(),
+                  builder: (context, snap) {
+                    if (snap.hasData) {
+                      String nalezeneLogo = '';
+                      for (var doc in snap.data!.docs) {
+                        final d = doc.data() as Map<String, dynamic>;
+                        final dbNazev = (d['nazev']?.toString() ?? doc.id)
+                            .trim()
+                            .toLowerCase();
+                        if (dbNazev == znackaNazev.toLowerCase()) {
+                          nalezeneLogo = d['logo']?.toString() ??
+                              d['logo_url']?.toString() ??
+                              '';
+                          break;
+                        }
+                      }
+                      if (nalezeneLogo.isNotEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 15),
+                          child: Container(
+                            height: 80,
+                            constraints: const BoxConstraints(
+                              maxWidth: 150,
+                            ),
+                            child: Image.network(
+                              nalezeneLogo,
+                              fit: BoxFit.contain,
+                              errorBuilder: (c, e, s) => const SizedBox(),
                             ),
                           ),
-                        ],
+                        );
+                      }
+                    }
+                    return const SizedBox(height: 20);
+                  },
+                ),
+
+              // SPZ Rámeček
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 25,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.black : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isDark ? Colors.grey[600]! : Colors.black87,
+                    width: 2.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 14,
+                      height: 24,
+                      color: Colors.blue[700],
+                      margin: const EdgeInsets.only(right: 12),
+                    ),
+                    Text(
+                      spz.toUpperCase(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 32,
+                        letterSpacing: 2,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
+              ),
+            ],
+          ),
+          const SizedBox(height: 30),
 
-                // --- DATA O VOZIDLE ---
-                Card(
-                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          // --- DATA O VOZIDLE ---
+          Card(
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
+              side: BorderSide(
+                color: Colors.teal.withOpacity(0.3),
+                width: 1.5,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoColumn(
+                          'Značka a Model',
+                          '${autoData['znacka'] ?? ''} ${autoData['model'] ?? ''}'
+                              .trim(),
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildInfoColumn(
+                          'Motorizace',
+                          autoData['motorizace'],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoColumn('VIN', autoData['vin']),
+                      ),
+                      Expanded(
+                        child: _buildInfoColumn(
+                          'Rok výroby',
+                          autoData['rok_vyroby'],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildInfoColumn(
+                          'Tachometr (poslední)',
+                          tacho.isNotEmpty ? '$tacho km' : '-',
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildInfoColumn(
+                          'Platnost STK',
+                          stkM.isNotEmpty && stkR.isNotEmpty
+                              ? '$stkM / $stkR'
+                              : '-',
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 25),
+
+          // --- MAJITEL ---
+          if (zakaznikId.isNotEmpty) ...[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: const Text(
+                'Majitel vozidla',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            FutureBuilder<QuerySnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('zakaznici')
+                  .where('servis_id', isEqualTo: user.uid)
+                  .where('id_zakaznika', isEqualTo: zakaznikId)
+                  .limit(1)
+                  .get(),
+              builder: (context, zakaznikSnap) {
+                if (zakaznikSnap.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!zakaznikSnap.hasData || zakaznikSnap.data!.docs.isEmpty) {
+                  return const Text(
+                    'Zákazník nenalezen.',
+                    style: TextStyle(color: Colors.grey),
+                  );
+                }
+
+                final zakaznikData = zakaznikSnap.data!.docs.first.data()
+                    as Map<String, dynamic>;
+
+                return Card(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.blueGrey[50],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                     side: BorderSide(
-                      color: Colors.teal.withOpacity(0.3),
-                      width: 1.5,
+                      color: Colors.blueGrey.withOpacity(0.3),
                     ),
                   ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(15),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ZakaznikDetailScreen(
+                            zakaznikData: zakaznikData,
+                          ),
+                        ),
+                      );
+                    },
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(15),
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blueGrey.withOpacity(0.2),
+                        foregroundColor: Colors.blueGrey,
+                        child: const Icon(Icons.person),
+                      ),
+                      title: Text(
+                        zakaznikData['jmeno'] ?? 'Neznámý zákazník',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${zakaznikData['telefon'] ?? ''}\n${zakaznikData['email'] ?? ''}'
+                            .trim(),
+                      ),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+          const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  // =======================================================
+  // ZÁLOŽKA 2: ZAKÁZKY
+  // =======================================================
+  Widget _buildZakazkyTab(
+      BuildContext context, bool isDark, User user, String spz) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('zakazky')
+            .where('servis_id', isEqualTo: user.uid)
+            .where('spz', isEqualTo: spz)
+            .snapshots(),
+        builder: (context, historySnap) {
+          if (historySnap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!historySnap.hasData || historySnap.data!.docs.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text(
+                  'Vozidlo zatím nemá žádné zakázky.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            );
+          }
+
+          final docs = historySnap.data!.docs.toList();
+          docs.sort((a, b) {
+            final dA = a.data() as Map<String, dynamic>;
+            final dB = b.data() as Map<String, dynamic>;
+            final tA = dA['cas_prijeti'] as Timestamp?;
+            final tB = dB['cas_prijeti'] as Timestamp?;
+            if (tA == null && tB == null) return 0;
+            if (tA == null) return 1;
+            if (tB == null) return -1;
+            return tB.compareTo(tA);
+          });
+
+          return Column(
+            children: docs.map((doc) {
+              final zakazka = doc.data() as Map<String, dynamic>;
+              final stav = zakazka['stav_zakazky'] ?? 'Přijato';
+
+              double celkovaCena = 0.0;
+              final prace = zakazka['provedene_prace'] as List<dynamic>? ?? [];
+              for (var p in prace) {
+                celkovaCena += (p['cena_s_dph'] ?? 0.0).toDouble();
+                final dily = p['pouzite_dily'] as List<dynamic>? ?? [];
+                for (var dil in dily) {
+                  double pocet = (dil['pocet'] ?? 1.0).toDouble();
+                  double cenaSDph = (dil['cena_s_dph'] ?? 0.0).toDouble();
+                  celkovaCena += (pocet * cenaSDph);
+                }
+              }
+
+              Color barvaStavu;
+              switch (stav) {
+                case 'Přijato':
+                  barvaStavu = Colors.blue;
+                  break;
+                case 'V řešení':
+                  barvaStavu = Colors.orange;
+                  break;
+                case 'Čeká na díly':
+                  barvaStavu = Colors.purple;
+                  break;
+                case 'Dokončeno':
+                  barvaStavu = Colors.green;
+                  break;
+                default:
+                  barvaStavu = Colors.grey;
+              }
+
+              return Card(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  side: BorderSide(
+                    color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+                  ),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(15),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ActiveJobScreen(
+                          documentId: doc.id,
+                          zakazkaId: zakazka['cislo_zakazky'].toString(),
+                          spz: spz,
+                        ),
+                      ),
+                    );
+                  },
                   child: Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(15),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: _buildInfoColumn(
-                                'Značka a Model',
-                                '${autoData['znacka'] ?? ''} ${autoData['model'] ?? ''}'
-                                    .trim(),
+                            Text(
+                              '${zakazka['cislo_zakazky']}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
                               ),
                             ),
-                            Expanded(
-                              child: _buildInfoColumn(
-                                'Motorizace',
-                                autoData['motorizace'],
-                              ),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: barvaStavu.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: barvaStavu,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    stav,
+                                    style: TextStyle(
+                                      color: barvaStavu,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward_ios,
+                                    size: 14, color: Colors.grey),
+                              ],
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildInfoColumn('VIN', autoData['vin']),
-                            ),
-                            Expanded(
-                              child: _buildInfoColumn(
-                                'Rok výroby',
-                                autoData['rok_vyroby'],
-                              ),
-                            ),
-                          ],
+                        const SizedBox(height: 5),
+                        Text(
+                          _formatDate(zakazka['cas_prijeti']),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 13,
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        const Divider(),
                         const SizedBox(height: 10),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Expanded(
-                              child: _buildInfoColumn(
-                                'Tachometr (poslední)',
-                                tacho.isNotEmpty ? '$tacho km' : '-',
-                              ),
+                            Text(
+                              '${prace.length} úkonů',
+                              style: const TextStyle(fontSize: 13),
                             ),
-                            Expanded(
-                              child: _buildInfoColumn(
-                                'Platnost STK',
-                                stkM.isNotEmpty && stkR.isNotEmpty
-                                    ? '$stkM / $stkR'
-                                    : '-',
+                            Text(
+                              '${celkovaCena.toStringAsFixed(2)} Kč',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    isDark ? Colors.greenAccent : Colors.green,
                               ),
                             ),
                           ],
@@ -713,446 +1022,174 @@ class VozidloDetailScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 25),
+              );
+            }).toList(),
+          );
+        },
+      ),
+    );
+  }
 
-                // --- MAJITEL ---
-                if (zakaznikId.isNotEmpty) ...[
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: const Text(
-                      'Majitel vozidla',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+  // =======================================================
+  // ZÁLOŽKA 3: FAKTURY
+  // =======================================================
+  Widget _buildFakturyTab(
+      BuildContext context, bool isDark, User user, String spz) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('faktury')
+            .where('servis_id', isEqualTo: user.uid)
+            .where('spz', isEqualTo: spz)
+            .snapshots(),
+        builder: (context, invoiceSnap) {
+          if (invoiceSnap.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!invoiceSnap.hasData || invoiceSnap.data!.docs.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text(
+                  'K tomuto vozidlu neevidujeme žádné faktury.',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            );
+          }
+
+          final fakturyDocs = invoiceSnap.data!.docs.toList();
+          fakturyDocs.sort((a, b) {
+            final dA = a.data() as Map<String, dynamic>;
+            final dB = b.data() as Map<String, dynamic>;
+            final tA = dA['datum_vystaveni'] as Timestamp?;
+            final tB = dB['datum_vystaveni'] as Timestamp?;
+            if (tA == null && tB == null) return 0;
+            if (tA == null) return 1;
+            if (tB == null) return -1;
+            return tB.compareTo(tA);
+          });
+
+          return Column(
+            children: fakturyDocs.map((fDoc) {
+              final faktura = fDoc.data() as Map<String, dynamic>;
+              final stavPlatby = faktura['stav_platby'] ?? 'Čeká na platbu';
+              final isStorno = stavPlatby == 'Stornováno';
+
+              Color platbaColor;
+              if (stavPlatby == 'Uhrazeno') {
+                platbaColor = Colors.green;
+              } else if (stavPlatby == 'Stornováno') {
+                platbaColor = Colors.red;
+              } else {
+                platbaColor = Colors.orange;
+              }
+
+              return Card(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                margin: const EdgeInsets.only(bottom: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  side: BorderSide(
+                    color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
                   ),
-                  const SizedBox(height: 10),
-                  FutureBuilder<QuerySnapshot>(
-                    future: FirebaseFirestore.instance
-                        .collection('zakaznici')
-                        .where('servis_id', isEqualTo: user.uid)
-                        .where('id_zakaznika', isEqualTo: zakaznikId)
-                        .limit(1)
-                        .get(),
-                    builder: (context, zakaznikSnap) {
-                      if (zakaznikSnap.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (!zakaznikSnap.hasData ||
-                          zakaznikSnap.data!.docs.isEmpty) {
-                        return const Text(
-                          'Zákazník nenalezen.',
-                          style: TextStyle(color: Colors.grey),
-                        );
-                      }
-
-                      final zakaznikData = zakaznikSnap.data!.docs.first.data()
-                          as Map<String, dynamic>;
-
-                      return Card(
-                        color: isDark
-                            ? const Color(0xFF1E1E1E)
-                            : Colors.blueGrey[50],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          side: BorderSide(
-                            color: Colors.blueGrey.withOpacity(0.3),
-                          ),
+                ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(15),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FakturaDetailScreen(
+                          fakturaDocId: fDoc.id,
+                          zakazkaId: faktura['cislo_zakazky']?.toString() ?? '',
                         ),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(15),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ZakaznikDetailScreen(
-                                  zakaznikData: zakaznikData,
-                                ),
-                              ),
-                            );
-                          },
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(15),
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.blueGrey.withOpacity(0.2),
-                              foregroundColor: Colors.blueGrey,
-                              child: const Icon(Icons.person),
-                            ),
-                            title: Text(
-                              zakaznikData['jmeno'] ?? 'Neznámý zákazník',
-                              style: const TextStyle(
+                      ),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(15),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${faktura['cislo_faktury']}',
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
+                                decoration: isStorno
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
-                            subtitle: Text(
-                              '${zakaznikData['telefon'] ?? ''}\n${zakaznikData['email'] ?? ''}'
-                                  .trim(),
-                            ),
-                            trailing: const Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 25),
-                ],
-
-                // --- HISTORIE ZAKÁZEK (AKTIVNÍ I DOKONČENÉ) ---
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: const Text(
-                    'Zakázky vozidla',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('zakazky')
-                      .where('servis_id', isEqualTo: user.uid)
-                      .where('spz', isEqualTo: spz)
-                      .snapshots(),
-                  builder: (context, historySnap) {
-                    if (historySnap.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (!historySnap.hasData ||
-                        historySnap.data!.docs.isEmpty) {
-                      return const Text(
-                        'Vozidlo zatím nemá žádné zakázky.',
-                        style: TextStyle(color: Colors.grey),
-                      );
-                    }
-
-                    final docs = historySnap.data!.docs.toList();
-                    docs.sort((a, b) {
-                      final dA = a.data() as Map<String, dynamic>;
-                      final dB = b.data() as Map<String, dynamic>;
-                      final tA = dA['cas_prijeti'] as Timestamp?;
-                      final tB = dB['cas_prijeti'] as Timestamp?;
-                      if (tA == null && tB == null) return 0;
-                      if (tA == null) return 1;
-                      if (tB == null) return -1;
-                      return tB.compareTo(tA);
-                    });
-
-                    return Column(
-                      children: docs.map((doc) {
-                        final zakazka = doc.data() as Map<String, dynamic>;
-                        final stav = zakazka['stav_zakazky'] ?? 'Přijato';
-
-                        double celkovaCena = 0.0;
-                        final prace =
-                            zakazka['provedene_prace'] as List<dynamic>? ?? [];
-                        for (var p in prace) {
-                          celkovaCena += (p['cena_s_dph'] ?? 0.0).toDouble();
-                          final dily =
-                              p['pouzite_dily'] as List<dynamic>? ?? [];
-                          for (var dil in dily) {
-                            double pocet = (dil['pocet'] ?? 1.0).toDouble();
-                            double cenaSDph =
-                                (dil['cena_s_dph'] ?? 0.0).toDouble();
-                            celkovaCena += (pocet * cenaSDph);
-                          }
-                        }
-
-                        Color barvaStavu;
-                        switch (stav) {
-                          case 'Přijato':
-                            barvaStavu = Colors.blue;
-                            break;
-                          case 'V řešení':
-                            barvaStavu = Colors.orange;
-                            break;
-                          case 'Čeká na díly':
-                            barvaStavu = Colors.purple;
-                            break;
-                          case 'Dokončeno':
-                            barvaStavu = Colors.green;
-                            break;
-                          default:
-                            barvaStavu = Colors.grey;
-                        }
-
-                        return Card(
-                          color:
-                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          margin: const EdgeInsets.only(bottom: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            side: BorderSide(
-                              color: isDark
-                                  ? Colors.grey[800]!
-                                  : Colors.grey[200]!,
-                            ),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(15),
-                            // OPRAVA: VŽDY SE VOLÁ ActiveJobScreen
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ActiveJobScreen(
-                                    documentId: doc.id,
-                                    zakazkaId:
-                                        zakazka['cislo_zakazky'].toString(),
-                                    spz: spz,
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: platbaColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: platbaColor, width: 0.5),
                                   ),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(15),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '${zakazka['cislo_zakazky']}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: barvaStavu.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border: Border.all(
-                                            color: barvaStavu,
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          stav,
-                                          style: TextStyle(
-                                            color: barvaStavu,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    _formatDate(zakazka['cas_prijeti']),
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 13,
+                                  child: Text(
+                                    stavPlatby,
+                                    style: TextStyle(
+                                      color: platbaColor,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '${prace.length} úkonů',
-                                        style: const TextStyle(fontSize: 13),
-                                      ),
-                                      Text(
-                                        '${celkovaCena.toStringAsFixed(2)} Kč',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: isDark
-                                              ? Colors.greenAccent
-                                              : Colors.green,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward_ios,
+                                    size: 14, color: Colors.grey),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          DateFormat('dd.MM.yyyy').format(
+                              (faktura['datum_vystaveni'] as Timestamp)
+                                  .toDate()),
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              '${(faktura['celkova_castka'] ?? 0.0).toStringAsFixed(2)} Kč',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isStorno
+                                    ? Colors.grey
+                                    : (isDark
+                                        ? Colors.greenAccent
+                                        : Colors.green),
+                                decoration: isStorno
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 25),
-
-                // --- FAKTURY VOZIDLA ---
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: const Text(
-                    'Faktury vozidla',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('faktury')
-                      .where('servis_id', isEqualTo: user.uid)
-                      .where('spz', isEqualTo: spz)
-                      .snapshots(),
-                  builder: (context, invoiceSnap) {
-                    if (invoiceSnap.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (!invoiceSnap.hasData ||
-                        invoiceSnap.data!.docs.isEmpty) {
-                      return const Text(
-                        'K tomuto vozidlu neevidujeme žádné faktury.',
-                        style: TextStyle(color: Colors.grey),
-                      );
-                    }
-
-                    final fakturyDocs = invoiceSnap.data!.docs.toList();
-                    fakturyDocs.sort((a, b) {
-                      final dA = a.data() as Map<String, dynamic>;
-                      final dB = b.data() as Map<String, dynamic>;
-                      final tA = dA['datum_vystaveni'] as Timestamp?;
-                      final tB = dB['datum_vystaveni'] as Timestamp?;
-                      if (tA == null && tB == null) return 0;
-                      if (tA == null) return 1;
-                      if (tB == null) return -1;
-                      return tB.compareTo(tA);
-                    });
-
-                    return Column(
-                      children: fakturyDocs.map((fDoc) {
-                        final faktura = fDoc.data() as Map<String, dynamic>;
-                        final stavPlatby =
-                            faktura['stav_platby'] ?? 'Čeká na platbu';
-                        final isStorno = stavPlatby == 'Stornováno';
-
-                        Color platbaColor;
-                        if (stavPlatby == 'Uhrazeno') {
-                          platbaColor = Colors.green;
-                        } else if (stavPlatby == 'Stornováno') {
-                          platbaColor = Colors.red;
-                        } else {
-                          platbaColor = Colors.orange;
-                        }
-
-                        return Card(
-                          color:
-                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          margin: const EdgeInsets.only(bottom: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            side: BorderSide(
-                              color: isDark
-                                  ? Colors.grey[800]!
-                                  : Colors.grey[200]!,
-                            ),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(15),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => FakturaDetailScreen(
-                                    fakturaDocId: fDoc.id,
-                                    zakazkaId: fDoc.id,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(15),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '${faktura['cislo_faktury']}',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          decoration: isStorno
-                                              ? TextDecoration.lineThrough
-                                              : null,
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: platbaColor.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border: Border.all(
-                                              color: platbaColor, width: 0.5),
-                                        ),
-                                        child: Text(
-                                          stavPlatby,
-                                          style: TextStyle(
-                                            color: platbaColor,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    _formatDate(faktura['datum_vystaveni']),
-                                    style: const TextStyle(
-                                        color: Colors.grey, fontSize: 13),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        '${(faktura['celkova_castka'] ?? 0.0).toStringAsFixed(2)} Kč',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: isStorno
-                                              ? Colors.grey
-                                              : (isDark
-                                                  ? Colors.greenAccent
-                                                  : Colors.green),
-                                          decoration: isStorno
-                                              ? TextDecoration.lineThrough
-                                              : null,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 40),
-              ],
-            ),
-          ),
-        );
-      },
+              );
+            }).toList(),
+          );
+        },
+      ),
     );
   }
 
