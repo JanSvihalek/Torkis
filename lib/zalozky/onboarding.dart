@@ -3,7 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'main_screen.dart'; 
+
+import 'main_screen.dart';
+import '../core/constants.dart'; // <--- IMPORT PRO OKAMŽITOU ZMĚNU VZHLEDU
 
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
@@ -22,17 +24,18 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   final _nazevController = TextEditingController();
   final _icoController = TextEditingController();
   final _registraceController = TextEditingController();
-  final _emailServisuController = TextEditingController(); 
+  final _emailServisuController = TextEditingController();
 
   // KROK 2: Fakturace a Ceny
   final _sazbaController = TextEditingController();
   final _bankaController = TextEditingController();
   final _dicController = TextEditingController();
-  final _prefixZakazkaController = TextEditingController(text: 'ZAK'); // NOVÉ: Prefix Zakázek
-  final _prefixFakturaController = TextEditingController(text: 'FAK'); // NOVÉ: Prefix Faktur
-  
+  final _prefixZakazkaController = TextEditingController(text: 'ZAK');
+  final _prefixFakturaController = TextEditingController(text: 'FAK');
+
   bool _jePlatceDph = false;
-  bool _defaultOdeslatEmaily = true; // NOVÉ: Přepínač pro defaultní odesílání e-mailů
+  bool _defaultOdeslatEmaily = true;
+  bool _tmavyRezim = false; // <--- NOVÁ PROMĚNNÁ PRO TMAVÝ REŽIM
 
   // KROK 3: Předpřipravené úkony
   final List<TextEditingController> _ukonyControllers = [];
@@ -140,6 +143,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           'registrace_servisu': _registraceController.text.trim(),
           'email_servisu': _emailServisuController.text.trim(),
           'default_odesilat_emaily': _defaultOdeslatEmaily,
+          'tmavy_rezim': _tmavyRezim, // <--- ULOŽENÍ MOTIVU DO DATABÁZE
           'hodinova_sazba':
               double.tryParse(_sazbaController.text.replaceAll(',', '.')) ??
                   0.0,
@@ -198,6 +202,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Toto isDark sleduje aktuální ThemeMode aplikace
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -205,6 +210,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // HLAVIČKA S PROGRESS BAREM
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
               child: Row(
@@ -222,7 +228,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                           decoration: BoxDecoration(
                               color: _currentPage >= 1
                                   ? Colors.blue
-                                  : Colors.grey[300],
+                                  : (isDark
+                                      ? Colors.grey[800]
+                                      : Colors.grey[300]),
                               borderRadius: BorderRadius.circular(3)))),
                   const SizedBox(width: 10),
                   Expanded(
@@ -231,11 +239,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                           decoration: BoxDecoration(
                               color: _currentPage == 2
                                   ? Colors.blue
-                                  : Colors.grey[300],
+                                  : (isDark
+                                      ? Colors.grey[800]
+                                      : Colors.grey[300]),
                               borderRadius: BorderRadius.circular(3)))),
                 ],
               ),
             ),
+
+            // OBSAH FORMULÁŘE
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -248,13 +260,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 ],
               ),
             ),
+
+            // SPODNÍ NAVIGAČNÍ LIŠTA
             Container(
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF121212) : Colors.white,
+                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, -5))
                 ],
@@ -266,6 +280,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       onPressed: _moveBack,
                       icon: const Icon(Icons.arrow_back_ios_new_rounded),
                       padding: const EdgeInsets.all(15),
+                      style: IconButton.styleFrom(
+                        backgroundColor: isDark ? Colors.grey[800] : null,
+                      ),
                     ),
                   if (_currentPage > 0) const SizedBox(width: 15),
                   Expanded(
@@ -345,8 +362,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       tooltip: 'Načíst z ARES'),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
 
@@ -363,8 +386,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               prefixIcon: const Icon(Icons.storefront, color: Colors.blue),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
 
@@ -380,19 +409,26 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               prefixIcon: const Icon(Icons.gavel, color: Colors.blueGrey),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
 
           const SizedBox(height: 30),
           const Divider(),
           const SizedBox(height: 20),
-          const Text('Komunikace se zákazníky',
+          const Text('Komunikace a vzhled',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          
-          const Text('E-mailová adresa (z níž budou odcházet e-maily zákazníkům)',
+
+          const Text(
+              'E-mailová adresa (z níž budou odcházet e-maily zákazníkům)',
               style:
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
@@ -404,8 +440,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               prefixIcon: const Icon(Icons.email, color: Colors.blue),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
           const SizedBox(height: 15),
@@ -426,6 +468,32 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               value: _defaultOdeslatEmaily,
               activeColor: Colors.blue,
               onChanged: (val) => setState(() => _defaultOdeslatEmaily = val),
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          // --- NOVÝ PŘEPÍNAČ PRO TMAVÝ REŽIM ---
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(
+                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+            child: SwitchListTile(
+              title: const Text('Vynutit tmavý režim',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: const Text(
+                  'Aplikace bude okamžitě přepnuta do tmavého vzhledu.',
+                  style: TextStyle(fontSize: 12)),
+              value: _tmavyRezim,
+              activeColor: Colors.blue,
+              onChanged: (val) {
+                setState(() => _tmavyRezim = val);
+                // Mění vzhled aplikace IHNED
+                themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
+              },
             ),
           ),
         ],
@@ -465,8 +533,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
           const SizedBox(height: 20),
@@ -500,8 +574,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     const Icon(Icons.assignment_ind, color: Colors.blue),
                 filled: true,
                 fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(
+                        color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(
+                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
               ),
             ),
           ],
@@ -518,8 +598,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   const Icon(Icons.account_balance, color: Colors.blueGrey),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
           const SizedBox(height: 20),
@@ -530,7 +616,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Prefix pro zakázky',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.grey)),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _prefixZakazkaController,
@@ -539,8 +626,20 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                         hintText: 'ZAK',
                         prefixIcon: const Icon(Icons.build, color: Colors.blue),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        fillColor:
+                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[400]!)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!)),
                       ),
                     ),
                   ],
@@ -552,17 +651,31 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Prefix pro faktury',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.grey)),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _prefixFakturaController,
                       textCapitalization: TextCapitalization.characters,
                       decoration: InputDecoration(
                         hintText: 'FAK',
-                        prefixIcon: const Icon(Icons.receipt, color: Colors.green),
+                        prefixIcon:
+                            const Icon(Icons.receipt, color: Colors.green),
                         filled: true,
-                        fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+                        fillColor:
+                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[400]!)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!)),
                       ),
                     ),
                   ],

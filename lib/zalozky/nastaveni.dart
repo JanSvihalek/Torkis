@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth_screen.dart'; // Přidán import pro přesměrování po odhlášení
+import '../core/constants.dart'; // <--- PŘIDÁNO PRO OKAMŽITOU ZMĚNU MOTIVU
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -25,9 +26,10 @@ class _SettingsPageState extends State<SettingsPage> {
   final _splatnostCtrl = TextEditingController(text: '14');
   final _prefixZakazkaCtrl = TextEditingController(text: 'ZAK');
   final _prefixFakturaCtrl = TextEditingController(text: 'FAK');
-  
+
   bool _platceDph = false;
   bool _defaultEmail = true;
+  bool _tmavyRezim = false;
   bool _isLoading = true;
   bool _isSaving = false;
 
@@ -40,7 +42,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final doc = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('nastaveni_servisu')
+          .doc(user.uid)
+          .get();
       if (doc.exists) {
         final data = doc.data()!;
         setState(() {
@@ -60,6 +65,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _prefixFakturaCtrl.text = data['prefix_faktury'] ?? 'FAK';
           _platceDph = data['platce_dph'] ?? false;
           _defaultEmail = data['default_odesilat_emaily'] ?? true;
+          _tmavyRezim = data['tmavy_rezim'] ?? false;
         });
       }
     }
@@ -71,7 +77,10 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(user.uid).set({
+        await FirebaseFirestore.instance
+            .collection('nastaveni_servisu')
+            .doc(user.uid)
+            .set({
           'nazev_servisu': _nazevCtrl.text.trim(),
           'ico_servisu': _icoCtrl.text.trim(),
           'dic_servisu': _dicCtrl.text.trim(),
@@ -84,29 +93,32 @@ class _SettingsPageState extends State<SettingsPage> {
           'registrace_servisu': _registraceCtrl.text.trim(),
           'prefix_zakazky': _prefixZakazkaCtrl.text.trim().toUpperCase(),
           'prefix_faktury': _prefixFakturaCtrl.text.trim().toUpperCase(),
-          'hodinova_sazba': double.tryParse(_sazbaCtrl.text.replaceAll(',', '.')) ?? 0.0,
+          'hodinova_sazba':
+              double.tryParse(_sazbaCtrl.text.replaceAll(',', '.')) ?? 0.0,
           'splatnost_dny': int.tryParse(_splatnostCtrl.text) ?? 14,
           'platce_dph': _platceDph,
           'default_odesilat_emaily': _defaultEmail,
+          'tmavy_rezim': _tmavyRezim,
           'zmeneno': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
+        // --- ZMĚNA VZHLEDU IHNED PO ULOŽENÍ ---
+        themeNotifier.value = _tmavyRezim ? ThemeMode.dark : ThemeMode.light;
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Nastavení bylo úspěšně uloženo.'), 
-              backgroundColor: Colors.green
-            )
-          );
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Nastavení bylo úspěšně uloženo.'),
+              backgroundColor: Colors.green));
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chyba: $e')));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Chyba: $e')));
     }
     setState(() => _isSaving = false);
   }
 
-  // --- NOVÁ METODA PRO ODHLÁŠENÍ ---
   Future<void> _odhlasitSe() async {
     bool? potvrdit = await showDialog<bool>(
       context: context,
@@ -120,10 +132,9 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'ODHLÁSIT', 
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)
-            ),
+            child: const Text('ODHLÁSIT',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -132,7 +143,6 @@ class _SettingsPageState extends State<SettingsPage> {
     if (potvrdit == true) {
       await FirebaseAuth.instance.signOut();
       if (mounted) {
-        // Vymaže celou historii stránek a hodí uživatele zpět na přihlašování
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const AuthScreen()),
@@ -145,14 +155,13 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return Column(
       children: [
-        // ZÁHLAVÍ S TLAČÍTKEM
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
           child: Row(
@@ -162,55 +171,69 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Úprava nastavení', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    const Text('Úprava nastavení',
+                        style: TextStyle(
+                            fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text('Firemní údaje, ceník a chování.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                    const Text('Firemní údaje, ceník a chování.',
+                        style: TextStyle(color: Colors.grey, fontSize: 13)),
                   ],
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: _isSaving ? null : _saveSettings,
-                icon: _isSaving 
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) 
+                icon: _isSaving
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
                     : const Icon(Icons.check_circle),
-                label: const Text('ULOŽIT', style: TextStyle(fontWeight: FontWeight.bold)),
+                label: const Text('ULOŽIT',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
               ),
             ],
           ),
         ),
         const Divider(height: 1),
-        
-        // ZBYTEK STRÁNKY S KARTAMI
         Expanded(
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              // 1. FIREMNÍ ÚDAJE
               _buildCard(
                 title: 'Firemní údaje',
                 icon: Icons.business,
                 color: Colors.blue,
                 isDark: isDark,
                 children: [
-                  _buildInput(_nazevCtrl, 'Obchodní jméno / Název servisu', Icons.store, isDark),
+                  _buildInput(_nazevCtrl, 'Obchodní jméno / Název servisu',
+                      Icons.store, isDark),
                   Row(
                     children: [
-                      Expanded(child: _buildInput(_icoCtrl, 'IČO', Icons.numbers, isDark)),
+                      Expanded(
+                          child: _buildInput(
+                              _icoCtrl, 'IČO', Icons.numbers, isDark)),
                       const SizedBox(width: 10),
-                      Expanded(child: _buildInput(_dicCtrl, 'DIČ', Icons.badge, isDark)),
+                      Expanded(
+                          child: _buildInput(
+                              _dicCtrl, 'DIČ', Icons.badge, isDark)),
                     ],
                   ),
-                  _buildInput(_registraceCtrl, 'Zápis v rejstříku (spisová značka)', Icons.gavel, isDark),
+                  _buildInput(
+                      _registraceCtrl,
+                      'Zápis v rejstříku (spisová značka)',
+                      Icons.gavel,
+                      isDark),
                 ],
               ),
-
-              // 2. SÍDLO A KONTAKT
               _buildCard(
                 title: 'Sídlo a kontakt',
                 icon: Icons.location_on,
@@ -220,39 +243,54 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildInput(_adresaCtrl, 'Ulice a č.p.', Icons.map, isDark),
                   Row(
                     children: [
-                      Expanded(flex: 2, child: _buildInput(_mestoCtrl, 'Město', Icons.location_city, isDark)),
+                      Expanded(
+                          flex: 2,
+                          child: _buildInput(_mestoCtrl, 'Město',
+                              Icons.location_city, isDark)),
                       const SizedBox(width: 10),
-                      Expanded(flex: 1, child: _buildInput(_pscCtrl, 'PSČ', Icons.mark_email_unread, isDark)),
+                      Expanded(
+                          flex: 1,
+                          child: _buildInput(_pscCtrl, 'PSČ',
+                              Icons.mark_email_unread, isDark)),
                     ],
                   ),
-                  _buildInput(_telefonCtrl, 'Telefon servisu', Icons.phone, isDark),
-                  _buildInput(_emailCtrl, 'E-mail pro komunikaci', Icons.email, isDark),
+                  _buildInput(
+                      _telefonCtrl, 'Telefon servisu', Icons.phone, isDark),
+                  _buildInput(
+                      _emailCtrl, 'E-mail pro komunikaci', Icons.email, isDark),
                 ],
               ),
-
-              // 3. FAKTURACE A CENY
               _buildCard(
                 title: 'Fakturace a ceny',
                 icon: Icons.receipt_long,
                 color: Colors.green,
                 isDark: isDark,
                 children: [
-                  _buildInput(_bankaCtrl, 'Bankovní účet', Icons.account_balance, isDark),
+                  _buildInput(_bankaCtrl, 'Bankovní účet',
+                      Icons.account_balance, isDark),
                   Row(
                     children: [
-                      Expanded(child: _buildInput(_sazbaCtrl, 'Hodinová sazba', Icons.timer, isDark, isNum: true)),
+                      Expanded(
+                          child: _buildInput(
+                              _sazbaCtrl, 'Hodinová sazba', Icons.timer, isDark,
+                              isNum: true)),
                       const SizedBox(width: 10),
-                      Expanded(child: _buildInput(_splatnostCtrl, 'Splatnost (dny)', Icons.calendar_today, isDark, isNum: true)),
+                      Expanded(
+                          child: _buildInput(_splatnostCtrl, 'Splatnost (dny)',
+                              Icons.calendar_today, isDark,
+                              isNum: true)),
                     ],
                   ),
                   const SizedBox(height: 5),
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+                      color:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: SwitchListTile(
-                      title: const Text('Plátce DPH', style: TextStyle(fontWeight: FontWeight.bold)),
+                      title: const Text('Plátce DPH',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                       value: _platceDph,
                       activeColor: Colors.blue,
                       onChanged: (v) => setState(() => _platceDph = v),
@@ -260,8 +298,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-
-              // 4. ČÍSLOVÁNÍ A AUTOMATIZACE
               _buildCard(
                 title: 'Číslování a automatizace',
                 icon: Icons.settings_suggest,
@@ -270,20 +306,28 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: _buildInput(_prefixZakazkaCtrl, 'Prefix zakázek', Icons.build, isDark)),
+                      Expanded(
+                          child: _buildInput(_prefixZakazkaCtrl,
+                              'Prefix zakázek', Icons.build, isDark)),
                       const SizedBox(width: 10),
-                      Expanded(child: _buildInput(_prefixFakturaCtrl, 'Prefix faktur', Icons.receipt, isDark)),
+                      Expanded(
+                          child: _buildInput(_prefixFakturaCtrl,
+                              'Prefix faktur', Icons.receipt, isDark)),
                     ],
                   ),
                   const SizedBox(height: 5),
                   Container(
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+                      color:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: SwitchListTile(
-                      title: const Text('Automaticky zasílat e-maily', style: TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: const Text('Přednastaví odesílání PDF nabídek a faktur.', style: TextStyle(fontSize: 12)),
+                      title: const Text('Automaticky zasílat e-maily',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text(
+                          'Přednastaví odesílání PDF nabídek a faktur.',
+                          style: TextStyle(fontSize: 12)),
                       value: _defaultEmail,
                       activeColor: Colors.blue,
                       onChanged: (v) => setState(() => _defaultEmail = v),
@@ -291,29 +335,54 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
-              
+              _buildCard(
+                title: 'Vzhled aplikace',
+                icon: Icons.palette,
+                color: Colors.pinkAccent,
+                isDark: isDark,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: SwitchListTile(
+                      title: const Text('Vynutit tmavý režim',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: const Text(
+                          'Aplikace bude tmavá bez ohledu na nastavení telefonu.',
+                          style: TextStyle(fontSize: 12)),
+                      value: _tmavyRezim,
+                      activeColor: Colors.blue,
+                      onChanged: (v) => setState(() => _tmavyRezim = v),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
-              
-              // --- TLAČÍTKO PRO ODHLÁŠENÍ ---
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _odhlasitSe,
                   icon: const Icon(Icons.logout),
-                  label: const Text('ODHLÁSIT SE', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  label: const Text('ODHLÁSIT SE',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, letterSpacing: 1)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark ? const Color(0xFF3A1C1C) : Colors.red[50], // Jemné červené pozadí
-                    foregroundColor: Colors.redAccent, // Červený text a ikona
+                    backgroundColor:
+                        isDark ? const Color(0xFF3A1C1C) : Colors.red[50],
+                    foregroundColor: Colors.redAccent,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
-                      side: const BorderSide(color: Colors.redAccent, width: 1.5),
+                      side:
+                          const BorderSide(color: Colors.redAccent, width: 1.5),
                     ),
                   ),
                 ),
               ),
-              
               const SizedBox(height: 50),
             ],
           ),
@@ -322,7 +391,12 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildCard({required String title, required IconData icon, required Color color, required List<Widget> children, required bool isDark}) {
+  Widget _buildCard(
+      {required String title,
+      required IconData icon,
+      required Color color,
+      required List<Widget> children,
+      required bool isDark}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(20),
@@ -368,12 +442,16 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildInput(TextEditingController ctrl, String label, IconData icon, bool isDark, {bool isNum = false}) {
+  Widget _buildInput(
+      TextEditingController ctrl, String label, IconData icon, bool isDark,
+      {bool isNum = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 15),
       child: TextField(
         controller: ctrl,
-        keyboardType: isNum ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+        keyboardType: isNum
+            ? const TextInputType.numberWithOptions(decimal: true)
+            : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, size: 20, color: Colors.grey),
@@ -393,7 +471,8 @@ class _SettingsPageState extends State<SettingsPage> {
               width: 1,
             ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         ),
       ),
     );

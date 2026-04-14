@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../core/constants.dart';
 import 'prubeh.dart';
 import 'prijem_vozidla.dart';
@@ -65,8 +68,27 @@ class _MainScreenState extends State<MainScreen> {
               isDark ? Icons.light_mode : Icons.dark_mode,
               color: isDark ? Colors.amber : Colors.black54,
             ),
-            onPressed: () =>
-                themeNotifier.value = isDark ? ThemeMode.light : ThemeMode.dark,
+            onPressed: () async {
+              // 1. Okamžitá změna v UI
+              final newIsDark = !isDark;
+              themeNotifier.value =
+                  newIsDark ? ThemeMode.dark : ThemeMode.light;
+
+              // 2. Uložení volby do databáze, aby to vydrželo i po restartu
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null) {
+                try {
+                  await FirebaseFirestore.instance
+                      .collection('nastaveni_servisu')
+                      .doc(user.uid)
+                      .set({
+                    'tmavy_rezim': newIsDark,
+                  }, SetOptions(merge: true));
+                } catch (e) {
+                  debugPrint('Chyba při ukládání motivu: $e');
+                }
+              }
+            },
           ),
           const SizedBox(width: 8),
         ],
@@ -131,7 +153,6 @@ class MenuPage extends StatelessWidget {
               style: TextStyle(color: Colors.grey),
             ),
           ),
-
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -237,9 +258,8 @@ class MenuPage extends StatelessWidget {
                   builder: (context) => Scaffold(
                     backgroundColor: Theme.of(context).colorScheme.surface,
                     appBar: AppBar(
-                      backgroundColor: isDark
-                          ? const Color(0xFF1A1A1A)
-                          : Colors.white,
+                      backgroundColor:
+                          isDark ? const Color(0xFF1A1A1A) : Colors.white,
                       elevation: 1,
                       title: Text(
                         title,
