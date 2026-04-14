@@ -4,8 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'main_screen.dart';
-import '../core/constants.dart'; // <--- IMPORT PRO OKAMŽITOU ZMĚNU VZHLEDU
+import 'auth_gate.dart'; // <--- ZMĚNĚNÝ IMPORT (Místo main_screen.dart voláme AuthGate)
+import '../core/constants.dart';
 
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
@@ -35,7 +35,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   bool _jePlatceDph = false;
   bool _defaultOdeslatEmaily = true;
-  bool _tmavyRezim = false; // <--- NOVÁ PROMĚNNÁ PRO TMAVÝ REŽIM
+  bool _tmavyRezim = false;
 
   // KROK 3: Předpřipravené úkony
   final List<TextEditingController> _ukonyControllers = [];
@@ -134,6 +134,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             .where((text) => text.isNotEmpty)
             .toList();
 
+        // 1. ZÁPIS NASTAVENÍ SERVISU
         await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
             .doc(user.uid)
@@ -143,7 +144,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           'registrace_servisu': _registraceController.text.trim(),
           'email_servisu': _emailServisuController.text.trim(),
           'default_odesilat_emaily': _defaultOdeslatEmaily,
-          'tmavy_rezim': _tmavyRezim, // <--- ULOŽENÍ MOTIVU DO DATABÁZE
+          'tmavy_rezim': _tmavyRezim,
           'hodinova_sazba':
               double.tryParse(_sazbaController.text.replaceAll(',', '.')) ??
                   0.0,
@@ -161,10 +162,24 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           'vytvoreno': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
 
+        // 2. VYTVOŘENÍ PROFILU ADMINA (ZAKLADATELE)
+        await FirebaseFirestore.instance
+            .collection('uzivatele')
+            .doc(user.uid)
+            .set({
+          'uid': user.uid,
+          'email': user.email,
+          'role': 'admin', // První uživatel je vždy admin
+          'servis_id': user.uid, // Servis ID je ID zakladatele
+          'jmeno': _nazevController.text.trim(),
+          'vytvoreno': FieldValue.serverTimestamp(),
+        });
+
         if (mounted) {
+          // Přesměrujeme zpět na AuthGate, ten už to teď vyhodnotí správně
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const MainScreen()),
+            MaterialPageRoute(builder: (context) => const AuthGate()),
             (route) => false,
           );
         }
@@ -202,7 +217,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Toto isDark sleduje aktuální ThemeMode aplikace
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -210,7 +224,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // HLAVIČKA S PROGRESS BAREM
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
               child: Row(
@@ -246,8 +259,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 ],
               ),
             ),
-
-            // OBSAH FORMULÁŘE
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -260,8 +271,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 ],
               ),
             ),
-
-            // SPODNÍ NAVIGAČNÍ LIŠTA
             Container(
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
@@ -338,7 +347,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               'Nejprve vyplníme základní informace o vašem servisu. Ty se pak budou automaticky propisovat do faktur a protokolů.',
               style: TextStyle(fontSize: 14, color: Colors.grey)),
           const SizedBox(height: 40),
-
           const Text('IČO (ARES vyhledávání)',
               style:
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
@@ -372,7 +380,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
-
           const SizedBox(height: 20),
           const Text('Název servisu / Jméno *',
               style:
@@ -396,7 +403,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
-
           const SizedBox(height: 20),
           const Text('Zápis v rejstříku (nepovinné)',
               style:
@@ -419,14 +425,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
-
           const SizedBox(height: 30),
           const Divider(),
           const SizedBox(height: 20),
           const Text('Komunikace a vzhled',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-
           const Text(
               'E-mailová adresa (z níž budou odcházet e-maily zákazníkům)',
               style:
@@ -451,7 +455,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ),
           ),
           const SizedBox(height: 15),
-
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
@@ -470,10 +473,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               onChanged: (val) => setState(() => _defaultOdeslatEmaily = val),
             ),
           ),
-
           const SizedBox(height: 15),
-
-          // --- NOVÝ PŘEPÍNAČ PRO TMAVÝ REŽIM ---
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
@@ -491,7 +491,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               activeColor: Colors.blue,
               onChanged: (val) {
                 setState(() => _tmavyRezim = val);
-                // Mění vzhled aplikace IHNED
                 themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
               },
             ),

@@ -3,8 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../core/constants.dart';
+import 'auth_gate.dart'; // Kvůli globalServisId a globalUserRole
+
+// Importy tvých stránek
 import 'prubeh.dart';
-import 'prijem_vozidla.dart';
+import 'prijem_vozidla.dart'; // <--- TATO ZÁLOŽKA JE ZPĚT
 import 'historie.dart';
 import 'zakaznici.dart';
 import 'vozidla.dart';
@@ -12,10 +15,12 @@ import 'ukony.dart';
 import 'fakturace.dart';
 import 'statistiky.dart';
 import 'nastaveni.dart';
-import 'ucetnictvi.dart'; // <--- NOVÝ IMPORT PRO ÚČETNICTVÍ
+import 'ucetnictvi.dart';
+import 'zamestnanci.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
@@ -23,11 +28,12 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
+  // Seznam všech stránek (musí odpovídat počtu položek v NavigationBar)
   final List<Widget> _pages = [
-    const MainWizardPage(),
-    const ServiceProgressPage(),
-    const HistoryPage(),
-    const MenuPage(),
+    const MainWizardPage(), // Index 0: Příjem vozidla
+    const ServiceProgressPage(), // Index 1: Zakázky
+    const HistoryPage(), // Index 2: Historie
+    const MenuPage(), // Index 3: Menu
   ];
 
   @override
@@ -47,7 +53,7 @@ class _MainScreenState extends State<MainScreen> {
                 color: Theme.of(context).colorScheme.primary,
                 size: 28,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 8),
               Text(
                 'Torkis',
                 style: TextStyle(
@@ -69,18 +75,16 @@ class _MainScreenState extends State<MainScreen> {
               color: isDark ? Colors.amber : Colors.black54,
             ),
             onPressed: () async {
-              // 1. Okamžitá změna v UI
               final newIsDark = !isDark;
               themeNotifier.value =
                   newIsDark ? ThemeMode.dark : ThemeMode.light;
 
-              // 2. Uložení volby do databáze, aby to vydrželo i po restartu
               final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
+              if (user != null && globalServisId != null) {
                 try {
                   await FirebaseFirestore.instance
                       .collection('nastaveni_servisu')
-                      .doc(user.uid)
+                      .doc(globalServisId)
                       .set({
                     'tmavy_rezim': newIsDark,
                   }, SetOptions(merge: true));
@@ -93,7 +97,10 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) => setState(() => _currentIndex = index),
@@ -134,6 +141,11 @@ class MenuPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Načtení role z AuthGate
+    final role = globalUserRole ?? 'mechanik';
+    final isAdmin = role == 'admin';
+    final isTechnik = role == 'technik' || isAdmin;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -142,15 +154,19 @@ class MenuPage extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(left: 10, top: 10, bottom: 5),
             child: Text(
-              'Další moduly',
+              'Moduly',
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(left: 10, bottom: 20),
+          Padding(
+            padding: const EdgeInsets.only(left: 10, bottom: 20),
             child: Text(
-              'Správa servisu a zákazníků.',
-              style: TextStyle(color: Colors.grey),
+              'Přihlášen jako: ${role.toUpperCase()}',
+              style: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
             ),
           ),
           GridView.count(
@@ -161,14 +177,6 @@ class MenuPage extends StatelessWidget {
             crossAxisSpacing: 15,
             childAspectRatio: 1.1,
             children: [
-              _buildMenuCard(
-                context,
-                'Databáze zákazníků',
-                Icons.people_alt,
-                Colors.blue,
-                const ZakazniciPage(),
-                isDark,
-              ),
               _buildMenuCard(
                 context,
                 'Vozidla',
@@ -185,38 +193,60 @@ class MenuPage extends StatelessWidget {
                 const UkonyPage(),
                 isDark,
               ),
-              _buildMenuCard(
-                context,
-                'Faktury',
-                Icons.receipt_long,
-                Colors.green,
-                const FakturacePage(),
-                isDark,
-              ),
-              _buildMenuCard(
-                context,
-                'Účetnictví', // <--- NOVÁ DLAŽDICE ÚČETNICTVÍ
-                Icons.pie_chart,
-                Colors.indigo,
-                const UcetnictviPage(),
-                isDark,
-              ),
-              _buildMenuCard(
-                context,
-                'Statistiky',
-                Icons.bar_chart,
-                Colors.purple,
-                const StatisticsPage(),
-                isDark,
-              ),
-              _buildMenuCard(
-                context,
-                'Nastavení',
-                Icons.settings,
-                Colors.blueGrey,
-                const SettingsPage(),
-                isDark,
-              ),
+              if (isTechnik)
+                _buildMenuCard(
+                  context,
+                  'Databáze zákazníků',
+                  Icons.people_alt,
+                  Colors.blue,
+                  const ZakazniciPage(),
+                  isDark,
+                ),
+              if (isTechnik)
+                _buildMenuCard(
+                  context,
+                  'Faktury',
+                  Icons.receipt_long,
+                  Colors.green,
+                  const FakturacePage(),
+                  isDark,
+                ),
+              if (isAdmin)
+                _buildMenuCard(
+                  context,
+                  'Zaměstnanci',
+                  Icons.badge,
+                  Colors.redAccent,
+                  const ZamestnanciPage(),
+                  isDark,
+                ),
+              if (isAdmin)
+                _buildMenuCard(
+                  context,
+                  'Účetnictví',
+                  Icons.pie_chart,
+                  Colors.indigo,
+                  const UcetnictviPage(),
+                  isDark,
+                ),
+              if (isAdmin)
+                _buildMenuCard(
+                  context,
+                  'Statistiky',
+                  Icons.bar_chart,
+                  Colors.purple,
+                  const StatisticsPage(),
+                  isDark,
+                ),
+              if (isAdmin)
+                _buildMenuCard(
+                  context,
+                  'Nastavení',
+                  Icons.settings,
+                  Colors.blueGrey,
+                  const SettingsPage(),
+                  isDark,
+                ),
               _buildMenuCard(
                 context,
                 'Sklad dílů',
@@ -228,6 +258,7 @@ class MenuPage extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -298,6 +329,7 @@ class MenuPage extends StatelessWidget {
             const SizedBox(height: 15),
             Text(
               title,
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,

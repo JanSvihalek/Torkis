@@ -6,6 +6,10 @@ import 'auth_screen.dart';
 import 'onboarding.dart';
 import 'main_screen.dart';
 
+// --- NOVÉ: GLOBÁLNÍ PROMĚNNÉ PRO CELOU APLIKACI ---
+String? globalServisId;
+String? globalUserRole;
+
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -25,37 +29,39 @@ class AuthGate extends StatelessWidget {
           return const AuthScreen();
         }
 
-        // 3. Uživatel JE přihlášen -> Jdeme do databáze
         final user = authSnapshot.data!;
 
+        // 3. ZMĚNA: Už nehledáme v 'nastaveni_servisu', ale v 'uzivatele'
         return FutureBuilder<DocumentSnapshot>(
           future: FirebaseFirestore.instance
-              .collection('nastaveni_servisu')
+              .collection('uzivatele')
               .doc(user.uid)
               .get(),
-          builder: (context, firestoreSnapshot) {
-            if (firestoreSnapshot.connectionState == ConnectionState.waiting) {
+          builder: (context, userSnap) {
+            if (userSnap.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                   body: Center(child: CircularProgressIndicator()));
             }
 
-            if (firestoreSnapshot.hasError) {
+            if (userSnap.hasError) {
               return Scaffold(
-                  body:
-                      Center(child: Text('Chyba: ${firestoreSnapshot.error}')));
+                  body: Center(
+                      child:
+                          Text('Chyba načítání profilu: ${userSnap.error}')));
             }
 
-            // 4. Kontrola
-            final doc = firestoreSnapshot.data;
-            if (doc != null && doc.exists) {
-              final data = doc.data() as Map<String, dynamic>;
-              if (data['prvni_spusteni_dokonceno'] == true) {
-                // Hotovo, pouštíme ho dál!
-                return const MainScreen();
-              }
+            // 4. Kontrola, zda má uživatel vytvořený profil a roli
+            if (userSnap.hasData && userSnap.data!.exists) {
+              final userData = userSnap.data!.data() as Map<String, dynamic>;
+
+              // ULOŽÍME ID SERVISU A ROLI DO PAMĚTI PRO ZBYTEK APLIKACE
+              globalServisId = userData['servis_id'];
+              globalUserRole = userData['role'];
+
+              return const MainScreen();
             }
 
-            // 5. Není to hotové -> Zpět do průvodce
+            // 5. Pokud profil v 'uzivatele' neexistuje, je to nově registrovaný majitel -> Průvodce
             return const SetupWizardScreen();
           },
         );
