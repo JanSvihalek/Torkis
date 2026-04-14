@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+
 import 'zakaznici.dart';
+import 'prubeh.dart'; // Odsud si bereme ActiveJobScreen pro VŠECHNY zakázky
+import 'fakturace.dart'; // Pro odkaz do detailu faktury
 
 class VozidlaPage extends StatefulWidget {
   const VozidlaPage({super.key});
@@ -27,9 +30,8 @@ class _VozidlaPageState extends State<VozidlaPage> {
       final map = <String, String>{};
       for (var doc in snap.docs) {
         final data = doc.data();
-        final nazev = (data['nazev']?.toString() ?? doc.id)
-            .trim()
-            .toLowerCase();
+        final nazev =
+            (data['nazev']?.toString() ?? doc.id).trim().toLowerCase();
         final logoUrl =
             data['logo']?.toString() ?? data['logo_url']?.toString() ?? '';
         if (nazev.isNotEmpty && logoUrl.isNotEmpty) {
@@ -167,12 +169,10 @@ class _VozidlaPageState extends State<VozidlaPage> {
                   final data = docs[index].data() as Map<String, dynamic>;
                   final docId = docs[index].id;
 
-                  final znackaNazev = (data['znacka']?.toString() ?? '')
-                      .trim()
-                      .toLowerCase();
+                  final znackaNazev =
+                      (data['znacka']?.toString() ?? '').trim().toLowerCase();
                   final logoUrl = _logaZnacek[znackaNazev];
 
-                  // PŘIDÁNO: Načtení tachometru a STK
                   final tacho = data['tachometr']?.toString() ?? '';
                   final stkM = data['stk_mesic']?.toString() ?? '';
                   final stkR = data['stk_rok']?.toString() ?? '';
@@ -194,9 +194,8 @@ class _VozidlaPageState extends State<VozidlaPage> {
                         height: 50,
                         padding: const EdgeInsets.all(5),
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF2C2C2C)
-                              : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF2C2C2C) : Colors.white,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Colors.teal.withOpacity(0.3),
@@ -208,9 +207,9 @@ class _VozidlaPageState extends State<VozidlaPage> {
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) =>
                                     const Icon(
-                                      Icons.directions_car,
-                                      color: Colors.teal,
-                                    ),
+                                  Icons.directions_car,
+                                  color: Colors.teal,
+                                ),
                               )
                             : const Icon(
                                 Icons.directions_car,
@@ -241,7 +240,6 @@ class _VozidlaPageState extends State<VozidlaPage> {
                                   color: Colors.grey,
                                 ),
                               ),
-                            // PŘIDÁNO: Zobrazení tachometru a STK
                             const SizedBox(height: 4),
                             if (tacho.isNotEmpty || maStk)
                               Text(
@@ -373,7 +371,6 @@ class VozidloDetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 20),
-
                       LayoutBuilder(
                         builder: (context, constraints) {
                           return DropdownMenu<String>(
@@ -400,7 +397,6 @@ class VozidloDetailScreen extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 15),
-
                       LayoutBuilder(
                         builder: (context, constraints) {
                           return DropdownMenu<String>(
@@ -421,7 +417,6 @@ class VozidloDetailScreen extends StatelessWidget {
                         },
                       ),
                       const SizedBox(height: 15),
-
                       TextField(
                         controller: vinCtrl,
                         decoration: const InputDecoration(
@@ -467,12 +462,12 @@ class VozidloDetailScreen extends StatelessWidget {
                                 .collection('vozidla')
                                 .doc(docId)
                                 .update({
-                                  'znacka': znackaCtrl.text.trim(),
-                                  'model': modelCtrl.text.trim(),
-                                  'vin': vinCtrl.text.trim(),
-                                  'rok_vyroby': rokCtrl.text.trim(),
-                                  'motorizace': motorCtrl.text.trim(),
-                                });
+                              'znacka': znackaCtrl.text.trim(),
+                              'model': modelCtrl.text.trim(),
+                              'vin': vinCtrl.text.trim(),
+                              'rok_vyroby': rokCtrl.text.trim(),
+                              'motorizace': motorCtrl.text.trim(),
+                            });
                             if (context.mounted) Navigator.pop(context);
                           },
                           child: const Text(
@@ -532,7 +527,6 @@ class VozidloDetailScreen extends StatelessWidget {
         final zakaznikId = autoData['zakaznik_id']?.toString() ?? '';
         final znackaNazev = (autoData['znacka']?.toString() ?? '').trim();
 
-        // PŘIDÁNO: Načtení tachometru a STK
         final tacho = autoData['tachometr']?.toString() ?? '';
         final stkM = autoData['stk_mesic']?.toString() ?? '';
         final stkR = autoData['stk_rok']?.toString() ?? '';
@@ -558,8 +552,7 @@ class VozidloDetailScreen extends StatelessWidget {
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // Vycentrování celého sloupce
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // --- VELKÁ HLAVIČKA S LOGEM NAD SPZ ---
                 Column(
@@ -578,8 +571,7 @@ class VozidloDetailScreen extends StatelessWidget {
                                   .trim()
                                   .toLowerCase();
                               if (dbNazev == znackaNazev.toLowerCase()) {
-                                nalezeneLogo =
-                                    d['logo']?.toString() ??
+                                nalezeneLogo = d['logo']?.toString() ??
                                     d['logo_url']?.toString() ??
                                     '';
                                 break;
@@ -696,7 +688,6 @@ class VozidloDetailScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // PŘIDÁNO: Zobrazení tachometru a STK
                         const SizedBox(height: 20),
                         const Divider(),
                         const SizedBox(height: 10),
@@ -757,9 +748,8 @@ class VozidloDetailScreen extends StatelessWidget {
                         );
                       }
 
-                      final zakaznikData =
-                          zakaznikSnap.data!.docs.first.data()
-                              as Map<String, dynamic>;
+                      final zakaznikData = zakaznikSnap.data!.docs.first.data()
+                          as Map<String, dynamic>;
 
                       return Card(
                         color: isDark
@@ -813,11 +803,11 @@ class VozidloDetailScreen extends StatelessWidget {
                   const SizedBox(height: 25),
                 ],
 
-                // --- HISTORIE SERVISŮ ---
+                // --- HISTORIE ZAKÁZEK (AKTIVNÍ I DOKONČENÉ) ---
                 Align(
                   alignment: Alignment.centerLeft,
                   child: const Text(
-                    'Historie servisů tohoto vozidla',
+                    'Zakázky vozidla',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -829,13 +819,14 @@ class VozidloDetailScreen extends StatelessWidget {
                       .where('spz', isEqualTo: spz)
                       .snapshots(),
                   builder: (context, historySnap) {
-                    if (historySnap.connectionState == ConnectionState.waiting) {
+                    if (historySnap.connectionState ==
+                        ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
                     }
                     if (!historySnap.hasData ||
                         historySnap.data!.docs.isEmpty) {
                       return const Text(
-                        'Vozidlo zatím nemá žádné servisní záznamy.',
+                        'Vozidlo zatím nemá žádné zakázky.',
                         style: TextStyle(color: Colors.grey),
                       );
                     }
@@ -866,8 +857,8 @@ class VozidloDetailScreen extends StatelessWidget {
                               p['pouzite_dily'] as List<dynamic>? ?? [];
                           for (var dil in dily) {
                             double pocet = (dil['pocet'] ?? 1.0).toDouble();
-                            double cenaSDph = (dil['cena_s_dph'] ?? 0.0)
-                                .toDouble();
+                            double cenaSDph =
+                                (dil['cena_s_dph'] ?? 0.0).toDouble();
                             celkovaCena += (pocet * cenaSDph);
                           }
                         }
@@ -891,9 +882,8 @@ class VozidloDetailScreen extends StatelessWidget {
                         }
 
                         return Card(
-                          color: isDark
-                              ? const Color(0xFF1E1E1E)
-                              : Colors.white,
+                          color:
+                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
                           margin: const EdgeInsets.only(bottom: 10),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
@@ -903,73 +893,93 @@ class VozidloDetailScreen extends StatelessWidget {
                                   : Colors.grey[200]!,
                             ),
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(15),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '${zakazka['cislo_zakazky']}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: barvaStavu.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: barvaStavu,
-                                          width: 0.5,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        stav,
-                                        style: TextStyle(
-                                          color: barvaStavu,
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  _formatDate(zakazka['cas_prijeti']),
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 13,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(15),
+                            // OPRAVA: VŽDY SE VOLÁ ActiveJobScreen
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ActiveJobScreen(
+                                    documentId: doc.id,
+                                    zakazkaId:
+                                        zakazka['cislo_zakazky'].toString(),
+                                    spz: spz,
                                   ),
                                 ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '${prace.length} úkonů',
-                                      style: const TextStyle(fontSize: 13),
-                                    ),
-                                    Text(
-                                      '${celkovaCena.toStringAsFixed(2)} Kč',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green,
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${zakazka['cislo_zakazky']}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
                                       ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: barvaStavu.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: barvaStavu,
+                                            width: 0.5,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          stav,
+                                          style: TextStyle(
+                                            color: barvaStavu,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    _formatDate(zakazka['cas_prijeti']),
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 13,
                                     ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${prace.length} úkonů',
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
+                                      Text(
+                                        '${celkovaCena.toStringAsFixed(2)} Kč',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isDark
+                                              ? Colors.greenAccent
+                                              : Colors.green,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
@@ -977,6 +987,166 @@ class VozidloDetailScreen extends StatelessWidget {
                     );
                   },
                 ),
+
+                const SizedBox(height: 25),
+
+                // --- FAKTURY VOZIDLA ---
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: const Text(
+                    'Faktury vozidla',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('faktury')
+                      .where('servis_id', isEqualTo: user.uid)
+                      .where('spz', isEqualTo: spz)
+                      .snapshots(),
+                  builder: (context, invoiceSnap) {
+                    if (invoiceSnap.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (!invoiceSnap.hasData ||
+                        invoiceSnap.data!.docs.isEmpty) {
+                      return const Text(
+                        'K tomuto vozidlu neevidujeme žádné faktury.',
+                        style: TextStyle(color: Colors.grey),
+                      );
+                    }
+
+                    final fakturyDocs = invoiceSnap.data!.docs.toList();
+                    fakturyDocs.sort((a, b) {
+                      final dA = a.data() as Map<String, dynamic>;
+                      final dB = b.data() as Map<String, dynamic>;
+                      final tA = dA['datum_vystaveni'] as Timestamp?;
+                      final tB = dB['datum_vystaveni'] as Timestamp?;
+                      if (tA == null && tB == null) return 0;
+                      if (tA == null) return 1;
+                      if (tB == null) return -1;
+                      return tB.compareTo(tA);
+                    });
+
+                    return Column(
+                      children: fakturyDocs.map((fDoc) {
+                        final faktura = fDoc.data() as Map<String, dynamic>;
+                        final stavPlatby =
+                            faktura['stav_platby'] ?? 'Čeká na platbu';
+                        final isStorno = stavPlatby == 'Stornováno';
+
+                        Color platbaColor;
+                        if (stavPlatby == 'Uhrazeno') {
+                          platbaColor = Colors.green;
+                        } else if (stavPlatby == 'Stornováno') {
+                          platbaColor = Colors.red;
+                        } else {
+                          platbaColor = Colors.orange;
+                        }
+
+                        return Card(
+                          color:
+                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            side: BorderSide(
+                              color: isDark
+                                  ? Colors.grey[800]!
+                                  : Colors.grey[200]!,
+                            ),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(15),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => FakturaDetailScreen(
+                                    fakturaDocId: fDoc.id,
+                                    zakazkaId: fDoc.id,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(15),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${faktura['cislo_faktury']}',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          decoration: isStorno
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: platbaColor.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          border: Border.all(
+                                              color: platbaColor, width: 0.5),
+                                        ),
+                                        child: Text(
+                                          stavPlatby,
+                                          style: TextStyle(
+                                            color: platbaColor,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    _formatDate(faktura['datum_vystaveni']),
+                                    style: const TextStyle(
+                                        color: Colors.grey, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${(faktura['celkova_castka'] ?? 0.0).toStringAsFixed(2)} Kč',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: isStorno
+                                              ? Colors.grey
+                                              : (isDark
+                                                  ? Colors.greenAccent
+                                                  : Colors.green),
+                                          decoration: isStorno
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+
                 const SizedBox(height: 40),
               ],
             ),

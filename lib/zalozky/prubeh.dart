@@ -9,7 +9,6 @@ import 'package:printing/printing.dart';
 import 'dart:io';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
-
 import 'zakaznici.dart';
 import 'vozidla.dart';
 
