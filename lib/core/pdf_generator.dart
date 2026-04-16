@@ -42,9 +42,9 @@ class GlobalPdfGenerator {
           final numericString = '${bban}123500';
           final remainder = BigInt.parse(numericString) % BigInt.from(97);
           final checkDigits = (98 - remainder.toInt()).toString().padLeft(
-            2,
-            '0',
-          );
+                2,
+                '0',
+              );
 
           iban = 'CZ$checkDigits$bban';
         }
@@ -78,7 +78,7 @@ class GlobalPdfGenerator {
     final pozadavky = data['pozadavky_zakaznika'] as List<dynamic>? ?? [];
     final formaUhrady = data['forma_uhrady']?.toString() ?? 'Převodem';
 
-    // ZJISTÍME SPLATNOST (buď byla předána v 'data', nebo default 14)
+    // ZJISTÍME SPLATNOST
     final splatnostDny = data['splatnost_dny'] ?? 14;
     final datumVystaveni = DateTime.now();
     final datumSplatnosti = datumVystaveni.add(Duration(days: splatnostDny));
@@ -143,15 +143,13 @@ class GlobalPdfGenerator {
     final znackaNazev = (data['znacka']?.toString() ?? '').trim();
     if (znackaNazev.isNotEmpty) {
       try {
-        final snap = await FirebaseFirestore.instance
-            .collection('znacka')
-            .get();
+        final snap =
+            await FirebaseFirestore.instance.collection('znacka').get();
         String foundLogoUrl = '';
         for (var doc in snap.docs) {
           final d = doc.data();
-          final dbNazev = (d['nazev']?.toString() ?? doc.id)
-              .trim()
-              .toLowerCase();
+          final dbNazev =
+              (d['nazev']?.toString() ?? doc.id).trim().toLowerCase();
           if (dbNazev == znackaNazev.toLowerCase()) {
             foundLogoUrl =
                 d['logo']?.toString() ?? d['logo_url']?.toString() ?? '';
@@ -216,13 +214,15 @@ class GlobalPdfGenerator {
       );
     }
 
+    // Výpočet celkové sumy pro zobrazení dole a generování QR kódu
     for (var prace in provedenePrace) {
       final polozky = prace['polozky'] as List<dynamic>?;
       if (polozky != null) {
         for (var p in polozky) {
           double mnoz = double.tryParse(p['mnozstvi'].toString()) ?? 1.0;
           double cena = double.tryParse(p['cena_s_dph'].toString()) ?? 0.0;
-          celkovaSuma += (mnoz * cena);
+          double sleva = double.tryParse(p['sleva']?.toString() ?? '0') ?? 0.0;
+          celkovaSuma += (mnoz * cena) * (1 - (sleva / 100));
         }
       } else {
         celkovaSuma += (prace['cena_s_dph'] ?? 0.0).toDouble();
@@ -236,8 +236,7 @@ class GlobalPdfGenerator {
     }
 
     final spaydStr = _generateSpayd(sBanka, celkovaSuma, puvodniCislo);
-    final ukazQr =
-        typ == PdfTyp.faktura &&
+    final ukazQr = typ == PdfTyp.faktura &&
         formaUhrady.toLowerCase().contains('převod') &&
         celkovaSuma > 0 &&
         spaydStr.isNotEmpty;
@@ -297,7 +296,6 @@ class GlobalPdfGenerator {
             ],
           ),
           pw.SizedBox(height: 30),
-
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
@@ -389,7 +387,6 @@ class GlobalPdfGenerator {
                 ),
               ),
               pw.SizedBox(width: 20),
-
               pw.Expanded(
                 child: pw.Container(
                   padding: const pw.EdgeInsets.all(15),
@@ -485,7 +482,6 @@ class GlobalPdfGenerator {
             ],
           ),
           pw.SizedBox(height: 20),
-
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
             decoration: pw.BoxDecoration(
@@ -543,7 +539,6 @@ class GlobalPdfGenerator {
             ),
           ),
           pw.SizedBox(height: 20),
-
           if (typ == PdfTyp.protokol) ...[
             pw.Container(
               padding: const pw.EdgeInsets.all(12),
@@ -590,7 +585,6 @@ class GlobalPdfGenerator {
                       color: PdfColors.grey700,
                     ),
                   ),
-
                   if (stavVozidla['poskozeni'] != null) ...[
                     pw.SizedBox(height: 8),
                     pw.Text(
@@ -619,7 +613,6 @@ class GlobalPdfGenerator {
             ),
             pw.SizedBox(height: 25),
           ],
-
           pw.Text(
             zobrazitCeny ? 'ROZPIS POLOŽEK' : 'POŽADOVANÉ ÚKONY',
             style: pw.TextStyle(
@@ -630,12 +623,13 @@ class GlobalPdfGenerator {
             ),
           ),
           pw.SizedBox(height: 10),
-
           pw.Table(
             columnWidths: {
               0: const pw.FlexColumnWidth(3),
-              if (zobrazitCeny) 1: const pw.FlexColumnWidth(1),
-              if (zobrazitCeny) 2: const pw.FlexColumnWidth(1.5),
+              if (zobrazitCeny) 1: const pw.FlexColumnWidth(0.8), // Množství
+              if (zobrazitCeny) 2: const pw.FlexColumnWidth(1), // Cena/ks
+              if (zobrazitCeny) 3: const pw.FlexColumnWidth(1), // Sleva
+              if (zobrazitCeny) 4: const pw.FlexColumnWidth(1.2), // Celkem
             },
             children: [
               pw.TableRow(
@@ -681,6 +675,36 @@ class GlobalPdfGenerator {
                         horizontal: 4,
                       ),
                       child: pw.Text(
+                        'Cena/ks',
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                          font: fontBold,
+                          fontSize: 9,
+                          color: PdfColors.grey600,
+                        ),
+                      ),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 4,
+                      ),
+                      child: pw.Text(
+                        'Sleva',
+                        textAlign: pw.TextAlign.center,
+                        style: pw.TextStyle(
+                          font: fontBold,
+                          fontSize: 9,
+                          color: PdfColors.grey600,
+                        ),
+                      ),
+                    ),
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 4,
+                      ),
+                      child: pw.Text(
                         'Celkem s DPH',
                         textAlign: pw.TextAlign.right,
                         style: pw.TextStyle(
@@ -693,7 +717,6 @@ class GlobalPdfGenerator {
                   ],
                 ],
               ),
-
               if (!zobrazitCeny)
                 ...pozadavky.map(
                   (p) => pw.TableRow(
@@ -738,7 +761,6 @@ class GlobalPdfGenerator {
                     ],
                   ),
                 ),
-
               if (zobrazitCeny)
                 ...provedenePrace.expand((prace) {
                   List<dynamic> items = [];
@@ -751,8 +773,7 @@ class GlobalPdfGenerator {
                         'typ': 'Práce',
                         'nazev': 'Práce',
                         'cislo': '',
-                        'mnozstvi':
-                            double.tryParse(
+                        'mnozstvi': double.tryParse(
                               prace['delka_prace']?.toString() ?? '1',
                             ) ??
                             1.0,
@@ -790,6 +811,8 @@ class GlobalPdfGenerator {
                         ),
                         pw.Padding(padding: pw.EdgeInsets.zero),
                         pw.Padding(padding: pw.EdgeInsets.zero),
+                        pw.Padding(padding: pw.EdgeInsets.zero),
+                        pw.Padding(padding: pw.EdgeInsets.zero),
                       ],
                     ),
                     ...items.map((item) {
@@ -797,6 +820,12 @@ class GlobalPdfGenerator {
                           double.tryParse(item['mnozstvi'].toString()) ?? 1.0;
                       double c =
                           double.tryParse(item['cena_s_dph'].toString()) ?? 0.0;
+                      double s =
+                          double.tryParse(item['sleva']?.toString() ?? '0') ??
+                              0.0;
+
+                      double rCelkem = (p * c) * (1 - (s / 100));
+
                       String j = item['jednotka'] ?? 'ks';
                       String nazevPolozky = item['nazev'] ?? '';
                       if (item['cislo'] != null &&
@@ -843,7 +872,37 @@ class GlobalPdfGenerator {
                               horizontal: 4,
                             ),
                             child: pw.Text(
-                              '${(p * c).toStringAsFixed(2)} Kč',
+                              '${c.toStringAsFixed(2)} Kč',
+                              textAlign: pw.TextAlign.center,
+                              style: pw.TextStyle(
+                                font: fontRegular,
+                                fontSize: 9,
+                                color: PdfColors.grey700,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 4,
+                            ),
+                            child: pw.Text(
+                              s > 0 ? '${s.toStringAsFixed(0)} %' : '',
+                              textAlign: pw.TextAlign.center,
+                              style: pw.TextStyle(
+                                font: fontBold,
+                                fontSize: 9,
+                                color: PdfColors.red600,
+                              ),
+                            ),
+                          ),
+                          pw.Padding(
+                            padding: const pw.EdgeInsets.symmetric(
+                              vertical: 4,
+                              horizontal: 4,
+                            ),
+                            child: pw.Text(
+                              '${rCelkem.toStringAsFixed(2)} Kč',
                               textAlign: pw.TextAlign.right,
                               style: pw.TextStyle(
                                 font: fontRegular,
@@ -868,13 +927,14 @@ class GlobalPdfGenerator {
                         pw.SizedBox(height: 4),
                         pw.SizedBox(height: 4),
                         pw.SizedBox(height: 4),
+                        pw.SizedBox(height: 4),
+                        pw.SizedBox(height: 4),
                       ],
                     ),
                   ];
                 }),
             ],
           ),
-
           if (zobrazitCeny) ...[
             pw.SizedBox(height: 20),
             pw.Row(
@@ -949,7 +1009,6 @@ class GlobalPdfGenerator {
                         ),
                       )
                     : pw.SizedBox(),
-
                 pw.Container(
                   width: 220,
                   padding: const pw.EdgeInsets.symmetric(
@@ -986,9 +1045,7 @@ class GlobalPdfGenerator {
               ],
             ),
           ],
-
           pw.Spacer(),
-
           pw.Divider(color: PdfColors.grey300, thickness: 0.5),
           pw.SizedBox(height: 10),
           pw.Row(
