@@ -3,11 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart'; // Pro skenování čárových kódů
 import 'auth_gate.dart';
 import 'prubeh.dart'; // Pro proklik do zakázky
 import 'fakturace.dart'; // Pro proklik do faktury
 import '../core/pdf_generator.dart'; // Pro generování PDF při pultovém prodeji
-
 
 class SkladPage extends StatefulWidget {
   const SkladPage({super.key});
@@ -38,9 +38,9 @@ class _SkladPageState extends State<SkladPage> {
             unselectedLabelColor: Colors.grey,
             indicatorColor: Colors.orange,
             indicatorWeight: 3,
-            isScrollable: false, // <--- ZDE JE OPRAVA (pevné roztažení)
-            labelPadding: EdgeInsets.zero, // Odstraní zbytečné odsazení
-            labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold), // Mírně menší písmo pro lepší uspořádání
+            isScrollable: false, // Pevné ukotvení
+            labelPadding: EdgeInsets.zero,
+            labelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             tabs: [
               Tab(icon: Icon(Icons.inventory_2), text: 'Sklad'),
               Tab(icon: Icon(Icons.add_shopping_cart), text: 'Příjem'),
@@ -356,7 +356,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
 }
 
 // ============================================================================
-// 2. ZÁLOŽKA: PŘÍJEM (NASKLADNĚNÍ)
+// 2. ZÁLOŽKA: PŘÍJEM (NASKLADNĚNÍ A ZAKLÁDÁNÍ SE SKENOVÁNÍM)
 // ============================================================================
 class _PrijemSkladuTab extends StatefulWidget {
   const _PrijemSkladuTab();
@@ -381,6 +381,19 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
   
   bool _isSaving = false;
 
+  @override
+  void dispose() {
+    _nazevCtrl.dispose();
+    _kodCtrl.dispose();
+    _vyrobceCtrl.dispose();
+    _minStavCtrl.dispose();
+    _mnozstviCtrl.dispose();
+    _nakupkaCtrl.dispose();
+    _prodejkaCtrl.dispose();
+    _dodavatelCtrl.dispose();
+    super.dispose();
+  }
+
   void _clearForm() {
     _nazevCtrl.clear();
     _kodCtrl.clear();
@@ -391,6 +404,56 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
     _prodejkaCtrl.clear();
     _dodavatelCtrl.clear();
     _vybranaJednotka = 'ks';
+  }
+
+  Future<void> _skenovatKod(List<QueryDocumentSnapshot> dily) async {
+    try {
+      String naskenovanyKod = await FlutterBarcodeScanner.scanBarcode(
+        '#ff6666', 'Zrušit', true, ScanMode.BARCODE,
+      );
+
+      if (naskenovanyKod != '-1') {
+        try {
+          final nalezenyDil = dily.firstWhere((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['kod']?.toString() == naskenovanyKod;
+          });
+
+          final data = nalezenyDil.data() as Map<String, dynamic>;
+          
+          setState(() {
+            _vybranyDilId = nalezenyDil.id;
+            _nazevCtrl.text = data['nazev'] ?? '';
+            _kodCtrl.text = data['kod'] ?? '';
+            _vyrobceCtrl.text = data['vyrobce'] ?? '';
+            _vybranaJednotka = data['jednotka'] ?? 'ks';
+            _minStavCtrl.text = data['min_stav']?.toString() ?? '0';
+            _nakupkaCtrl.text = data['cena_nakup']?.toString() ?? '';
+            _prodejkaCtrl.text = data['cena_prodej']?.toString() ?? '';
+            _mnozstviCtrl.clear();
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Díl nalezen: ${data['nazev']}'), backgroundColor: Colors.green),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Díl s tímto kódem není v databázi. Můžete ho založit.'), backgroundColor: Colors.orange),
+            );
+            setState(() {
+              _vybranyDilId = null;
+              _clearForm();
+              _kodCtrl.text = naskenovanyKod;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chyba skeneru.'), backgroundColor: Colors.red));
+    }
   }
 
   @override
@@ -404,7 +467,7 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
         children: [
           const Text('Příjem a evidence nového dílu', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          const Text('Vyberte existující díl z roletky, nebo zadejte zcela nový.', style: TextStyle(color: Colors.grey)),
+          const Text('Vyberte existující díl z roletky, naskenujte jeho kód, nebo zadejte zcela nový.', style: TextStyle(color: Colors.grey)),
           const SizedBox(height: 30),
 
           Container(
@@ -423,46 +486,66 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
                     if (!snapshot.hasData) return const CircularProgressIndicator();
                     final dily = snapshot.data!.docs;
 
-                    return DropdownButtonFormField<String?>(
-                      decoration: const InputDecoration(
-                        labelText: 'Vyberte existující díl ze skladu',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.inventory_2),
-                      ),
-                      value: _vybranyDilId,
-                      items: [
-                        const DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text('➕ PŘIDAT JAKO NOVÝ DÍL', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String?>(
+                            decoration: const InputDecoration(
+                              labelText: 'Vyberte existující díl ze skladu',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.inventory_2),
+                            ),
+                            value: _vybranyDilId,
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('➕ PŘIDAT JAKO NOVÝ DÍL', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+                              ),
+                              ...dily.map((doc) {
+                                final data = doc.data() as Map<String, dynamic>;
+                                return DropdownMenuItem<String?>(
+                                  value: doc.id,
+                                  child: Text('${data['nazev']} (${data['kod'] ?? '-'})'),
+                                );
+                              }),
+                            ],
+                            onChanged: (val) {
+                              setState(() {
+                                _vybranyDilId = val;
+                                if (val == null) {
+                                  _clearForm();
+                                } else {
+                                  final selectedDoc = dily.firstWhere((d) => d.id == val);
+                                  final data = selectedDoc.data() as Map<String, dynamic>;
+                                  
+                                  _nazevCtrl.text = data['nazev'] ?? '';
+                                  _kodCtrl.text = data['kod'] ?? '';
+                                  _vyrobceCtrl.text = data['vyrobce'] ?? '';
+                                  _vybranaJednotka = data['jednotka'] ?? 'ks';
+                                  _minStavCtrl.text = data['min_stav']?.toString() ?? '0';
+                                  _nakupkaCtrl.text = data['cena_nakup']?.toString() ?? '';
+                                  _prodejkaCtrl.text = data['cena_prodej']?.toString() ?? '';
+                                  _mnozstviCtrl.clear();
+                                }
+                              });
+                            },
+                          ),
                         ),
-                        ...dily.map((doc) {
-                          final data = doc.data() as Map<String, dynamic>;
-                          return DropdownMenuItem<String?>(
-                            value: doc.id,
-                            child: Text('${data['nazev']} (${data['kod'] ?? '-'})'),
-                          );
-                        }),
+                        const SizedBox(width: 10),
+                        InkWell(
+                          onTap: () => _skenovatKod(dily),
+                          borderRadius: BorderRadius.circular(10),
+                          child: Container(
+                            height: 60,
+                            width: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
+                          ),
+                        ),
                       ],
-                      onChanged: (val) {
-                        setState(() {
-                          _vybranyDilId = val;
-                          if (val == null) {
-                            _clearForm();
-                          } else {
-                            final selectedDoc = dily.firstWhere((d) => d.id == val);
-                            final data = selectedDoc.data() as Map<String, dynamic>;
-                            
-                            _nazevCtrl.text = data['nazev'] ?? '';
-                            _kodCtrl.text = data['kod'] ?? '';
-                            _vyrobceCtrl.text = data['vyrobce'] ?? '';
-                            _vybranaJednotka = data['jednotka'] ?? 'ks';
-                            _minStavCtrl.text = data['min_stav']?.toString() ?? '0';
-                            _nakupkaCtrl.text = data['cena_nakup']?.toString() ?? '';
-                            _prodejkaCtrl.text = data['cena_prodej']?.toString() ?? '';
-                            _mnozstviCtrl.clear();
-                          }
-                        });
-                      },
                     );
                   },
                 ),
@@ -632,7 +715,7 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
 }
 
 // ============================================================================
-// 3. ZÁLOŽKA: PULTOVÝ PRODEJ (KOŠÍK + ZÁKAZNÍK)
+// 3. ZÁLOŽKA: PULTOVÝ PRODEJ (KOŠÍK + ZÁKAZNÍK + SKENOVÁNÍ)
 // ============================================================================
 class _PultovyProdejTab extends StatefulWidget {
   const _PultovyProdejTab();
@@ -642,7 +725,6 @@ class _PultovyProdejTab extends StatefulWidget {
 }
 
 class _PultovyProdejTabState extends State<_PultovyProdejTab> {
-  // Údaje zákazníka
   Map<String, dynamic>? _vybranyZakaznik;
   final _jmenoCtrl = TextEditingController();
   final _telefonCtrl = TextEditingController();
@@ -651,7 +733,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
   final _icoCtrl = TextEditingController();
   final _dicCtrl = TextEditingController();
 
-  // Výběr dílu
   String? _vybranyDilId;
   Map<String, dynamic>? _vybranyDilData;
   final _mnozstviCtrl = TextEditingController(text: '1');
@@ -678,6 +759,42 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
     _dicCtrl.dispose();
     _mnozstviCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _skenovatKodDoProdeje(List<QueryDocumentSnapshot> dily) async {
+    try {
+      String naskenovanyKod = await FlutterBarcodeScanner.scanBarcode(
+        '#ff6666', 'Zrušit', true, ScanMode.BARCODE,
+      );
+
+      if (naskenovanyKod != '-1') {
+        try {
+          final nalezenyDil = dily.firstWhere((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['kod']?.toString() == naskenovanyKod;
+          });
+
+          setState(() {
+            _vybranyDilId = nalezenyDil.id;
+            _vybranyDilData = nalezenyDil.data() as Map<String, dynamic>;
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Připraveno: ${_vybranyDilData!['nazev']}'), backgroundColor: Colors.green),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Díl s tímto kódem nebyl ve skladu nalezen.'), backgroundColor: Colors.red),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chyba skeneru.'), backgroundColor: Colors.red));
+    }
   }
 
   void _pridatDoKosiku() {
@@ -786,7 +903,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                       onPressed: _kosik.isEmpty || _isSaving ? null : () async {
                         setModalState(() => _isSaving = true);
                         await _dokoncitProdej();
-                        if (mounted) Navigator.pop(context); // Zavře modal
+                        if (mounted) Navigator.pop(context); 
                       },
                       icon: _isSaving ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.point_of_sale),
                       label: Text(_isSaving ? 'ZPRACOVÁVÁM...' : 'DOKONČIT PRODEJ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
@@ -840,7 +957,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
         });
       }
 
-      // Vytvoření dat pro zákazníka (Prodej)
       Map<String, dynamic> finalCustomerData = {
         'id_zakaznika': _vybranyZakaznik?['id_zakaznika'] ?? '',
         'jmeno': _jmenoCtrl.text.trim().isNotEmpty ? _jmenoCtrl.text.trim() : 'Pultový prodej',
@@ -870,7 +986,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
       String sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
       String sIco = docNast.data()?['ico_servisu'] ?? '';
 
-      // Vygenerování PDF
       final pdfBytes = await GlobalPdfGenerator.generateDocument(
         data: invoiceData,
         servisNazev: sNazev,
@@ -926,7 +1041,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
     return Stack(
       children: [
         Positioned.fill(
-          bottom: 80, // Místo pro spodní lištu košíku
+          bottom: 80, 
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -935,7 +1050,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                 const Text('Pultový prodej', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
 
-                // KARTA ZÁKAZNÍKA
                 Card(
                   color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                   elevation: 2,
@@ -1014,7 +1128,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                 ),
                 const SizedBox(height: 20),
 
-                // KARTA VÝBĚRU DÍLU
                 Card(
                   color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                   elevation: 2,
@@ -1038,26 +1151,46 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                             if (!snapshot.hasData) return const CircularProgressIndicator();
                             final dily = snapshot.data!.docs;
 
-                            return DropdownButtonFormField<String>(
-                              decoration: InputDecoration(
-                                labelText: 'Vyhledejte díl...',
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                                prefixIcon: const Icon(Icons.search),
-                              ),
-                              value: _vybranyDilId,
-                              items: dily.map((doc) {
-                                final data = doc.data() as Map<String, dynamic>;
-                                return DropdownMenuItem<String>(
-                                  value: doc.id,
-                                  child: Text('${data['nazev']} (Skladem: ${data['skladem']}) - ${data['cena_prodej']} Kč'),
-                                );
-                              }).toList(),
-                              onChanged: (val) {
-                                setState(() {
-                                  _vybranyDilId = val;
-                                  _vybranyDilData = dily.firstWhere((d) => d.id == val).data() as Map<String, dynamic>;
-                                });
-                              },
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    decoration: InputDecoration(
+                                      labelText: 'Vyhledejte díl...',
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                      prefixIcon: const Icon(Icons.search),
+                                    ),
+                                    value: _vybranyDilId,
+                                    items: dily.map((doc) {
+                                      final data = doc.data() as Map<String, dynamic>;
+                                      return DropdownMenuItem<String>(
+                                        value: doc.id,
+                                        child: Text('${data['nazev']} (Skladem: ${data['skladem']}) - ${data['cena_prodej']} Kč'),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _vybranyDilId = val;
+                                        _vybranyDilData = dily.firstWhere((d) => d.id == val).data() as Map<String, dynamic>;
+                                      });
+                                    },
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                InkWell(
+                                  onTap: () => _skenovatKodDoProdeje(dily),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    height: 60,
+                                    width: 60,
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
+                                  ),
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -1127,7 +1260,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
           ),
         ),
 
-        // SPODNÍ LIŠTA PRO KOŠÍK
         Positioned(
           bottom: 0, left: 0, right: 0,
           child: Container(
