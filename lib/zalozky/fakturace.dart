@@ -7,7 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 import '../core/pdf_generator.dart';
-import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO globalServisId
+import 'auth_gate.dart';
 
 import 'zakaznici.dart';
 import 'vozidla.dart';
@@ -18,7 +18,7 @@ Future<void> syncAndRegenerateFaktura(
   String zakazkaId,
   List<dynamic> updatedPrace,
 ) async {
-  if (globalServisId == null) return; // <--- OCHRANA
+  if (globalServisId == null) return;
 
   double celkovaSuma = 0.0;
   for (var prace in updatedPrace) {
@@ -27,7 +27,9 @@ Future<void> syncAndRegenerateFaktura(
       for (var p in polozky) {
         double mnoz = double.tryParse(p['mnozstvi'].toString()) ?? 1.0;
         double cena = double.tryParse(p['cena_s_dph'].toString()) ?? 0.0;
-        celkovaSuma += (mnoz * cena);
+        double sleva = double.tryParse(p['sleva']?.toString() ?? '0') ??
+            0.0; // <--- PŘIDÁNA SLEVA PŘI REGENERACI
+        celkovaSuma += (mnoz * cena) * (1 - (sleva / 100));
       }
     } else {
       celkovaSuma += (prace['cena_s_dph'] ?? 0.0).toDouble();
@@ -42,7 +44,7 @@ Future<void> syncAndRegenerateFaktura(
 
   final zakazkaRef = FirebaseFirestore.instance
       .collection('zakazky')
-      .doc('${globalServisId}_$zakazkaId'); // <--- ZMĚNA ZDE
+      .doc('${globalServisId}_$zakazkaId');
   final zakDoc = await zakazkaRef.get();
   if (!zakDoc.exists)
     throw Exception("Původní zakázka nenalezena pro přegenerování PDF.");
@@ -54,7 +56,7 @@ Future<void> syncAndRegenerateFaktura(
   String odesilatelIco = '';
   final docNastaveni = await FirebaseFirestore.instance
       .collection('nastaveni_servisu')
-      .doc(globalServisId) // <--- ZMĚNA ZDE
+      .doc(globalServisId)
       .get();
   if (docNastaveni.exists) {
     odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
@@ -69,7 +71,7 @@ Future<void> syncAndRegenerateFaktura(
   );
 
   Reference pdfRef = FirebaseStorage.instance.ref().child(
-        'servisy/$globalServisId/zakazky/$zakazkaId/finalni_vyuctovani_$zakazkaId.pdf', // <--- ZMĚNA ZDE
+        'servisy/$globalServisId/zakazky/$zakazkaId/finalni_vyuctovani_$zakazkaId.pdf',
       );
   await pdfRef.putData(
     pdfBytes,
@@ -197,8 +199,7 @@ class _FakturacePageState extends State<FakturacePage> {
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('faktury')
-                  .where('servis_id',
-                      isEqualTo: globalServisId) // <--- ZMĚNA ZDE
+                  .where('servis_id', isEqualTo: globalServisId)
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError)
@@ -652,8 +653,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                 ? Future<DocumentSnapshot?>.value(null)
                 : FirebaseFirestore.instance
                     .collection('zakazky')
-                    .doc(
-                        '${globalServisId}_${widget.zakazkaId}') // <--- ZMĚNA ZDE
+                    .doc('${globalServisId}_${widget.zakazkaId}')
                     .get(),
             builder: (context, zakazkaSnap) {
               Map<String, dynamic> zakData = {};
@@ -761,7 +761,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                               : ''),
                                       onTap: () {
                                         final vozidloDocId =
-                                            '${globalServisId}_${fData['spz']}'; // <--- ZMĚNA ZDE
+                                            '${globalServisId}_${fData['spz']}';
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -781,7 +781,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                       value: '${fData['cislo_zakazky']}',
                                       onTap: () {
                                         final docId =
-                                            '${globalServisId}_${widget.zakazkaId}'; // <--- ZMĚNA ZDE
+                                            '${globalServisId}_${widget.zakazkaId}';
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -926,13 +926,17 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
 
                             double celkemUkon = 0.0;
                             for (var p in polozky) {
+                              double pMnoz =
+                                  double.tryParse(p['mnozstvi'].toString()) ??
+                                      1.0;
+                              double pCena =
+                                  double.tryParse(p['cena_s_dph'].toString()) ??
+                                      0.0;
+                              double pSleva = double.tryParse(
+                                      p['sleva']?.toString() ?? '0') ??
+                                  0.0;
                               celkemUkon +=
-                                  (double.tryParse(p['mnozstvi'].toString()) ??
-                                          1.0) *
-                                      (double.tryParse(
-                                            p['cena_s_dph'].toString(),
-                                          ) ??
-                                          0.0);
+                                  (pMnoz * pCena) * (1 - (pSleva / 100));
                             }
 
                             return Card(
@@ -999,19 +1003,23 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                     const SizedBox(height: 10),
                                     ...polozky.map((p) {
                                       double pMnoz = double.tryParse(
-                                            p['mnozstvi'].toString(),
-                                          ) ??
+                                              p['mnozstvi'].toString()) ??
                                           1.0;
                                       double pCena = double.tryParse(
-                                            p['cena_s_dph'].toString(),
-                                          ) ??
+                                              p['cena_s_dph'].toString()) ??
                                           0.0;
+                                      double pSleva = double.tryParse(
+                                              p['sleva']?.toString() ?? '0') ??
+                                          0.0;
+
                                       String pJedn = p['jednotka'] ?? 'ks';
-                                      String cistyMnoz =
-                                          pMnoz.toString().replaceAll(
-                                                RegExp(r"([.]*0)(?!.*\d)"),
-                                                "",
-                                              );
+                                      String cistyMnoz = pMnoz
+                                          .toString()
+                                          .replaceAll(
+                                              RegExp(r"([.]*0)(?!.*\d)"), "");
+                                      String slevaStr = pSleva > 0
+                                          ? ' (-${pSleva.toStringAsFixed(0)}%)'
+                                          : '';
 
                                       String cNum =
                                           p['cislo']?.toString() ?? '';
@@ -1025,7 +1033,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                           left: 10,
                                         ),
                                         child: Text(
-                                          '• [${p['typ']}] $nDisp - $cistyMnoz $pJedn - ${(pMnoz * pCena).toStringAsFixed(2)} Kč',
+                                          '• [${p['typ']}] $nDisp - $cistyMnoz $pJedn$slevaStr - ${(pMnoz * pCena * (1 - pSleva / 100)).toStringAsFixed(2)} Kč',
                                           style: const TextStyle(fontSize: 13),
                                         ),
                                       );
@@ -1096,6 +1104,7 @@ class PolozkaInput {
   String jednotka = 'ks';
   final cenaBezDph = TextEditingController(text: '0');
   final cenaSDph = TextEditingController(text: '0');
+  final sleva = TextEditingController(text: '0'); // <--- PŘIDÁNA SLEVA
 
   void dispose() {
     cislo.dispose();
@@ -1103,6 +1112,7 @@ class PolozkaInput {
     mnozstvi.dispose();
     cenaBezDph.dispose();
     cenaSDph.dispose();
+    sleva.dispose(); // <--- ZDE TAKÉ
   }
 }
 
@@ -1157,6 +1167,12 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
           input.jednotka = p['jednotka'] ?? 'ks';
           input.cenaBezDph.text = (p['cena_bez_dph'] ?? 0.0).toStringAsFixed(2);
           input.cenaSDph.text = (p['cena_s_dph'] ?? 0.0).toStringAsFixed(2);
+
+          String slevaVal = (p['sleva'] ?? 0.0).toString();
+          input.sleva.text = slevaVal.endsWith('.0')
+              ? slevaVal.replaceAll('.0', '')
+              : slevaVal;
+
           _polozkyInputs.add(input);
         }
       } else {
@@ -1204,7 +1220,7 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
     if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(globalServisId) // <--- ZMĚNA ZDE
+          .doc(globalServisId)
           .get();
       if (doc.exists) {
         setState(() {
@@ -1222,7 +1238,10 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
           double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
       double cenaKs =
           double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0;
-      celkem += (pocet * cenaKs);
+      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
+          0.0; // <--- UPLATNĚNÍ SLEVY
+
+      celkem += (pocet * cenaKs) * (1 - (sleva / 100));
     }
     setState(() {
       _celkovaCenaSDph = celkem;
@@ -1274,6 +1293,8 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                       0.0,
               'cena_s_dph':
                   double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
+              'sleva': double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
+                  0.0, // <--- ULOŽENÍ SLEVY
             },
           )
           .where((d) => d['nazev'].toString().isNotEmpty)
@@ -1404,7 +1425,11 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                                   polozka.cenaSDph.text.replaceAll(',', '.'),
                                 ) ??
                                 0.0;
-                            double rCelkem = dPocet * dCena;
+                            double dSleva = double.tryParse(
+                                    polozka.sleva.text.replaceAll(',', '.')) ??
+                                0.0;
+                            double rCelkem =
+                                (dPocet * dCena) * (1 - (dSleva / 100));
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 15),
@@ -1535,9 +1560,9 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                                           onChanged: (v) => _prepocitatCelkem(),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 4),
                                       Expanded(
-                                        flex: 3,
+                                        flex: 2,
                                         child: DropdownButtonFormField<String>(
                                           value: polozka.jednotka,
                                           style: TextStyle(
@@ -1554,7 +1579,7 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                                             'm',
                                             'bal',
                                             'sada',
-                                            'úkon',
+                                            'úkon'
                                           ]
                                               .map(
                                                 (j) => DropdownMenuItem(
@@ -1595,7 +1620,19 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        flex: 2,
+                                        child: _buildTextField(
+                                          polozka.sleva,
+                                          'Sleva %',
+                                          isDark,
+                                          isNumber: true,
+                                          compact: true,
+                                          onChanged: (v) => _prepocitatCelkem(),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
                                       Expanded(
                                         flex: 3,
                                         child: _buildTextField(
@@ -1608,7 +1645,7 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                                               _prepocitatDphPolozky(polozka, v),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 4),
                                       Expanded(
                                         flex: 3,
                                         child: _buildTextField(
@@ -1836,7 +1873,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
     if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(globalServisId) // <--- ZMĚNA ZDE
+          .doc(globalServisId)
           .get();
       if (doc.exists) {
         setState(() {
@@ -1855,7 +1892,10 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
           double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
       double cenaKs =
           double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0;
-      celkem += (pocet * cenaKs);
+      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
+          0.0; // <--- UPLATNĚNÍ SLEVY
+
+      celkem += (pocet * cenaKs) * (1 - (sleva / 100));
     }
     setState(() {
       _celkovaCenaSDph = celkem;
@@ -1921,6 +1961,8 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                       0.0,
               'cena_s_dph':
                   double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
+              'sleva': double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
+                  0.0, // <--- ULOŽENÍ SLEVY
             },
           )
           .where((d) => d['nazev'].toString().isNotEmpty)
@@ -1946,7 +1988,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
 
       final docNast = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(globalServisId) // <--- ZMĚNA ZDE
+          .doc(globalServisId)
           .get();
       String sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
       String sIco = docNast.data()?['ico_servisu'] ?? '';
@@ -1958,17 +2000,18 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         typ: PdfTyp.faktura,
       );
 
-      Reference pdfRef = FirebaseStorage.instance.ref().child(
-          'servisy/$globalServisId/faktury/$cisloFaktury.pdf'); // <--- ZMĚNA ZDE
+      Reference pdfRef = FirebaseStorage.instance
+          .ref()
+          .child('servisy/$globalServisId/faktury/$cisloFaktury.pdf');
       await pdfRef.putData(
           pdfBytes, SettableMetadata(contentType: 'application/pdf'));
       String pdfUrl = await pdfRef.getDownloadURL();
 
       await FirebaseFirestore.instance
           .collection('faktury')
-          .doc('${globalServisId}_$cisloFaktury') // <--- ZMĚNA ZDE
+          .doc('${globalServisId}_$cisloFaktury')
           .set({
-        'servis_id': globalServisId, // <--- ZMĚNA ZDE
+        'servis_id': globalServisId,
         'cislo_faktury': cisloFaktury,
         'zakaznik_id': finalCustomerData['id_zakaznika'],
         'zakaznik_jmeno': finalCustomerData['jmeno'],
@@ -2019,8 +2062,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('zakaznici')
-                    .where('servis_id',
-                        isEqualTo: globalServisId) // <--- ZMĚNA ZDE
+                    .where('servis_id', isEqualTo: globalServisId)
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData)
@@ -2149,14 +2191,15 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
               ...List.generate(_polozkyInputs.length, (index) {
                 final polozka = _polozkyInputs[index];
                 double dPocet = double.tryParse(
-                      polozka.mnozstvi.text.replaceAll(',', '.'),
-                    ) ??
+                        polozka.mnozstvi.text.replaceAll(',', '.')) ??
                     0.0;
                 double dCena = double.tryParse(
-                      polozka.cenaSDph.text.replaceAll(',', '.'),
-                    ) ??
+                        polozka.cenaSDph.text.replaceAll(',', '.')) ??
                     0.0;
-                double rCelkem = dPocet * dCena;
+                double dSleva =
+                    double.tryParse(polozka.sleva.text.replaceAll(',', '.')) ??
+                        0.0;
+                double rCelkem = (dPocet * dCena) * (1 - (dSleva / 100));
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 15),
@@ -2279,9 +2322,9 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                               onChanged: (v) => _prepocitatCelkem(),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Expanded(
-                            flex: 3,
+                            flex: 2,
                             child: DropdownButtonFormField<String>(
                               value: polozka.jednotka,
                               style: TextStyle(
@@ -2296,7 +2339,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                                 'm',
                                 'bal',
                                 'sada',
-                                'úkon',
+                                'úkon'
                               ]
                                   .map(
                                     (j) => DropdownMenuItem(
@@ -2335,7 +2378,19 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            flex: 2,
+                            child: _buildTextField(
+                              polozka.sleva,
+                              'Sleva %',
+                              isDark,
+                              isNumber: true,
+                              compact: true,
+                              onChanged: (v) => _prepocitatCelkem(),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
                           Expanded(
                             flex: 3,
                             child: _buildTextField(
@@ -2348,7 +2403,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                                   _prepocitatDphPolozky(polozka, v),
                             ),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 4),
                           Expanded(
                             flex: 3,
                             child: _buildTextField(

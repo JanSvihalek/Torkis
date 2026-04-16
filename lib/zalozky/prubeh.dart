@@ -11,7 +11,7 @@ import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 import 'zakaznici.dart';
 import 'vozidla.dart';
-import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO ROLE A ID SERVISU
+import 'auth_gate.dart';
 
 class ServiceProgressPage extends StatefulWidget {
   const ServiceProgressPage({super.key});
@@ -85,7 +85,7 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('zakazky')
-                .where('servis_id', isEqualTo: globalServisId) // <--- ZMĚNA ZDE
+                .where('servis_id', isEqualTo: globalServisId)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -232,7 +232,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(globalServisId) // <--- ZMĚNA ZDE
+          .doc(globalServisId)
           .get();
       if (doc.exists) {
         setState(() {
@@ -406,7 +406,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         final docNast = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
             .doc(globalServisId)
-            .get(); // <--- ZMĚNA ZDE
+            .get();
         if (docNast.exists) {
           sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
           sIco = docNast.data()?['ico_servisu'] ?? '';
@@ -424,7 +424,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         );
 
         String fileName = 'naceneni_${widget.zakazkaId}.pdf';
-        // <--- ZMĚNA ZDE (ukládáme pod servis ID)
         Reference ref = FirebaseStorage.instance.ref().child(
             'servisy/$globalServisId/zakazky/${widget.zakazkaId}/$fileName');
         await ref.putData(
@@ -530,7 +529,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           String cisloFaktury = 'FAK$cisloIba';
           final fakturaRef = FirebaseFirestore.instance
               .collection('faktury')
-              .doc('${globalServisId}_$cisloFaktury'); // <--- ZMĚNA ZDE
+              .doc('${globalServisId}_$cisloFaktury');
           final fakturaSnap = await fakturaRef.get();
 
           if (fakturaSnap.exists) {
@@ -805,9 +804,12 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           for (var p in polozky) {
             double mnoz = double.tryParse(p['mnozstvi'].toString()) ?? 1.0;
             double cena = double.tryParse(p['cena_s_dph'].toString()) ?? 0.0;
-            celkovaSuma += (mnoz * cena);
+            double sleva = double.tryParse(p['sleva'].toString()) ??
+                0.0; // <--- PŘIDÁNA SLEVA
+            celkovaSuma += (mnoz * cena) * (1 - (sleva / 100));
           }
         } else {
+          // Zpětná kompatibilita pro staré zakázky
           celkovaSuma += (prace['cena_s_dph'] ?? 0.0).toDouble();
           final dily = prace['pouzite_dily'] as List<dynamic>? ?? [];
           for (var dil in dily) {
@@ -828,7 +830,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       if (!zruseno) {
         final docNastaveni = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
-            .doc(globalServisId) // <--- ZMĚNA ZDE
+            .doc(globalServisId)
             .get();
         if (docNastaveni.exists) {
           odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
@@ -845,7 +847,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           typ: PdfTyp.faktura,
         );
 
-        // <--- ZMĚNA ZDE
         Reference pdfRef = FirebaseStorage.instance.ref().child(
               'servisy/$globalServisId/zakazky/${widget.zakazkaId}/finalni_vyuctovani_${widget.zakazkaId}.pdf',
             );
@@ -865,9 +866,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
           await FirebaseFirestore.instance
               .collection('faktury')
-              .doc('${globalServisId}_$cisloFaktury') // <--- ZMĚNA ZDE
+              .doc('${globalServisId}_$cisloFaktury')
               .set({
-            'servis_id': globalServisId, // <--- ZMĚNA ZDE
+            'servis_id': globalServisId,
             'cislo_faktury': cisloFaktury,
             'cislo_zakazky': widget.zakazkaId,
             'spz': widget.spz,
@@ -961,7 +962,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // PŘIDÁNO: Zjištění role pro schování citlivých tlačítek
     final bool isMechanik = globalUserRole == 'mechanik';
 
     return Scaffold(
@@ -1077,8 +1077,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       ),
                     ),
                     const SizedBox(width: 5),
-                    if (!isCompleted &&
-                        !isMechanik) // <--- MECHANIK NESMÍ NACENIT
+                    if (!isCompleted && !isMechanik)
                       IconButton(
                         icon: const Icon(
                           Icons.request_quote,
@@ -1109,7 +1108,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     final docNast = await FirebaseFirestore
                                         .instance
                                         .collection('nastaveni_servisu')
-                                        .doc(globalServisId) // <--- ZMĚNA ZDE
+                                        .doc(globalServisId)
                                         .get();
                                     sNazev = docNast.data()?['nazev_servisu'] ??
                                         'Servis';
@@ -1140,7 +1139,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 ),
               ),
               const Divider(height: 1),
-
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(20),
@@ -1261,7 +1259,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                         if (globalServisId != null &&
                                             data['spz'] != null) {
                                           final vozidloDocId =
-                                              '${globalServisId}_${data['spz']}'; // <--- ZMĚNA ZDE
+                                              '${globalServisId}_${data['spz']}';
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -1402,7 +1400,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 : Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      if (!isMechanik) // <--- MECHANIK NEMAŽE POŽADAVKY
+                                      if (!isMechanik)
                                         IconButton(
                                           icon: const Icon(Icons.delete_outline,
                                               color: Colors.red),
@@ -1474,7 +1472,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'cislo': '',
                               'mnozstvi': prace['delka_prace'] ?? 1,
                               'jednotka': 'h',
-                              'cena_s_dph': prace['cena_s_dph']
+                              'cena_s_dph': prace['cena_s_dph'],
+                              'sleva': 0.0, // Záložní
                             });
                           }
                           for (var d
@@ -1486,18 +1485,23 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'cislo': d['cislo'] ?? '',
                               'mnozstvi': d['pocet'] ?? 1,
                               'jednotka': 'ks',
-                              'cena_s_dph': d['cena_s_dph']
+                              'cena_s_dph': d['cena_s_dph'],
+                              'sleva': 0.0, // Záložní
                             });
                           }
                         }
 
                         double celkemUkon = 0.0;
                         for (var p in polozky) {
-                          celkemUkon += (double.tryParse(
-                                      p['mnozstvi'].toString()) ??
-                                  1.0) *
-                              (double.tryParse(p['cena_s_dph'].toString()) ??
-                                  0.0);
+                          double pMnoz =
+                              double.tryParse(p['mnozstvi'].toString()) ?? 1.0;
+                          double pCena =
+                              double.tryParse(p['cena_s_dph'].toString()) ??
+                                  0.0;
+                          double pSleva =
+                              double.tryParse(p['sleva']?.toString() ?? '0') ??
+                                  0.0;
+                          celkemUkon += (pMnoz * pCena) * (1 - (pSleva / 100));
                         }
 
                         return Card(
@@ -1538,8 +1542,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                           size: 20,
                                         ),
                                       ),
-                                    if (!isCompleted &&
-                                        !isMechanik) // <--- MECHANIK NEMAŽE ÚKONY
+                                    if (!isCompleted && !isMechanik)
                                       IconButton(
                                         onPressed: () =>
                                             _deleteWork(context, prace),
@@ -1583,11 +1586,18 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     double pCena = double.tryParse(
                                             p['cena_s_dph'].toString()) ??
                                         0.0;
+                                    double pSleva = double.tryParse(
+                                            p['sleva']?.toString() ?? '0') ??
+                                        0.0;
+
                                     String pJedn = p['jednotka'] ?? 'ks';
                                     String cistyMnoz = pMnoz
                                         .toString()
                                         .replaceAll(
                                             RegExp(r"([.]*0)(?!.*\d)"), "");
+                                    String slevaStr = pSleva > 0
+                                        ? ' (-${pSleva.toStringAsFixed(0)}%)'
+                                        : '';
 
                                     String cNum = p['cislo']?.toString() ?? '';
                                     String nDisp = cNum.trim().isNotEmpty
@@ -1600,7 +1610,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                         left: 10,
                                       ),
                                       child: Text(
-                                        '• [${p['typ']}] $nDisp - $cistyMnoz $pJedn ${!isMechanik ? "- ${(pMnoz * pCena).toStringAsFixed(2)} Kč" : ""}',
+                                        '• [${p['typ']}] $nDisp - $cistyMnoz $pJedn$slevaStr ${!isMechanik ? "- ${(pMnoz * pCena * (1 - pSleva / 100)).toStringAsFixed(2)} Kč" : ""}',
                                         style: const TextStyle(
                                           fontSize: 13,
                                         ),
@@ -1644,10 +1654,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   ],
                 ),
               ),
-
-              // SPODNÍ LIŠTA PRO ZAMČENOU ZAKÁZKU (STORNO)
-              if (isCompleted &&
-                  !isMechanik) // <--- MECHANIK NESMÍ STORNOVAT FAKTURU
+              if (isCompleted && !isMechanik)
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
@@ -1684,8 +1691,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     ),
                   ),
                 ),
-
-              // SPODNÍ LIŠTA PRO AKTIVNÍ ZAKÁZKU
               if (!isCompleted)
                 Container(
                   width: double.infinity,
@@ -1703,7 +1708,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   child: SafeArea(
                     child: Row(
                       children: [
-                        if (!isMechanik) // <--- MECHANIK NESMÍ VYDAT FAKTURU
+                        if (!isMechanik)
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () => _ukoncitZakazkuDialog(context,
@@ -1757,6 +1762,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   }
 }
 
+// ----------------------------------------------------
+// Třída PolozkaInput (přidána Sleva)
+// ----------------------------------------------------
 class PolozkaInput {
   String typ = 'Materiál';
   final cislo = TextEditingController();
@@ -1765,6 +1773,9 @@ class PolozkaInput {
   String jednotka = 'ks';
   final cenaBezDph = TextEditingController(text: '0');
   final cenaSDph = TextEditingController(text: '0');
+  final sleva = TextEditingController(text: '0'); // <--- PŘIDÁNA SLEVA
+
+  String? skladDocId;
 
   void dispose() {
     cislo.dispose();
@@ -1772,6 +1783,7 @@ class PolozkaInput {
     mnozstvi.dispose();
     cenaBezDph.dispose();
     cenaSDph.dispose();
+    sleva.dispose(); // <--- ZDE TAKÉ
   }
 }
 
@@ -1832,6 +1844,13 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
           input.jednotka = p['jednotka'] ?? 'ks';
           input.cenaBezDph.text = (p['cena_bez_dph'] ?? 0.0).toStringAsFixed(2);
           input.cenaSDph.text = (p['cena_s_dph'] ?? 0.0).toStringAsFixed(2);
+
+          // Načtení slevy a vyčištění od zbytečných desetinných míst, pokud to jde
+          String slevaVal = (p['sleva'] ?? 0.0).toString();
+          input.sleva.text = slevaVal.endsWith('.0')
+              ? slevaVal.replaceAll('.0', '')
+              : slevaVal;
+
           _polozkyInputs.add(input);
         }
       } else {
@@ -1880,7 +1899,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
     if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(globalServisId) // <--- ZMĚNA ZDE
+          .doc(globalServisId)
           .get();
       if (doc.exists) {
         setState(() {
@@ -1898,7 +1917,10 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
           double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
       double cenaKs =
           double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0;
-      celkem += (pocet * cenaKs);
+      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
+          0.0; // <--- UPLATNĚNÍ SLEVY
+
+      celkem += (pocet * cenaKs) * (1 - (sleva / 100));
     }
     setState(() {
       _celkovaCenaSDph = celkem;
@@ -1941,6 +1963,107 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
     if (photos.isNotEmpty) setState(() => _workImages.addAll(photos));
   }
 
+  void _vybratDilZeSkladu(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              const SizedBox(height: 20),
+              const Text('Vybrat díl ze skladu',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 15),
+              Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('sklad')
+                          .where('servis_id', isEqualTo: globalServisId)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData)
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        final docs = snapshot.data!.docs;
+
+                        if (docs.isEmpty) {
+                          return const Center(
+                            child: Text('Váš sklad je zatím prázdný.',
+                                style: TextStyle(color: Colors.grey)),
+                          );
+                        }
+
+                        return ListView.separated(
+                            itemCount: docs.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (context, index) {
+                              final data =
+                                  docs[index].data() as Map<String, dynamic>;
+                              final docId = docs[index].id;
+                              final stav = (data['skladem'] ?? 0.0) as double;
+
+                              return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        Colors.orange.withOpacity(0.1),
+                                    child: const Icon(Icons.inventory_2,
+                                        color: Colors.orange),
+                                  ),
+                                  title: Text(data['nazev'] ?? 'Bez názvu',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  subtitle: Text(
+                                      'Skladem: $stav ${data['jednotka'] ?? 'ks'} • Kód: ${data['kod'] ?? '-'}'),
+                                  trailing: Text(
+                                      '${data['cena_prodej'] ?? 0} Kč',
+                                      style: const TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
+                                  onTap: () {
+                                    setState(() {
+                                      final p = PolozkaInput();
+                                      p.typ = 'Materiál';
+                                      p.nazev.text = data['nazev'] ?? '';
+                                      p.cislo.text = data['kod'] ?? '';
+                                      p.jednotka = data['jednotka'] ?? 'ks';
+                                      p.cenaSDph.text =
+                                          (data['cena_prodej'] ?? 0.0)
+                                              .toStringAsFixed(2);
+                                      p.skladDocId = docId;
+
+                                      if (_polozkyInputs.length == 1 &&
+                                          _polozkyInputs[0]
+                                              .nazev
+                                              .text
+                                              .isEmpty) {
+                                        _polozkyInputs[0] = p;
+                                      } else {
+                                        _polozkyInputs.add(p);
+                                      }
+                                      _prepocitatCelkem();
+                                    });
+                                    Navigator.pop(context);
+                                  });
+                            });
+                      }))
+            ])));
+  }
+
   Future<void> _saveWork() async {
     if (_nazevController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1960,11 +2083,37 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
       for (int i = 0; i < _workImages.length; i++) {
         String fileName =
             'prace_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-        // <--- ZMĚNA ZDE
         Reference ref = FirebaseStorage.instance.ref().child(
             'servisy/$globalServisId/zakazky/${widget.zakazkaId}/$fileName');
         await ref.putData(await _workImages[i].readAsBytes());
         uploadedUrls.add(await ref.getDownloadURL());
+      }
+
+      for (var p in _polozkyInputs) {
+        if (p.skladDocId != null) {
+          double qty =
+              double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
+          if (qty > 0) {
+            await FirebaseFirestore.instance
+                .collection('sklad')
+                .doc(p.skladDocId)
+                .update({
+              'skladem': FieldValue.increment(-qty),
+            });
+            await FirebaseFirestore.instance.collection('skladove_pohyby').add({
+              'servis_id': globalServisId,
+              'sklad_id': p.skladDocId,
+              'nazev_dilu': p.nazev.text.trim(),
+              'typ_pohybu': 'výdej',
+              'mnozstvi': -qty,
+              'zakazka_id': widget.zakazkaId,
+              'datum': FieldValue.serverTimestamp(),
+              'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
+            });
+
+            p.skladDocId = null;
+          }
+        }
       }
 
       List<Map<String, dynamic>> zpracovanePolozky = _polozkyInputs
@@ -1982,6 +2131,9 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                 'cena_s_dph':
                     double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ??
                         0.0,
+                'sleva': double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
+                    0.0, // <--- ULOŽENÍ SLEVY
+                'sklad_id': p.skladDocId,
               })
           .where((d) => d['nazev'].toString().isNotEmpty)
           .toList();
@@ -2115,7 +2267,11 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                             double dCena = double.tryParse(polozka.cenaSDph.text
                                     .replaceAll(',', '.')) ??
                                 0.0;
-                            double rCelkem = dPocet * dCena;
+                            double dSleva = double.tryParse(
+                                    polozka.sleva.text.replaceAll(',', '.')) ??
+                                0.0; // <--- UPLATNĚNÍ SLEVY
+                            double rCelkem =
+                                (dPocet * dCena) * (1 - (dSleva / 100));
 
                             return Container(
                               margin: const EdgeInsets.only(bottom: 15),
@@ -2212,6 +2368,8 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                       polozka.nazev, 'Název položky', isDark,
                                       compact: true),
                                   const SizedBox(height: 8),
+
+                                  // --- ZDE JE PŘIDÁNA KOLONKA PRO SLEVU ---
                                   Row(
                                     children: [
                                       Expanded(
@@ -2225,9 +2383,9 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                           onChanged: (v) => _prepocitatCelkem(),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 4),
                                       Expanded(
-                                        flex: 3,
+                                        flex: 2,
                                         child: DropdownButtonFormField<String>(
                                           value: polozka.jednotka,
                                           style: TextStyle(
@@ -2274,8 +2432,20 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
-                                      if (!isMechanik) // <--- Cenu mechanik nevyplňuje, může nechat prázdnou/skrytou, ale pro zachování datového modelu ji můžeme nechat jako Disabled nebo jen skrýt pro mechaniky. Zde ji nechám k dispozici, pokud ji mechanik zná z dílu, jinak by se ukládala 0. Zde nechávám zobrazeno, pouze jsme skryli náhled pro fakturaci, ale můžeš si ji přizpůsobit.
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        flex: 2,
+                                        child: _buildTextField(
+                                          polozka.sleva,
+                                          'Sleva %', // <--- NOVÁ KOLONKA
+                                          isDark,
+                                          isNumber: true,
+                                          compact: true,
+                                          onChanged: (v) => _prepocitatCelkem(),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      if (!isMechanik)
                                         Expanded(
                                           flex: 3,
                                           child: _buildTextField(
@@ -2289,7 +2459,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                                     polozka, v),
                                           ),
                                         ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 4),
                                       if (!isMechanik)
                                         Expanded(
                                           flex: 3,
@@ -2335,11 +2505,29 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                               ),
                             );
                           }),
-                          TextButton.icon(
-                            onPressed: () => setState(
-                                () => _polozkyInputs.add(PolozkaInput())),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Přidat další položku'),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 10,
+                            children: [
+                              TextButton.icon(
+                                onPressed: () => setState(
+                                    () => _polozkyInputs.add(PolozkaInput())),
+                                icon: const Icon(Icons.add),
+                                label: const Text('Přidat ručně'),
+                              ),
+                              TextButton.icon(
+                                onPressed: () =>
+                                    _vybratDilZeSkladu(context, isDark),
+                                icon: const Icon(Icons.inventory_2,
+                                    color: Colors.orange),
+                                label: const Text('Vybrat ze skladu',
+                                    style: TextStyle(color: Colors.orange)),
+                                style: TextButton.styleFrom(
+                                  backgroundColor:
+                                      Colors.orange.withOpacity(0.1),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),

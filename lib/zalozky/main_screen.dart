@@ -16,6 +16,7 @@ import 'statistiky.dart';
 import 'nastaveni.dart';
 import 'ucetnictvi.dart';
 import 'zamestnanci.dart';
+import 'sklad.dart'; // <--- PŘIDÁN IMPORT SKLADU
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -72,7 +73,6 @@ class _MainScreenState extends State<MainScreen> {
               final user = FirebaseAuth.instance.currentUser;
               if (user != null) {
                 try {
-                  // OPRAVA: Ukládáme to do kolekce "uzivatele", aby měl každý svůj motiv
                   await FirebaseFirestore.instance
                       .collection('uzivatele')
                       .doc(user.uid)
@@ -175,13 +175,12 @@ class MenuPage extends StatelessWidget {
                 _buildMenuCard(context, 'Statistiky', Icons.bar_chart,
                     Colors.purple, const StatisticsPage(), isDark),
 
-              // OPRAVA: Nastavení vidí všichni (byl smazán příkaz if (isAdmin))
               _buildMenuCard(context, 'Nastavení', Icons.settings,
                   Colors.blueGrey, const SettingsPage(), isDark),
 
+              // <--- ZMĚNA ZDE: Sklad dílů je nyní odemčen a vede na SkladPage
               _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2,
-                  Colors.orange, null, isDark,
-                  isLocked: true),
+                  Colors.orange, const SkladPage(), isDark),
             ],
           ),
           const SizedBox(height: 40),
@@ -193,8 +192,12 @@ class MenuPage extends StatelessWidget {
   Widget _buildMenuCard(BuildContext context, String title, IconData icon,
       Color color, Widget? page, bool isDark,
       {bool isLocked = false}) {
+    // V této chvíli nevyužíváme zamykání přes Paywall (viz naše předchozí diskuze),
+    // protože jsme se dohodli, že to přidáme až po dokončení všech modulů.
+    // Nechávám to tu tedy v jednoduché formě jako předtím.
+
     return InkWell(
-      onTap: isLocked
+      onTap: isLocked || page == null
           ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Tento modul připravujeme v další verzi!')))
           : () => Navigator.push(
