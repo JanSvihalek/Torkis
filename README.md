@@ -1,17 +1,35 @@
-# torkis
+# Torkis
 
-A new Flutter project.
+A modern and comprehensive information system for car repair shops built with the **Flutter** framework. 
+The application digitalizes the entire workflow of a repair shop - from vehicle intake, mechanics' work tracking, and inventory management, to automated PDF invoice generation and customer communication.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## Main Features
 
-A few resources to get you started if this is your first Flutter project:
+* **Job Management**: Vehicle records (License plates, VIN), service intake, customer requests, and defect photo documentation.
+* **Role-Based Access Control**: Specific access rights for *Owner/Admin*, *Technician*, and *Mechanic* roles.
+* **Inventory Management**: 
+  * Parts tracking and low stock alerts.
+  * **Barcode and QR code scanning** for fast stock intake and dispatch.
+  * Over-the-counter sales with a shopping cart and direct receipt generation.
+* **Invoicing and PDF Documents**: 
+  * Automated generation of service protocols, price quotes, and final PDF invoices.
+  * Chronological and secure invoice numbering using transactional counters.
+  * Document cancellation feature with automatic return of parts to the inventory.
+* **Email Communication**: Sending PDF quotes and invoices directly from the application to the customer's email.
+* **User Interface**: Fully responsive design with **Dark / Light mode** support.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Technologies Used
+
+* **Frontend:** [Flutter](https://flutter.dev/) & Dart
+* **Backend & Database:** [Firebase](https://firebase.google.com/)
+  * *Authentication* (User management)
+  * *Cloud Firestore* (Real-time NoSQL database)
+  * *Firebase Storage* (Photo and PDF document storage)
+* **Key Packages:**
+  * `printing` and `pdf` (Document creation and printing)
+  * `flutter_barcode_scanner` (Camera barcode scanner)
+  * `image_picker` (Photo documentation capturing)
