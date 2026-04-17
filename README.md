@@ -33,11 +33,3 @@ The application digitalizes the entire workflow of a repair shop - from vehicle 
   * `printing` and `pdf` (Document creation and printing)
   * `flutter_barcode_scanner` (Camera barcode scanner)
   * `image_picker` (Photo documentation capturing)
-
----
-
-## How to run locally
-
-1. **Clone the repository:**
-   ```bash
-   git clone [https://github.com/JanSvihalek/Torkis.git](https://github.com/JanSvihalek/Torkis.git)
