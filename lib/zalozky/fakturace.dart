@@ -41,7 +41,15 @@ Future<void> syncAndRegenerateFaktura(
     }
   }
 
+  final docNastaveni = await FirebaseFirestore.instance
+      .collection('nastaveni_servisu')
+      .doc(globalServisId)
+      .get();
+  String odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
+  String odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
+
   if (zakazkaId != 'PRODEJ' && zakazkaId != 'PULTOVÝ PRODEJ') {
+    // 1. ZAKÁZKOVÁ FAKTURA
     final zakazkaRef = FirebaseFirestore.instance
         .collection('zakazky')
         .doc('${globalServisId}_$zakazkaId');
@@ -50,17 +58,6 @@ Future<void> syncAndRegenerateFaktura(
     if (zakDoc.exists) {
       final zakData = zakDoc.data()!;
       zakData['provedene_prace'] = updatedPrace;
-
-      String odesilatelJmeno = 'Servis';
-      String odesilatelIco = '';
-      final docNastaveni = await FirebaseFirestore.instance
-          .collection('nastaveni_servisu')
-          .doc(globalServisId)
-          .get();
-      if (docNastaveni.exists) {
-        odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
-        odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
-      }
 
       final pdfBytes = await GlobalPdfGenerator.generateDocument(
         data: zakData,
@@ -90,13 +87,33 @@ Future<void> syncAndRegenerateFaktura(
       });
     }
   } else {
-    await FirebaseFirestore.instance
-        .collection('faktury')
-        .doc(fakturaDocId)
-        .update({
-      'provedene_prace': updatedPrace,
-      'celkova_castka': celkovaSuma,
-    });
+    // 2. MANUÁLNÍ FAKTURA A PULTOVÝ PRODEJ (Včetně přegenerování PDF)
+    final fakturaRef = FirebaseFirestore.instance.collection('faktury').doc(fakturaDocId);
+    final fakDoc = await fakturaRef.get();
+
+    if (fakDoc.exists) {
+      final fakData = fakDoc.data()!;
+      fakData['provedene_prace'] = updatedPrace;
+      fakData['celkova_castka'] = celkovaSuma;
+
+      final pdfBytes = await GlobalPdfGenerator.generateDocument(
+        data: fakData, 
+        servisNazev: odesilatelJmeno,
+        servisIco: odesilatelIco,
+        typ: PdfTyp.faktura,
+      );
+
+      String cisloFak = fakData['cislo_faktury'] ?? 'PRODEJ';
+      Reference pdfRef = FirebaseStorage.instance.ref().child('servisy/$globalServisId/faktury/$cisloFak.pdf');
+      await pdfRef.putData(pdfBytes, SettableMetadata(contentType: 'application/pdf'));
+      String pdfUrl = await pdfRef.getDownloadURL();
+
+      await fakturaRef.update({
+        'provedene_prace': updatedPrace,
+        'celkova_castka': celkovaSuma,
+        'pdf_url': pdfUrl,
+      });
+    }
   }
 }
 
@@ -499,7 +516,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Stornovat pultový prodej?'),
+        title: const Text('Stornovat prodej?'),
         content: const Text(
           'Tato akce označí fakturu jako stornovanou a automaticky vrátí všechny prodané díly zpět na sklad.\n\nOpravdu chcete prodej stornovat?',
         ),
@@ -551,7 +568,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                   'nazev_dilu': item['nazev'],
                   'typ_pohybu': 'příjem',
                   'mnozstvi': mnozstvi,
-                  'poznamka': 'Storno prodeje ${fData['cislo_faktury']}',
+                  'poznamka': 'Storno faktury ${fData['cislo_faktury']}',
                   'zakazka_id': fData['cislo_faktury'],
                   'datum': FieldValue.serverTimestamp(),
                   'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
@@ -1011,8 +1028,9 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                           ...List.generate(provedenePrace.length, (index) {
                             final prace = provedenePrace[index];
 
-                            List<dynamic> polozky =
-                                prace['polozky'] as List<dynamic>? ?? [];
+                            // OCHRANA PROTI PÁDŮM (VŽDY VYTVÁŘÍME NOVÝ SEZNAM)
+                            List<dynamic> polozky = List.from(prace['polozky'] as List<dynamic>? ?? []);
+                            
                             if (polozky.isEmpty) {
                               if ((prace['cena_s_dph'] ?? 0) > 0) {
                                 polozky.add({
@@ -1257,7 +1275,7 @@ class PolozkaInput {
   final cenaSDph = TextEditingController(text: '0');
   final sleva = TextEditingController(text: '0');
 
-  String? skladDocId; // Pro evidenci odkud to přišlo
+  String? skladDocId;
 
   void dispose() {
     cislo.dispose();
@@ -1424,6 +1442,21 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
           content: Text('Zadejte alespoň hlavičku (Název skupiny).'),
           backgroundColor: Colors.orange,
         ),
+      );
+      return;
+    }
+
+    // OCHRANA PROTI TICHÉMU SMAZÁNÍ: Pokud nemá položka název, upozorníme uživatele
+    bool maChybu = false;
+    for (var p in _polozkyInputs) {
+      if (p.nazev.text.trim().isEmpty) {
+        maChybu = true;
+        break;
+      }
+    }
+    if (maChybu) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vyplňte názvy u všech položek!')),
       );
       return;
     }
@@ -2186,7 +2219,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
     try {
       if (globalServisId == null) return;
 
-      // 1. ZPRACOVÁNÍ SKLADU - Odpočet dílů + Logování do pohybů
       for (var p in _polozkyInputs) {
         if (p.skladDocId != null) {
           double qty =
@@ -2198,7 +2230,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                 .update({
               'skladem': FieldValue.increment(-qty),
             });
-            // Poznámka: Pohyb uložíme za chvíli, až budeme znát číslo faktury
           }
         }
       }
@@ -2232,7 +2263,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                   double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
               'sleva':
                   double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
-              'sklad_id': p.skladDocId, // Ukládáme pro možnost storna
+              'sklad_id': p.skladDocId, 
             },
           )
           .where((d) => d['nazev'].toString().isNotEmpty)
@@ -2244,7 +2275,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
           .get();
       String prefix = docNast.data()?['prefix_faktury'] ?? 'FAK';
 
-      // GENEROVÁNÍ ČÍSLA FAKTURY (Inkrement)
       String datumPart = DateFormat('yyMMdd').format(ted);
       final counterRef = FirebaseFirestore.instance.collection('citace_faktur').doc('${globalServisId}_$datumPart');
       
@@ -2259,7 +2289,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         return '$prefix$datumPart$sequencePart';
       });
 
-      // 2. DOLOGOVÁNÍ SKLADOVÝCH POHYBŮ (nyní už známe cisloFaktury)
       for (var p in _polozkyInputs) {
         if (p.skladDocId != null) {
           double qty = double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
@@ -2281,7 +2310,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
 
       Map<String, dynamic> invoiceData = {
         'zakaznik': finalCustomerData,
-        'cislo_zakazky': 'PRODEJ', // Zůstává "PRODEJ" pro identifikaci, že nemá vazbu na zakázku
+        'cislo_zakazky': 'PRODEJ', 
         'spz': '',
         'cas_prijeti': Timestamp.fromDate(ted),
         'splatnost_dny': _splatnostDny,
