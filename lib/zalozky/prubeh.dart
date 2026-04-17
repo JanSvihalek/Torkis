@@ -525,15 +525,22 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     if (confirm == true) {
       if (globalServisId != null) {
         try {
-          String cisloIba = widget.zakazkaId.replaceAll(RegExp(r'[^0-9]'), '');
-          String cisloFaktury = 'FAK$cisloIba';
-          final fakturaRef = FirebaseFirestore.instance
-              .collection('faktury')
-              .doc('${globalServisId}_$cisloFaktury');
-          final fakturaSnap = await fakturaRef.get();
+          // Hledáme fakturu spojenou s touto zakázkou
+          final zakazkaSnap = await FirebaseFirestore.instance
+              .collection('zakazky')
+              .doc(widget.documentId)
+              .get();
+          String fakturaCislo = zakazkaSnap.data()?['faktura_cislo'] ?? '';
 
-          if (fakturaSnap.exists) {
-            await fakturaRef.update({'stav_platby': 'Stornováno'});
+          if (fakturaCislo.isNotEmpty) {
+            final fakturaRef = FirebaseFirestore.instance
+                .collection('faktury')
+                .doc('${globalServisId}_$fakturaCislo');
+            final fakturaDoc = await fakturaRef.get();
+
+            if (fakturaDoc.exists) {
+              await fakturaRef.update({'stav_platby': 'Stornováno'});
+            }
           }
 
           await FirebaseFirestore.instance
@@ -545,6 +552,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             'forma_uhrady': FieldValue.delete(),
             'splatnost_dny': FieldValue.delete(),
             'cas_ukonceni': FieldValue.delete(),
+            'faktura_cislo': FieldValue.delete(),
           });
 
           if (context.mounted) {
@@ -804,8 +812,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           for (var p in polozky) {
             double mnoz = double.tryParse(p['mnozstvi'].toString()) ?? 1.0;
             double cena = double.tryParse(p['cena_s_dph'].toString()) ?? 0.0;
-            double sleva = double.tryParse(p['sleva'].toString()) ??
-                0.0; // <--- PŘIDÁNA SLEVA
+            double sleva = double.tryParse(p['sleva'].toString()) ?? 0.0;
             celkovaSuma += (mnoz * cena) * (1 - (sleva / 100));
           }
         } else {
@@ -820,12 +827,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         }
       }
 
-      String cisloIba = widget.zakazkaId.replaceAll(RegExp(r'[^0-9]'), '');
-      String cisloFaktury = 'FAK$cisloIba';
-
       String odesilatelJmeno = 'Servis';
       String odesilatelIco = '';
       String odesilatelEmail = '';
+      String prefix = 'FAK';
 
       if (!zruseno) {
         final docNastaveni = await FirebaseFirestore.instance
@@ -836,6 +841,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
           odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
           odesilatelEmail = docNastaveni.data()?['email_servisu'] ?? '';
+          prefix = docNastaveni.data()?['prefix_faktury'] ??
+              'FAK'; // Načtení prefixu
         }
 
         data['splatnost_dny'] = splatnostDny;
@@ -855,66 +862,75 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           SettableMetadata(contentType: 'application/pdf'),
         );
         pdfUrl = await pdfRef.getDownloadURL();
+      }
 
-        if (zpusob == 'faktura') {
-          DateTime now = DateTime.now();
-          DateTime splatnost = now.add(Duration(days: splatnostDny));
+      String cisloFaktury = '';
 
-          String stavPlatby = (platba == 'Hotově' || platba == 'Kartou')
-              ? 'Uhrazeno'
-              : 'Čeká na platbu';
+      if (zpusob == 'faktura') {
+        // GENERUJEME ČÍSLO FYYMMDDXXXX
+        final ted = DateTime.now();
+        String datumPart = DateFormat('yyMMdd').format(ted);
+        String uniquePart = ted.millisecondsSinceEpoch.toString();
+        uniquePart = uniquePart.substring(uniquePart.length - 4);
 
-          await FirebaseFirestore.instance
-              .collection('faktury')
-              .doc('${globalServisId}_$cisloFaktury')
-              .set({
-            'servis_id': globalServisId,
-            'cislo_faktury': cisloFaktury,
-            'cislo_zakazky': widget.zakazkaId,
-            'spz': widget.spz,
-            'zakaznik_id': zakaznik['id_zakaznika'] ?? '',
-            'zakaznik_jmeno': zakaznik['jmeno'] ?? 'Neznámý zákazník',
-            'datum_vystaveni': Timestamp.fromDate(now),
-            'datum_splatnosti': Timestamp.fromDate(splatnost),
-            'forma_uhrady': platba,
-            'celkova_castka': celkovaSuma,
-            'stav_platby': stavPlatby,
-            'pdf_url': pdfUrl,
-            'provedene_prace': data['provedene_prace'] ?? [],
-            'vytvoreno': FieldValue.serverTimestamp(),
-          });
+        cisloFaktury = '$prefix$datumPart$uniquePart';
 
-          if (odeslatEmail) {
-            String zakaznikEmail = zakaznik['email']?.toString() ?? '';
-            if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
-              Map<String, dynamic> mailDoc = {
-                'to': zakaznikEmail,
-                'from':
-                    '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>',
-                'message': {
-                  'subject':
-                      'Faktura - Zakázka ${widget.zakazkaId} ($odesilatelJmeno)',
-                  'html': '''
-                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                      <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
-                      <p>v příloze Vám zasíláme fakturu za provedené servisní práce na Vašem vozidle <b>${data['spz']}</b> v našem servisu.</p>
-                      <div style="text-align: center; margin: 30px 0;">
-                        <a href="$pdfUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit a stáhnout fakturu</a>
-                      </div>
-                      <p>Děkujeme za využití našich služeb. V případě jakýchkoliv dotazů na tento e-mail jednoduše odpovězte, zpráva nám bude doručena.</p>
-                      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                      <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerován automaticky systémem <b>Torkis.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
+        DateTime splatnost = ted.add(Duration(days: splatnostDny));
+
+        String stavPlatby = (platba == 'Hotově' || platba == 'Kartou')
+            ? 'Uhrazeno'
+            : 'Čeká na platbu';
+
+        await FirebaseFirestore.instance
+            .collection('faktury')
+            .doc('${globalServisId}_$cisloFaktury')
+            .set({
+          'servis_id': globalServisId,
+          'cislo_faktury': cisloFaktury,
+          'cislo_zakazky': widget.zakazkaId,
+          'spz': widget.spz,
+          'zakaznik_id': zakaznik['id_zakaznika'] ?? '',
+          'zakaznik_jmeno': zakaznik['jmeno'] ?? 'Neznámý zákazník',
+          'datum_vystaveni': Timestamp.fromDate(ted),
+          'datum_splatnosti': Timestamp.fromDate(splatnost),
+          'forma_uhrady': platba,
+          'celkova_castka': celkovaSuma,
+          'stav_platby': stavPlatby,
+          'pdf_url': pdfUrl,
+          'provedene_prace': data['provedene_prace'] ?? [],
+          'vytvoreno': FieldValue.serverTimestamp(),
+        });
+
+        if (odeslatEmail) {
+          String zakaznikEmail = zakaznik['email']?.toString() ?? '';
+          if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
+            Map<String, dynamic> mailDoc = {
+              'to': zakaznikEmail,
+              'from':
+                  '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>',
+              'message': {
+                'subject':
+                    'Faktura - Zakázka ${widget.zakazkaId} ($odesilatelJmeno)',
+                'html': '''
+                  <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
+                    <p>v příloze Vám zasíláme fakturu za provedené servisní práce na Vašem vozidle <b>${data['spz']}</b> v našem servisu.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                      <a href="$pdfUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit a stáhnout fakturu</a>
                     </div>
-                  '''
-                }
-              };
-
-              if (odesilatelEmail.isNotEmpty && odesilatelEmail.contains('@')) {
-                mailDoc['replyTo'] = odesilatelEmail;
+                    <p>Děkujeme za využití našich služeb. V případě jakýchkoliv dotazů na tento e-mail jednoduše odpovězte, zpráva nám bude doručena.</p>
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                    <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerován automaticky systémem <b>Torkis.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
+                  </div>
+                '''
               }
+            };
 
-              await FirebaseFirestore.instance.collection('maily').add(mailDoc);
+            if (odesilatelEmail.isNotEmpty && odesilatelEmail.contains('@')) {
+              mailDoc['replyTo'] = odesilatelEmail;
             }
+
+            await FirebaseFirestore.instance.collection('maily').add(mailDoc);
           }
         }
       }
@@ -928,6 +944,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         'forma_uhrady': platba,
         'splatnost_dny': splatnostDny,
         'cas_ukonceni': FieldValue.serverTimestamp(),
+        if (cisloFaktury.isNotEmpty) 'faktura_cislo': cisloFaktury,
         if (pdfUrl.isNotEmpty) 'vystupni_protokol_url': pdfUrl,
       });
 
@@ -1473,7 +1490,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'mnozstvi': prace['delka_prace'] ?? 1,
                               'jednotka': 'h',
                               'cena_s_dph': prace['cena_s_dph'],
-                              'sleva': 0.0, // Záložní
+                              'sleva': 0.0,
                             });
                           }
                           for (var d
@@ -1486,7 +1503,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                               'mnozstvi': d['pocet'] ?? 1,
                               'jednotka': 'ks',
                               'cena_s_dph': d['cena_s_dph'],
-                              'sleva': 0.0, // Záložní
+                              'sleva': 0.0,
                             });
                           }
                         }
@@ -1763,7 +1780,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 }
 
 // ----------------------------------------------------
-// Třída PolozkaInput (přidána Sleva)
+// Třída PolozkaInput
 // ----------------------------------------------------
 class PolozkaInput {
   String typ = 'Materiál';
@@ -1773,7 +1790,7 @@ class PolozkaInput {
   String jednotka = 'ks';
   final cenaBezDph = TextEditingController(text: '0');
   final cenaSDph = TextEditingController(text: '0');
-  final sleva = TextEditingController(text: '0'); // <--- PŘIDÁNA SLEVA
+  final sleva = TextEditingController(text: '0');
 
   String? skladDocId;
 
@@ -1783,7 +1800,7 @@ class PolozkaInput {
     mnozstvi.dispose();
     cenaBezDph.dispose();
     cenaSDph.dispose();
-    sleva.dispose(); // <--- ZDE TAKÉ
+    sleva.dispose();
   }
 }
 
@@ -1845,7 +1862,6 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
           input.cenaBezDph.text = (p['cena_bez_dph'] ?? 0.0).toStringAsFixed(2);
           input.cenaSDph.text = (p['cena_s_dph'] ?? 0.0).toStringAsFixed(2);
 
-          // Načtení slevy a vyčištění od zbytečných desetinných míst, pokud to jde
           String slevaVal = (p['sleva'] ?? 0.0).toString();
           input.sleva.text = slevaVal.endsWith('.0')
               ? slevaVal.replaceAll('.0', '')
@@ -1917,8 +1933,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
           double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
       double cenaKs =
           double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0;
-      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
-          0.0; // <--- UPLATNĚNÍ SLEVY
+      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0;
 
       celkem += (pocet * cenaKs) * (1 - (sleva / 100));
     }
@@ -2131,8 +2146,8 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                 'cena_s_dph':
                     double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ??
                         0.0,
-                'sleva': double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
-                    0.0, // <--- ULOŽENÍ SLEVY
+                'sleva':
+                    double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
                 'sklad_id': p.skladDocId,
               })
           .where((d) => d['nazev'].toString().isNotEmpty)
@@ -2269,7 +2284,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                 0.0;
                             double dSleva = double.tryParse(
                                     polozka.sleva.text.replaceAll(',', '.')) ??
-                                0.0; // <--- UPLATNĚNÍ SLEVY
+                                0.0;
                             double rCelkem =
                                 (dPocet * dCena) * (1 - (dSleva / 100));
 
@@ -2368,8 +2383,6 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                       polozka.nazev, 'Název položky', isDark,
                                       compact: true),
                                   const SizedBox(height: 8),
-
-                                  // --- ZDE JE PŘIDÁNA KOLONKA PRO SLEVU ---
                                   Row(
                                     children: [
                                       Expanded(
@@ -2437,7 +2450,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                         flex: 2,
                                         child: _buildTextField(
                                           polozka.sleva,
-                                          'Sleva %', // <--- NOVÁ KOLONKA
+                                          'Sleva %',
                                           isDark,
                                           isNumber: true,
                                           compact: true,

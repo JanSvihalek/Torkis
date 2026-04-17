@@ -27,8 +27,7 @@ Future<void> syncAndRegenerateFaktura(
       for (var p in polozky) {
         double mnoz = double.tryParse(p['mnozstvi'].toString()) ?? 1.0;
         double cena = double.tryParse(p['cena_s_dph'].toString()) ?? 0.0;
-        double sleva = double.tryParse(p['sleva']?.toString() ?? '0') ??
-            0.0; // <--- PŘIDÁNA SLEVA PŘI REGENERACI
+        double sleva = double.tryParse(p['sleva']?.toString() ?? '0') ?? 0.0;
         celkovaSuma += (mnoz * cena) * (1 - (sleva / 100));
       }
     } else {
@@ -42,56 +41,65 @@ Future<void> syncAndRegenerateFaktura(
     }
   }
 
-  final zakazkaRef = FirebaseFirestore.instance
-      .collection('zakazky')
-      .doc('${globalServisId}_$zakazkaId');
-  final zakDoc = await zakazkaRef.get();
-  if (!zakDoc.exists)
-    throw Exception("Původní zakázka nenalezena pro přegenerování PDF.");
-  final zakData = zakDoc.data()!;
+  // U manuální faktury / prodeje žádnou zakázku z databáze neaktualizujeme
+  if (zakazkaId != 'PRODEJ' && zakazkaId != 'PULTOVÝ PRODEJ') {
+    final zakazkaRef = FirebaseFirestore.instance
+        .collection('zakazky')
+        .doc('${globalServisId}_$zakazkaId');
+    final zakDoc = await zakazkaRef.get();
 
-  zakData['provedene_prace'] = updatedPrace;
+    if (zakDoc.exists) {
+      final zakData = zakDoc.data()!;
+      zakData['provedene_prace'] = updatedPrace;
 
-  String odesilatelJmeno = 'Servis';
-  String odesilatelIco = '';
-  final docNastaveni = await FirebaseFirestore.instance
-      .collection('nastaveni_servisu')
-      .doc(globalServisId)
-      .get();
-  if (docNastaveni.exists) {
-    odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
-    odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
-  }
+      String odesilatelJmeno = 'Servis';
+      String odesilatelIco = '';
+      final docNastaveni = await FirebaseFirestore.instance
+          .collection('nastaveni_servisu')
+          .doc(globalServisId)
+          .get();
+      if (docNastaveni.exists) {
+        odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
+        odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
+      }
 
-  final pdfBytes = await GlobalPdfGenerator.generateDocument(
-    data: zakData,
-    servisNazev: odesilatelJmeno,
-    servisIco: odesilatelIco,
-    typ: PdfTyp.faktura,
-  );
-
-  Reference pdfRef = FirebaseStorage.instance.ref().child(
-        'servisy/$globalServisId/zakazky/$zakazkaId/finalni_vyuctovani_$zakazkaId.pdf',
+      final pdfBytes = await GlobalPdfGenerator.generateDocument(
+        data: zakData,
+        servisNazev: odesilatelJmeno,
+        servisIco: odesilatelIco,
+        typ: PdfTyp.faktura,
       );
-  await pdfRef.putData(
-    pdfBytes,
-    SettableMetadata(contentType: 'application/pdf'),
-  );
-  String pdfUrl = await pdfRef.getDownloadURL();
 
-  await FirebaseFirestore.instance
-      .collection('faktury')
-      .doc(fakturaDocId)
-      .update({
-    'provedene_prace': updatedPrace,
-    'celkova_castka': celkovaSuma,
-    'pdf_url': pdfUrl,
-  });
+      Reference pdfRef = FirebaseStorage.instance.ref().child(
+          'servisy/$globalServisId/zakazky/$zakazkaId/finalni_vyuctovani_$zakazkaId.pdf');
+      await pdfRef.putData(
+          pdfBytes, SettableMetadata(contentType: 'application/pdf'));
+      String pdfUrl = await pdfRef.getDownloadURL();
 
-  await zakazkaRef.update({
-    'provedene_prace': updatedPrace,
-    'vystupni_protokol_url': pdfUrl,
-  });
+      await FirebaseFirestore.instance
+          .collection('faktury')
+          .doc(fakturaDocId)
+          .update({
+        'provedene_prace': updatedPrace,
+        'celkova_castka': celkovaSuma,
+        'pdf_url': pdfUrl,
+      });
+
+      await zakazkaRef.update({
+        'provedene_prace': updatedPrace,
+        'vystupni_protokol_url': pdfUrl,
+      });
+    }
+  } else {
+    // Pouze aktualizace samotné faktury u pultového prodeje
+    await FirebaseFirestore.instance
+        .collection('faktury')
+        .doc(fakturaDocId)
+        .update({
+      'provedene_prace': updatedPrace,
+      'celkova_castka': celkovaSuma,
+    });
+  }
 }
 
 class FakturacePage extends StatefulWidget {
@@ -265,8 +273,11 @@ class _FakturacePageState extends State<FakturacePage> {
 
                     final stavPlatby = data['stav_platby'] ?? 'Neznámý';
                     final jeUhrazeno = stavPlatby == 'Uhrazeno';
-                    final barvaStavu =
-                        jeUhrazeno ? Colors.green : Colors.redAccent;
+                    final jeStornovano = stavPlatby == 'Stornováno';
+
+                    Color barvaStavu = Colors.redAccent;
+                    if (jeUhrazeno) barvaStavu = Colors.green;
+                    if (jeStornovano) barvaStavu = Colors.grey;
 
                     return Card(
                       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -298,19 +309,28 @@ class _FakturacePageState extends State<FakturacePage> {
                                 children: [
                                   Text(
                                     '${data['cislo_faktury']}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 18,
+                                      decoration: jeStornovano
+                                          ? TextDecoration.lineThrough
+                                          : null,
+                                      color: jeStornovano ? Colors.grey : null,
                                     ),
                                   ),
                                   Text(
                                     '${(data['celkova_castka'] ?? 0.0).toStringAsFixed(2)} Kč',
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: isDark
-                                          ? Colors.white
-                                          : Colors.blue[900]!,
+                                      color: jeStornovano
+                                          ? Colors.grey
+                                          : (isDark
+                                              ? Colors.white
+                                              : Colors.blue[900]!),
                                       fontSize: 18,
+                                      decoration: jeStornovano
+                                          ? TextDecoration.lineThrough
+                                          : null,
                                     ),
                                   ),
                                 ],
@@ -362,7 +382,7 @@ class _FakturacePageState extends State<FakturacePage> {
                                           'Splatnost: ${_formatDate(data['datum_splatnosti'])}',
                                           style: TextStyle(
                                             fontWeight: FontWeight.bold,
-                                            color: jeUhrazeno
+                                            color: jeUhrazeno || jeStornovano
                                                 ? Colors.grey
                                                 : Colors.red,
                                             fontSize: 13,
@@ -397,7 +417,7 @@ class _FakturacePageState extends State<FakturacePage> {
                                     ),
                                   ),
                                   const Spacer(),
-                                  if (!jeUhrazeno)
+                                  if (!jeUhrazeno && !jeStornovano)
                                     TextButton.icon(
                                       icon: const Icon(
                                         Icons.check_circle,
@@ -477,6 +497,95 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
     );
   }
 
+  // Speciální metoda pro vrácení dílů na sklad při stornu manuální/prodejní faktury
+  Future<void> _stornovatPultovyProdej(Map<String, dynamic> fData) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Stornovat pultový prodej?'),
+        content: const Text(
+          'Tato akce označí fakturu jako stornovanou a automaticky vrátí všechny prodané díly zpět na sklad.\n\nOpravdu chcete prodej stornovat?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ZRUŠIT'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('STORNOVAT',
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        // 1. Změna stavu faktury
+        await FirebaseFirestore.instance
+            .collection('faktury')
+            .doc(widget.fakturaDocId)
+            .update({
+          'stav_platby': 'Stornováno',
+        });
+
+        // 2. Vrácení položek na sklad
+        final prace = fData['provedene_prace'] as List<dynamic>? ?? [];
+        for (var p in prace) {
+          final polozky = p['polozky'] as List<dynamic>? ?? [];
+          for (var item in polozky) {
+            final skladId = item['sklad_id'];
+            if (skladId != null && skladId.toString().isNotEmpty) {
+              double mnozstvi =
+                  double.tryParse(item['mnozstvi'].toString()) ?? 0.0;
+              if (mnozstvi > 0) {
+                // Vracíme na sklad
+                await FirebaseFirestore.instance
+                    .collection('sklad')
+                    .doc(skladId)
+                    .update({
+                  'skladem': FieldValue.increment(mnozstvi),
+                });
+
+                // Záznam pohybu o stornu a příjmu
+                await FirebaseFirestore.instance
+                    .collection('skladove_pohyby')
+                    .add({
+                  'servis_id': globalServisId,
+                  'sklad_id': skladId,
+                  'nazev_dilu': item['nazev'],
+                  'typ_pohybu': 'příjem',
+                  'mnozstvi': mnozstvi,
+                  'poznamka': 'Storno prodeje ${fData['cislo_faktury']}',
+                  'zakazka_id': fData['cislo_faktury'],
+                  'datum': FieldValue.serverTimestamp(),
+                  'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
+                });
+              }
+            }
+          }
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Prodej stornován a díly vráceny na sklad.'),
+                backgroundColor: Colors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('Chyba storna: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _deleteWork(
     BuildContext context,
     Map<String, dynamic> workItem,
@@ -498,7 +607,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text(
               'SMAZAT',
-              style: const TextStyle(color: Colors.red),
+              style: TextStyle(color: Colors.red),
             ),
           ),
         ],
@@ -615,6 +724,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bool isMechanik = globalUserRole == 'mechanik';
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -644,9 +754,11 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
               fData['provedene_prace'] as List<dynamic>? ?? [];
           final stavPlatby = fData['stav_platby'] ?? 'Neznámý';
           final jeUhrazeno = stavPlatby == 'Uhrazeno';
+          final jeStornovano = stavPlatby == 'Stornováno';
 
-          // Ošetření pro manuální fakturu
-          final bool isManual = fData['cislo_zakazky'] == 'PRODEJ';
+          // Ošetření pro manuální fakturu a pultový prodej
+          final bool isManual = fData['cislo_zakazky'] == 'PRODEJ' ||
+              fData['cislo_zakazky'] == 'PULTOVÝ PRODEJ';
 
           return FutureBuilder<DocumentSnapshot?>(
             future: isManual || globalServisId == null
@@ -689,9 +801,13 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                           children: [
                             Text(
                               '${fData['cislo_faktury']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
+                                decoration: jeStornovano
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                                color: jeStornovano ? Colors.grey : null,
                               ),
                             ),
                             ElevatedButton.icon(
@@ -824,7 +940,12 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 20,
-                                        color: Colors.blue[800],
+                                        color: jeStornovano
+                                            ? Colors.grey
+                                            : Colors.blue[800],
+                                        decoration: jeStornovano
+                                            ? TextDecoration.lineThrough
+                                            : null,
                                       ),
                                     ),
                                     const SizedBox(height: 15),
@@ -840,9 +961,11 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
-                                        color: jeUhrazeno
-                                            ? Colors.green
-                                            : Colors.red,
+                                        color: jeStornovano
+                                            ? Colors.grey
+                                            : (jeUhrazeno
+                                                ? Colors.green
+                                                : Colors.red),
                                       ),
                                     ),
                                     const SizedBox(height: 15),
@@ -965,7 +1088,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                             ),
                                           ),
                                         ),
-                                        if (!isManual)
+                                        if (!isManual && !jeStornovano)
                                           IconButton(
                                             onPressed: () => _openEditDialog(
                                               context,
@@ -983,7 +1106,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                               horizontal: 10,
                                             ),
                                           ),
-                                        if (!isManual)
+                                        if (!isManual && !jeStornovano)
                                           IconButton(
                                             onPressed: () => _deleteWork(
                                               context,
@@ -1046,7 +1169,9 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                       ],
                     ),
                   ),
-                  if (!isManual)
+
+                  // Tlačítko pro přidání úkonů (pouze pro normální faktury a nezrušené)
+                  if (!isManual && !jeStornovano)
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
@@ -1086,6 +1211,45 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                         ),
                       ),
                     ),
+
+                  // Tlačítko Storno (pro manuální / pultový prodej)
+                  if (isManual && !jeStornovano && !isMechanik)
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                        boxShadow: [
+                          const BoxShadow(
+                            color: Color(0x0D000000),
+                            blurRadius: 10,
+                            offset: Offset(0, -5),
+                          ),
+                        ],
+                      ),
+                      child: SafeArea(
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _stornovatPultovyProdej(fData),
+                            icon: const Icon(Icons.settings_backup_restore),
+                            label: const Text(
+                              'STORNOVAT PRODEJ A VRÁTIT DÍLY',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red[50],
+                              foregroundColor: Colors.red,
+                              side:
+                                  const BorderSide(color: Colors.red, width: 2),
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               );
             },
@@ -1104,7 +1268,7 @@ class PolozkaInput {
   String jednotka = 'ks';
   final cenaBezDph = TextEditingController(text: '0');
   final cenaSDph = TextEditingController(text: '0');
-  final sleva = TextEditingController(text: '0'); // <--- PŘIDÁNA SLEVA
+  final sleva = TextEditingController(text: '0');
 
   void dispose() {
     cislo.dispose();
@@ -1112,7 +1276,7 @@ class PolozkaInput {
     mnozstvi.dispose();
     cenaBezDph.dispose();
     cenaSDph.dispose();
-    sleva.dispose(); // <--- ZDE TAKÉ
+    sleva.dispose();
   }
 }
 
@@ -1238,8 +1402,7 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
           double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
       double cenaKs =
           double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0;
-      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
-          0.0; // <--- UPLATNĚNÍ SLEVY
+      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0;
 
       celkem += (pocet * cenaKs) * (1 - (sleva / 100));
     }
@@ -1293,8 +1456,8 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
                       0.0,
               'cena_s_dph':
                   double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
-              'sleva': double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
-                  0.0, // <--- ULOŽENÍ SLEVY
+              'sleva':
+                  double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
             },
           )
           .where((d) => d['nazev'].toString().isNotEmpty)
@@ -1819,7 +1982,6 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
   }
 }
 
-// OBRAZOVKA PRO MANUÁLNÍ VYTVOŘENÍ FAKTURY (Bez zakázky)
 class ManualInvoiceScreen extends StatefulWidget {
   const ManualInvoiceScreen({super.key});
 
@@ -1830,7 +1992,6 @@ class ManualInvoiceScreen extends StatefulWidget {
 class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Data zákazníka
   Map<String, dynamic>? _vybranyZakaznik;
   final _jmenoController = TextEditingController();
   final _telefonController = TextEditingController();
@@ -1892,8 +2053,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
           double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
       double cenaKs =
           double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0;
-      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
-          0.0; // <--- UPLATNĚNÍ SLEVY
+      double sleva = double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0;
 
       celkem += (pocet * cenaKs) * (1 - (sleva / 100));
     }
@@ -1961,15 +2121,16 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                       0.0,
               'cena_s_dph':
                   double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
-              'sleva': double.tryParse(p.sleva.text.replaceAll(',', '.')) ??
-                  0.0, // <--- ULOŽENÍ SLEVY
+              'sleva':
+                  double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
             },
           )
           .where((d) => d['nazev'].toString().isNotEmpty)
           .toList();
 
-      String timestamp = ted.millisecondsSinceEpoch.toString().substring(7);
-      String cisloFaktury = 'MAN-$timestamp';
+      String timestamp = ted.millisecondsSinceEpoch.toString().substring(5);
+      String cisloFaktury =
+          'FAK$timestamp'; // Změna: Aby to ladilo s normálními fakturami
 
       Map<String, dynamic> invoiceData = {
         'zakaznik': finalCustomerData,
@@ -2191,10 +2352,12 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
               ...List.generate(_polozkyInputs.length, (index) {
                 final polozka = _polozkyInputs[index];
                 double dPocet = double.tryParse(
-                        polozka.mnozstvi.text.replaceAll(',', '.')) ??
+                      polozka.mnozstvi.text.replaceAll(',', '.'),
+                    ) ??
                     0.0;
                 double dCena = double.tryParse(
-                        polozka.cenaSDph.text.replaceAll(',', '.')) ??
+                      polozka.cenaSDph.text.replaceAll(',', '.'),
+                    ) ??
                     0.0;
                 double dSleva =
                     double.tryParse(polozka.sleva.text.replaceAll(',', '.')) ??
