@@ -1151,28 +1151,42 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
     setState(() => _isSaving = true);
 
     try {
-      // 1. NAČTENÍ NASTAVENÍ (včetně prefixu)
+      // 1. NAČTENÍ NASTAVENÍ
       final docNast = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
           .doc(globalServisId)
           .get();
       String sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
       String sIco = docNast.data()?['ico_servisu'] ?? '';
-      String prefix = docNast.data()?['prefix_faktury'] ??
-          'FAK'; // Načtení uživatelského prefixu
+      String prefix = docNast.data()?['prefix_faktury'] ?? 'FAK';
 
-      // 2. GENEROVÁNÍ ČÍSLA VE FORMÁTU [Prefix][RR][MM][DD][XXXX]
+      // 2. BEZPEČNÉ GENEROVÁNÍ ČÍSLA PŘES TRANSAKCI (INKREMENT)
       final ted = DateTime.now();
       String datumPart = DateFormat('yyMMdd').format(ted);
-      String uniquePart = ted.millisecondsSinceEpoch.toString();
-      uniquePart = uniquePart.substring(uniquePart.length - 4);
 
-      String cisloFaktury = '$prefix$datumPart$uniquePart';
+      // Vytvoříme počítadlo specifické pro daný den a servis
+      final counterRef = FirebaseFirestore.instance
+          .collection('citace_faktur')
+          .doc('${globalServisId}_$datumPart');
+
+      String cisloFaktury =
+          await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(counterRef);
+        int currentCount = 1;
+        if (snapshot.exists) {
+          currentCount = (snapshot.data()?['pocet'] ?? 0) + 1;
+        }
+        transaction.set(
+            counterRef, {'pocet': currentCount}, SetOptions(merge: true));
+
+        // Převede číslo 1 na "0001"
+        String sequencePart = currentCount.toString().padLeft(4, '0');
+        return '$prefix$datumPart$sequencePart';
+      });
 
       List<Map<String, dynamic>> polozkyProFakturu = [];
 
       for (var p in _kosik) {
-        // Odečteme ze skladu
         await FirebaseFirestore.instance
             .collection('sklad')
             .doc(p['sklad_id'])
@@ -1180,7 +1194,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
           'skladem': FieldValue.increment(-p['mnozstvi']),
         });
 
-        // Zapíšeme do historie pohybů skladu (s novým číslem faktury)
         await FirebaseFirestore.instance.collection('skladove_pohyby').add({
           'servis_id': globalServisId,
           'sklad_id': p['sklad_id'],
@@ -1193,7 +1206,6 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
           'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
         });
 
-        // Přidáme položku na fakturu
         polozkyProFakturu.add({
           'typ': 'Materiál',
           'cislo': p['kod'],
@@ -1202,7 +1214,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
           'jednotka': p['jednotka'],
           'cena_s_dph': p['cena_prodej'],
           'sleva': 0.0,
-          'sklad_id': p['sklad_id'], // <--- Zásadní pro budoucí storno!
+          'sklad_id': p['sklad_id'],
         });
       }
 
@@ -1220,8 +1232,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
 
       Map<String, dynamic> invoiceData = {
         'zakaznik': finalCustomerData,
-        'cislo_zakazky':
-            'PULTOVÝ PRODEJ', // Necháme pro PDF, aby bylo jasné, z čeho to vzniklo
+        'cislo_zakazky': 'PULTOVÝ PRODEJ',
         'spz': '',
         'cas_prijeti': Timestamp.fromDate(ted),
         'splatnost_dny': _formaUhrady == 'Převodem' ? 14 : 0,
@@ -1249,14 +1260,14 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
           pdfBytes, SettableMetadata(contentType: 'application/pdf'));
       String pdfUrl = await pdfRef.getDownloadURL();
 
-      // 4. ULOŽÍME DO FAKTUR
+      // 4. ULOŽÍME FAKTURU
       await FirebaseFirestore.instance
           .collection('faktury')
           .doc('${globalServisId}_$cisloFaktury')
           .set({
         'servis_id': globalServisId,
         'cislo_faktury': cisloFaktury,
-        'cislo_zakazky': 'PULTOVÝ PRODEJ', // Vnitřní identifikátor pro appku
+        'cislo_zakazky': 'PULTOVÝ PRODEJ',
         'zakaznik_id': finalCustomerData['id_zakaznika'],
         'zakaznik_jmeno': finalCustomerData['jmeno'],
         'zakaznik': finalCustomerData,
@@ -1285,8 +1296,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
           _vybranyZakaznik = null;
         });
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content:
-                Text('Prodej byl úspěšně dokončen, faktura byla vystavena.'),
+            content: Text('Prodej dokončen, faktura vytvořena.'),
             backgroundColor: Colors.green));
       }
     } catch (e) {

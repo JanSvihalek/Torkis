@@ -816,7 +816,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             celkovaSuma += (mnoz * cena) * (1 - (sleva / 100));
           }
         } else {
-          // Zpětná kompatibilita pro staré zakázky
           celkovaSuma += (prace['cena_s_dph'] ?? 0.0).toDouble();
           final dily = prace['pouzite_dily'] as List<dynamic>? ?? [];
           for (var dil in dily) {
@@ -841,8 +840,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
           odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
           odesilatelEmail = docNastaveni.data()?['email_servisu'] ?? '';
-          prefix = docNastaveni.data()?['prefix_faktury'] ??
-              'FAK'; // Načtení prefixu
+          prefix = docNastaveni.data()?['prefix_faktury'] ?? 'FAK';
         }
 
         data['splatnost_dny'] = splatnostDny;
@@ -867,13 +865,26 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       String cisloFaktury = '';
 
       if (zpusob == 'faktura') {
-        // GENERUJEME ČÍSLO FYYMMDDXXXX
+        // GENEROVÁNÍ ČÍSLA FYYMMDDXXXX PŘES TRANSAKCI
         final ted = DateTime.now();
         String datumPart = DateFormat('yyMMdd').format(ted);
-        String uniquePart = ted.millisecondsSinceEpoch.toString();
-        uniquePart = uniquePart.substring(uniquePart.length - 4);
 
-        cisloFaktury = '$prefix$datumPart$uniquePart';
+        final counterRef = FirebaseFirestore.instance
+            .collection('citace_faktur')
+            .doc('${globalServisId}_$datumPart');
+
+        cisloFaktury = await FirebaseFirestore.instance
+            .runTransaction((transaction) async {
+          final snapshot = await transaction.get(counterRef);
+          int currentCount = 1;
+          if (snapshot.exists) {
+            currentCount = (snapshot.data()?['pocet'] ?? 0) + 1;
+          }
+          transaction.set(
+              counterRef, {'pocet': currentCount}, SetOptions(merge: true));
+          String sequencePart = currentCount.toString().padLeft(4, '0');
+          return '$prefix$datumPart$sequencePart';
+        });
 
         DateTime splatnost = ted.add(Duration(days: splatnostDny));
 
