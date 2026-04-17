@@ -41,7 +41,6 @@ Future<void> syncAndRegenerateFaktura(
     }
   }
 
-  // U manuální faktury / prodeje žádnou zakázku z databáze neaktualizujeme
   if (zakazkaId != 'PRODEJ' && zakazkaId != 'PULTOVÝ PRODEJ') {
     final zakazkaRef = FirebaseFirestore.instance
         .collection('zakazky')
@@ -91,7 +90,6 @@ Future<void> syncAndRegenerateFaktura(
       });
     }
   } else {
-    // Pouze aktualizace samotné faktury u pultového prodeje
     await FirebaseFirestore.instance
         .collection('faktury')
         .doc(fakturaDocId)
@@ -497,7 +495,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
     );
   }
 
-  // Speciální metoda pro vrácení dílů na sklad při stornu manuální/prodejní faktury
   Future<void> _stornovatPultovyProdej(Map<String, dynamic> fData) async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -523,7 +520,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
 
     if (confirm == true) {
       try {
-        // 1. Změna stavu faktury
         await FirebaseFirestore.instance
             .collection('faktury')
             .doc(widget.fakturaDocId)
@@ -531,7 +527,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
           'stav_platby': 'Stornováno',
         });
 
-        // 2. Vrácení položek na sklad
         final prace = fData['provedene_prace'] as List<dynamic>? ?? [];
         for (var p in prace) {
           final polozky = p['polozky'] as List<dynamic>? ?? [];
@@ -541,7 +536,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
               double mnozstvi =
                   double.tryParse(item['mnozstvi'].toString()) ?? 0.0;
               if (mnozstvi > 0) {
-                // Vracíme na sklad
                 await FirebaseFirestore.instance
                     .collection('sklad')
                     .doc(skladId)
@@ -549,7 +543,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                   'skladem': FieldValue.increment(mnozstvi),
                 });
 
-                // Záznam pohybu o stornu a příjmu
                 await FirebaseFirestore.instance
                     .collection('skladove_pohyby')
                     .add({
@@ -756,7 +749,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
           final jeUhrazeno = stavPlatby == 'Uhrazeno';
           final jeStornovano = stavPlatby == 'Stornováno';
 
-          // Ošetření pro manuální fakturu a pultový prodej
           final bool isManual = fData['cislo_zakazky'] == 'PRODEJ' ||
               fData['cislo_zakazky'] == 'PULTOVÝ PRODEJ';
 
@@ -775,7 +767,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                 zakData = zakazkaSnap.data!.data() as Map<String, dynamic>;
               }
 
-              // Pokud je manuální, bereme zákazníka přímo z fData (faktury)
               final pZakaznik = isManual
                   ? (fData['zakaznik'] as Map<String, dynamic>? ?? {})
                   : (zakData['zakaznik'] as Map<String, dynamic>? ?? {});
@@ -1049,12 +1040,12 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
 
                             double celkemUkon = 0.0;
                             for (var p in polozky) {
-                              double pMnoz =
-                                  double.tryParse(p['mnozstvi'].toString()) ??
-                                      1.0;
-                              double pCena =
-                                  double.tryParse(p['cena_s_dph'].toString()) ??
-                                      0.0;
+                              double pMnoz = double.tryParse(
+                                      p['mnozstvi'].toString()) ??
+                                  1.0;
+                              double pCena = double.tryParse(
+                                      p['cena_s_dph'].toString()) ??
+                                  0.0;
                               double pSleva = double.tryParse(
                                       p['sleva']?.toString() ?? '0') ??
                                   0.0;
@@ -1144,8 +1135,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                           ? ' (-${pSleva.toStringAsFixed(0)}%)'
                                           : '';
 
-                                      String cNum =
-                                          p['cislo']?.toString() ?? '';
+                                      String cNum = p['cislo']?.toString() ?? '';
                                       String nDisp = cNum.trim().isNotEmpty
                                           ? '${p['nazev']} ($cNum)'
                                           : p['nazev'];
@@ -1170,7 +1160,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                     ),
                   ),
 
-                  // Tlačítko pro přidání úkonů (pouze pro normální faktury a nezrušené)
                   if (!isManual && !jeStornovano)
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -1212,7 +1201,6 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                       ),
                     ),
 
-                  // Tlačítko Storno (pro manuální / pultový prodej)
                   if (isManual && !jeStornovano && !isMechanik)
                     Container(
                       padding: const EdgeInsets.all(20),
@@ -1233,14 +1221,13 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                             onPressed: () => _stornovatPultovyProdej(fData),
                             icon: const Icon(Icons.settings_backup_restore),
                             label: const Text(
-                              'STORNOVAT PRODEJ A VRÁTIT DÍLY',
+                              'STORNOVAT FAKTURU A VRÁTIT DÍLY',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red[50],
                               foregroundColor: Colors.red,
-                              side:
-                                  const BorderSide(color: Colors.red, width: 2),
+                              side: const BorderSide(color: Colors.red, width: 2),
                               padding: const EdgeInsets.symmetric(vertical: 20),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(15),
@@ -1269,6 +1256,8 @@ class PolozkaInput {
   final cenaBezDph = TextEditingController(text: '0');
   final cenaSDph = TextEditingController(text: '0');
   final sleva = TextEditingController(text: '0');
+
+  String? skladDocId; // Pro evidenci odkud to přišlo
 
   void dispose() {
     cislo.dispose();
@@ -2069,6 +2058,108 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
     _prepocitatCelkem();
   }
 
+  // Funkce pro výběr dílu ze skladu a automatické vyplnění inputu
+  void _vybratDilZeSkladu(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              const SizedBox(height: 20),
+              const Text('Vybrat díl ze skladu',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 15),
+              Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('sklad')
+                          .where('servis_id', isEqualTo: globalServisId)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData)
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        final docs = snapshot.data!.docs;
+
+                        if (docs.isEmpty) {
+                          return const Center(
+                            child: Text('Váš sklad je zatím prázdný.',
+                                style: TextStyle(color: Colors.grey)),
+                          );
+                        }
+
+                        return ListView.separated(
+                            itemCount: docs.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (context, index) {
+                              final data =
+                                  docs[index].data() as Map<String, dynamic>;
+                              final docId = docs[index].id;
+                              final stav = (data['skladem'] ?? 0.0) as double;
+
+                              return ListTile(
+                                  leading: CircleAvatar(
+                                    backgroundColor:
+                                        Colors.orange.withOpacity(0.1),
+                                    child: const Icon(Icons.inventory_2,
+                                        color: Colors.orange),
+                                  ),
+                                  title: Text(data['nazev'] ?? 'Bez názvu',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  subtitle: Text(
+                                      'Skladem: $stav ${data['jednotka'] ?? 'ks'} • Kód: ${data['kod'] ?? '-'}'),
+                                  trailing: Text(
+                                      '${data['cena_prodej'] ?? 0} Kč',
+                                      style: const TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16)),
+                                  onTap: () {
+                                    setState(() {
+                                      final p = PolozkaInput();
+                                      p.typ = 'Materiál';
+                                      p.nazev.text = data['nazev'] ?? '';
+                                      p.cislo.text = data['kod'] ?? '';
+                                      p.jednotka = data['jednotka'] ?? 'ks';
+                                      p.cenaSDph.text =
+                                          (data['cena_prodej'] ?? 0.0)
+                                              .toStringAsFixed(2);
+                                      p.skladDocId = docId;
+
+                                      if (_polozkyInputs.length == 1 &&
+                                          _polozkyInputs[0]
+                                              .nazev
+                                              .text
+                                              .isEmpty) {
+                                        _polozkyInputs[0] = p;
+                                      } else {
+                                        _polozkyInputs.add(p);
+                                      }
+                                      _prepocitatCelkem();
+                                    });
+                                    Navigator.pop(context);
+                                  });
+                            });
+                      }))
+            ])));
+  }
+
   Future<void> _ulozitFakturu() async {
     if (_jmenoController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -2094,6 +2185,24 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
 
     try {
       if (globalServisId == null) return;
+
+      // 1. ZPRACOVÁNÍ SKLADU - Odpočet dílů + Logování do pohybů
+      for (var p in _polozkyInputs) {
+        if (p.skladDocId != null) {
+          double qty =
+              double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
+          if (qty > 0) {
+            await FirebaseFirestore.instance
+                .collection('sklad')
+                .doc(p.skladDocId)
+                .update({
+              'skladem': FieldValue.increment(-qty),
+            });
+            // Poznámka: Pohyb uložíme za chvíli, až budeme znát číslo faktury
+          }
+        }
+      }
+
       final ted = DateTime.now();
       final splatnost = ted.add(Duration(days: _splatnostDny));
 
@@ -2123,18 +2232,56 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                   double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
               'sleva':
                   double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
+              'sklad_id': p.skladDocId, // Ukládáme pro možnost storna
             },
           )
           .where((d) => d['nazev'].toString().isNotEmpty)
           .toList();
 
-      String timestamp = ted.millisecondsSinceEpoch.toString().substring(5);
-      String cisloFaktury =
-          'FAK$timestamp'; // Změna: Aby to ladilo s normálními fakturami
+      final docNast = await FirebaseFirestore.instance
+          .collection('nastaveni_servisu')
+          .doc(globalServisId)
+          .get();
+      String prefix = docNast.data()?['prefix_faktury'] ?? 'FAK';
+
+      // GENEROVÁNÍ ČÍSLA FAKTURY (Inkrement)
+      String datumPart = DateFormat('yyMMdd').format(ted);
+      final counterRef = FirebaseFirestore.instance.collection('citace_faktur').doc('${globalServisId}_$datumPart');
+      
+      String cisloFaktury = await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snapshot = await transaction.get(counterRef);
+        int currentCount = 1;
+        if (snapshot.exists) {
+          currentCount = (snapshot.data()?['pocet'] ?? 0) + 1;
+        }
+        transaction.set(counterRef, {'pocet': currentCount}, SetOptions(merge: true));
+        String sequencePart = currentCount.toString().padLeft(4, '0');
+        return '$prefix$datumPart$sequencePart';
+      });
+
+      // 2. DOLOGOVÁNÍ SKLADOVÝCH POHYBŮ (nyní už známe cisloFaktury)
+      for (var p in _polozkyInputs) {
+        if (p.skladDocId != null) {
+          double qty = double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
+          if (qty > 0) {
+            await FirebaseFirestore.instance.collection('skladove_pohyby').add({
+              'servis_id': globalServisId,
+              'sklad_id': p.skladDocId,
+              'nazev_dilu': p.nazev.text.trim(),
+              'typ_pohybu': 'výdej',
+              'mnozstvi': -qty,
+              'zakazka_id': cisloFaktury,
+              'poznamka': 'Manuální faktura',
+              'datum': FieldValue.serverTimestamp(),
+              'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
+            });
+          }
+        }
+      }
 
       Map<String, dynamic> invoiceData = {
         'zakaznik': finalCustomerData,
-        'cislo_zakazky': 'PRODEJ',
+        'cislo_zakazky': 'PRODEJ', // Zůstává "PRODEJ" pro identifikaci, že nemá vazbu na zakázku
         'spz': '',
         'cas_prijeti': Timestamp.fromDate(ted),
         'splatnost_dny': _splatnostDny,
@@ -2147,10 +2294,6 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         ],
       };
 
-      final docNast = await FirebaseFirestore.instance
-          .collection('nastaveni_servisu')
-          .doc(globalServisId)
-          .get();
       String sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
       String sIco = docNast.data()?['ico_servisu'] ?? '';
 
@@ -2186,6 +2329,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
             ? 'Uhrazeno'
             : 'Čeká na platbu',
         'pdf_url': pdfUrl,
+        'provedene_prace': invoiceData['provedene_prace'],
         'vytvoreno': FieldValue.serverTimestamp(),
       });
 
@@ -2615,12 +2759,30 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                   ),
                 );
               }),
-              TextButton.icon(
-                onPressed: () =>
-                    setState(() => _polozkyInputs.add(PolozkaInput())),
-                icon: const Icon(Icons.add),
-                label: const Text('Přidat další položku'),
+              
+              // Tlačítka pro přidání položek do manuální faktury
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  TextButton.icon(
+                    onPressed: () =>
+                        setState(() => _polozkyInputs.add(PolozkaInput())),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Přidat ručně'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _vybratDilZeSkladu(context, isDark),
+                    icon: const Icon(Icons.inventory_2, color: Colors.orange),
+                    label: const Text('Vybrat ze skladu',
+                        style: TextStyle(color: Colors.orange)),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.orange.withOpacity(0.1),
+                    ),
+                  ),
+                ],
               ),
+              
               const Divider(height: 40),
 
               // PLATEBNÍ ÚDAJE
