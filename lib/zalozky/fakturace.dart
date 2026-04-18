@@ -2435,9 +2435,12 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         }
       }
 
+// ... tady se předtím generuje cisloFaktury přes transakci ...
+
       Map<String, dynamic> invoiceData = {
         'zakaznik': finalCustomerData,
         'cislo_zakazky': 'PRODEJ', 
+        'cislo_faktury': cisloFaktury, // <--- TENTO JEDINÝ ŘÁDEK TAM CHYBĚL!
         'spz': '',
         'cas_prijeti': Timestamp.fromDate(ted),
         'splatnost_dny': _splatnostDny,
@@ -2451,6 +2454,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
       };
 
       String sNazev = docNast.data()?['nazev_servisu'] ?? 'Servis';
+      // ... tady kód normálně pokračuje voláním GlobalPdfGenerator ...
       String sIco = docNast.data()?['ico_servisu'] ?? '';
 
       final pdfBytes = await GlobalPdfGenerator.generateDocument(

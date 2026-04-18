@@ -42,9 +42,9 @@ class GlobalPdfGenerator {
           final numericString = '${bban}123500';
           final remainder = BigInt.parse(numericString) % BigInt.from(97);
           final checkDigits = (98 - remainder.toInt()).toString().padLeft(
-            2,
-            '0',
-          );
+                2,
+                '0',
+              );
 
           iban = 'CZ$checkDigits$bban';
         }
@@ -83,28 +83,7 @@ class GlobalPdfGenerator {
     final datumVystaveni = DateTime.now();
     final datumSplatnosti = datumVystaveni.add(Duration(days: splatnostDny));
 
-    String titulek = "FAKTURA - DAŇOVÝ DOKLAD";
-    String puvodniCislo = data['cislo_zakazky']?.toString() ?? '-';
-    String cisloDokladu = puvodniCislo;
-    bool zobrazitCeny = true;
-
-    if (typ == PdfTyp.protokol) {
-      titulek = "PROTOKOL O PŘÍJMU";
-      zobrazitCeny = false;
-    } else if (typ == PdfTyp.faktura) {
-      titulek = "FAKTURA - DAŇOVÝ DOKLAD";
-      zobrazitCeny = true;
-      String cisloIba = puvodniCislo.replaceAll(RegExp(r'[^0-9]'), '');
-      cisloDokladu = 'FAK$cisloIba';
-    } else if (typ == PdfTyp.naceneni) {
-      titulek = "CENOVÁ NABÍDKA";
-      zobrazitCeny = true;
-      String cisloIba = puvodniCislo.replaceAll(RegExp(r'[^0-9]'), '');
-      cisloDokladu = 'NAB$cisloIba';
-    }
-
-    double celkovaSuma = 0.0;
-
+    // NAČTENÍ INFO O SERVISU
     String sAdresa = '';
     String sMesto = '';
     String sPsc = '';
@@ -113,14 +92,13 @@ class GlobalPdfGenerator {
     String sDic = '';
     String sBanka = '';
     String sRegistrace = '';
+    String sPrefix = 'FAK';
 
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        final docNast = await FirebaseFirestore.instance
-            .collection('nastaveni_servisu')
-            .doc(user.uid)
-            .get();
+        final uid = data['servis_id'] ?? user.uid; // Použití ID ze zakázky/faktury, nebo fallback
+        final docNast = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(uid).get();
         if (docNast.exists) {
           final nd = docNast.data()!;
           servisNazev = nd['nazev_servisu'] ?? servisNazev;
@@ -133,40 +111,66 @@ class GlobalPdfGenerator {
           sDic = nd['dic_servisu'] ?? '';
           sBanka = nd['banka_servisu'] ?? '';
           sRegistrace = nd['registrace_servisu'] ?? '';
+          sPrefix = nd['prefix_faktury'] ?? 'FAK';
         }
       } catch (e) {
         debugPrint("Chyba načítání detailů servisu: $e");
       }
     }
 
+    // --- ČISTÁ LOGIKA PRO ČÍSLO DOKLADU ---
+    String titulek = "FAKTURA - DAŇOVÝ DOKLAD";
+    String puvodniCislo = data['cislo_zakazky']?.toString() ?? '-';
+    String cisloDokladu = puvodniCislo;
+    bool zobrazitCeny = true;
+
+    if (typ == PdfTyp.protokol) {
+      titulek = "PROTOKOL O PŘÍJMU";
+      cisloDokladu = puvodniCislo;
+      zobrazitCeny = false;
+    } else if (typ == PdfTyp.faktura) {
+      titulek = "FAKTURA - DAŇOVÝ DOKLAD";
+      zobrazitCeny = true;
+      // TVRDĚ se načte to, co je v databázi, jinak se generuje záloha z prefixu
+      if (data['cislo_faktury'] != null && data['cislo_faktury'].toString().isNotEmpty) {
+        cisloDokladu = data['cislo_faktury'].toString();
+      } else {
+        String cisloIba = puvodniCislo.replaceAll(RegExp(r'[^0-9]'), '');
+        cisloDokladu = '$sPrefix$cisloIba'; 
+      }
+    } else if (typ == PdfTyp.naceneni) {
+      titulek = "CENOVÁ NABÍDKA";
+      zobrazitCeny = true;
+      if (data['cislo_nabidky'] != null && data['cislo_nabidky'].toString().isNotEmpty) {
+        cisloDokladu = data['cislo_nabidky'].toString();
+      } else if (data['cislo_faktury'] != null) {
+        cisloDokladu = data['cislo_faktury'].toString().replaceFirst(RegExp(r'^[A-Za-z]+'), 'NAB');
+      } else {
+        cisloDokladu = 'NAB${puvodniCislo.replaceAll(RegExp(r'[^0-9]'), '')}';
+      }
+    }
+
+    double celkovaSuma = 0.0;
+
     pw.MemoryImage? logoImage;
     final znackaNazev = (data['znacka']?.toString() ?? '').trim();
     if (znackaNazev.isNotEmpty) {
       try {
-        final snap = await FirebaseFirestore.instance
-            .collection('znacka')
-            .get();
+        final snap = await FirebaseFirestore.instance.collection('znacka').get();
         String foundLogoUrl = '';
         for (var doc in snap.docs) {
           final d = doc.data();
-          final dbNazev = (d['nazev']?.toString() ?? doc.id)
-              .trim()
-              .toLowerCase();
+          final dbNazev = (d['nazev']?.toString() ?? doc.id).trim().toLowerCase();
           if (dbNazev == znackaNazev.toLowerCase()) {
-            foundLogoUrl =
-                d['logo']?.toString() ?? d['logo_url']?.toString() ?? '';
+            foundLogoUrl = d['logo']?.toString() ?? d['logo_url']?.toString() ?? '';
             break;
           }
         }
         if (foundLogoUrl.isNotEmpty) {
           final resp = await http.get(Uri.parse(foundLogoUrl));
-          if (resp.statusCode == 200) {
-            logoImage = pw.MemoryImage(resp.bodyBytes);
-          }
+          if (resp.statusCode == 200) logoImage = pw.MemoryImage(resp.bodyBytes);
         }
-      } catch (e) {
-        debugPrint("Chyba načítání loga do PDF: $e");
-      }
+      } catch (e) { debugPrint("Logo error: $e"); }
     }
 
     pw.MemoryImage? podpisImage;
@@ -175,12 +179,8 @@ class GlobalPdfGenerator {
       if (podpisUrl != null && podpisUrl.isNotEmpty) {
         try {
           final resp = await http.get(Uri.parse(podpisUrl));
-          if (resp.statusCode == 200) {
-            podpisImage = pw.MemoryImage(resp.bodyBytes);
-          }
-        } catch (e) {
-          debugPrint("Chyba načítání podpisu do PDF: $e");
-        }
+          if (resp.statusCode == 200) podpisImage = pw.MemoryImage(resp.bodyBytes);
+        } catch (e) { debugPrint("Sign error: $e"); }
       }
     }
 
@@ -190,33 +190,13 @@ class GlobalPdfGenerator {
         child: pw.Row(
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
-            pw.SizedBox(
-              width: 70,
-              child: pw.Text(
-                label,
-                style: pw.TextStyle(
-                  font: fontRegular,
-                  fontSize: 9,
-                  color: PdfColors.grey600,
-                ),
-              ),
-            ),
-            pw.Expanded(
-              child: pw.Text(
-                value,
-                style: pw.TextStyle(
-                  font: fontMedium,
-                  fontSize: 10,
-                  color: PdfColors.grey900,
-                ),
-              ),
-            ),
+            pw.SizedBox(width: 70, child: pw.Text(label, style: pw.TextStyle(font: fontRegular, fontSize: 9, color: PdfColors.grey600))),
+            pw.Expanded(child: pw.Text(value, style: pw.TextStyle(font: fontMedium, fontSize: 10, color: PdfColors.grey900))),
           ],
         ),
       );
     }
 
-    // Výpočet celkové sumy pro zobrazení dole a generování QR kódu
     for (var prace in provedenePrace) {
       final polozky = prace['polozky'] as List<dynamic>?;
       if (polozky != null) {
@@ -237,315 +217,98 @@ class GlobalPdfGenerator {
       }
     }
 
-    final spaydStr = _generateSpayd(sBanka, celkovaSuma, puvodniCislo);
-    final ukazQr =
-        typ == PdfTyp.faktura &&
-        formaUhrady.toLowerCase().contains('převod') &&
-        celkovaSuma > 0 &&
-        spaydStr.isNotEmpty;
+    final spaydStr = _generateSpayd(sBanka, celkovaSuma, cisloDokladu);
+    final ukazQr = typ == PdfTyp.faktura && formaUhrady.toLowerCase().contains('převod') && celkovaSuma > 0 && spaydStr.isNotEmpty;
 
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+        margin: const pw.EdgeInsets.all(40),
         theme: pw.ThemeData.withFont(base: fontRegular, bold: fontBold),
         build: (pw.Context context) => [
           pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text(
-                titulek,
-                style: pw.TextStyle(
-                  font: fontBold,
-                  fontSize: 22,
-                  color: PdfColors.blue800,
-                  letterSpacing: 1.0,
-                ),
-              ),
+              pw.Text(titulek, style: pw.TextStyle(font: fontBold, fontSize: 22, color: PdfColors.blue800)),
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
-                  pw.Text(
-                    'Číslo: $cisloDokladu',
-                    style: pw.TextStyle(
-                      font: fontBold,
-                      fontSize: 14,
-                      color: PdfColors.grey800,
-                    ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  pw.Text(
-                    'Vystaveno: ${DateFormat('dd.MM.yyyy').format(datumVystaveni)}',
-                    style: pw.TextStyle(
-                      font: fontMedium,
-                      fontSize: 10,
-                      color: PdfColors.grey600,
-                    ),
-                  ),
-                  if (typ == PdfTyp.faktura) ...[
-                    pw.SizedBox(height: 2),
-                    pw.Text(
-                      'Splatnost: ${DateFormat('dd.MM.yyyy').format(datumSplatnosti)}',
-                      style: pw.TextStyle(
-                        font: fontBold,
-                        fontSize: 10,
-                        color: PdfColors.red800,
-                      ),
-                    ),
-                  ],
+                  pw.Text('Číslo: $cisloDokladu', style: pw.TextStyle(font: fontBold, fontSize: 14)),
+                  pw.Text('Vystaveno: ${DateFormat('dd.MM.yyyy').format(datumVystaveni)}', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
+                  if (typ == PdfTyp.faktura) pw.Text('Splatnost: ${DateFormat('dd.MM.yyyy').format(datumSplatnosti)}', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.red800)),
                 ],
               ),
             ],
           ),
           pw.SizedBox(height: 30),
-
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Expanded(
-                child: pw.Container(
-                  padding: const pw.EdgeInsets.all(15),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColor.fromHex('#F8FAFC'),
-                    borderRadius: pw.BorderRadius.circular(8),
-                    border: pw.Border.all(color: PdfColors.grey200),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'DODAVATEL',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 10,
-                          color: PdfColors.blue700,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      pw.SizedBox(height: 10),
-                      pw.Text(
-                        servisNazev,
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 13,
-                          color: PdfColors.grey900,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      pw.Text(
-                        sAdresa,
-                        style: pw.TextStyle(
-                          font: fontRegular,
-                          fontSize: 10,
-                          color: PdfColors.grey700,
-                        ),
-                      ),
-                      pw.Text(
-                        '$sPsc $sMesto',
-                        style: pw.TextStyle(
-                          font: fontRegular,
-                          fontSize: 10,
-                          color: PdfColors.grey700,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      pw.Text(
-                        'IČO: $servisIco',
-                        style: pw.TextStyle(
-                          font: fontMedium,
-                          fontSize: 10,
-                          color: PdfColors.grey800,
-                        ),
-                      ),
-                      if (sDic.isNotEmpty)
-                        pw.Text(
-                          'DIČ: $sDic',
-                          style: pw.TextStyle(
-                            font: fontMedium,
-                            fontSize: 10,
-                            color: PdfColors.grey800,
-                          ),
-                        ),
-                      pw.SizedBox(height: 6),
-                      if (sTelefon.isNotEmpty)
-                        pw.Text(
-                          'Tel: $sTelefon',
-                          style: pw.TextStyle(
-                            font: fontRegular,
-                            fontSize: 10,
-                            color: PdfColors.grey700,
-                          ),
-                        ),
-                      if (sEmail.isNotEmpty)
-                        pw.Text(
-                          'E-mail: $sEmail',
-                          style: pw.TextStyle(
-                            font: fontRegular,
-                            fontSize: 10,
-                            color: PdfColors.grey700,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
+              pw.Expanded(child: pw.Container(
+                padding: const pw.EdgeInsets.all(15),
+                decoration: pw.BoxDecoration(color: PdfColor.fromHex('#F8FAFC'), borderRadius: pw.BorderRadius.circular(8), border: pw.Border.all(color: PdfColors.grey200)),
+                child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                  pw.Text('DODAVATEL', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.blue700)),
+                  pw.SizedBox(height: 10),
+                  pw.Text(servisNazev, style: pw.TextStyle(font: fontBold, fontSize: 13)),
+                  pw.SizedBox(height: 6),
+                  pw.Text(sAdresa, style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)), 
+                  pw.Text('$sPsc $sMesto', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                  pw.SizedBox(height: 6),
+                  pw.Text('IČO: $servisIco', style: pw.TextStyle(font: fontMedium, fontSize: 10)),
+                  if (sDic.isNotEmpty) pw.Text('DIČ: $sDic', style: pw.TextStyle(font: fontMedium, fontSize: 10)),
+                  pw.SizedBox(height: 6),
+                  if (sTelefon.isNotEmpty) pw.Text('Tel: $sTelefon', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                  if (sEmail.isNotEmpty) pw.Text('E-mail: $sEmail', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                ]),
+              )),
               pw.SizedBox(width: 20),
-
-              pw.Expanded(
-                child: pw.Container(
-                  padding: const pw.EdgeInsets.all(15),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColor.fromHex('#F8FAFC'),
-                    borderRadius: pw.BorderRadius.circular(8),
-                    border: pw.Border.all(color: PdfColors.grey200),
-                  ),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text(
-                        'ODBĚRATEL',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 10,
-                          color: PdfColors.blue700,
-                          letterSpacing: 1,
-                        ),
-                      ),
-                      pw.SizedBox(height: 10),
-                      pw.Text(
-                        zakaznik['jmeno'] ?? 'Neuvedeno',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 13,
-                          color: PdfColors.grey900,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      pw.Text(
-                        '${zakaznik['ulice'] ?? ''}',
-                        style: pw.TextStyle(
-                          font: fontRegular,
-                          fontSize: 10,
-                          color: PdfColors.grey700,
-                        ),
-                      ),
-                      pw.Text(
-                        '${zakaznik['psc'] ?? ''} ${zakaznik['mesto'] ?? ''}',
-                        style: pw.TextStyle(
-                          font: fontRegular,
-                          fontSize: 10,
-                          color: PdfColors.grey700,
-                        ),
-                      ),
-                      pw.SizedBox(height: 6),
-                      if (zakaznik['ico'] != null &&
-                          zakaznik['ico'].toString().isNotEmpty)
-                        pw.Text(
-                          'IČO: ${zakaznik['ico']}',
-                          style: pw.TextStyle(
-                            font: fontMedium,
-                            fontSize: 10,
-                            color: PdfColors.grey800,
-                          ),
-                        ),
-                      if (zakaznik['dic'] != null &&
-                          zakaznik['dic'].toString().isNotEmpty)
-                        pw.Text(
-                          'DIČ: ${zakaznik['dic']}',
-                          style: pw.TextStyle(
-                            font: fontMedium,
-                            fontSize: 10,
-                            color: PdfColors.grey800,
-                          ),
-                        ),
-                      pw.SizedBox(height: 6),
-                      if (zakaznik['telefon'] != null &&
-                          zakaznik['telefon'].toString().isNotEmpty)
-                        pw.Text(
-                          'Tel: ${zakaznik['telefon']}',
-                          style: pw.TextStyle(
-                            font: fontMedium,
-                            fontSize: 10,
-                            color: PdfColors.grey800,
-                          ),
-                        ),
-                      if (zakaznik['email'] != null &&
-                          zakaznik['email'].toString().isNotEmpty)
-                        pw.Text(
-                          'E-mail: ${zakaznik['email']}',
-                          style: pw.TextStyle(
-                            font: fontRegular,
-                            fontSize: 10,
-                            color: PdfColors.grey700,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
+              pw.Expanded(child: pw.Container(
+                padding: const pw.EdgeInsets.all(15),
+                decoration: pw.BoxDecoration(color: PdfColor.fromHex('#F8FAFC'), borderRadius: pw.BorderRadius.circular(8), border: pw.Border.all(color: PdfColors.grey200)),
+                child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                  pw.Text('ODBĚRATEL', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.blue700)),
+                  pw.SizedBox(height: 10),
+                  pw.Text(zakaznik['jmeno'] ?? 'Neuvedeno', style: pw.TextStyle(font: fontBold, fontSize: 13)),
+                  pw.SizedBox(height: 6),
+                  pw.Text('${zakaznik['ulice'] ?? ''}', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)), 
+                  pw.Text('${zakaznik['psc'] ?? ''} ${zakaznik['mesto'] ?? ''}', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                  pw.SizedBox(height: 6),
+                  if (zakaznik['ico'] != null && zakaznik['ico'].toString().isNotEmpty) pw.Text('IČO: ${zakaznik['ico']}', style: pw.TextStyle(font: fontMedium, fontSize: 10)),
+                  if (zakaznik['dic'] != null && zakaznik['dic'].toString().isNotEmpty) pw.Text('DIČ: ${zakaznik['dic']}', style: pw.TextStyle(font: fontMedium, fontSize: 10)),
+                  pw.SizedBox(height: 6),
+                  if (zakaznik['telefon'] != null && zakaznik['telefon'].toString().isNotEmpty) pw.Text('Tel: ${zakaznik['telefon']}', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                  if (zakaznik['email'] != null && zakaznik['email'].toString().isNotEmpty) pw.Text('E-mail: ${zakaznik['email']}', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700)),
+                ]),
+              )),
             ],
           ),
           pw.SizedBox(height: 20),
-
+          
           pw.Container(
             padding: const pw.EdgeInsets.all(15),
-            decoration: pw.BoxDecoration(
-              color: PdfColor.fromHex('#F8FAFC'),
-              borderRadius: pw.BorderRadius.circular(8),
-              border: pw.Border.all(color: PdfColors.grey200),
-            ),
-            child: pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'VOZIDLO & ZAKÁZKA',
-                          style: pw.TextStyle(
-                            font: fontBold,
-                            fontSize: 10,
-                            color: PdfColors.blue700,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                        pw.SizedBox(height: 10),
-                        pw.Text(
-                          '${data['znacka'] ?? ''} ${data['model'] ?? ''}',
-                          style: pw.TextStyle(
-                            font: fontBold,
-                            fontSize: 13,
-                            color: PdfColors.grey900,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (logoImage != null)
-                      pw.Container(
-                        width: 40,
-                        height: 40,
-                        child: pw.Image(logoImage, fit: pw.BoxFit.contain),
-                      ),
-                  ],
-                ),
+            decoration: pw.BoxDecoration(color: PdfColor.fromHex('#F8FAFC'), borderRadius: pw.BorderRadius.circular(8), border: pw.Border.all(color: PdfColors.grey200)),
+            child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                  pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                    pw.Text('VOZIDLO & ZAKÁZKA', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.blue700, letterSpacing: 1)),
+                    pw.SizedBox(height: 10),
+                    pw.Text('${data['znacka'] ?? ''} ${data['model'] ?? ''}', style: pw.TextStyle(font: fontBold, fontSize: 13)),
+                  ]),
+                  if (logoImage != null) pw.Container(width: 40, height: 40, child: pw.Image(logoImage)),
+                ]),
                 pw.SizedBox(height: 6),
                 buildInfoRow('K zakázce:', puvodniCislo),
                 buildInfoRow('SPZ:', data['spz'] ?? ''),
                 buildInfoRow('VIN:', data['vin'] ?? '-'),
-                if (stavVozidla['tachometr'] != null &&
-                    stavVozidla['tachometr'].toString().isNotEmpty)
+                if (stavVozidla['tachometr'] != null && stavVozidla['tachometr'].toString().isNotEmpty)
                   buildInfoRow('Najeto:', '${stavVozidla['tachometr']} km'),
                 buildInfoRow('Přijato:', _formatDate(data['cas_prijeti'])),
-              ],
-            ),
+            ]),
           ),
           pw.SizedBox(height: 20),
 
+          // --- OBNOVENÝ BLOK PROTOKOLU (STAV PŘI PŘÍJMU) ---
           if (typ == PdfTyp.protokol) ...[
             pw.Container(
               padding: const pw.EdgeInsets.all(12),
@@ -593,7 +356,7 @@ class GlobalPdfGenerator {
                     ),
                   ),
 
-                  if (stavVozidla['poskozeni'] != null) ...[
+                  if (stavVozidla['poskozeni'] != null && stavVozidla['poskozeni'].toString().isNotEmpty) ...[
                     pw.SizedBox(height: 8),
                     pw.Text(
                       'Zaznamenaná poškození: ${stavVozidla['poskozeni'] is List ? (stavVozidla['poskozeni'] as List).join(", ") : stavVozidla['poskozeni']}',
@@ -604,8 +367,7 @@ class GlobalPdfGenerator {
                       ),
                     ),
                   ],
-                  if (data['poznamky'] != null &&
-                      data['poznamky'].toString().isNotEmpty) ...[
+                  if (data['poznamky'] != null && data['poznamky'].toString().isNotEmpty) ...[
                     pw.SizedBox(height: 4),
                     pw.Text(
                       'Poznámka: ${data['poznamky']}',
@@ -621,113 +383,22 @@ class GlobalPdfGenerator {
             ),
             pw.SizedBox(height: 25),
           ],
+          // ------------------------------------------------
 
-          pw.Text(
-            zobrazitCeny ? 'ROZPIS POLOŽEK' : 'POŽADOVANÉ ÚKONY',
-            style: pw.TextStyle(
-              font: fontBold,
-              fontSize: 12,
-              color: PdfColors.grey800,
-              letterSpacing: 0.5,
-            ),
-          ),
+          pw.Text(zobrazitCeny ? 'ROZPIS POLOŽEK' : 'POŽADOVANÉ ÚKONY', style: pw.TextStyle(font: fontBold, fontSize: 12)),
           pw.SizedBox(height: 10),
-
           pw.Table(
-            columnWidths: {
-              0: const pw.FlexColumnWidth(3),
-              if (zobrazitCeny) 1: const pw.FlexColumnWidth(0.8), // Množství
-              if (zobrazitCeny) 2: const pw.FlexColumnWidth(1),   // Cena/ks
-              if (zobrazitCeny) 3: const pw.FlexColumnWidth(1),   // Sleva
-              if (zobrazitCeny) 4: const pw.FlexColumnWidth(1.2), // Celkem
-            },
+            columnWidths: {0: const pw.FlexColumnWidth(3), if (zobrazitCeny) 1: const pw.FlexColumnWidth(1), if (zobrazitCeny) 2: const pw.FlexColumnWidth(1), if (zobrazitCeny) 3: const pw.FlexColumnWidth(1.2)},
             children: [
-              pw.TableRow(
-                decoration: pw.BoxDecoration(
-                  border: pw.Border(
-                    bottom: pw.BorderSide(color: PdfColors.grey300, width: 1),
-                  ),
-                ),
-                children: [
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 4,
-                    ),
-                    child: pw.Text(
-                      'Popis položky',
-                      style: pw.TextStyle(
-                        font: fontBold,
-                        fontSize: 9,
-                        color: PdfColors.grey600,
-                      ),
-                    ),
-                  ),
-                  if (zobrazitCeny) ...[
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 4,
-                      ),
-                      child: pw.Text(
-                        'Množství',
-                        textAlign: pw.TextAlign.center,
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 9,
-                          color: PdfColors.grey600,
-                        ),
-                      ),
-                    ),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 4,
-                      ),
-                      child: pw.Text(
-                        'Cena/ks',
-                        textAlign: pw.TextAlign.center,
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 9,
-                          color: PdfColors.grey600,
-                        ),
-                      ),
-                    ),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 4,
-                      ),
-                      child: pw.Text(
-                        'Sleva',
-                        textAlign: pw.TextAlign.center,
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 9,
-                          color: PdfColors.grey600,
-                        ),
-                      ),
-                    ),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.symmetric(
-                        vertical: 8,
-                        horizontal: 4,
-                      ),
-                      child: pw.Text(
-                        'Celkem s DPH',
-                        textAlign: pw.TextAlign.right,
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 9,
-                          color: PdfColors.grey600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-
+              pw.TableRow(decoration: pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.grey300))), children: [
+                pw.Padding(padding: const pw.EdgeInsets.all(4), child: pw.Text('Popis', style: pw.TextStyle(font: fontBold, fontSize: 9))),
+                if (zobrazitCeny) ...[
+                  pw.Text('Množství', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: fontBold, fontSize: 9)),
+                  pw.Text('Cena/ks', textAlign: pw.TextAlign.center, style: pw.TextStyle(font: fontBold, fontSize: 9)),
+                  pw.Text('Celkem s DPH', textAlign: pw.TextAlign.right, style: pw.TextStyle(font: fontBold, fontSize: 9)),
+                ]
+              ]),
+              
               if (!zobrazitCeny)
                 ...pozadavky.map(
                   (p) => pw.TableRow(
@@ -825,24 +496,22 @@ class GlobalPdfGenerator {
                         pw.Padding(padding: pw.EdgeInsets.zero),
                         pw.Padding(padding: pw.EdgeInsets.zero),
                         pw.Padding(padding: pw.EdgeInsets.zero),
-                        pw.Padding(padding: pw.EdgeInsets.zero),
                       ],
                     ),
                     ...items.map((item) {
-                      double p =
-                          double.tryParse(item['mnozstvi'].toString()) ?? 1.0;
-                      double c =
-                          double.tryParse(item['cena_s_dph'].toString()) ?? 0.0;
+                      double p = double.tryParse(item['mnozstvi'].toString()) ?? 1.0;
+                      double c = double.tryParse(item['cena_s_dph'].toString()) ?? 0.0;
                       double s = double.tryParse(item['sleva']?.toString() ?? '0') ?? 0.0;
                       
                       double rCelkem = (p * c) * (1 - (s / 100));
 
                       String j = item['jednotka'] ?? 'ks';
                       String nazevPolozky = item['nazev'] ?? '';
-                      if (item['cislo'] != null &&
-                          item['cislo'].toString().trim().isNotEmpty) {
+                      if (item['cislo'] != null && item['cislo'].toString().trim().isNotEmpty) {
                         nazevPolozky += ' (${item['cislo']})';
                       }
+                      
+                      String slevaStr = s > 0 ? ' (-${s.toStringAsFixed(0)}%)' : '';
 
                       return pw.TableRow(
                         children: [
@@ -883,27 +552,12 @@ class GlobalPdfGenerator {
                               horizontal: 4,
                             ),
                             child: pw.Text(
-                              '${c.toStringAsFixed(2)} Kč',
+                              '${c.toStringAsFixed(2)} Kč$slevaStr',
                               textAlign: pw.TextAlign.center,
                               style: pw.TextStyle(
                                 font: fontRegular,
                                 fontSize: 9,
                                 color: PdfColors.grey700,
-                              ),
-                            ),
-                          ),
-                          pw.Padding(
-                            padding: const pw.EdgeInsets.symmetric(
-                              vertical: 4,
-                              horizontal: 4,
-                            ),
-                            child: pw.Text(
-                              s > 0 ? '${s.toStringAsFixed(0)} %' : '',
-                              textAlign: pw.TextAlign.center,
-                              style: pw.TextStyle(
-                                font: fontBold,
-                                fontSize: 9,
-                                color: PdfColors.red600,
                               ),
                             ),
                           ),
@@ -925,143 +579,34 @@ class GlobalPdfGenerator {
                         ],
                       );
                     }),
-                    pw.TableRow(
-                      decoration: pw.BoxDecoration(
-                        border: pw.Border(
-                          bottom: pw.BorderSide(
-                            color: PdfColor.fromHex('#F1F5F9'),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      children: [
-                        pw.SizedBox(height: 4),
-                        pw.SizedBox(height: 4),
-                        pw.SizedBox(height: 4),
-                        pw.SizedBox(height: 4),
-                        pw.SizedBox(height: 4),
-                      ],
-                    ),
                   ];
                 }),
             ],
           ),
-
           if (zobrazitCeny) ...[
-            pw.SizedBox(height: 20),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                (typ == PdfTyp.faktura && sBanka.isNotEmpty)
-                    ? pw.Container(
-                        width: 270,
-                        padding: const pw.EdgeInsets.all(12),
-                        decoration: pw.BoxDecoration(
-                          color: PdfColor.fromHex('#F8FAFC'),
-                          borderRadius: pw.BorderRadius.circular(8),
-                          border: pw.Border.all(color: PdfColors.grey200),
-                        ),
-                        child: pw.Row(
-                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: pw.CrossAxisAlignment.center,
-                          children: [
-                            pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.start,
-                              children: [
-                                pw.Text(
-                                  'PLATEBNÍ ÚDAJE',
-                                  style: pw.TextStyle(
-                                    font: fontBold,
-                                    fontSize: 9,
-                                    color: PdfColors.grey600,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                pw.SizedBox(height: 6),
-                                pw.Text(
-                                  'Banka: $sBanka',
-                                  style: pw.TextStyle(
-                                    font: fontBold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                                pw.SizedBox(height: 4),
-                                pw.Text(
-                                  'Var. symbol: ${puvodniCislo.replaceAll(RegExp(r'[^0-9]'), '')}',
-                                  style: pw.TextStyle(
-                                    font: fontMedium,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                                pw.SizedBox(height: 4),
-                                pw.Text(
-                                  'Úhrada: $formaUhrady',
-                                  style: pw.TextStyle(
-                                    font: fontRegular,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (ukazQr) ...[
-                              pw.SizedBox(width: 10),
-                              pw.Container(
-                                width: 65,
-                                height: 65,
-                                child: pw.BarcodeWidget(
-                                  barcode: pw.Barcode.qrCode(),
-                                  data: spaydStr,
-                                  color: PdfColors.black,
-                                  drawText: false,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      )
-                    : pw.SizedBox(),
-
-                pw.Container(
-                  width: 220,
-                  padding: const pw.EdgeInsets.symmetric(
-                    vertical: 15,
-                    horizontal: 15,
-                  ),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColor.fromHex('#EFF6FF'),
-                    borderRadius: pw.BorderRadius.circular(8),
-                    border: pw.Border.all(color: PdfColor.fromHex('#BFDBFE')),
-                  ),
-                  child: pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-                      // --- ZMĚNA ZDE: Dynamický text podle typu dokumentu ---
-                      pw.Text(
-                        typ == PdfTyp.naceneni ? 'Celkem:' : 'Celkem k úhradě:',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 12,
-                          color: PdfColors.blue900,
-                        ),
-                      ),
-                      pw.Text(
-                        '${celkovaSuma.toStringAsFixed(2)} Kč',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 16,
-                          color: PdfColors.blue900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            pw.SizedBox(height: 30),
+            pw.Row(mainAxisAlignment: pw.MainAxisAlignment.spaceBetween, children: [
+              if (ukazQr) pw.Container(
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(border: pw.Border.all(color: PdfColors.grey200), borderRadius: pw.BorderRadius.circular(8)),
+                child: pw.Row(children: [
+                  pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                    pw.Text('PLATBA PŘEVODEM', style: pw.TextStyle(font: fontBold, fontSize: 8)),
+                    pw.Text('Banka: $sBanka', style: const pw.TextStyle(fontSize: 9)),
+                    pw.Text('VS: ${cisloDokladu.replaceAll(RegExp(r'[^0-9]'), '')}', style: const pw.TextStyle(fontSize: 9)),
+                  ]),
+                  pw.SizedBox(width: 10),
+                  pw.BarcodeWidget(barcode: pw.Barcode.qrCode(), data: spaydStr, width: 50, height: 50),
+                ]),
+              ) else pw.SizedBox(),
+              pw.Container(
+                padding: const pw.EdgeInsets.all(15),
+                decoration: pw.BoxDecoration(color: PdfColor.fromHex('#EFF6FF'), borderRadius: pw.BorderRadius.circular(8)),
+                child: pw.Text('CELKEM: ${celkovaSuma.toStringAsFixed(2)} Kč', style: pw.TextStyle(font: fontBold, fontSize: 16, color: PdfColors.blue900)),
+              ),
+            ]),
           ],
-
           pw.Spacer(),
-
           pw.Divider(color: PdfColors.grey300, thickness: 0.5),
           pw.SizedBox(height: 10),
           pw.Row(
@@ -1073,66 +618,28 @@ class GlobalPdfGenerator {
                 children: [
                   pw.Text(
                     'Datum vystavení: ${DateFormat('dd.MM.yyyy').format(datumVystaveni)}',
-                    style: pw.TextStyle(
-                      font: fontRegular,
-                      fontSize: 8,
-                      color: PdfColors.grey600,
-                    ),
+                    style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColors.grey600),
                   ),
                   if (sRegistrace.isNotEmpty) ...[
                     pw.SizedBox(height: 2),
-                    pw.Text(
-                      sRegistrace,
-                      style: pw.TextStyle(
-                        font: fontRegular,
-                        fontSize: 8,
-                        color: PdfColors.grey500,
-                      ),
-                    ),
+                    pw.Text(sRegistrace, style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColors.grey500)),
                   ],
                   pw.SizedBox(height: 4),
-                  pw.Text(
-                    'Vygenerováno v systému Torkis.cz',
-                    style: pw.TextStyle(
-                      font: fontRegular,
-                      fontSize: 8,
-                      color: PdfColors.grey400,
-                    ),
-                  ),
+                  pw.Text('Vygenerováno v systému Torkis.cz', style: pw.TextStyle(font: fontRegular, fontSize: 8, color: PdfColors.grey400)),
                 ],
               ),
               if (typ == PdfTyp.protokol)
                 pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text(
-                      'Podpis zákazníka (převzetí do servisu):',
-                      style: pw.TextStyle(
-                        font: fontMedium,
-                        fontSize: 9,
-                        color: PdfColors.grey600,
-                      ),
-                    ),
+                    pw.Text('Podpis zákazníka (převzetí do servisu):', style: pw.TextStyle(font: fontMedium, fontSize: 9, color: PdfColors.grey600)),
                     if (podpisImage != null) ...[
                       pw.SizedBox(height: 5),
-                      pw.Container(
-                        height: 40,
-                        width: 120,
-                        alignment: pw.Alignment.bottomRight,
-                        child: pw.Image(podpisImage, fit: pw.BoxFit.contain),
-                      ),
-                      pw.Container(
-                        width: 120,
-                        height: 0.5,
-                        color: PdfColors.grey400,
-                      ),
+                      pw.Container(height: 40, width: 120, alignment: pw.Alignment.bottomRight, child: pw.Image(podpisImage, fit: pw.BoxFit.contain)),
+                      pw.Container(width: 120, height: 0.5, color: PdfColors.grey400),
                     ] else ...[
                       pw.SizedBox(height: 30),
-                      pw.Container(
-                        width: 120,
-                        height: 0.5,
-                        color: PdfColors.grey400,
-                      ),
+                      pw.Container(width: 120, height: 0.5, color: PdfColors.grey400),
                     ],
                   ],
                 ),
@@ -1141,7 +648,6 @@ class GlobalPdfGenerator {
         ],
       ),
     );
-
     return pdf.save();
   }
 }
