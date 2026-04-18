@@ -512,6 +512,116 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
     );
   }
 
+  Future<void> _odeslatFakturuEmailem(Map<String, dynamic> fData, String vychoziEmail) async {
+    final String pdfUrl = fData['pdf_url']?.toString() ?? '';
+    final String cisloFaktury = fData['cislo_faktury']?.toString() ?? '';
+
+    if (pdfUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Faktura ještě nemá vygenerované PDF.'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    TextEditingController emailCtrl = TextEditingController(text: vychoziEmail);
+
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Odeslat fakturu e-mailem?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Faktura bude odeslána na níže uvedený e-mail:'),
+            const SizedBox(height: 15),
+            TextField(
+              controller: emailCtrl,
+              decoration: const InputDecoration(
+                labelText: 'E-mail příjemce',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.email),
+              ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ZRUŠIT'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('ODESLAT', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final finalEmail = emailCtrl.text.trim();
+      if (finalEmail.isEmpty || !finalEmail.contains('@')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zadán neplatný e-mail.'), backgroundColor: Colors.red));
+        }
+        return;
+      }
+
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        final docNastaveni = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(globalServisId).get();
+        String odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
+        String odesilatelEmail = docNastaveni.data()?['email_servisu'] ?? '';
+
+        Map<String, dynamic> mailDoc = {
+          'to': finalEmail,
+          'from': '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>',
+          'message': {
+            'subject': 'Faktura $cisloFaktury ($odesilatelJmeno)',
+            'html': '''
+              <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
+                <p>v příloze Vám zasíláme fakturu <b>$cisloFaktury</b> za provedené služby a dodané zboží.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="$pdfUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit a stáhnout fakturu</a>
+                </div>
+                <p>Děkujeme za využití našich služeb. V případě jakýchkoliv dotazů na tento e-mail jednoduše odpovězte, zpráva nám bude doručena.</p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerován automaticky systémem <b>Torkis.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
+              </div>
+            '''
+          }
+        };
+
+        if (odesilatelEmail.isNotEmpty && odesilatelEmail.contains('@')) {
+          mailDoc['replyTo'] = odesilatelEmail;
+        }
+
+        await FirebaseFirestore.instance.collection('maily').add(mailDoc);
+
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Faktura odeslána na: $finalEmail'), backgroundColor: Colors.green),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Chyba odeslání: $e'), backgroundColor: Colors.red),
+          );
+        }
+      }
+    }
+  }
+
   Future<void> _stornovatPultovyProdej(Map<String, dynamic> fData) async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -807,38 +917,52 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '${fData['cislo_faktury']}',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                decoration: jeStornovano
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                                color: jeStornovano ? Colors.grey : null,
+                            Expanded(
+                              child: Text(
+                                '${fData['cislo_faktury']}',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: jeStornovano
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                  color: jeStornovano ? Colors.grey : null,
+                                ),
                               ),
                             ),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                if (fData['pdf_url'] != null &&
-                                    fData['pdf_url'].toString().isNotEmpty) {
-                                  _zobrazitPdf(context, fData['pdf_url']);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'PDF zatím není k dispozici.',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.picture_as_pdf),
-                              label: const Text('ZOBRAZIT PDF'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blueAccent,
-                                foregroundColor: Colors.white,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.email_outlined, color: Colors.blue),
+                                  tooltip: 'Odeslat na e-mail zákazníka',
+                                  onPressed: () => _odeslatFakturuEmailem(fData, email),
+                                ),
+                                const SizedBox(width: 5),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    if (fData['pdf_url'] != null &&
+                                        fData['pdf_url'].toString().isNotEmpty) {
+                                      _zobrazitPdf(context, fData['pdf_url']);
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'PDF zatím není k dispozici.',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(Icons.picture_as_pdf),
+                                  label: const Text('PDF'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blueAccent,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -1028,7 +1152,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                           ...List.generate(provedenePrace.length, (index) {
                             final prace = provedenePrace[index];
 
-                            // OCHRANA PROTI PÁDŮM (VŽDY VYTVÁŘÍME NOVÝ SEZNAM)
+                            // OCHRANA PROTI PÁDŮM
                             List<dynamic> polozky = List.from(prace['polozky'] as List<dynamic>? ?? []);
                             
                             if (polozky.isEmpty) {
@@ -1446,7 +1570,7 @@ class _EditFakturaWorkScreenState extends State<EditFakturaWorkScreen> {
       return;
     }
 
-    // OCHRANA PROTI TICHÉMU SMAZÁNÍ: Pokud nemá položka název, upozorníme uživatele
+    // OCHRANA PROTI TICHÉMU SMAZÁNÍ
     bool maChybu = false;
     for (var p in _polozkyInputs) {
       if (p.nazev.text.trim().isEmpty) {
@@ -2219,6 +2343,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
     try {
       if (globalServisId == null) return;
 
+      // 1. ZPRACOVÁNÍ SKLADU - Odpočet dílů
       for (var p in _polozkyInputs) {
         if (p.skladDocId != null) {
           double qty =
@@ -2275,6 +2400,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
           .get();
       String prefix = docNast.data()?['prefix_faktury'] ?? 'FAK';
 
+      // GENEROVÁNÍ ČÍSLA FAKTURY PŘES TRANSAKCI (Inkrement)
       String datumPart = DateFormat('yyMMdd').format(ted);
       final counterRef = FirebaseFirestore.instance.collection('citace_faktur').doc('${globalServisId}_$datumPart');
       
@@ -2289,6 +2415,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         return '$prefix$datumPart$sequencePart';
       });
 
+      // 2. DOLOGOVÁNÍ SKLADOVÝCH POHYBŮ S VYGENEROVANÝM ČÍSLEM FAKTURY
       for (var p in _polozkyInputs) {
         if (p.skladDocId != null) {
           double qty = double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 0.0;
