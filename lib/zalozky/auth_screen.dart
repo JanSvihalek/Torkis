@@ -200,7 +200,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(height: 15),
                           const Text(
-                            'Torkis',
+                            'TORKIS',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 40,
@@ -212,7 +212,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           const SizedBox(height: 10),
                           Text(
                             _isLogin
-                                ? 'Přihlaste se do svého servisu'
+                                ? 'Váš digitální servis v kapse'
                                 : 'Zaregistrujte svůj servis',
                             textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.7)),

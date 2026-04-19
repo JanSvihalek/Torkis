@@ -104,7 +104,7 @@ class _MainScreenState extends State<MainScreen> {
                   Icon(Icons.car_repair, color: Theme.of(context).colorScheme.primary, size: 28),
                   const SizedBox(width: 8),
                   Text(
-                    'Torkis', 
+                    'TORKIS', 
                     style: TextStyle(
                       fontWeight: FontWeight.w900, 
                       color: isDark ? Colors.white : Colors.black87, 

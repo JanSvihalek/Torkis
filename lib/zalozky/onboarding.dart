@@ -340,7 +340,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             child: const Icon(Icons.handshake, color: Colors.blue, size: 40),
           ),
           const SizedBox(height: 20),
-          const Text('Vítejte ve Torkis!',
+          const Text('Vítejte ve TORKIS!',
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           const Text(

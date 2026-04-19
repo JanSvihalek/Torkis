@@ -444,7 +444,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
             Map<String, dynamic> mailDoc = {
               'to': zakaznikEmail,
-              'from': '$sNazev (přes Torkis) <jan.svihalek00@gmail.com>',
+              'from': '$sNazev (přes TORKIS) <jan.svihalek00@gmail.com>',
               'message': {
                 'subject':
                     'Cenová nabídka - Zakázka ${widget.zakazkaId} ($sNazev)',
@@ -916,7 +916,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             Map<String, dynamic> mailDoc = {
               'to': zakaznikEmail,
               'from':
-                  '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>',
+                  '$odesilatelJmeno (přes TORKIS) <jan.svihalek00@gmail.com>',
               'message': {
                 'subject':
                     'Faktura - Zakázka ${widget.zakazkaId} ($odesilatelJmeno)',
@@ -929,7 +929,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     </div>
                     <p>Děkujeme za využití našich služeb. V případě jakýchkoliv dotazů na tento e-mail jednoduše odpovězte, zpráva nám bude doručena.</p>
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerován automaticky systémem <b>Torkis.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
+                    <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerován automaticky systémem <b>TORKIS.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
                   </div>
                 '''
               }

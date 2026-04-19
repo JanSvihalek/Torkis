@@ -903,7 +903,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
       await FirebaseFirestore.instance.collection('maily').add({
         'to': emailZakanika,
-        'from': '$odesilatelJmeno (přes Torkis) <jan.svihalek00@gmail.com>',
+        'from': '$odesilatelJmeno (přes TORKIS) <jan.svihalek00@gmail.com>',
         'replyTo': user?.email ?? '',
         'message': {
           'subject': 'Protokol o přijetí vozidla $spz - $odesilatelJmeno',
