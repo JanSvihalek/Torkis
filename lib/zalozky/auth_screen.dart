@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui'; // Nutné pro ImageFilter (efekt skla)
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'auth_gate.dart'; // <--- ODKAZ NA NAŠEHO STRÁŽCE
@@ -10,7 +11,7 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> {
+class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -19,14 +20,45 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
+  // --- NOVÉ: Proměnné pro animaci pozadí ---
+  late AnimationController _animController;
+  late Animation<Alignment> _topAlignmentAnimation;
+  late Animation<Alignment> _bottomAlignmentAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Nastavení plynulé animace
+    _animController = AnimationController(vsync: this, duration: const Duration(seconds: 7));
+    
+    _topAlignmentAnimation = TweenSequence<Alignment>([
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topLeft, end: Alignment.topRight), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topRight, end: Alignment.bottomRight), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomRight, end: Alignment.bottomLeft), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomLeft, end: Alignment.topLeft), weight: 1),
+    ]).animate(_animController);
+
+    _bottomAlignmentAnimation = TweenSequence<Alignment>([
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomRight, end: Alignment.bottomLeft), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomLeft, end: Alignment.topLeft), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topLeft, end: Alignment.topRight), weight: 1),
+      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topRight, end: Alignment.bottomRight), weight: 1),
+    ]).animate(_animController);
+
+    _animController.repeat();
+  }
+
   @override
   void dispose() {
+    _animController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
+  // --- TVOJE PŮVODNÍ LOGIKA (BEZ JAKÉKOLIV ZMĚNY) ---
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     final email = _emailController.text.trim();
@@ -117,162 +149,181 @@ class _AuthScreenState extends State<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(30.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(
-                  Icons.car_repair,
-                  size: 80,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  'Torkis',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -1,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  _isLogin
-                      ? 'Přihlaste se do svého servisu'
-                      : 'Zaregistrujte svůj servis',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                const SizedBox(height: 40),
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
+      extendBodyBehindAppBar: true,
+      body: Stack(
+        children: [
+          // 1. ANIMOVANÉ POZADÍ
+          AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: _topAlignmentAnimation.value,
+                    end: _bottomAlignmentAnimation.value,
+                    colors: const [
+                      Color(0xFF0F2027), // Velmi tmavě modrá/černá
+                      Color(0xFF203A43), // Temně modrá
+                      Color(0xFF2C5364), // Lehce světlejší ocelově modrá
                     ],
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _buildTextField(
-                        controller: _emailController,
-                        hint: 'E-mailová adresa',
-                        icon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
-                        isDark: isDark,
+                ),
+              );
+            },
+          ),
+
+          // 2. FORMULÁŘ (Glassmorphism)
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(30.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
                       ),
-                      const SizedBox(height: 15),
-                      _buildTextField(
-                        controller: _passwordController,
-                        hint: 'Heslo',
-                        icon: Icons.lock_outline,
-                        isPassword: true,
-                        isDark: isDark,
-                      ),
-                      if (!_isLogin) ...[
-                        const SizedBox(height: 15),
-                        _buildTextField(
-                          controller: _confirmPasswordController,
-                          hint: 'Potvrzení hesla',
-                          icon: Icons.lock_reset,
-                          isPassword: true,
-                          isDark: isDark,
-                        ),
-                      ],
-                      if (_isLogin)
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: _resetPassword,
-                            child: const Text(
-                              'Zapomněli jste heslo?',
-                              style: TextStyle(color: Colors.grey),
+                      padding: const EdgeInsets.all(30),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Icon(
+                            Icons.car_repair,
+                            size: 80,
+                            color: Colors.blueAccent,
+                          ),
+                          const SizedBox(height: 15),
+                          const Text(
+                            'Torkis',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: -1,
+                              color: Colors.white,
                             ),
                           ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _submit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    elevation: 5,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 3,
+                          const SizedBox(height: 10),
+                          Text(
+                            _isLogin
+                                ? 'Přihlaste se do svého servisu'
+                                : 'Zaregistrujte svůj servis',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.7)),
                           ),
-                        )
-                      : Text(
-                          _isLogin ? 'PŘIHLÁSIT SE' : 'VYTVOŘIT ÚČET',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
+                          const SizedBox(height: 40),
+                          
+                          _buildTextField(
+                            controller: _emailController,
+                            hint: 'E-mailová adresa',
+                            icon: Icons.email_outlined,
+                            keyboardType: TextInputType.emailAddress,
                           ),
-                        ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isLogin = !_isLogin;
-                      _emailController.clear();
-                      _passwordController.clear();
-                      _confirmPasswordController.clear();
-                    });
-                  },
-                  child: RichText(
-                    text: TextSpan(
-                      text:
-                          _isLogin ? 'Nemáte ještě účet? ' : 'Již máte účet? ',
-                      style: TextStyle(
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        fontSize: 15,
+                          const SizedBox(height: 15),
+                          
+                          _buildTextField(
+                            controller: _passwordController,
+                            hint: 'Heslo',
+                            icon: Icons.lock_outline,
+                            isPassword: true,
+                          ),
+                          
+                          if (!_isLogin) ...[
+                            const SizedBox(height: 15),
+                            _buildTextField(
+                              controller: _confirmPasswordController,
+                              hint: 'Potvrzení hesla',
+                              icon: Icons.lock_reset,
+                              isPassword: true,
+                            ),
+                          ],
+                          
+                          if (_isLogin)
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: _resetPassword,
+                                child: const Text(
+                                  'Zapomněli jste heslo?',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ),
+                            ),
+                          
+                          const SizedBox(height: 30),
+                          ElevatedButton(
+                            onPressed: _isLoading ? null : _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              elevation: 5,
+                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 3,
+                                    ),
+                                  )
+                                : Text(
+                                    _isLogin ? 'PŘIHLÁSIT SE' : 'VYTVOŘIT ÚČET',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1,
+                                    ),
+                                  ),
+                          ),
+                          const SizedBox(height: 20),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _isLogin = !_isLogin;
+                                _emailController.clear();
+                                _passwordController.clear();
+                                _confirmPasswordController.clear();
+                              });
+                            },
+                            child: RichText(
+                              text: TextSpan(
+                                text: _isLogin ? 'Nemáte ještě účet? ' : 'Již máte účet? ',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 15,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: _isLogin ? 'Zaregistrujte se' : 'Přihlaste se',
+                                    style: const TextStyle(
+                                      color: Colors.blueAccent,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      children: [
-                        TextSpan(
-                          text: _isLogin ? 'Zaregistrujte se' : 'Přihlaste se',
-                          style: const TextStyle(
-                            color: Colors.blue,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -283,22 +334,22 @@ class _AuthScreenState extends State<AuthScreen> {
     required IconData icon,
     bool isPassword = false,
     TextInputType keyboardType = TextInputType.text,
-    required bool isDark,
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword && _obscurePassword,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 16),
+      style: const TextStyle(fontSize: 16, color: Colors.white),
+      cursorColor: Colors.white,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[500]),
-        prefixIcon: Icon(icon, color: Colors.blue),
+        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+        prefixIcon: Icon(icon, color: Colors.blueAccent),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
+                  color: Colors.white70,
                 ),
                 onPressed: () {
                   setState(() {
@@ -308,21 +359,14 @@ class _AuthScreenState extends State<AuthScreen> {
               )
             : null,
         filled: true,
-        fillColor: isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF5F5F5),
+        fillColor: Colors.white.withOpacity(0.1),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(width: 0, style: BorderStyle.none),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark ? const Color(0xFF424242) : const Color(0xFFE0E0E0),
-            width: 1,
-          ),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
+          borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5),
         ),
       ),
     );
