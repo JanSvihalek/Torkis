@@ -23,6 +23,7 @@ dependencies:
   signature: ^5.5.0
   google_mlkit_text_recognition: ^0.15.0
   flutter_barcode_scanner: ^2.0.0
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:

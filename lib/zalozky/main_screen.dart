@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants.dart';
 import 'auth_gate.dart'; // Kvůli globalServisId a globalUserRole
@@ -16,7 +17,15 @@ import 'statistiky.dart';
 import 'nastaveni.dart';
 import 'ucetnictvi.dart'; 
 import 'zamestnanci.dart';
-import 'sklad.dart'; // Import nového skladu
+import 'sklad.dart';
+
+// GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
+final ValueNotifier<List<String>> navOrderNotifier = ValueNotifier([
+  'prijem', 
+  'zakazky', 
+  'historie', 
+  'menu'
+]);
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -26,105 +35,143 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  // Pamatujeme si ID aktuálního tabu
+  String _currentTabId = 'prijem';
 
-  // Hlavní 4 obrazovky ve spodní liště
-  final List<Widget> _pages = [
-    const MainWizardPage(),      
-    const ServiceProgressPage(), 
-    const HistoryPage(),         
-    const MenuPage(),            
-  ];
+  // DATABÁZE VŠECH DOSTUPNÝCH MODULŮ PRO SPODNÍ LIŠTU
+  final Map<String, _NavData> _allNavItems = {
+    'prijem': _NavData(page: const MainWizardPage(), icon: Icons.add_circle_outline_rounded, activeIcon: Icons.add_circle_rounded, label: 'Příjem'),
+    'zakazky': _NavData(page: const ServiceProgressPage(), icon: Icons.build_circle_outlined, activeIcon: Icons.build_circle, label: 'Zakázky'),
+    'historie': _NavData(page: const HistoryPage(), icon: Icons.history_rounded, activeIcon: Icons.history_rounded, label: 'Historie'),
+    'menu': _NavData(page: const MenuPage(), icon: Icons.grid_view, activeIcon: Icons.grid_view_rounded, label: 'Menu'),
+    'sklad': _NavData(page: const SkladPage(), icon: Icons.inventory_2_outlined, activeIcon: Icons.inventory_2, label: 'Sklad'),
+    'fakturace': _NavData(page: const FakturacePage(), icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'Faktury'),
+    'vozidla': _NavData(page: const VozidlaPage(), icon: Icons.directions_car_outlined, activeIcon: Icons.directions_car, label: 'Vozidla'),
+    'ukony': _NavData(page: const UkonyPage(), icon: Icons.playlist_add_check_circle_outlined, activeIcon: Icons.playlist_add_check_circle, label: 'Úkony'),
+    'zakaznici': _NavData(page: const ZakazniciPage(), icon: Icons.people_alt_outlined, activeIcon: Icons.people_alt, label: 'Zákazníci'),
+    'zamestnanci': _NavData(page: const ZamestnanciPage(), icon: Icons.badge_outlined, activeIcon: Icons.badge, label: 'Tým'),
+    'ucetnictvi': _NavData(page: const UcetnictviPage(), icon: Icons.pie_chart_outline, activeIcon: Icons.pie_chart, label: 'Účetnictví'),
+    'statistiky': _NavData(page: const StatisticsPage(), icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart, label: 'Statistiky'),
+    'nastaveni': _NavData(page: const SettingsPage(), icon: Icons.settings_outlined, activeIcon: Icons.settings, label: 'Nastavení'),
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadNavOrder();
+  }
+
+  // Načtení uloženého pořadí z paměti zařízení
+  Future<void> _loadNavOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedOrder = prefs.getStringList('nav_order');
+    if (savedOrder != null && savedOrder.isNotEmpty) {
+      navOrderNotifier.value = savedOrder;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.car_repair, color: Theme.of(context).colorScheme.primary, size: 28),
-              const SizedBox(width: 8),
-              Text(
-                'Torkis', 
-                style: TextStyle(
-                  fontWeight: FontWeight.w900, 
-                  color: isDark ? Colors.white : Colors.black87, 
-                  letterSpacing: -0.5
-                )
+    return ValueListenableBuilder<List<String>>(
+      valueListenable: navOrderNotifier,
+      builder: (context, navOrder, child) {
+        
+        // Zjistíme, na jakém indexu se aktuálně nachází náš aktivní tab (pokud byl smazán, skočíme na 0)
+        int currentIndex = navOrder.indexOf(_currentTabId);
+        if (currentIndex == -1) currentIndex = 0; 
+
+        // Sestavíme aktuální seznam stránek a tlačítek podle uživatelského výběru
+        final List<Widget> currentPages = navOrder.map((id) => _allNavItems[id]!.page).toList();
+        final List<NavigationDestination> currentDestinations = navOrder.map((id) {
+          final item = _allNavItems[id]!;
+          return NavigationDestination(
+            icon: Icon(item.icon),
+            selectedIcon: Icon(item.activeIcon),
+            label: item.label,
+          );
+        }).toList();
+
+        return Scaffold(
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          appBar: AppBar(
+            title: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.car_repair, color: Theme.of(context).colorScheme.primary, size: 28),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Torkis', 
+                    style: TextStyle(
+                      fontWeight: FontWeight.w900, 
+                      color: isDark ? Colors.white : Colors.black87, 
+                      letterSpacing: -0.5
+                    )
+                  ),
+                ],
               ),
+            ),
+            centerTitle: true,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  isDark ? Icons.light_mode : Icons.dark_mode, 
+                  color: isDark ? Colors.amber : Colors.black54
+                ),
+                onPressed: () async {
+                  final newIsDark = !isDark;
+                  themeNotifier.value = newIsDark ? ThemeMode.dark : ThemeMode.light;
+
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null) {
+                    try {
+                      await FirebaseFirestore.instance.collection('uzivatele').doc(user.uid).set({
+                        'tmavy_rezim': newIsDark,
+                      }, SetOptions(merge: true));
+                    } catch (e) {
+                      debugPrint('Chyba při ukládání motivu: $e');
+                    }
+                  }
+                },
+              ),
+              const SizedBox(width: 8),
             ],
           ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          // Tlačítko pro přepínání tmavého/světlého režimu
-          IconButton(
-            icon: Icon(
-              isDark ? Icons.light_mode : Icons.dark_mode, 
-              color: isDark ? Colors.amber : Colors.black54
-            ),
-            onPressed: () async {
-              final newIsDark = !isDark;
-              themeNotifier.value = newIsDark ? ThemeMode.dark : ThemeMode.light;
-
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null) {
-                try {
-                  await FirebaseFirestore.instance.collection('uzivatele').doc(user.uid).set({
-                    'tmavy_rezim': newIsDark,
-                  }, SetOptions(merge: true));
-                } catch (e) {
-                  debugPrint('Chyba při ukládání motivu: $e');
-                }
-              }
+          body: IndexedStack(
+            index: currentIndex, 
+            children: currentPages,
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: currentIndex,
+            onDestinationSelected: (index) {
+              setState(() {
+                _currentTabId = navOrder[index];
+              });
             },
+            backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            indicatorColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+            destinations: currentDestinations,
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: IndexedStack(
-        index: _currentIndex, 
-        children: _pages,
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (index) => setState(() => _currentIndex = index),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        indicatorColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.add_circle_outline_rounded), 
-            selectedIcon: Icon(Icons.add_circle_rounded), 
-            label: 'Příjem'
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.build_circle_outlined), 
-            selectedIcon: Icon(Icons.build_circle), 
-            label: 'Zakázky'
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_rounded), 
-            selectedIcon: Icon(Icons.history_rounded), 
-            label: 'Historie'
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.grid_view), 
-            selectedIcon: Icon(Icons.grid_view_rounded), 
-            label: 'Menu'
-          ),
-        ],
-      ),
+        );
+      }
     );
   }
+}
+
+// Pomocná třída pro uložení dat o jednom tabu
+class _NavData {
+  final Widget page;
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+
+  _NavData({required this.page, required this.icon, required this.activeIcon, required this.label});
 }
 
 // ============================================================================
@@ -137,7 +184,6 @@ class MenuPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
-    // Zjištění role uživatele pro zobrazení/skrytí modulů
     final role = globalUserRole ?? 'mechanik'; 
     final isAdmin = role == 'admin';
     final isTechnik = role == 'technik' || isAdmin; 
@@ -168,9 +214,9 @@ class MenuPage extends StatelessWidget {
             childAspectRatio: 1.1,
             children: [
               // Moduly dostupné pro všechny (i pro mechaniky)
+              _buildMenuCard(context, 'Historie', Icons.history_rounded, Colors.brown, const HistoryPage(), isDark),
               _buildMenuCard(context, 'Vozidla', Icons.directions_car, Colors.teal, const VozidlaPage(), isDark),
               _buildMenuCard(context, 'Úkony', Icons.playlist_add_check_circle, Colors.deepOrange, const UkonyPage(), isDark),
-              // Zde je Sklad - má parametr hasOwnScaffold: true, aby se neduplikovala horní lišta!
               _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2, Colors.orange, const SkladPage(), isDark, hasOwnScaffold: true),
 
               // Moduly dostupné pouze pro techniky a adminy
@@ -196,9 +242,6 @@ class MenuPage extends StatelessWidget {
     );
   }
 
-  // ============================================================================
-  // POMOCNÝ WIDGET PRO VYKRESLENÍ DLAŽDICE V MENU
-  // ============================================================================
   Widget _buildMenuCard(
     BuildContext context, 
     String title, 

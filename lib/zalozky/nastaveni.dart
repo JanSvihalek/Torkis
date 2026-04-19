@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'auth_screen.dart';
 import '../core/constants.dart';
 import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
+import 'main_screen.dart'; // Kvůli navOrderNotifier
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -49,7 +51,6 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // 1. NAČTENÍ OSOBNÍHO NASTAVENÍ (Tmavý režim)
       final userDoc = await FirebaseFirestore.instance
           .collection('uzivatele')
           .doc(user.uid)
@@ -60,7 +61,6 @@ class _SettingsPageState extends State<SettingsPage> {
         });
       }
 
-      // 2. NAČTENÍ FIREMNÍHO NASTAVENÍ (Jen pro Admina)
       if (_isAdmin && globalServisId != null) {
         final doc = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
@@ -97,7 +97,6 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        // 1. ULOŽENÍ OSOBNÍHO NASTAVENÍ DO PROFILU UŽIVATELE
         await FirebaseFirestore.instance
             .collection('uzivatele')
             .doc(user.uid)
@@ -105,7 +104,6 @@ class _SettingsPageState extends State<SettingsPage> {
           'tmavy_rezim': _tmavyRezim,
         }, SetOptions(merge: true));
 
-        // 2. ULOŽENÍ FIREMNÍHO NASTAVENÍ (Jen pro Admina)
         if (_isAdmin && globalServisId != null) {
           await FirebaseFirestore.instance
               .collection('nastaveni_servisu')
@@ -132,7 +130,6 @@ class _SettingsPageState extends State<SettingsPage> {
           }, SetOptions(merge: true));
         }
 
-        // Měníme motiv ihned po uložení
         themeNotifier.value = _tmavyRezim ? ThemeMode.dark : ThemeMode.light;
 
         if (mounted) {
@@ -178,6 +175,183 @@ class _SettingsPageState extends State<SettingsPage> {
             (route) => false);
       }
     }
+  }
+
+  // --- FUNKCE PRO VYKRESLENÍ DIALOGU NA PŘESKLÁDÁNÍ A PŘIDÁVÁNÍ MODULŮ ---
+  void _ukazatReorderingDialog(BuildContext context, bool isDark) {
+    List<String> lokalniPoradi = List.from(navOrderNotifier.value);
+
+    // Kompletní seznam všech dostupných modulů
+    final Map<String, Map<String, dynamic>> vizual = {
+      'prijem': {'nazev': 'Příjem vozidla', 'ikona': Icons.add_circle_outline_rounded},
+      'zakazky': {'nazev': 'Aktivní zakázky', 'ikona': Icons.build_circle_outlined},
+      'historie': {'nazev': 'Historie', 'ikona': Icons.history_rounded},
+      'menu': {'nazev': 'Menu (Ostatní moduly)', 'ikona': Icons.grid_view},
+      'sklad': {'nazev': 'Sklad dílů', 'ikona': Icons.inventory_2_outlined},
+      'fakturace': {'nazev': 'Faktury', 'ikona': Icons.receipt_long_outlined},
+      'vozidla': {'nazev': 'Vozidla', 'ikona': Icons.directions_car_outlined},
+      'ukony': {'nazev': 'Úkony', 'ikona': Icons.playlist_add_check_circle_outlined},
+      'zakaznici': {'nazev': 'Zákazníci', 'ikona': Icons.people_alt_outlined},
+      'zamestnanci': {'nazev': 'Tým a práva', 'ikona': Icons.badge_outlined},
+      'ucetnictvi': {'nazev': 'Účetnictví', 'ikona': Icons.pie_chart_outline},
+      'statistiky': {'nazev': 'Statistiky', 'ikona': Icons.bar_chart_outlined},
+      'nastaveni': {'nazev': 'Nastavení', 'ikona': Icons.settings_outlined},
+    };
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.65,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 5,
+                      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('Přizpůsobit spodní lištu', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 5),
+                  const Text('Můžete mít aktivních 2 až 5 záložek. Přetažením změníte pořadí.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  const SizedBox(height: 15),
+                  
+                  // Interaktivní Reorderable list s možností mazání
+                  Expanded(
+                    child: ReorderableListView(
+                      onReorder: (oldIndex, newIndex) async {
+                        setModalState(() {
+                          if (newIndex > oldIndex) {
+                            newIndex -= 1;
+                          }
+                          final item = lokalniPoradi.removeAt(oldIndex);
+                          lokalniPoradi.insert(newIndex, item);
+                        });
+                        
+                        navOrderNotifier.value = List.from(lokalniPoradi);
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setStringList('nav_order', lokalniPoradi);
+                      },
+                      children: [
+                        for (int i = 0; i < lokalniPoradi.length; i++)
+                          Card(
+                            key: ValueKey(lokalniPoradi[i]),
+                            color: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                            elevation: 0,
+                            margin: const EdgeInsets.symmetric(vertical: 5),
+                            child: ListTile(
+                              leading: Icon(vizual[lokalniPoradi[i]]!['ikona'], color: Colors.blue),
+                              title: Text(vizual[lokalniPoradi[i]]!['nazev'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (lokalniPoradi.length > 2) // Ochrana: nenecháme uživatele smazat všechno
+                                    IconButton(
+                                      icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
+                                      onPressed: () async {
+                                        setModalState(() {
+                                          lokalniPoradi.removeAt(i);
+                                        });
+                                        navOrderNotifier.value = List.from(lokalniPoradi);
+                                        final prefs = await SharedPreferences.getInstance();
+                                        await prefs.setStringList('nav_order', lokalniPoradi);
+                                      },
+                                    ),
+                                  const Icon(Icons.drag_handle, color: Colors.grey),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Tlačítko na přidání, pokud jich je méně než 5
+                  if (lokalniPoradi.length < 5)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15),
+                      child: Center(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            // Dialog s výběrem chybějících modulů
+                            showDialog(
+                              context: context,
+                              builder: (ctx) {
+                                // Vytvoříme seznam jen těch, které ještě na liště nejsou
+                                final dostupne = vizual.keys.where((k) => !lokalniPoradi.contains(k)).toList();
+                                return AlertDialog(
+                                  title: const Text('Vyberte modul pro lištu'),
+                                  content: SizedBox(
+                                    width: double.maxFinite,
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      itemCount: dostupne.length,
+                                      itemBuilder: (c, i) {
+                                        final key = dostupne[i];
+                                        return ListTile(
+                                          leading: Icon(vizual[key]!['ikona'], color: Colors.blueGrey),
+                                          title: Text(vizual[key]!['nazev']),
+                                          onTap: () async {
+                                            setModalState(() {
+                                              lokalniPoradi.add(key);
+                                            });
+                                            navOrderNotifier.value = List.from(lokalniPoradi);
+                                            final prefs = await SharedPreferences.getInstance();
+                                            await prefs.setStringList('nav_order', lokalniPoradi);
+                                            if (context.mounted) Navigator.pop(ctx);
+                                          },
+                                        );
+                                      }
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ZAVŘÍT')),
+                                  ],
+                                );
+                              }
+                            );
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('Přidat další záložku (max 5)'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
+                          ),
+                        ),
+                      ),
+                    ),
+                  
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                      ),
+                      child: const Text('HOTOVO', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        );
+      },
+    );
   }
 
   @override
@@ -380,18 +554,44 @@ class _SettingsPageState extends State<SettingsPage> {
                 color: Colors.pinkAccent,
                 isDark: isDark,
                 children: [
+                  // NOVÉ TLAČÍTKO PRO PŘESKLÁDÁNÍ A PŘIDÁNÍ DO MENU
+                  Card(
+                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                    ),
+                    margin: const EdgeInsets.only(bottom: 10),
+                    child: ListTile(
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.view_column, color: Colors.blue),
+                      ),
+                      title: const Text('Přizpůsobit spodní lištu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: const Text('Přidejte si zástupce nebo změňte pořadí.', style: TextStyle(fontSize: 11)),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                      onTap: () => _ukazatReorderingDialog(context, isDark),
+                    ),
+                  ),
+                  const SizedBox(height: 5),
                   Container(
                     decoration: BoxDecoration(
                       color:
-                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[100],
+                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
                     ),
                     child: SwitchListTile(
                       title: const Text('Vynutit tmavý režim',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       subtitle: const Text(
                           'Aplikace bude tmavá bez ohledu na systém.',
-                          style: TextStyle(fontSize: 12)),
+                          style: TextStyle(fontSize: 11)),
                       value: _tmavyRezim,
                       activeColor: Colors.blue,
                       onChanged: (v) => setState(() => _tmavyRezim = v),

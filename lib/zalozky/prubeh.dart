@@ -1743,7 +1743,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                   data, stav, zakaznik, imageUrlsByCategoryRaw),
                               icon: const Icon(Icons.flag),
                               label: const Text(
-                                'UKONČIT A VYDAT',
+                                'UKONČIT A VYFAKTUROVAT',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                                 textAlign: TextAlign.center,
                               ),
