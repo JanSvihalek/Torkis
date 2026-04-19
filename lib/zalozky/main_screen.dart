@@ -214,25 +214,16 @@ class MenuPage extends StatelessWidget {
             childAspectRatio: 1.1,
             children: [
               // Moduly dostupné pro všechny (i pro mechaniky)
-              _buildMenuCard(context, 'Historie', Icons.history_rounded, Colors.brown, const HistoryPage(), isDark),
+            
               _buildMenuCard(context, 'Vozidla', Icons.directions_car, Colors.teal, const VozidlaPage(), isDark),
-              _buildMenuCard(context, 'Úkony', Icons.playlist_add_check_circle, Colors.deepOrange, const UkonyPage(), isDark),
+              _buildMenuCard(context, 'Zákazníci', Icons.people_alt, Colors.blue, const ZakazniciPage(), isDark),
+              _buildMenuCard(context, 'Zakázky', Icons.build_circle, const Color.fromARGB(255, 68, 134, 70), const ServiceProgressPage(), isDark),
               _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2, Colors.orange, const SkladPage(), isDark, hasOwnScaffold: true),
-
-              // Moduly dostupné pouze pro techniky a adminy
-              if (isTechnik) 
-                _buildMenuCard(context, 'Zákazníci', Icons.people_alt, Colors.blue, const ZakazniciPage(), isDark),
-              if (isTechnik) 
-                _buildMenuCard(context, 'Faktury', Icons.receipt_long, Colors.green, const FakturacePage(), isDark),
-
-              // Moduly dostupné pouze pro majitele/adminy
-              if (isAdmin) 
-                _buildMenuCard(context, 'Zaměstnanci', Icons.badge, Colors.redAccent, const ZamestnanciPage(), isDark),
-              if (isAdmin) 
-                _buildMenuCard(context, 'Účetnictví', Icons.pie_chart, Colors.indigo, const UcetnictviPage(), isDark),
-              if (isAdmin) 
-                _buildMenuCard(context, 'Statistiky', Icons.bar_chart, Colors.purple, const StatisticsPage(), isDark),
-              
+              _buildMenuCard(context, 'Faktury', Icons.receipt_long, Colors.green, const FakturacePage(), isDark),
+              _buildMenuCard(context, 'Úkony', Icons.playlist_add_check_circle, Colors.deepOrange, const UkonyPage(), isDark),
+              _buildMenuCard(context, 'Zaměstnanci', Icons.badge, Colors.redAccent, const ZamestnanciPage(), isDark),
+              _buildMenuCard(context, 'Účetnictví', Icons.pie_chart, Colors.indigo, const UcetnictviPage(), isDark),
+              _buildMenuCard(context, 'Statistiky', Icons.bar_chart, Colors.purple, const StatisticsPage(), isDark),
               _buildMenuCard(context, 'Nastavení', Icons.settings, Colors.blueGrey, const SettingsPage(), isDark),
             ],
           ),

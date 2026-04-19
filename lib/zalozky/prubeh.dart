@@ -525,7 +525,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     if (confirm == true) {
       if (globalServisId != null) {
         try {
-          // Hledáme fakturu spojenou s touto zakázkou
           final zakazkaSnap = await FirebaseFirestore.instance
               .collection('zakazky')
               .doc(widget.documentId)
@@ -865,7 +864,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       String cisloFaktury = '';
 
       if (zpusob == 'faktura') {
-        // GENEROVÁNÍ ČÍSLA FYYMMDDXXXX PŘES TRANSAKCI
         final ted = DateTime.now();
         String datumPart = DateFormat('yyMMdd').format(ted);
 
@@ -888,7 +886,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
         DateTime splatnost = ted.add(Duration(days: splatnostDny));
 
-        String stavPlatby = (platba == 'Hotově' || platba == 'Kartou')
+        String stavPlatby = (celkovaSuma <= 0 || platba == 'Hotově' || platba == 'Kartou')
             ? 'Uhrazeno'
             : 'Čeká na platbu';
 
@@ -1022,12 +1020,23 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           final aktualniStav = data['stav_zakazky'] ?? 'Přijato';
           final stav = data['stav_vozidla'] as Map<String, dynamic>? ?? {};
           final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
+          
           final rawUrls = data['fotografie_urls'];
           final Map<String, dynamic> imageUrlsByCategoryRaw = {};
           if (rawUrls is Map) {
             imageUrlsByCategoryRaw.addAll(Map<String, dynamic>.from(rawUrls));
           } else if (rawUrls is List) {
             imageUrlsByCategoryRaw['ostatni'] = rawUrls;
+          }
+
+          // Vytažení všech fotek z příjmu do jednoho pole
+          List<String> prijemFotky = [];
+          for (var val in imageUrlsByCategoryRaw.values) {
+            if (val is List) {
+              prijemFotky.addAll(val.map((e) => e.toString()));
+            } else if (val is String) {
+              prijemFotky.add(val);
+            }
           }
 
           final bool isCompleted = aktualniStav == 'Dokončeno';
@@ -1182,18 +1191,31 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
                                 vertical: 5,
                               ),
-                              child: Text(
-                                'Informace o zakázce',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Informace o zakázce',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Přijato: ${_formatDate(data['cas_prijeti'])}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isDark ? Colors.grey[400] : Colors.grey[700],
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             const Divider(height: 10),
@@ -1396,6 +1418,33 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 ),
                               ],
                             ),
+                            if (prijemFotky.isNotEmpty) ...[
+                              const Divider(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => FotodokumentaceScreen(
+                                          fotografieUrls: prijemFotky,
+                                          titulek: 'Příjem vozidla',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.camera_alt_outlined),
+                                  label: Text('Fotodokumentace z příjmu (${prijemFotky.length})'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.blue,
+                                    side: const BorderSide(color: Colors.blue),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -1649,28 +1698,24 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 if (fotky.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 15),
-                                    child: SizedBox(
-                                      height: 100,
-                                      child: ListView.separated(
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: fotky.length,
-                                        separatorBuilder: (c, i) =>
-                                            const SizedBox(width: 10),
-                                        itemBuilder: (c, i) => GestureDetector(
-                                          onTap: () =>
-                                              _openImageDialog(fotky[i]),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            child: Image.network(
-                                              fotky[i],
-                                              width: 140,
-                                              height: 80,
-                                              fit: BoxFit.cover,
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => FotodokumentaceScreen(
+                                              fotografieUrls: fotky.map((e) => e.toString()).toList(),
+                                              titulek: prace['nazev'] ?? 'Úkon',
                                             ),
                                           ),
-                                        ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.photo_library),
+                                      label: Text('Zobrazit fotodokumentaci (${fotky.length})'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.blue,
+                                        side: const BorderSide(color: Colors.blue),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       ),
                                     ),
                                   ),
@@ -1790,9 +1835,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
   }
 }
 
-// ----------------------------------------------------
-// Třída PolozkaInput
-// ----------------------------------------------------
 class PolozkaInput {
   String typ = 'Materiál';
   final cislo = TextEditingController();
@@ -2762,6 +2804,127 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
         contentPadding: EdgeInsets.symmetric(
             horizontal: compact ? 10 : 15, vertical: compact ? 10 : 15),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// NOVÉ TŘÍDY PRO ZOBRAZENÍ FOTODOKUMENTACE
+// ============================================================================
+
+class FotodokumentaceScreen extends StatelessWidget {
+  final List<String> fotografieUrls;
+  final String titulek;
+
+  const FotodokumentaceScreen({
+    super.key,
+    required this.fotografieUrls,
+    required this.titulek,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: Text('Fotodokumentace: $titulek', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        elevation: 0,
+      ),
+      body: fotografieUrls.isEmpty
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.no_photography_outlined, size: 80, color: Colors.grey),
+                  SizedBox(height: 16),
+                  Text('Zatím nebyly nahrány žádné fotografie.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                ],
+              ),
+            )
+          : GridView.builder(
+              padding: const EdgeInsets.all(20),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1.0, 
+              ),
+              itemCount: fotografieUrls.length,
+              itemBuilder: (context, index) {
+                final url = fotografieUrls[index];
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FullScreenImage(imageUrl: url, index: index + 1, total: fotografieUrls.length),
+                      ),
+                    );
+                  },
+                  child: Hero(
+                    tag: 'foto_$url',
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            color: isDark ? Colors.grey[800] : Colors.grey[200],
+                            child: const Center(child: CircularProgressIndicator()),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: isDark ? Colors.grey[800] : Colors.grey[200],
+                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+    );
+  }
+}
+
+class FullScreenImage extends StatelessWidget {
+  final String imageUrl;
+  final int index;
+  final int total;
+
+  const FullScreenImage({super.key, required this.imageUrl, required this.index, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text('Fotografie $index z $total', style: const TextStyle(color: Colors.white, fontSize: 16)),
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0, 
+          child: Hero(
+            tag: 'foto_$imageUrl',
+            child: Image.network(
+              imageUrl,
+              fit: BoxFit.contain,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(child: CircularProgressIndicator(color: Colors.white));
+              },
+            ),
+          ),
+        ),
       ),
     );
   }
