@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:torkis/zalozky/planovac.dart';
 
 import '../core/constants.dart';
 import 'auth_gate.dart'; // Kvůli globalServisId a globalUserRole
@@ -45,6 +46,7 @@ class _MainScreenState extends State<MainScreen> {
     'historie': _NavData(page: const HistoryPage(), icon: Icons.history_rounded, activeIcon: Icons.history_rounded, label: 'Historie'),
     'menu': _NavData(page: const MenuPage(), icon: Icons.grid_view, activeIcon: Icons.grid_view_rounded, label: 'Menu'),
     'sklad': _NavData(page: const SkladPage(), icon: Icons.inventory_2_outlined, activeIcon: Icons.inventory_2, label: 'Sklad'),
+    'planovac': _NavData(page: const PlanovacPage(), icon: Icons.calendar_today, activeIcon: Icons.calendar_today, label: 'Plánování'),
     'fakturace': _NavData(page: const FakturacePage(), icon: Icons.receipt_long_outlined, activeIcon: Icons.receipt_long, label: 'Faktury'),
     'vozidla': _NavData(page: const VozidlaPage(), icon: Icons.directions_car_outlined, activeIcon: Icons.directions_car, label: 'Vozidla'),
     'ukony': _NavData(page: const UkonyPage(), icon: Icons.playlist_add_check_circle_outlined, activeIcon: Icons.playlist_add_check_circle, label: 'Úkony'),
@@ -220,6 +222,7 @@ class MenuPage extends StatelessWidget {
               _buildMenuCard(context, 'Zakázky', Icons.build_circle, const Color.fromARGB(255, 68, 134, 70), const ServiceProgressPage(), isDark),
               _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2, Colors.orange, const SkladPage(), isDark, hasOwnScaffold: true),
               _buildMenuCard(context, 'Faktury', Icons.receipt_long, Colors.green, const FakturacePage(), isDark),
+              _buildMenuCard(context, 'Plánování', Icons.calendar_today, Colors.green, const PlanovacPage(), isDark),
               _buildMenuCard(context, 'Úkony', Icons.playlist_add_check_circle, Colors.deepOrange, const UkonyPage(), isDark),
               _buildMenuCard(context, 'Zaměstnanci', Icons.badge, Colors.redAccent, const ZamestnanciPage(), isDark),
               _buildMenuCard(context, 'Účetnictví', Icons.pie_chart, Colors.indigo, const UcetnictviPage(), isDark),
