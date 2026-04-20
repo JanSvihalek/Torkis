@@ -16,7 +16,10 @@ import '../core/pdf_generator.dart';
 import 'auth_gate.dart';
 
 class MainWizardPage extends StatefulWidget {
-  const MainWizardPage({super.key});
+  // PŘIDÁNO: Parametr pro přijetí existující rezervace
+  final String? planovanaRezervaceId;
+  const MainWizardPage({super.key, this.planovanaRezervaceId});
+
   @override
   State<MainWizardPage> createState() => _MainWizardPageState();
 }
@@ -114,9 +117,59 @@ class _MainWizardPageState extends State<MainWizardPage> {
   @override
   void initState() {
     super.initState();
-    _generujCisloZakazky();
     _nactiNastaveni();
     _nactiDatabaziZnacek();
+
+    // PŘIDÁNO: Načtení dat z plánovače, pokud byl předán ID
+    if (widget.planovanaRezervaceId != null) {
+      _nactiPlanovanouRezervaci();
+    } else {
+      _generujCisloZakazky();
+    }
+  }
+
+  // PŘIDÁNO: Funkce pro dotažení rezervace
+  Future<void> _nactiPlanovanouRezervaci() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('planovac').doc(widget.planovanaRezervaceId).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        setState(() {
+          _spzController.text = data['spz'] ?? '';
+          _znackaController.text = data['znacka'] ?? '';
+          _modelController.text = data['model'] ?? '';
+          _vinController.text = data['vin'] ?? '';
+
+          _jmenoController.text = data['zakaznik_jmeno'] ?? '';
+          _icoController.text = data['zakaznik_ico'] ?? '';
+          _telefonController.text = data['zakaznik_telefon'] ?? '';
+          _emailZController.text = data['zakaznik_email'] ?? '';
+          _vybranyZakaznikId = data['zakaznik_id'];
+
+          final ukon = data['nazev_ukonu'];
+          if (ukon != null && ukon.toString().isNotEmpty) {
+            _pozadavkyControllers.clear();
+            _pozadavkyControllers.add(TextEditingController(text: ukon.toString()));
+          }
+        });
+
+        if (_spzController.text.isNotEmpty) {
+          final vozidlaQuery = await FirebaseFirestore.instance
+              .collection('vozidla')
+              .where('servis_id', isEqualTo: globalServisId)
+              .where('spz', isEqualTo: _spzController.text)
+              .limit(1)
+              .get();
+          if (vozidlaQuery.docs.isNotEmpty) {
+            await _aplikovatVybraneVozidlo(vozidlaQuery.docs.first.data());
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Chyba při načítání plánované zakázky: $e");
+    } finally {
+      _generujCisloZakazky();
+    }
   }
 
   Future<void> _nactiDatabaziZnacek() async {
@@ -868,6 +921,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
         .doc('${globalServisId}_$zakazkaId')
         .set(zakazkaData);
 
+    // PŘIDÁNO: PROPOJENÍ S KALENDÁŘEM
+    if (widget.planovanaRezervaceId != null) {
+      try {
+        await FirebaseFirestore.instance.collection('planovac').doc(widget.planovanaRezervaceId).update({
+          'zakazka_doc_id': '${globalServisId}_$zakazkaId'
+        });
+      } catch (e) {
+        debugPrint("Chyba při updatování plánovače: $e");
+      }
+    }
+
     final emailZakanika = _emailZController.text.trim();
 
     if (_odeslatEmail &&
@@ -971,6 +1035,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     setState(() => _currentPage = 0);
     _pageController.jumpToPage(0);
+
+    // PŘIDÁNO: Návrat do kalendáře po uložení
+    if (widget.planovanaRezervaceId != null) {
+      if (mounted) Navigator.pop(context);
+    }
   }
 
   Future<void> _takePhotoSeries(String categoryKey) async {
@@ -1242,8 +1311,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
               ),
             ),
             const SizedBox(height: 20),
-            _buildInput('VIN kód', Icons.abc, _vinController, isDark,
-                caps: true),
+            _buildInput(
+              'VIN kód',
+              Icons.abc,
+              _vinController,
+              isDark,
+              caps: true,
+            ),
             const SizedBox(height: 20),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
