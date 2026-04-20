@@ -6,7 +6,9 @@ import 'package:table_calendar/table_calendar.dart';
 import 'auth_gate.dart';
 import 'prubeh.dart';
 import 'nova_rezervace_screen.dart';
-import 'prijem_vozidla.dart'; 
+
+// NAŠE PŘIDANÁ ÚPRAVA: Musíme si z prijem_vozidla "vypůjčit" náš vysílač!
+import 'prijem_vozidla.dart' show rezervaceKeZpracovani; 
 
 class PlanovacPage extends StatefulWidget {
   const PlanovacPage({super.key});
@@ -69,11 +71,21 @@ class _PlanovacPageState extends State<PlanovacPage> {
               height: 60,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pop(context); // Zavře detail
-                  // Otevře tvůj příjem vozu s předaným ID rezervace
-                  Navigator.push(context, MaterialPageRoute(
-                    builder: (context) => MainWizardPage(planovanaRezervaceId: docId),
-                  ));
+                  // --- OPRAVENÁ LOGIKA TLAČÍTKA ---
+                  Navigator.pop(context); // 1. Zavře tenhle detail
+                  
+                  // 2. Pošle ID rezervace do vysílače. 
+                  // Záložka "Příjem vozidla" to na pozadí uslyší a začne stahovat a předvyplňovat data!
+                  rezervaceKeZpracovani.value = docId;
+                  
+                  // 3. Ukáže ti dole hezkou hlášku, co máš udělat dál
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Data připravena! Přepněte se do záložky "Příjem vozidla" v dolním menu.', style: TextStyle(fontWeight: FontWeight.bold)),
+                      backgroundColor: Colors.blue,
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.check_circle_outline),
                 label: const Text('PŘIJMOUT VOZIDLO DO SERVISU', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),

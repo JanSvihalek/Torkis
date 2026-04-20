@@ -15,11 +15,11 @@ import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 import 'auth_gate.dart';
 
-class MainWizardPage extends StatefulWidget {
-  // PŘIDÁNO: Parametr pro přijetí existující rezervace
-  final String? planovanaRezervaceId;
-  const MainWizardPage({super.key, this.planovanaRezervaceId});
+// --- PŘIDÁNO: Globální vysílač pro komunikaci mezi záložkami ---
+final ValueNotifier<String?> rezervaceKeZpracovani = ValueNotifier(null);
 
+class MainWizardPage extends StatefulWidget {
+  const MainWizardPage({super.key});
   @override
   State<MainWizardPage> createState() => _MainWizardPageState();
 }
@@ -47,6 +47,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _defaultOdeslatEmail = true;
 
   String? _vybranyZakaznikId;
+  String? _zpracovavanaRezervaceId; // PŘIDÁNO: Uchová si ID rezervace z plánovače
   List<Map<String, dynamic>> _nalezenaVozidla = [];
 
   final _zakazkaController = TextEditingController();
@@ -117,21 +118,23 @@ class _MainWizardPageState extends State<MainWizardPage> {
   @override
   void initState() {
     super.initState();
+    _generujCisloZakazky();
     _nactiNastaveni();
     _nactiDatabaziZnacek();
-
-    // PŘIDÁNO: Načtení dat z plánovače, pokud byl předán ID
-    if (widget.planovanaRezervaceId != null) {
-      _nactiPlanovanouRezervaci();
-    } else {
-      _generujCisloZakazky();
-    }
+    
+    // PŘIDÁNO: Naslouchání na signál z plánovače
+    rezervaceKeZpracovani.addListener(_zpracujRezervaciZPlanovace);
   }
 
-  // PŘIDÁNO: Funkce pro dotažení rezervace
-  Future<void> _nactiPlanovanouRezervaci() async {
+  // --- PŘIDÁNO: Funkce, která se spustí, když Plánovač pošle data ---
+  Future<void> _zpracujRezervaciZPlanovace() async {
+    final id = rezervaceKeZpracovani.value;
+    if (id == null) return;
+
     try {
-      final doc = await FirebaseFirestore.instance.collection('planovac').doc(widget.planovanaRezervaceId).get();
+      _zpracovavanaRezervaceId = id;
+      final doc = await FirebaseFirestore.instance.collection('planovac').doc(id).get();
+      
       if (doc.exists) {
         final data = doc.data()!;
         setState(() {
@@ -153,6 +156,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
           }
         });
 
+        // Pokus o dotažení zbytku auta podle SPZ
         if (_spzController.text.isNotEmpty) {
           final vozidlaQuery = await FirebaseFirestore.instance
               .collection('vozidla')
@@ -164,13 +168,18 @@ class _MainWizardPageState extends State<MainWizardPage> {
             await _aplikovatVybraneVozidlo(vozidlaQuery.docs.first.data());
           }
         }
+        
+        // Přepne se na první stránku průvodce
+        setState(() => _currentPage = 0);
+        _pageController.jumpToPage(0);
       }
     } catch (e) {
-      debugPrint("Chyba při načítání plánované zakázky: $e");
+      debugPrint("Chyba při načítání rezervace: $e");
     } finally {
-      _generujCisloZakazky();
+      rezervaceKeZpracovani.value = null; // Vyčistíme signál
     }
   }
+  // ------------------------------------------------------------------
 
   Future<void> _nactiDatabaziZnacek() async {
     try {
@@ -525,6 +534,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     for (var c in _pozadavkyControllers) {
       c.dispose();
     }
+    // Odebrání posluchače
+    rezervaceKeZpracovani.removeListener(_zpracujRezervaciZPlanovace);
     super.dispose();
   }
 
@@ -774,10 +785,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
 
     // --- OPRAVA DUPLICIT ZÁKAZNÍKŮ ---
-    // Priorita: vybraný zákazník přes lupu → telefon → IČO → nový zákazník
     String zakaznikId = '';
     if (_vybranyZakaznikId != null && _vybranyZakaznikId!.isNotEmpty) {
-      // Zákazník byl vybrán ručně z historie — použij jeho ID přímo
       zakaznikId = _vybranyZakaznikId!;
     } else {
       final telefon = _telefonController.text.trim();
@@ -785,7 +794,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
       QuerySnapshot? existujici;
 
-      // 1. Zkus najít podle telefonu (nejspolehlivější)
       if (telefon.isNotEmpty) {
         final snap = await FirebaseFirestore.instance
             .collection('zakaznici')
@@ -796,7 +804,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
         if (snap.docs.isNotEmpty) existujici = snap;
       }
 
-      // 2. Pokud telefon nenašel, zkus IČO
       if (existujici == null && ico.isNotEmpty) {
         final snap = await FirebaseFirestore.instance
             .collection('zakaznici')
@@ -808,10 +815,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
 
       if (existujici != null && existujici.docs.isNotEmpty) {
-        // Zákazník nalezen — použij existující ID
         zakaznikId = existujici.docs.first['id_zakaznika'];
       } else {
-        // Skutečně nový zákazník
         zakaznikId = 'ZAK_${DateTime.now().millisecondsSinceEpoch}';
       }
     }
@@ -921,10 +926,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
         .doc('${globalServisId}_$zakazkaId')
         .set(zakazkaData);
 
-    // PŘIDÁNO: PROPOJENÍ S KALENDÁŘEM
-    if (widget.planovanaRezervaceId != null) {
+    // --- PŘIDÁNO: PROPOJENÍ ZAKÁZKY DO KALENDÁŘE ---
+    if (_zpracovavanaRezervaceId != null) {
       try {
-        await FirebaseFirestore.instance.collection('planovac').doc(widget.planovanaRezervaceId).update({
+        await FirebaseFirestore.instance.collection('planovac').doc(_zpracovavanaRezervaceId).update({
           'zakazka_doc_id': '${globalServisId}_$zakazkaId'
         });
       } catch (e) {
@@ -997,6 +1002,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _telefonController.clear();
     _emailZController.clear();
     _vybranyZakaznikId = null;
+    _zpracovavanaRezervaceId = null; // PŘIDÁNO: Vyčištění ID
     _nalezenaVozidla.clear();
 
     _spzController.clear();
@@ -1035,11 +1041,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     setState(() => _currentPage = 0);
     _pageController.jumpToPage(0);
-
-    // PŘIDÁNO: Návrat do kalendáře po uložení
-    if (widget.planovanaRezervaceId != null) {
-      if (mounted) Navigator.pop(context);
-    }
   }
 
   Future<void> _takePhotoSeries(String categoryKey) async {
