@@ -7,7 +7,7 @@ import 'auth_gate.dart';
 import 'prubeh.dart';
 import 'nova_rezervace_screen.dart';
 
-// --- IMPORTY PRO DÁLKOVÉ OVLÁDÁNÍ PŘÍJMU A ZÁLOŽEK ---
+// Odkazujeme na stejné soubory lokálně
 import 'prijem_vozidla.dart' show rezervaceKeZpracovani;
 import 'main_screen.dart' show globalSwitchTabNotifier;
 
@@ -86,14 +86,24 @@ class _PlanovacPageState extends State<PlanovacPage> {
               height: 60,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  Navigator.pop(context); // Zavře tenhle detail
+                  final targetDocId = docId;
 
-                  // --- ZDE JE TO KOUZLO S PŘESMĚROVÁNÍM ---
-                  // 1. Předá ID dokumentu do Příjmu vozidla
-                  rezervaceKeZpracovani.value = docId;
+                  // 1. Zavřeme vyskakovací okno (BottomSheet)
+                  Navigator.pop(context);
 
-                  // 2. Přepne spodní menu na záložku 'prijem'
-                  globalSwitchTabNotifier.value = 'prijem';
+                  // 2. TOTO JE TA OPRAVA:
+                  // Pokud byl Plánovač otevřen přes vrchní vrstvu (např. z Menu mřížky),
+                  // nekompromisně ho zavřeme a vrátíme se na kořenovou obrazovku (MainScreen).
+                  // Pokud už na MainScreen jsme, tento příkaz bezpečně nedělá nic.
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+
+                  // 3. Předáme ID dokumentu do Příjmu vozidla
+                  rezervaceKeZpracovani.value = targetDocId;
+
+                  // 4. Počkáme zlomek vteřiny na dokončení animace a přepneme spodní menu
+                  Future.delayed(const Duration(milliseconds: 150), () {
+                    globalSwitchTabNotifier.value = 'prijem';
+                  });
                 },
                 icon: const Icon(Icons.check_circle_outline),
                 label: const Text('PŘIJMOUT VOZIDLO DO SERVISU',
@@ -173,7 +183,7 @@ class _PlanovacPageState extends State<PlanovacPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                // Data se řadí přímo v aplikaci = odpadá problém s Firebase Indexy
+                // Řadíme v telefonu - firebase indexy nepotřebujeme!
                 final docs = snapshot.data!.docs.toList();
 
                 docs.sort((a, b) {
@@ -278,7 +288,6 @@ class _PlanovacPageState extends State<PlanovacPage> {
             color: rez['zakazka_doc_id'] != null ? Colors.green : Colors.grey),
         onTap: () {
           if (rez['zakazka_doc_id'] != null) {
-            // Zakázka už je fyzicky na dílně -> Otevřeme detail
             Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -288,7 +297,6 @@ class _PlanovacPageState extends State<PlanovacPage> {
                           spz: rez['spz'],
                         )));
           } else {
-            // Zatím jen plán v kalendáři -> Tlačítko k přijetí
             _ukazDetailRezervace(context, docId, rez, isDark);
           }
         },

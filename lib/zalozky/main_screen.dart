@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:torkis/zalozky/planovac.dart';
 
 import '../core/constants.dart';
-import 'auth_gate.dart'; // Kvůli globalServisId a globalUserRole
+import 'auth_gate.dart';
 
+// Sjednocené relativní importy!
+import 'planovac.dart';
 import 'prubeh.dart';
 import 'prijem_vozidla.dart';
 import 'historie.dart';
@@ -24,8 +25,7 @@ import 'sklad.dart';
 final ValueNotifier<List<String>> navOrderNotifier =
     ValueNotifier(['prijem', 'zakazky', 'historie', 'menu']);
 
-// --- PŘIDÁNO: DÁLKOVÝ OVLADAČ PRO PŘEPÍNÁNÍ ZÁLOŽEK ZVENČÍ ---
-// Poslouží nám na předávání povelů z detailu plánovače apod.
+// DÁLKOVÝ OVLADAČ PRO PŘEPÍNÁNÍ ZÁLOŽEK ZVENČÍ
 final ValueNotifier<String?> globalSwitchTabNotifier = ValueNotifier(null);
 
 class MainScreen extends StatefulWidget {
@@ -36,10 +36,8 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  // Pamatujeme si ID aktuálního tabu
   String _currentTabId = 'prijem';
 
-  // DATABÁZE VŠECH DOSTUPNÝCH MODULŮ PRO SPODNÍ LIŠTU
   final Map<String, _NavData> _allNavItems = {
     'prijem': _NavData(
         page: const MainWizardPage(),
@@ -117,32 +115,22 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _loadNavOrder();
-
-    // --- PŘIDÁNO: Naslouchání na signál zvenčí ---
     globalSwitchTabNotifier.addListener(_onGlobalTabSwitch);
   }
 
-  // --- PŘIDÁNO: Funkce pro přepnutí tabu zvenčí ---
   void _onGlobalTabSwitch() {
     final targetTabId = globalSwitchTabNotifier.value;
 
     if (targetTabId != null && mounted) {
-      // Zjistíme, jestli cílový tab (např. 'prijem') je vůbec ve spodním menu
-      if (navOrderNotifier.value.contains(targetTabId)) {
-        setState(() {
-          _currentTabId = targetTabId;
-        });
-      } else {
-        // Pokud tab ve spodní liště NENÍ, hodíme pro jistotu chybovou hlášku
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
-              'Tato záložka není ve spodním menu! Přidejte si ji tam v nastavení.'),
-          backgroundColor: Colors.orange,
-        ));
-      }
-
-      // Vynulujeme vysílač, aby reagoval i na další kliknutí
-      globalSwitchTabNotifier.value = null;
+      // Future.microtask zajistí, že se přepnutí provede bezpečně až po dokončení aktuálního renderu (např. zavření modalu v plánovači)
+      Future.microtask(() {
+        if (navOrderNotifier.value.contains(targetTabId)) {
+          setState(() {
+            _currentTabId = targetTabId;
+          });
+        }
+        globalSwitchTabNotifier.value = null; // Vyčistíme pro další použití
+      });
     }
   }
 
@@ -152,7 +140,6 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
-  // Načtení uloženého pořadí z paměti zařízení
   Future<void> _loadNavOrder() async {
     final prefs = await SharedPreferences.getInstance();
     final savedOrder = prefs.getStringList('nav_order');
@@ -168,11 +155,9 @@ class _MainScreenState extends State<MainScreen> {
     return ValueListenableBuilder<List<String>>(
         valueListenable: navOrderNotifier,
         builder: (context, navOrder, child) {
-          // Zjistíme, na jakém indexu se aktuálně nachází náš aktivní tab
           int currentIndex = navOrder.indexOf(_currentTabId);
           if (currentIndex == -1) currentIndex = 0;
 
-          // Sestavíme aktuální seznam stránek a tlačítek podle uživatelského výběru
           final List<Widget> currentPages =
               navOrder.map((id) => _allNavItems[id]!.page).toList();
           final List<NavigationDestination> currentDestinations =
@@ -256,7 +241,6 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-// Pomocná třída pro uložení dat o jednom tabu
 class _NavData {
   final Widget page;
   final IconData icon;
@@ -270,19 +254,14 @@ class _NavData {
       required this.label});
 }
 
-// ============================================================================
-// STRÁNKA MENU (MŘÍŽKA S MODULY)
-// ============================================================================
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final role = globalUserRole ?? 'mechanik';
     final isAdmin = role == 'admin';
-    final isTechnik = role == 'technik' || isAdmin;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -308,8 +287,6 @@ class MenuPage extends StatelessWidget {
             crossAxisSpacing: 15,
             childAspectRatio: 1.1,
             children: [
-              // Moduly dostupné pro všechny (i pro mechaniky)
-
               _buildMenuCard(context, 'Vozidla', Icons.directions_car,
                   Colors.teal, const VozidlaPage(), isDark),
               _buildMenuCard(context, 'Zákazníci', Icons.people_alt,
@@ -354,22 +331,20 @@ class MenuPage extends StatelessWidget {
           ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Tento modul připravujeme v další verzi!')))
           : () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => hasOwnScaffold
-                        ? page
-                        : Scaffold(
-                            appBar: AppBar(
-                                backgroundColor: isDark
-                                    ? const Color(0xFF1A1A1A)
-                                    : Colors.white,
-                                elevation: 1,
-                                title: Text(title,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold))),
-                            body: page,
-                          )),
-              ),
+              context,
+              MaterialPageRoute(
+                  builder: (context) => hasOwnScaffold
+                      ? page
+                      : Scaffold(
+                          appBar: AppBar(
+                              backgroundColor: isDark
+                                  ? const Color(0xFF1A1A1A)
+                                  : Colors.white,
+                              elevation: 1,
+                              title: Text(title,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold))),
+                          body: page))),
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
@@ -401,20 +376,6 @@ class MenuPage extends StatelessWidget {
                     color: isLocked
                         ? Colors.grey
                         : (isDark ? Colors.white : Colors.black87))),
-            if (isLocked) ...[
-              const SizedBox(height: 5),
-              Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(5)),
-                  child: const Text('Připravujeme',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold))),
-            ],
           ],
         ),
       ),
