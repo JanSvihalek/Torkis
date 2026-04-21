@@ -47,7 +47,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _defaultOdeslatEmail = true;
 
   String? _vybranyZakaznikId;
-  String? _zpracovavanaRezervaceId; // PŘIDÁNO: Uchová si ID rezervace z plánovače
+  String? _zpracovavanaRezervaceId; 
   List<Map<String, dynamic>> _nalezenaVozidla = [];
 
   final _zakazkaController = TextEditingController();
@@ -119,14 +119,47 @@ class _MainWizardPageState extends State<MainWizardPage> {
   void initState() {
     super.initState();
     _generujCisloZakazky();
-    _nactiNastaveni();
+    _nactiNastaveni(); 
+    _nactiUkonyZDatabaze(); // Nová funkce pro tahání z kolekce ukony
     _nactiDatabaziZnacek();
     
-    // PŘIDÁNO: Naslouchání na signál z plánovače
     rezervaceKeZpracovani.addListener(_zpracujRezervaciZPlanovace);
   }
 
-  // --- PŘIDÁNO: Funkce, která se spustí, když Plánovač pošle data ---
+  // --- NOVÉ: Funkce pro načtení úkonů z nové kolekce ---
+  Future<void> _nactiUkonyZDatabaze() async {
+    if (globalServisId == null) return;
+    
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('ukony')
+          .where('servis_id', isEqualTo: globalServisId)
+          .where('aktivni', isEqualTo: true) // Natáhneme jen ty aktivní
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final ukonyZDb = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return (data['nazev'] ?? data['nazev_ukonu'] ?? '').toString();
+        }).where((nazev) => nazev.isNotEmpty).toList();
+        
+        ukonyZDb.sort(); // Hezky podle abecedy
+
+        if (mounted) {
+          setState(() {
+            _rychleUkony = ukonyZDb;
+            _isLoadingUkony = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingUkony = false);
+      }
+    } catch (e) {
+      debugPrint("Chyba při načítání úkonů: $e");
+      if (mounted) setState(() => _isLoadingUkony = false);
+    }
+  }
+
   Future<void> _zpracujRezervaciZPlanovace() async {
     final id = rezervaceKeZpracovani.value;
     if (id == null) return;
@@ -156,7 +189,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
           }
         });
 
-        // Pokus o dotažení zbytku auta podle SPZ
         if (_spzController.text.isNotEmpty) {
           final vozidlaQuery = await FirebaseFirestore.instance
               .collection('vozidla')
@@ -169,17 +201,15 @@ class _MainWizardPageState extends State<MainWizardPage> {
           }
         }
         
-        // Přepne se na první stránku průvodce
         setState(() => _currentPage = 0);
         _pageController.jumpToPage(0);
       }
     } catch (e) {
       debugPrint("Chyba při načítání rezervace: $e");
     } finally {
-      rezervaceKeZpracovani.value = null; // Vyčistíme signál
+      rezervaceKeZpracovani.value = null; 
     }
   }
-  // ------------------------------------------------------------------
 
   Future<void> _nactiDatabaziZnacek() async {
     try {
@@ -216,6 +246,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     });
   }
 
+  // Změněno: Již nestahuje "rychle_ukony"
   Future<void> _nactiNastaveni() async {
     if (globalServisId != null) {
       try {
@@ -227,46 +258,15 @@ class _MainWizardPageState extends State<MainWizardPage> {
           final data = doc.data()!;
           if (mounted) {
             setState(() {
-              if (data.containsKey('rychle_ukony')) {
-                _rychleUkony = List<String>.from(data['rychle_ukony']);
-              } else {
-                _rychleUkony = [
-                  'Výměna oleje a filtrů',
-                  'Kontrola brzd',
-                  'Servis klimatizace',
-                  'Příprava a provedení STK',
-                  'Geometrie kol',
-                  'Pneuservis (přezutí)',
-                  'Diagnostika závad',
-                ];
-              }
-
               if (data.containsKey('default_odesilat_emaily')) {
                 _defaultOdeslatEmail = data['default_odesilat_emaily'] as bool;
                 _odeslatEmail = _defaultOdeslatEmail;
               }
-
-              _isLoadingUkony = false;
-            });
-          }
-        } else {
-          if (mounted) {
-            setState(() {
-              _rychleUkony = [
-                'Výměna oleje a filtrů',
-                'Kontrola brzd',
-                'Servis klimatizace',
-                'Příprava a provedení STK',
-                'Geometrie kol',
-                'Pneuservis (přezutí)',
-                'Diagnostika závad',
-              ];
-              _isLoadingUkony = false;
             });
           }
         }
       } catch (e) {
-        if (mounted) setState(() => _isLoadingUkony = false);
+        debugPrint("Chyba při načítání nastavení servisu: $e");
       }
     }
   }
@@ -534,7 +534,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     for (var c in _pozadavkyControllers) {
       c.dispose();
     }
-    // Odebrání posluchače
     rezervaceKeZpracovani.removeListener(_zpracujRezervaciZPlanovace);
     super.dispose();
   }
@@ -926,7 +925,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
         .doc('${globalServisId}_$zakazkaId')
         .set(zakazkaData);
 
-    // --- PŘIDÁNO: PROPOJENÍ ZAKÁZKY DO KALENDÁŘE ---
     if (_zpracovavanaRezervaceId != null) {
       try {
         await FirebaseFirestore.instance.collection('planovac').doc(_zpracovavanaRezervaceId).update({
@@ -1002,7 +1000,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _telefonController.clear();
     _emailZController.clear();
     _vybranyZakaznikId = null;
-    _zpracovavanaRezervaceId = null; // PŘIDÁNO: Vyčištění ID
+    _zpracovavanaRezervaceId = null; 
     _nalezenaVozidla.clear();
 
     _spzController.clear();

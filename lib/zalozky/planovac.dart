@@ -7,8 +7,9 @@ import 'auth_gate.dart';
 import 'prubeh.dart';
 import 'nova_rezervace_screen.dart';
 
-// NAŠE PŘIDANÁ ÚPRAVA: Musíme si z prijem_vozidla "vypůjčit" náš vysílač!
-import 'prijem_vozidla.dart' show rezervaceKeZpracovani; 
+// --- IMPORTY PRO DÁLKOVÉ OVLÁDÁNÍ PŘÍJMU A ZÁLOŽEK ---
+import 'prijem_vozidla.dart' show rezervaceKeZpracovani;
+import 'main_screen.dart' show globalSwitchTabNotifier;
 
 class PlanovacPage extends StatefulWidget {
   const PlanovacPage({super.key});
@@ -22,10 +23,12 @@ class _PlanovacPageState extends State<PlanovacPage> {
   DateTime _focusedDay = DateTime.now();
   DateTime _selectedDay = DateTime.now();
 
-  void _ukazDetailRezervace(BuildContext context, String docId, Map<String, dynamic> rez, bool isDark) {
+  void _ukazDetailRezervace(BuildContext context, String docId,
+      Map<String, dynamic> rez, bool isDark) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
       builder: (context) => Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
@@ -39,60 +42,68 @@ class _PlanovacPageState extends State<PlanovacPage> {
             Container(
               alignment: Alignment.center,
               margin: const EdgeInsets.only(bottom: 20),
-              child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+              child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10))),
             ),
-            const Text('Detail rezervace', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const Text('Detail rezervace',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.directions_car, color: Colors.white)),
-              title: Text(rez['spz'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              leading: const CircleAvatar(
+                  backgroundColor: Colors.blue,
+                  child: Icon(Icons.directions_car, color: Colors.white)),
+              title: Text(rez['spz'] ?? '',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 18)),
               subtitle: Text('${rez['znacka'] ?? ''} ${rez['model'] ?? ''}'),
             ),
             const Divider(),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.person, color: Colors.grey),
-              title: Text(rez['zakaznik_jmeno'] ?? 'Neznámý zákazník', style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(rez['zakaznik_jmeno'] ?? 'Neznámý zákazník',
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(rez['zakaznik_telefon'] ?? ''),
             ),
             const Divider(),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.build_circle, color: Colors.orange),
-              title: const Text('Plánovaný úkon', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              subtitle: Text(rez['nazev_ukonu'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              title: const Text('Plánovaný úkon',
+                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+              subtitle: Text(rez['nazev_ukonu'] ?? '',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
             ),
             const SizedBox(height: 30),
-            
             SizedBox(
               width: double.infinity,
               height: 60,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // --- OPRAVENÁ LOGIKA TLAČÍTKA ---
-                  Navigator.pop(context); // 1. Zavře tenhle detail
-                  
-                  // 2. Pošle ID rezervace do vysílače. 
-                  // Záložka "Příjem vozidla" to na pozadí uslyší a začne stahovat a předvyplňovat data!
+                  Navigator.pop(context); // Zavře tenhle detail
+
+                  // --- ZDE JE TO KOUZLO S PŘESMĚROVÁNÍM ---
+                  // 1. Předá ID dokumentu do Příjmu vozidla
                   rezervaceKeZpracovani.value = docId;
-                  
-                  // 3. Ukáže ti dole hezkou hlášku, co máš udělat dál
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Data připravena! Přepněte se do záložky "Příjem vozidla" v dolním menu.', style: TextStyle(fontWeight: FontWeight.bold)),
-                      backgroundColor: Colors.blue,
-                      duration: Duration(seconds: 4),
-                    ),
-                  );
+
+                  // 2. Přepne spodní menu na záložku 'prijem'
+                  globalSwitchTabNotifier.value = 'prijem';
                 },
                 icon: const Icon(Icons.check_circle_outline),
-                label: const Text('PŘIJMOUT VOZIDLO DO SERVISU', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                label: const Text('PŘIJMOUT VOZIDLO DO SERVISU',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, letterSpacing: 1)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15)),
                 ),
               ),
             ),
@@ -121,21 +132,27 @@ class _PlanovacPageState extends State<PlanovacPage> {
               calendarFormat: _calendarFormat,
               startingDayOfWeek: StartingDayOfWeek.monday,
               selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-              onDaySelected: (selectedDay, focusedDay) => setState(() { 
-                _selectedDay = selectedDay; 
-                _focusedDay = focusedDay; 
+              onDaySelected: (selectedDay, focusedDay) => setState(() {
+                _selectedDay = selectedDay;
+                _focusedDay = focusedDay;
               }),
-              onFormatChanged: (format) => setState(() => _calendarFormat = format),
+              onFormatChanged: (format) =>
+                  setState(() => _calendarFormat = format),
               onPageChanged: (focusedDay) => _focusedDay = focusedDay,
               headerStyle: HeaderStyle(
                 formatButtonVisible: true,
                 titleCentered: true,
-                formatButtonDecoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(15)),
-                formatButtonTextStyle: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                formatButtonDecoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(15)),
+                formatButtonTextStyle: const TextStyle(
+                    color: Colors.blue, fontWeight: FontWeight.bold),
               ),
               calendarStyle: const CalendarStyle(
-                selectedDecoration: BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
-                todayDecoration: BoxDecoration(color: Colors.blueAccent, shape: BoxShape.circle),
+                selectedDecoration:
+                    BoxDecoration(color: Colors.blue, shape: BoxShape.circle),
+                todayDecoration: BoxDecoration(
+                    color: Colors.blueAccent, shape: BoxShape.circle),
               ),
             ),
           ),
@@ -145,27 +162,45 @@ class _PlanovacPageState extends State<PlanovacPage> {
               stream: FirebaseFirestore.instance
                   .collection('planovac')
                   .where('servis_id', isEqualTo: globalServisId)
-                  .where('datum', isEqualTo: DateFormat('yyyy-MM-dd').format(_selectedDay))
-                  .orderBy('cas_od')
+                  .where('datum',
+                      isEqualTo: DateFormat('yyyy-MM-dd').format(_selectedDay))
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.hasError) return Center(child: Text("Chyba: ${snapshot.error}"));
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                
-                final docs = snapshot.data!.docs;
+                if (snapshot.hasError) {
+                  return Center(child: Text("Chyba: ${snapshot.error}"));
+                }
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                // Data se řadí přímo v aplikaci = odpadá problém s Firebase Indexy
+                final docs = snapshot.data!.docs.toList();
+
+                docs.sort((a, b) {
+                  final aData = a.data() as Map<String, dynamic>;
+                  final bData = b.data() as Map<String, dynamic>;
+
+                  final timeA = aData['cas_od']?.toString() ?? '00:00';
+                  final timeB = bData['cas_od']?.toString() ?? '00:00';
+
+                  return timeA.compareTo(timeB);
+                });
+
                 if (docs.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.calendar_today_outlined, size: 50, color: Colors.grey.withOpacity(0.5)),
+                        Icon(Icons.calendar_today_outlined,
+                            size: 50, color: Colors.grey.withOpacity(0.5)),
                         const SizedBox(height: 10),
-                        const Text("Žádné rezervace", style: TextStyle(color: Colors.grey)),
+                        const Text("Žádné rezervace",
+                            style: TextStyle(color: Colors.grey)),
                       ],
                     ),
                   );
                 }
-                
+
                 return ListView.builder(
                   padding: const EdgeInsets.all(20),
                   itemCount: docs.length,
@@ -181,12 +216,17 @@ class _PlanovacPageState extends State<PlanovacPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => NovaRezervaceScreen(vybranyDen: _selectedDay)));
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) =>
+                      NovaRezervaceScreen(vybranyDen: _selectedDay)));
         },
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
-        label: const Text('Nová rezervace', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: const Text('Nová rezervace',
+            style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -207,32 +247,46 @@ class _PlanovacPageState extends State<PlanovacPage> {
         leading: Container(
           width: 55,
           decoration: BoxDecoration(
-            color: rez['zakazka_doc_id'] != null ? Colors.green.withOpacity(0.1) : Colors.blue.withOpacity(0.1), 
-            borderRadius: BorderRadius.circular(12)
-          ),
+              color: rez['zakazka_doc_id'] != null
+                  ? Colors.green.withOpacity(0.1)
+                  : Colors.blue.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(rez['cas_od'] ?? '', style: TextStyle(fontWeight: FontWeight.bold, color: rez['zakazka_doc_id'] != null ? Colors.green : Colors.blue, fontSize: 13)),
-              Text(rez['cas_do'] ?? '', style: const TextStyle(fontSize: 10, color: Colors.grey)),
+              Text(rez['cas_od'] ?? '',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: rez['zakazka_doc_id'] != null
+                          ? Colors.green
+                          : Colors.blue,
+                      fontSize: 13)),
+              Text(rez['cas_do'] ?? '',
+                  style: const TextStyle(fontSize: 10, color: Colors.grey)),
             ],
           ),
         ),
-        title: Text(rez['spz'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Text(rez['nazev_ukonu'] ?? '', style: const TextStyle(fontSize: 13)),
+        title: Text(rez['spz'] ?? '',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        subtitle: Text(rez['nazev_ukonu'] ?? '',
+            style: const TextStyle(fontSize: 13)),
         trailing: Icon(
-          rez['zakazka_doc_id'] != null ? Icons.build_circle : Icons.arrow_forward_ios, 
-          size: rez['zakazka_doc_id'] != null ? 24 : 14, 
-          color: rez['zakazka_doc_id'] != null ? Colors.green : Colors.grey
-        ),
+            rez['zakazka_doc_id'] != null
+                ? Icons.build_circle
+                : Icons.arrow_forward_ios,
+            size: rez['zakazka_doc_id'] != null ? 24 : 14,
+            color: rez['zakazka_doc_id'] != null ? Colors.green : Colors.grey),
         onTap: () {
           if (rez['zakazka_doc_id'] != null) {
             // Zakázka už je fyzicky na dílně -> Otevřeme detail
-            Navigator.push(context, MaterialPageRoute(builder: (context) => ActiveJobScreen(
-              documentId: rez['zakazka_doc_id'],
-              zakazkaId: '---', 
-              spz: rez['spz'],
-            )));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ActiveJobScreen(
+                          documentId: rez['zakazka_doc_id'],
+                          zakazkaId: '---',
+                          spz: rez['spz'],
+                        )));
           } else {
             // Zatím jen plán v kalendáři -> Tlačítko k přijetí
             _ukazDetailRezervace(context, docId, rez, isDark);

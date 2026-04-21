@@ -886,9 +886,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
         DateTime splatnost = ted.add(Duration(days: splatnostDny));
 
-        String stavPlatby = (celkovaSuma <= 0 || platba == 'Hotově' || platba == 'Kartou')
-            ? 'Uhrazeno'
-            : 'Čeká na platbu';
+        String stavPlatby =
+            (celkovaSuma <= 0 || platba == 'Hotově' || platba == 'Kartou')
+                ? 'Uhrazeno'
+                : 'Čeká na platbu';
 
         await FirebaseFirestore.instance
             .collection('faktury')
@@ -1020,7 +1021,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           final aktualniStav = data['stav_zakazky'] ?? 'Přijato';
           final stav = data['stav_vozidla'] as Map<String, dynamic>? ?? {};
           final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
-          
+
           final rawUrls = data['fotografie_urls'];
           final Map<String, dynamic> imageUrlsByCategoryRaw = {};
           if (rawUrls is Map) {
@@ -1029,7 +1030,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             imageUrlsByCategoryRaw['ostatni'] = rawUrls;
           }
 
-          // Vytažení všech fotek z příjmu do jednoho pole
           List<String> prijemFotky = [];
           for (var val in imageUrlsByCategoryRaw.values) {
             if (val is List) {
@@ -1197,7 +1197,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 vertical: 5,
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
                                     'Informace o zakázce',
@@ -1211,7 +1212,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     'Přijato: ${_formatDate(data['cas_prijeti'])}',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: isDark ? Colors.grey[400] : Colors.grey[700],
+                                      color: isDark
+                                          ? Colors.grey[400]
+                                          : Colors.grey[700],
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -1427,7 +1430,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => FotodokumentaceScreen(
+                                        builder: (context) =>
+                                            FotodokumentaceScreen(
                                           fotografieUrls: prijemFotky,
                                           titulek: 'Příjem vozidla',
                                         ),
@@ -1435,12 +1439,16 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                     );
                                   },
                                   icon: const Icon(Icons.camera_alt_outlined),
-                                  label: Text('Fotodokumentace z příjmu (${prijemFotky.length})'),
+                                  label: Text(
+                                      'Fotodokumentace z příjmu (${prijemFotky.length})'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: Colors.blue,
                                     side: const BorderSide(color: Colors.blue),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10)),
                                   ),
                                 ),
                               ),
@@ -1703,19 +1711,26 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => FotodokumentaceScreen(
-                                              fotografieUrls: fotky.map((e) => e.toString()).toList(),
+                                            builder: (context) =>
+                                                FotodokumentaceScreen(
+                                              fotografieUrls: fotky
+                                                  .map((e) => e.toString())
+                                                  .toList(),
                                               titulek: prace['nazev'] ?? 'Úkon',
                                             ),
                                           ),
                                         );
                                       },
                                       icon: const Icon(Icons.photo_library),
-                                      label: Text('Zobrazit fotodokumentaci (${fotky.length})'),
+                                      label: Text(
+                                          'Zobrazit fotodokumentaci (${fotky.length})'),
                                       style: OutlinedButton.styleFrom(
                                         foregroundColor: Colors.blue,
-                                        side: const BorderSide(color: Colors.blue),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                        side: const BorderSide(
+                                            color: Colors.blue),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10)),
                                       ),
                                     ),
                                   ),
@@ -2132,6 +2147,125 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
             ])));
   }
 
+  // --- NOVÉ: Funkce pro výběr úkonu z katalogu ---
+  void _vybratUkonZKatalogu(BuildContext context, bool isDark) {
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.7,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(25)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10)),
+              ),
+              const SizedBox(height: 20),
+              const Text('Katalog úkonů',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 15),
+              Expanded(
+                  child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('ukony')
+                          .where('servis_id', isEqualTo: globalServisId)
+                          .where('aktivni', isEqualTo: true)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData)
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        final docs = snapshot.data!.docs;
+
+                        if (docs.isEmpty) {
+                          return const Center(
+                              child: Text('Váš katalog úkonů je zatím prázdný.',
+                                  style: TextStyle(color: Colors.grey)));
+                        }
+
+                        // Lokální seřazení podle abecedy
+                        var listDocs = docs.toList();
+                        listDocs.sort((a, b) => (a['nazev'] ?? '')
+                            .toString()
+                            .compareTo((b['nazev'] ?? '').toString()));
+
+                        return ListView.separated(
+                            itemCount: listDocs.length,
+                            separatorBuilder: (_, __) => const Divider(),
+                            itemBuilder: (context, index) {
+                              final data = listDocs[index].data()
+                                  as Map<String, dynamic>;
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: Colors.blue.withOpacity(0.1),
+                                  child: const Icon(Icons.build,
+                                      color: Colors.blue),
+                                ),
+                                title: Text(data['nazev'] ?? '',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                subtitle: Text(
+                                    'Čas: ${data['odhadovany_cas'] ?? 1} h • Kategorie: ${data['kategorie'] ?? 'Ostatní'}'),
+                                trailing: Text(
+                                    '${data['cena_bez_dph'] ?? 0} Kč',
+                                    style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15)),
+                                onTap: () {
+                                  setState(() {
+                                    // Nastaví hlavičku celé skupiny
+                                    _nazevController.text = data['nazev'] ?? '';
+
+                                    PolozkaInput p;
+                                    // Pokud je první položka ještě úplně čistá a prázdná, přepíšeme ji.
+                                    // Jinak ji přidáme jako novou pod stávající položky.
+                                    if (_polozkyInputs.length == 1 &&
+                                        _polozkyInputs[0].nazev.text.isEmpty) {
+                                      p = _polozkyInputs[0];
+                                    } else {
+                                      p = PolozkaInput();
+                                      _polozkyInputs.add(p);
+                                    }
+
+                                    p.typ = 'Práce';
+                                    p.nazev.text = data['nazev'] ?? '';
+                                    p.mnozstvi.text =
+                                        (data['odhadovany_cas'] ?? 1.0)
+                                            .toString();
+                                    p.jednotka = 'h';
+
+                                    double bezDph =
+                                        (data['cena_bez_dph'] ?? 0.0)
+                                            .toDouble();
+                                    p.cenaBezDph.text =
+                                        bezDph.toStringAsFixed(2);
+
+                                    // Přepočet ceny s DPH, pokud je servis plátce
+                                    double sDph =
+                                        _jePlatceDph ? (bezDph * 1.21) : bezDph;
+                                    p.cenaSDph.text = sDph.toStringAsFixed(2);
+
+                                    _prepocitatCelkem();
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              );
+                            });
+                      }))
+            ])));
+  }
+  // --------------------------------------------------------
+
   Future<void> _saveWork() async {
     if (_nazevController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2300,6 +2434,17 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                           _buildTextField(_nazevController,
                               'Název úkonu (např. Servis brzd) *', isDark,
                               isBold: true),
+                          const SizedBox(height: 10),
+                          // --- NOVÉ: Tlačítko pro výběr z katalogu přímo pod hlavičkou ---
+                          TextButton.icon(
+                            onPressed: () =>
+                                _vybratUkonZKatalogu(context, isDark),
+                            icon: const Icon(Icons.menu_book),
+                            label: const Text('Vybrat úkon z katalogu',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.blue),
+                          ),
                         ],
                       ),
                     ),
@@ -2583,10 +2728,21 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                               ),
                               TextButton.icon(
                                 onPressed: () =>
+                                    _vybratUkonZKatalogu(context, isDark),
+                                icon: const Icon(Icons.menu_book,
+                                    color: Colors.blue),
+                                label: const Text('Katalog úkonů',
+                                    style: TextStyle(color: Colors.blue)),
+                                style: TextButton.styleFrom(
+                                  backgroundColor: Colors.blue.withOpacity(0.1),
+                                ),
+                              ),
+                              TextButton.icon(
+                                onPressed: () =>
                                     _vybratDilZeSkladu(context, isDark),
                                 icon: const Icon(Icons.inventory_2,
                                     color: Colors.orange),
-                                label: const Text('Vybrat ze skladu',
+                                label: const Text('Sklad',
                                     style: TextStyle(color: Colors.orange)),
                                 style: TextButton.styleFrom(
                                   backgroundColor:
@@ -2830,7 +2986,8 @@ class FotodokumentaceScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Text('Fotodokumentace: $titulek', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        title: Text('Fotodokumentace: $titulek',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
         backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         elevation: 0,
       ),
@@ -2839,9 +2996,11 @@ class FotodokumentaceScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.no_photography_outlined, size: 80, color: Colors.grey),
+                  Icon(Icons.no_photography_outlined,
+                      size: 80, color: Colors.grey),
                   SizedBox(height: 16),
-                  Text('Zatím nebyly nahrány žádné fotografie.', style: TextStyle(fontSize: 16, color: Colors.grey)),
+                  Text('Zatím nebyly nahrány žádné fotografie.',
+                      style: TextStyle(fontSize: 16, color: Colors.grey)),
                 ],
               ),
             )
@@ -2851,7 +3010,7 @@ class FotodokumentaceScreen extends StatelessWidget {
                 crossAxisCount: 3,
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
-                childAspectRatio: 1.0, 
+                childAspectRatio: 1.0,
               ),
               itemCount: fotografieUrls.length,
               itemBuilder: (context, index) {
@@ -2861,7 +3020,10 @@ class FotodokumentaceScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => FullScreenImage(imageUrl: url, index: index + 1, total: fotografieUrls.length),
+                        builder: (context) => FullScreenImage(
+                            imageUrl: url,
+                            index: index + 1,
+                            total: fotografieUrls.length),
                       ),
                     );
                   },
@@ -2876,12 +3038,14 @@ class FotodokumentaceScreen extends StatelessWidget {
                           if (loadingProgress == null) return child;
                           return Container(
                             color: isDark ? Colors.grey[800] : Colors.grey[200],
-                            child: const Center(child: CircularProgressIndicator()),
+                            child: const Center(
+                                child: CircularProgressIndicator()),
                           );
                         },
                         errorBuilder: (context, error, stackTrace) => Container(
                           color: isDark ? Colors.grey[800] : Colors.grey[200],
-                          child: const Icon(Icons.broken_image, color: Colors.grey),
+                          child: const Icon(Icons.broken_image,
+                              color: Colors.grey),
                         ),
                       ),
                     ),
@@ -2898,7 +3062,11 @@ class FullScreenImage extends StatelessWidget {
   final int index;
   final int total;
 
-  const FullScreenImage({super.key, required this.imageUrl, required this.index, required this.total});
+  const FullScreenImage(
+      {super.key,
+      required this.imageUrl,
+      required this.index,
+      required this.total});
 
   @override
   Widget build(BuildContext context) {
@@ -2907,12 +3075,13 @@ class FullScreenImage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
-        title: Text('Fotografie $index z $total', style: const TextStyle(color: Colors.white, fontSize: 16)),
+        title: Text('Fotografie $index z $total',
+            style: const TextStyle(color: Colors.white, fontSize: 16)),
       ),
       body: Center(
         child: InteractiveViewer(
           minScale: 0.5,
-          maxScale: 4.0, 
+          maxScale: 4.0,
           child: Hero(
             tag: 'foto_$imageUrl',
             child: Image.network(
@@ -2920,7 +3089,8 @@ class FullScreenImage extends StatelessWidget {
               fit: BoxFit.contain,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
-                return const Center(child: CircularProgressIndicator(color: Colors.white));
+                return const Center(
+                    child: CircularProgressIndicator(color: Colors.white));
               },
             ),
           ),

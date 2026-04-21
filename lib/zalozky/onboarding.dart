@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-import 'auth_gate.dart'; // <--- ZMĚNĚNÝ IMPORT (Místo main_screen.dart voláme AuthGate)
+import 'auth_gate.dart';
 import '../core/constants.dart';
 
 class SetupWizardScreen extends StatefulWidget {
@@ -134,49 +134,72 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             .where((text) => text.isNotEmpty)
             .toList();
 
+        // POUŽIJEME BATCH ZÁPIS - Zapíše všechny dokumenty najednou a bezpečně
+        WriteBatch batch = FirebaseFirestore.instance.batch();
+
         // 1. ZÁPIS NASTAVENÍ SERVISU
-        await FirebaseFirestore.instance
+        DocumentReference nastaveniRef = FirebaseFirestore.instance
             .collection('nastaveni_servisu')
-            .doc(user.uid)
-            .set({
-          'nazev_servisu': _nazevController.text.trim(),
-          'ico_servisu': _icoController.text.trim(),
-          'registrace_servisu': _registraceController.text.trim(),
-          'email_servisu': _emailServisuController.text.trim(),
-          'default_odesilat_emaily': _defaultOdeslatEmaily,
-          'tmavy_rezim': _tmavyRezim,
-          'hodinova_sazba':
-              double.tryParse(_sazbaController.text.replaceAll(',', '.')) ??
-                  0.0,
-          'platce_dph': _jePlatceDph,
-          'dic_servisu': _dicController.text.trim(),
-          'banka_servisu': _bankaController.text.trim(),
-          'prefix_zakazky': _prefixZakazkaController.text.trim().isEmpty
-              ? 'ZAK'
-              : _prefixZakazkaController.text.trim().toUpperCase(),
-          'prefix_faktury': _prefixFakturaController.text.trim().isEmpty
-              ? 'FAK'
-              : _prefixFakturaController.text.trim().toUpperCase(),
-          'rychle_ukony': finalniUkony,
-          'prvni_spusteni_dokonceno': true,
-          'vytvoreno': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+            .doc(user.uid);
+        batch.set(
+            nastaveniRef,
+            {
+              'nazev_servisu': _nazevController.text.trim(),
+              'ico_servisu': _icoController.text.trim(),
+              'registrace_servisu': _registraceController.text.trim(),
+              'email_servisu': _emailServisuController.text.trim(),
+              'default_odesilat_emaily': _defaultOdeslatEmaily,
+              'tmavy_rezim': _tmavyRezim,
+              'hodinova_sazba':
+                  double.tryParse(_sazbaController.text.replaceAll(',', '.')) ??
+                      0.0,
+              'platce_dph': _jePlatceDph,
+              'dic_servisu': _dicController.text.trim(),
+              'banka_servisu': _bankaController.text.trim(),
+              'prefix_zakazky': _prefixZakazkaController.text.trim().isEmpty
+                  ? 'ZAK'
+                  : _prefixZakazkaController.text.trim().toUpperCase(),
+              'prefix_faktury': _prefixFakturaController.text.trim().isEmpty
+                  ? 'FAK'
+                  : _prefixFakturaController.text.trim().toUpperCase(),
+              // Pole 'rychle_ukony' bylo smazáno, ukládáme to teď do samostatné kolekce (viz krok 3)
+              'prvni_spusteni_dokonceno': true,
+              'vytvoreno': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true));
 
         // 2. VYTVOŘENÍ PROFILU ADMINA (ZAKLADATELE)
-        await FirebaseFirestore.instance
-            .collection('uzivatele')
-            .doc(user.uid)
-            .set({
+        DocumentReference adminRef =
+            FirebaseFirestore.instance.collection('uzivatele').doc(user.uid);
+        batch.set(adminRef, {
           'uid': user.uid,
           'email': user.email,
-          'role': 'admin', // První uživatel je vždy admin
-          'servis_id': user.uid, // Servis ID je ID zakladatele
+          'role': 'admin',
+          'servis_id': user.uid,
           'jmeno': _nazevController.text.trim(),
           'vytvoreno': FieldValue.serverTimestamp(),
         });
 
+        // 3. VYTVOŘENÍ JEDNOTLIVÝCH ÚKONŮ DO SAMOSTATNÉ KOLEKCE
+        for (String nazevUkonu in finalniUkony) {
+          DocumentReference ukonRef = FirebaseFirestore.instance
+              .collection('ukony')
+              .doc(); // Vygeneruje nové náhodné ID
+          batch.set(ukonRef, {
+            'servis_id': user.uid,
+            'nazev': nazevUkonu,
+            'cena_bez_dph': 0.0, // Výchozí cena nula, může si ji pak nastavit
+            'sazba_dph': _jePlatceDph ? 21 : 0, // Dle toho, zda je plátce DPH
+            'odhadovany_cas': 1.0, // Výchozí čas 1 hodina
+            'kategorie': 'Běžný servis',
+            'aktivni': true,
+          });
+        }
+
+        // SPUŠTĚNÍ DÁVKOVÉHO ZÁPISU
+        await batch.commit();
+
         if (mounted) {
-          // Přesměrujeme zpět na AuthGate, ten už to teď vyhodnotí správně
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const AuthGate()),
