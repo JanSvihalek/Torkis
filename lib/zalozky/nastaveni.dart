@@ -192,6 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
       'vozidla': {'nazev': 'Vozidla', 'ikona': Icons.directions_car_outlined},
       'ukony': {'nazev': 'Úkony', 'ikona': Icons.playlist_add_check_circle_outlined},
       'zakaznici': {'nazev': 'Zákazníci', 'ikona': Icons.people_alt_outlined},
+      'planovac': {'nazev': 'Plánovač', 'ikona': Icons.calendar_today_outlined},
       'zamestnanci': {'nazev': 'Tým a práva', 'ikona': Icons.badge_outlined},
       'ucetnictvi': {'nazev': 'Účetnictví', 'ikona': Icons.pie_chart_outline},
       'statistiky': {'nazev': 'Statistiky', 'ikona': Icons.bar_chart_outlined},
