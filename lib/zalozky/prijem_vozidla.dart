@@ -13,9 +13,10 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
+import 'zakaznici.dart';
+import 'vozidla.dart';
 import 'auth_gate.dart';
 
-// --- PŘIDÁNO: Globální vysílač pro komunikaci mezi záložkami ---
 final ValueNotifier<String?> rezervaceKeZpracovani = ValueNotifier(null);
 
 class MainWizardPage extends StatefulWidget {
@@ -25,6 +26,8 @@ class MainWizardPage extends StatefulWidget {
 }
 
 class _MainWizardPageState extends State<MainWizardPage> {
+  String? get _sId => globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
+
   final PageController _pageController = PageController();
   int _currentPage = 0;
   final int _totalPages = 6;
@@ -47,7 +50,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _defaultOdeslatEmail = true;
 
   String? _vybranyZakaznikId;
-  String? _zpracovavanaRezervaceId; 
+  String? _zpracovavanaRezervaceId;
   List<Map<String, dynamic>> _nalezenaVozidla = [];
 
   final _zakazkaController = TextEditingController();
@@ -67,7 +70,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     'Elektro',
     'Hybrid',
     'LPG/CNG',
-    'Jiné',
+    'Jiné'
   ];
 
   String _vybranaPrevodovka = 'Manuální';
@@ -82,7 +85,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     'Čelní sklo',
     'Stěrače',
     'Disky',
-    'Karosérie',
+    'Karosérie'
   ];
 
   final _tachometrController = TextEditingController();
@@ -98,7 +101,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   final _pneuPZController = TextEditingController();
 
   final List<TextEditingController> _pozadavkyControllers = [
-    TextEditingController(),
+    TextEditingController()
   ];
 
   List<String> _rychleUkony = [];
@@ -119,31 +122,36 @@ class _MainWizardPageState extends State<MainWizardPage> {
   void initState() {
     super.initState();
     _generujCisloZakazky();
-    _nactiNastaveni(); 
-    _nactiUkonyZDatabaze(); // Nová funkce pro tahání z kolekce ukony
+    _nactiNastaveni();
+    _nactiUkonyZDatabaze();
     _nactiDatabaziZnacek();
-    
+
     rezervaceKeZpracovani.addListener(_zpracujRezervaciZPlanovace);
   }
 
-  // --- NOVÉ: Funkce pro načtení úkonů z nové kolekce ---
   Future<void> _nactiUkonyZDatabaze() async {
-    if (globalServisId == null) return;
-    
+    if (_sId == null) {
+      if (mounted) setState(() => _isLoadingUkony = false);
+      return;
+    }
+
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('ukony')
-          .where('servis_id', isEqualTo: globalServisId)
-          .where('aktivni', isEqualTo: true) // Natáhneme jen ty aktivní
+          .where('servis_id', isEqualTo: _sId)
+          .where('aktivni', isEqualTo: true)
           .get();
 
       if (snapshot.docs.isNotEmpty) {
-        final ukonyZDb = snapshot.docs.map((doc) {
-          final data = doc.data();
-          return (data['nazev'] ?? data['nazev_ukonu'] ?? '').toString();
-        }).where((nazev) => nazev.isNotEmpty).toList();
-        
-        ukonyZDb.sort(); // Hezky podle abecedy
+        final ukonyZDb = snapshot.docs
+            .map((doc) {
+              final data = doc.data();
+              return (data['nazev'] ?? data['nazev_ukonu'] ?? '').toString();
+            })
+            .where((nazev) => nazev.isNotEmpty)
+            .toList();
+
+        ukonyZDb.sort();
 
         if (mounted) {
           setState(() {
@@ -166,8 +174,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     try {
       _zpracovavanaRezervaceId = id;
-      final doc = await FirebaseFirestore.instance.collection('planovac').doc(id).get();
-      
+      final doc =
+          await FirebaseFirestore.instance.collection('planovac').doc(id).get();
+
       if (doc.exists) {
         final data = doc.data()!;
         setState(() {
@@ -185,14 +194,15 @@ class _MainWizardPageState extends State<MainWizardPage> {
           final ukon = data['nazev_ukonu'];
           if (ukon != null && ukon.toString().isNotEmpty) {
             _pozadavkyControllers.clear();
-            _pozadavkyControllers.add(TextEditingController(text: ukon.toString()));
+            _pozadavkyControllers
+                .add(TextEditingController(text: ukon.toString()));
           }
         });
 
-        if (_spzController.text.isNotEmpty) {
+        if (_spzController.text.isNotEmpty && _sId != null) {
           final vozidlaQuery = await FirebaseFirestore.instance
               .collection('vozidla')
-              .where('servis_id', isEqualTo: globalServisId)
+              .where('servis_id', isEqualTo: _sId)
               .where('spz', isEqualTo: _spzController.text)
               .limit(1)
               .get();
@@ -200,14 +210,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
             await _aplikovatVybraneVozidlo(vozidlaQuery.docs.first.data());
           }
         }
-        
+
         setState(() => _currentPage = 0);
         _pageController.jumpToPage(0);
       }
     } catch (e) {
       debugPrint("Chyba při načítání rezervace: $e");
     } finally {
-      rezervaceKeZpracovani.value = null; 
+      rezervaceKeZpracovani.value = null;
     }
   }
 
@@ -246,13 +256,12 @@ class _MainWizardPageState extends State<MainWizardPage> {
     });
   }
 
-  // Změněno: Již nestahuje "rychle_ukony"
   Future<void> _nactiNastaveni() async {
-    if (globalServisId != null) {
+    if (_sId != null) {
       try {
         final doc = await FirebaseFirestore.instance
             .collection('nastaveni_servisu')
-            .doc(globalServisId)
+            .doc(_sId)
             .get();
         if (doc.exists) {
           final data = doc.data()!;
@@ -273,15 +282,12 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   Future<void> _generujCisloZakazky() async {
     setState(() => _isGeneratingCislo = true);
-
     String prefixBase = 'ZAK';
-
     try {
-      if (globalServisId == null) return;
-
+      if (_sId == null) return;
       final nastaveniDoc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(globalServisId)
+          .doc(_sId)
           .get();
       if (nastaveniDoc.exists &&
           nastaveniDoc.data()!.containsKey('prefix_zakazky')) {
@@ -289,21 +295,16 @@ class _MainWizardPageState extends State<MainWizardPage> {
             nastaveniDoc.data()!['prefix_zakazky'].toString().trim();
         if (storedPrefix.isNotEmpty) prefixBase = storedPrefix;
       }
-
       final todayPrefix = DateFormat('yyMMdd').format(DateTime.now());
       final prefix = '$prefixBase$todayPrefix';
-
       final querySnapshot = await FirebaseFirestore.instance
           .collection('zakazky')
-          .where('servis_id', isEqualTo: globalServisId)
+          .where('servis_id', isEqualTo: _sId)
           .get();
-
       int nextNumber = 1;
-
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
         final cislo = data['cislo_zakazky']?.toString() ?? '';
-
         if (cislo.startsWith(prefix)) {
           final koncovka = cislo.substring(prefix.length);
           final currentNum = int.tryParse(koncovka) ?? 0;
@@ -312,7 +313,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
           }
         }
       }
-
       if (mounted) {
         setState(() {
           _zakazkaController.text =
@@ -335,78 +335,63 @@ class _MainWizardPageState extends State<MainWizardPage> {
   Future<void> _hledatPodleSpz() async {
     final spz = _spzController.text.trim().toUpperCase().replaceAll(' ', '');
     if (spz.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Zadejte alespoň část SPZ pro vyhledání.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+          backgroundColor: Colors.orange));
       return;
     }
-
     setState(() => _isLoadingSpz = true);
-
     try {
-      if (globalServisId == null) return;
-
+      if (_sId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Chyba: ID Servisu se nepodařilo načíst.'),
+            backgroundColor: Colors.red));
+        return;
+      }
       final vozidlaQuery = await FirebaseFirestore.instance
           .collection('vozidla')
-          .where('servis_id', isEqualTo: globalServisId)
+          .where('servis_id', isEqualTo: _sId)
           .get();
-
       final nalezenaVozidla = vozidlaQuery.docs.map((d) => d.data()).where((v) {
         final ulozenoSpz = (v['spz'] ?? '').toString().toUpperCase();
         return ulozenoSpz.startsWith(spz);
       }).toList();
 
       if (nalezenaVozidla.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Žádné vozidlo s touto SPZ nebylo nalezeno.'),
-            backgroundColor: Colors.blueGrey,
-          ),
-        );
+            backgroundColor: Colors.blueGrey));
         return;
       }
-
       if (nalezenaVozidla.length == 1) {
         await _aplikovatVybraneVozidlo(nalezenaVozidla.first);
       } else {
         _otevritVyberNalezenychVozidel(nalezenaVozidla);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Chyba při vyhledávání: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+          backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoadingSpz = false);
     }
   }
 
   Future<void> _aplikovatVybraneVozidlo(
-    Map<String, dynamic> vozidloData,
-  ) async {
-    if (globalServisId == null) return;
-
+      Map<String, dynamic> vozidloData) async {
+    if (_sId == null) return;
     setState(() {
       _spzController.text = vozidloData['spz']?.toString() ?? '';
-
       String nactenaZnacka = vozidloData['znacka']?.toString() ?? '';
       _znackaController.text = nactenaZnacka;
       _aktualizujModely(nactenaZnacka);
       _modelController.text = vozidloData['model']?.toString() ?? '';
-
       _vinController.text = vozidloData['vin']?.toString() ?? '';
       _rokVyrobyController.text = vozidloData['rok_vyroby']?.toString() ?? '';
       _motorizaceController.text = vozidloData['motorizace']?.toString() ?? '';
-
       _tachometrController.text = vozidloData['tachometr']?.toString() ?? '';
       _stkMesicController.text = vozidloData['stk_mesic']?.toString() ?? '';
       _stkRokController.text = vozidloData['stk_rok']?.toString() ?? '';
-
       if (vozidloData['palivo'] != null &&
           _moznostiPaliva.contains(vozidloData['palivo'])) {
         _vybranePalivo = vozidloData['palivo'];
@@ -421,35 +406,28 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (zakaznikId != null && zakaznikId.toString().isNotEmpty) {
       final zakQuery = await FirebaseFirestore.instance
           .collection('zakaznici')
-          .where('servis_id', isEqualTo: globalServisId)
+          .where('servis_id', isEqualTo: _sId)
           .where('id_zakaznika', isEqualTo: zakaznikId)
           .get();
-
       if (zakQuery.docs.isNotEmpty) {
         final z = zakQuery.docs.first.data();
         setState(() {
           _vybranyZakaznikId = z['id_zakaznika']?.toString();
           _jmenoController.text = z['jmeno']?.toString() ?? '';
           _icoController.text = z['ico']?.toString() ?? '';
-
           _uliceController.text =
               z['ulice']?.toString() ?? (z['adresa']?.toString() ?? '');
           _mestoController.text = z['mesto']?.toString() ?? '';
           _pscController.text = z['psc']?.toString() ?? '';
-
           _telefonController.text = z['telefon']?.toString() ?? '';
           _emailZController.text = z['email']?.toString() ?? '';
         });
       }
     }
-
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Údaje o vozidle a zákazníkovi byly načteny.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+          backgroundColor: Colors.green));
     }
   }
 
@@ -460,30 +438,24 @@ class _MainWizardPageState extends State<MainWizardPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-        ),
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(25))),
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10))),
             const SizedBox(height: 20),
-            const Text(
-              'Nalezeno více vozidel',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+            const Text('Nalezeno více vozidel',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            const Text(
-              'Vyberte konkrétní vozidlo ze seznamu:',
-              style: TextStyle(color: Colors.grey),
-            ),
+            const Text('Vyberte konkrétní vozidlo ze seznamu:',
+                style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 15),
             Expanded(
               child: ListView.separated(
@@ -493,14 +465,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
                   final v = vozidla[index];
                   return ListTile(
                     leading: const CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                      child: Icon(Icons.directions_car),
-                    ),
-                    title: Text(
-                      v['spz'] ?? 'Neznámá SPZ',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        child: Icon(Icons.directions_car)),
+                    title: Text(v['spz'] ?? 'Neznámá SPZ',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('${v['znacka'] ?? ''} ${v['model'] ?? ''}'),
                     onTap: () {
                       Navigator.pop(context);
@@ -541,28 +510,20 @@ class _MainWizardPageState extends State<MainWizardPage> {
   Future<void> _fetchAresData() async {
     final ico = _icoController.text.trim();
     if (ico.isEmpty || ico.length != 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Zadejte platné 8místné IČO.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+          backgroundColor: Colors.orange));
       return;
     }
     setState(() => _isLoadingAres = true);
     try {
-      final response = await http.get(
-        Uri.parse(
-          'https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/$ico',
-        ),
-      );
+      final response = await http.get(Uri.parse(
+          'https://ares.gov.cz/ekonomicke-subjekty-v-be/rest/ekonomicke-subjekty/$ico'));
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
           _jmenoController.text = data['obchodniJmeno'] ?? '';
-
           final sidlo = data['sidlo'] ?? {};
-
           final ulice = sidlo['nazevUlice'] ?? sidlo['nazevObce'] ?? '';
           final cp =
               sidlo['cisloDomovni'] != null ? ' ${sidlo['cisloDomovni']}' : '';
@@ -571,7 +532,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
               : '';
           final obec = sidlo['nazevObce'] ?? '';
           final psc = (sidlo['psc'] != null) ? sidlo['psc'].toString() : '';
-
           if (ulice.isEmpty && sidlo['textovaAdresa'] != null) {
             _uliceController.text = sidlo['textovaAdresa'];
             _mestoController.clear();
@@ -582,27 +542,18 @@ class _MainWizardPageState extends State<MainWizardPage> {
             _pscController.text = psc;
           }
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Údaje z ARES byly úspěšně načteny.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+            backgroundColor: Colors.green));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Zadané IČO nebylo v registru ARES nalezeno.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+            backgroundColor: Colors.red));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Chyba při komunikaci s ARES: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+          backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoadingAres = false);
     }
@@ -619,20 +570,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
             _vybranyZakaznikId = zakaznik['id_zakaznika'];
             _jmenoController.text = zakaznik['jmeno'] ?? '';
             _icoController.text = zakaznik['ico'] ?? '';
-
             _uliceController.text = zakaznik['ulice']?.toString() ??
                 (zakaznik['adresa']?.toString() ?? '');
             _mestoController.text = zakaznik['mesto']?.toString() ?? '';
             _pscController.text = zakaznik['psc']?.toString() ?? '';
-
             _telefonController.text = zakaznik['telefon'] ?? '';
             _emailZController.text = zakaznik['email'] ?? '';
           });
-
-          if (globalServisId != null && _vybranyZakaznikId != null) {
+          if (_sId != null && _vybranyZakaznikId != null) {
             final vozidlaSnap = await FirebaseFirestore.instance
                 .collection('vozidla')
-                .where('servis_id', isEqualTo: globalServisId)
+                .where('servis_id', isEqualTo: _sId)
                 .where('zakaznik_id', isEqualTo: _vybranyZakaznikId)
                 .get();
             setState(() {
@@ -646,40 +594,29 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   Future<void> _moveNext() async {
     FocusScope.of(context).unfocus();
-
     if (_currentPage == 0) {
       final zadaneCislo = _zakazkaController.text.trim();
-
       if (zadaneCislo.isEmpty || _spzController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Číslo zakázky a SPZ jsou povinné údaje!'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
+            duration: Duration(seconds: 3)));
         return;
       }
-
       setState(() => _isCheckingZakazka = true);
       try {
-        if (globalServisId != null) {
+        if (_sId != null) {
           final docSnap = await FirebaseFirestore.instance
               .collection('zakazky')
-              .where('servis_id', isEqualTo: globalServisId)
+              .where('servis_id', isEqualTo: _sId)
               .where('cislo_zakazky', isEqualTo: zadaneCislo)
               .get();
-
           if (docSnap.docs.isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text(
-                  'Toto číslo zakázky již v databázi existuje! Zadejte prosím jiné.',
-                ),
+                    'Toto číslo zakázky již v databázi existuje! Zadejte prosím jiné.'),
                 backgroundColor: Colors.red,
-                duration: Duration(seconds: 4),
-              ),
-            );
+                duration: Duration(seconds: 4)));
             setState(() => _isCheckingZakazka = false);
             return;
           }
@@ -690,33 +627,27 @@ class _MainWizardPageState extends State<MainWizardPage> {
         if (mounted) setState(() => _isCheckingZakazka = false);
       }
     }
-
     if (_currentPage == _totalPages - 1) {
       if (_signatureController.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Zákazník musí připojit podpis před odesláním.'),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3),
-          ),
-        );
+            duration: Duration(seconds: 3)));
         return;
       }
       _startDirectUpload();
     } else {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOutCubic,
-      );
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOutCubic);
     }
   }
 
   void _moveBack() {
     FocusScope.of(context).unfocus();
     _pageController.previousPage(
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeInOutCubic,
-    );
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic);
   }
 
   Future<void> _startDirectUpload() async {
@@ -724,22 +655,16 @@ class _MainWizardPageState extends State<MainWizardPage> {
     try {
       await _uploadToFirebase();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Zakázka úspěšně odeslána'),
-            backgroundColor: Colors.green,
-          ),
-        );
+            backgroundColor: Colors.green));
         _resetForm();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Chyba při odesílání: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+            backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -747,9 +672,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   Future<void> _uploadToFirebase() async {
-    if (globalServisId == null)
-      throw Exception('Nejste přiřazeni k žádnému servisu!');
-
+    if (_sId == null) throw Exception('Nejste přiřazeni k žádnému servisu!');
     final user = FirebaseAuth.instance.currentUser;
     final Map<String, List<String>> imageUrlsByCategory = {};
     String zakazkaId = _zakazkaController.text.trim();
@@ -762,9 +685,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
         final image = images[i];
         String fileName =
             '${categoryKey}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-        Reference ref = FirebaseStorage.instance.ref().child(
-              'servisy/$globalServisId/zakazky/$zakazkaId/$fileName',
-            );
+        Reference ref = FirebaseStorage.instance
+            .ref()
+            .child('servisy/$_sId/zakazky/$zakazkaId/$fileName');
         await ref.putData(await image.readAsBytes());
         String downloadUrl = await ref.getDownloadURL();
         imageUrlsByCategory[categoryKey]!.add(downloadUrl);
@@ -776,37 +699,33 @@ class _MainWizardPageState extends State<MainWizardPage> {
       final Uint8List? signatureBytes = await _signatureController.toPngBytes();
       if (signatureBytes != null) {
         Reference ref = FirebaseStorage.instance.ref().child(
-              'servisy/$globalServisId/zakazky/$zakazkaId/podpis_${DateTime.now().millisecondsSinceEpoch}.png',
-            );
+            'servisy/$_sId/zakazky/$zakazkaId/podpis_${DateTime.now().millisecondsSinceEpoch}.png');
         await ref.putData(signatureBytes);
         podpisUrl = await ref.getDownloadURL();
       }
     }
 
-    // --- OPRAVA DUPLICIT ZÁKAZNÍKŮ ---
     String zakaznikId = '';
     if (_vybranyZakaznikId != null && _vybranyZakaznikId!.isNotEmpty) {
       zakaznikId = _vybranyZakaznikId!;
     } else {
       final telefon = _telefonController.text.trim();
       final ico = _icoController.text.trim();
-
       QuerySnapshot? existujici;
 
       if (telefon.isNotEmpty) {
         final snap = await FirebaseFirestore.instance
             .collection('zakaznici')
-            .where('servis_id', isEqualTo: globalServisId)
+            .where('servis_id', isEqualTo: _sId)
             .where('telefon', isEqualTo: telefon)
             .limit(1)
             .get();
         if (snap.docs.isNotEmpty) existujici = snap;
       }
-
       if (existujici == null && ico.isNotEmpty) {
         final snap = await FirebaseFirestore.instance
             .collection('zakaznici')
-            .where('servis_id', isEqualTo: globalServisId)
+            .where('servis_id', isEqualTo: _sId)
             .where('ico', isEqualTo: ico)
             .limit(1)
             .get();
@@ -819,22 +738,19 @@ class _MainWizardPageState extends State<MainWizardPage> {
         zakaznikId = 'ZAK_${DateTime.now().millisecondsSinceEpoch}';
       }
     }
-    // ----------------------------------
 
     String ulice = _uliceController.text.trim();
     String mesto = _mestoController.text.trim();
     String psc = _pscController.text.trim();
-    String kombinovanaAdresa = '$ulice, $psc $mesto'.trim().replaceAll(
-          RegExp(r'^, |,$'),
-          '',
-        );
+    String kombinovanaAdresa =
+        '$ulice, $psc $mesto'.trim().replaceAll(RegExp(r'^, |,$'), '');
 
     if (_jmenoController.text.trim().isNotEmpty) {
       await FirebaseFirestore.instance
           .collection('zakaznici')
-          .doc('${globalServisId}_$zakaznikId')
+          .doc('${_sId}_$zakaznikId')
           .set({
-        'servis_id': globalServisId,
+        'servis_id': _sId,
         'id_zakaznika': zakaznikId,
         'jmeno': _jmenoController.text.trim(),
         'ico': _icoController.text.trim(),
@@ -852,9 +768,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (spz.isNotEmpty) {
       await FirebaseFirestore.instance
           .collection('vozidla')
-          .doc('${globalServisId}_$spz')
+          .doc('${_sId}_$spz')
           .set({
-        'servis_id': globalServisId,
+        'servis_id': _sId,
         'zakaznik_id': zakaznikId,
         'spz': spz,
         'vin': _vinController.text.trim().toUpperCase(),
@@ -877,7 +793,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         .toList();
 
     Map<String, dynamic> zakazkaData = {
-      'servis_id': globalServisId,
+      'servis_id': _sId,
       'zakaznik_id': zakaznikId,
       'cislo_zakazky': zakazkaId,
       'spz': spz,
@@ -889,6 +805,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'palivo_typ': _vybranePalivo,
       'prevodovka': _vybranaPrevodovka,
       'stav_zakazky': 'Přijato',
+      'rezervace_id': _zpracovavanaRezervaceId, // Uložíme ID pro Dokončeno
       'zakaznik': {
         'id_zakaznika': zakaznikId,
         'jmeno': _jmenoController.text.trim(),
@@ -922,13 +839,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     await FirebaseFirestore.instance
         .collection('zakazky')
-        .doc('${globalServisId}_$zakazkaId')
+        .doc('${_sId}_$zakazkaId')
         .set(zakazkaData);
 
     if (_zpracovavanaRezervaceId != null) {
       try {
-        await FirebaseFirestore.instance.collection('planovac').doc(_zpracovavanaRezervaceId).update({
-          'zakazka_doc_id': '${globalServisId}_$zakazkaId'
+        await FirebaseFirestore.instance
+            .collection('planovac')
+            .doc(_zpracovavanaRezervaceId)
+            .update({
+          'zakazka_doc_id': '${_sId}_$zakazkaId',
+          'stav': 'Přijato na servis'
         });
       } catch (e) {
         debugPrint("Chyba při updatování plánovače: $e");
@@ -936,7 +857,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
 
     final emailZakanika = _emailZController.text.trim();
-
     if (_odeslatEmail &&
         emailZakanika.isNotEmpty &&
         emailZakanika.contains('@')) {
@@ -944,7 +864,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       String odesilatelIco = '';
       final docNastaveni = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
-          .doc(globalServisId)
+          .doc(_sId)
           .get();
       if (docNastaveni.exists) {
         odesilatelJmeno =
@@ -959,13 +879,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
         typ: PdfTyp.protokol,
       );
 
-      Reference pdfRef = FirebaseStorage.instance.ref().child(
-            'servisy/$globalServisId/zakazky/$zakazkaId/protokol_$zakazkaId.pdf',
-          );
+      Reference pdfRef = FirebaseStorage.instance
+          .ref()
+          .child('servisy/$_sId/zakazky/$zakazkaId/protokol_$zakazkaId.pdf');
       await pdfRef.putData(
-        pdfBytes,
-        SettableMetadata(contentType: 'application/pdf'),
-      );
+          pdfBytes, SettableMetadata(contentType: 'application/pdf'));
       String pdfDownloadUrl = await pdfRef.getDownloadURL();
 
       await FirebaseFirestore.instance.collection('maily').add({
@@ -1000,7 +918,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _telefonController.clear();
     _emailZController.clear();
     _vybranyZakaznikId = null;
-    _zpracovavanaRezervaceId = null; 
+    _zpracovavanaRezervaceId = null;
     _nalezenaVozidla.clear();
 
     _spzController.clear();
@@ -1042,26 +960,20 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   Future<void> _takePhotoSeries(String categoryKey) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text(
-          'Sériové focení zapnuto. Foťák se bude otevírat, dokud nedáte "Zpět/Zrušit".',
-        ),
-        duration: Duration(seconds: 3),
-      ),
-    );
+            'Sériové focení zapnuto. Foťák se bude otevírat, dokud nedáte "Zpět/Zrušit".'),
+        duration: Duration(seconds: 3)));
     while (true) {
       final XFile? photo = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 60,
-        maxWidth: 1280,
-        maxHeight: 1280,
-      );
+          source: ImageSource.camera,
+          imageQuality: 60,
+          maxWidth: 1280,
+          maxHeight: 1280);
       if (photo != null) {
         setState(() {
-          if (_categoryImages[categoryKey] == null) {
+          if (_categoryImages[categoryKey] == null)
             _categoryImages[categoryKey] = [];
-          }
           _categoryImages[categoryKey]!.add(photo);
         });
       } else {
@@ -1072,43 +984,32 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   Future<void> _pickFromGallery(String categoryKey) async {
     final List<XFile> photos = await _picker.pickMultiImage(
-      imageQuality: 60,
-      maxWidth: 1280,
-      maxHeight: 1280,
-    );
+        imageQuality: 60, maxWidth: 1280, maxHeight: 1280);
     if (photos.isNotEmpty) {
       setState(() {
-        if (_categoryImages[categoryKey] == null) {
+        if (_categoryImages[categoryKey] == null)
           _categoryImages[categoryKey] = [];
-        }
         _categoryImages[categoryKey]!.addAll(photos);
       });
     }
   }
 
   Future<void> _scanText(
-    TextEditingController controller,
-    bool numbersOnly,
-  ) async {
+      TextEditingController controller, bool numbersOnly) async {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
-            'Skenování pomocí AI funguje pouze v nainstalované aplikaci (APK/iOS).',
-          ),
+              'Skenování pomocí AI funguje pouze v nainstalované aplikaci (APK/iOS).'),
           backgroundColor: Colors.orange,
-          duration: Duration(seconds: 4),
-        ),
-      );
+          duration: Duration(seconds: 4)));
       return;
     }
     try {
       final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
       if (photo == null) return;
       final inputImage = InputImage.fromFilePath(photo.path);
-      final textRecognizer = TextRecognizer(
-        script: TextRecognitionScript.latin,
-      );
+      final textRecognizer =
+          TextRecognizer(script: TextRecognitionScript.latin);
       final recognizedText = await textRecognizer.processImage(inputImage);
       String result = recognizedText.text;
       if (numbersOnly) {
@@ -1119,12 +1020,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
       setState(() => controller.text = result);
       textRecognizer.close();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Chyba skenování: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Chyba skenování: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -1166,10 +1063,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
                     children: [
                       CircularProgressIndicator(),
                       SizedBox(height: 20),
-                      Text(
-                        'Odesílám zakázku a protokol...',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      Text('Odesílám zakázku a protokol...',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -1189,41 +1084,31 @@ class _MainWizardPageState extends State<MainWizardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Expanded(
-                  flex: 3,
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 8.0),
-                    child: Text(
-                      'Příjem vozidla',
-                      style:
-                          TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
+                    flex: 3,
+                    child: Padding(
+                        padding: EdgeInsets.only(top: 8.0),
+                        child: Text('Příjem vozidla',
+                            style: TextStyle(
+                                fontSize: 32, fontWeight: FontWeight.bold)))),
                 const SizedBox(width: 15),
                 Expanded(
-                  flex: 2,
-                  child: _buildInput(
-                    'Číslo zakázky *',
-                    Icons.onetwothree,
-                    _zakazkaController,
-                    isDark,
-                    caps: true,
-                    customSuffix: _isGeneratingCislo
-                        ? const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.refresh, color: Colors.blue),
-                            onPressed: _generujCisloZakazky,
-                            tooltip: 'Vygenerovat nové číslo',
-                          ),
-                  ),
-                ),
+                    flex: 2,
+                    child: _buildInput('Číslo zakázky *', Icons.onetwothree,
+                        _zakazkaController, isDark,
+                        caps: true,
+                        customSuffix: _isGeneratingCislo
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2)))
+                            : IconButton(
+                                icon: const Icon(Icons.refresh,
+                                    color: Colors.blue),
+                                onPressed: _generujCisloZakazky,
+                                tooltip: 'Vygenerovat nové číslo'))),
               ],
             ),
             const SizedBox(height: 30),
@@ -1232,45 +1117,34 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.05),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                  borderRadius: BorderRadius.circular(15),
-                ),
+                    color: Colors.blue.withOpacity(0.05),
+                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                    borderRadius: BorderRadius.circular(15)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.directions_car, color: Colors.blue),
-                        SizedBox(width: 10),
-                        Text(
-                          'Zákazník má uložená tato vozidla:',
+                    const Row(children: [
+                      Icon(Icons.directions_car, color: Colors.blue),
+                      SizedBox(width: 10),
+                      Text('Zákazník má uložená tato vozidla:',
                           style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ],
-                    ),
+                              fontWeight: FontWeight.bold, color: Colors.blue))
+                    ]),
                     const SizedBox(height: 15),
                     Wrap(
                       spacing: 10,
                       runSpacing: 10,
                       children: _nalezenaVozidla
-                          .map(
-                            (v) => ActionChip(
+                          .map((v) => ActionChip(
                               backgroundColor: isDark
                                   ? const Color(0xFF2C2C2C)
                                   : Colors.white,
                               side: const BorderSide(color: Colors.blue),
                               label: Text(
-                                '${v['spz']} ${v['znacka'] != null && v['znacka'].toString().isNotEmpty ? '(${v['znacka']} ${v['model'] ?? ''})' : ''}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              onPressed: () => _aplikovatVybraneVozidlo(v),
-                            ),
-                          )
+                                  '${v['spz']} ${v['znacka'] != null && v['znacka'].toString().isNotEmpty ? '(${v['znacka']} ${v['model'] ?? ''})' : ''}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              onPressed: () => _aplikovatVybraneVozidlo(v)))
                           .toList(),
                     ),
                   ],
@@ -1278,67 +1152,45 @@ class _MainWizardPageState extends State<MainWizardPage> {
               ),
               const SizedBox(height: 30),
             ],
-            _buildInput(
-              'SPZ vozidla (Klikněte na lupu pro dotažení) *',
-              Icons.abc,
-              _spzController,
-              isDark,
-              caps: true,
-              customSuffix: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+            _buildInput('SPZ vozidla (Klikněte na lupu pro dotažení) *',
+                Icons.abc, _spzController, isDark,
+                caps: true,
+                customSuffix: Row(mainAxisSize: MainAxisSize.min, children: [
                   IconButton(
-                    icon: const Icon(Icons.document_scanner),
-                    onPressed: () => _scanText(_spzController, false),
-                    tooltip: 'Naskenovat SPZ fotoaparátem',
-                  ),
+                      icon: const Icon(Icons.document_scanner),
+                      onPressed: () => _scanText(_spzController, false),
+                      tooltip: 'Naskenovat SPZ fotoaparátem'),
                   _isLoadingSpz
                       ? const Padding(
                           padding: EdgeInsets.all(12.0),
                           child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2)))
                       : IconButton(
                           icon: const Icon(Icons.search, color: Colors.blue),
                           onPressed: _hledatPodleSpz,
-                          tooltip: 'Vyhledat auto a majitele z historie',
-                        ),
-                ],
-              ),
-            ),
+                          tooltip: 'Vyhledat auto a majitele z historie')
+                ])),
             const SizedBox(height: 20),
-            _buildInput(
-              'VIN kód',
-              Icons.abc,
-              _vinController,
-              isDark,
-              caps: true,
-            ),
+            _buildInput('VIN kód', Icons.abc, _vinController, isDark,
+                caps: true),
             const SizedBox(height: 20),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Značka (např. Škoda)',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
+                const Text('Značka (např. Škoda)',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
+                  decoration: BoxDecoration(boxShadow: [
+                    if (!isDark)
+                      BoxShadow(
                           color: Colors.black.withOpacity(0.05),
                           blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                    ],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                          offset: const Offset(0, 4))
+                  ], borderRadius: BorderRadius.circular(15)),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return DropdownMenu<String>(
@@ -1346,34 +1198,24 @@ class _MainWizardPageState extends State<MainWizardPage> {
                         controller: _znackaController,
                         enableFilter: true,
                         enableSearch: true,
-                        leadingIcon: const Icon(
-                          Icons.directions_car,
-                          color: Colors.blue,
-                        ),
+                        leadingIcon: const Icon(Icons.directions_car,
+                            color: Colors.blue),
                         inputDecorationTheme: InputDecorationTheme(
-                          filled: true,
-                          fillColor:
-                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 15,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                              color: isDark
-                                  ? Colors.grey[800]!
-                                  : Colors.grey[300]!,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                              color: Colors.blue,
-                              width: 2,
-                            ),
-                          ),
-                        ),
+                            filled: true,
+                            fillColor:
+                                isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 15, horizontal: 15),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide(
+                                    color: isDark
+                                        ? Colors.grey[800]!
+                                        : Colors.grey[300]!)),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: const BorderSide(
+                                    color: Colors.blue, width: 2))),
                         dropdownMenuEntries: _dostupneZnacky
                             .map((z) => DropdownMenuEntry(value: z, label: z))
                             .toList(),
@@ -1390,24 +1232,18 @@ class _MainWizardPageState extends State<MainWizardPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Model (např. Octavia)',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
+                const Text('Model (např. Octavia)',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
+                  decoration: BoxDecoration(boxShadow: [
+                    if (!isDark)
+                      BoxShadow(
                           color: Colors.black.withOpacity(0.05),
                           blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                    ],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                          offset: const Offset(0, 4))
+                  ], borderRadius: BorderRadius.circular(15)),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       return DropdownMenu<String>(
@@ -1415,34 +1251,24 @@ class _MainWizardPageState extends State<MainWizardPage> {
                         controller: _modelController,
                         enableFilter: true,
                         enableSearch: true,
-                        leadingIcon: const Icon(
-                          Icons.directions_car_filled,
-                          color: Colors.blue,
-                        ),
+                        leadingIcon: const Icon(Icons.directions_car_filled,
+                            color: Colors.blue),
                         inputDecorationTheme: InputDecorationTheme(
-                          filled: true,
-                          fillColor:
-                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15,
-                            horizontal: 15,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                              color: isDark
-                                  ? Colors.grey[800]!
-                                  : Colors.grey[300]!,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                              color: Colors.blue,
-                              width: 2,
-                            ),
-                          ),
-                        ),
+                            filled: true,
+                            fillColor:
+                                isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 15, horizontal: 15),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide(
+                                    color: isDark
+                                        ? Colors.grey[800]!
+                                        : Colors.grey[300]!)),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: const BorderSide(
+                                    color: Colors.blue, width: 2))),
                         dropdownMenuEntries: _dostupneModely
                             .map((m) => DropdownMenuEntry(value: m, label: m))
                             .toList(),
@@ -1453,38 +1279,28 @@ class _MainWizardPageState extends State<MainWizardPage> {
               ],
             ),
             const SizedBox(height: 20),
-            _buildInput(
-              'Rok výroby',
-              Icons.calendar_today,
-              _rokVyrobyController,
-              isDark,
-              numbersOnly: true,
-            ),
+            _buildInput('Rok výroby', Icons.calendar_today,
+                _rokVyrobyController, isDark,
+                numbersOnly: true),
             const SizedBox(height: 20),
-            _buildInput(
-              'Motorizace (např. 2.0 TDI)',
-              Icons.settings,
-              _motorizaceController,
-              isDark,
-            ),
+            _buildInput('Motorizace (např. 2.0 TDI)', Icons.settings,
+                _motorizaceController, isDark),
             const SizedBox(height: 20),
             _buildDropdown(
-              'Typ paliva',
-              Icons.local_gas_station,
-              _vybranePalivo,
-              _moznostiPaliva,
-              (v) => setState(() => _vybranePalivo = v!),
-              isDark,
-            ),
+                'Typ paliva',
+                Icons.local_gas_station,
+                _vybranePalivo,
+                _moznostiPaliva,
+                (v) => setState(() => _vybranePalivo = v!),
+                isDark),
             const SizedBox(height: 20),
             _buildDropdown(
-              'Převodovka',
-              Icons.settings_input_component,
-              _vybranaPrevodovka,
-              _moznostiPrevodovky,
-              (v) => setState(() => _vybranaPrevodovka = v!),
-              isDark,
-            ),
+                'Převodovka',
+                Icons.settings_input_component,
+                _vybranaPrevodovka,
+                _moznostiPrevodovky,
+                (v) => setState(() => _vybranaPrevodovka = v!),
+                isDark),
           ],
         ),
       );
@@ -1494,133 +1310,95 @@ class _MainWizardPageState extends State<MainWizardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Údaje o zákazníkovi',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
+            const Text('Údaje o zákazníkovi',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
             const SizedBox(height: 40),
-            _buildInput(
-              'Jméno a příjmení / Název firmy',
-              Icons.person,
-              _jmenoController,
-              isDark,
-              customSuffix: IconButton(
-                icon: const Icon(Icons.person_search, color: Colors.blue),
-                onPressed: _otevritVyberZakaznika,
-                tooltip: 'Hledat uloženého zákazníka',
-              ),
-            ),
+            _buildInput('Jméno a příjmení / Název firmy', Icons.person,
+                _jmenoController, isDark,
+                customSuffix: IconButton(
+                    icon: const Icon(Icons.person_search, color: Colors.blue),
+                    onPressed: _otevritVyberZakaznika,
+                    tooltip: 'Hledat uloženého zákazníka')),
             const SizedBox(height: 20),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'IČO (ARES vyhledávání)',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
+                const Text('IČO (ARES vyhledávání)',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
+                  decoration: BoxDecoration(boxShadow: [
+                    if (!isDark)
+                      BoxShadow(
                           color: Colors.black.withOpacity(0.05),
                           blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                    ],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                          offset: const Offset(0, 4))
+                  ], borderRadius: BorderRadius.circular(15)),
                   child: TextField(
                     controller: _icoController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      prefixIcon:
-                          const Icon(Icons.business, color: Colors.blue),
-                      suffixIcon: _isLoadingAres
-                          ? const Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            )
-                          : IconButton(
-                              icon:
-                                  const Icon(Icons.search, color: Colors.blue),
-                              onPressed: _fetchAresData,
-                              tooltip: 'Hledat v ARES',
-                            ),
-                      filled: true,
-                      fillColor:
-                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide:
-                            const BorderSide(color: Colors.blue, width: 2),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1,
-                        ),
-                      ),
-                    ),
+                        prefixIcon:
+                            const Icon(Icons.business, color: Colors.blue),
+                        suffixIcon: _isLoadingAres
+                            ? const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2)))
+                            : IconButton(
+                                icon: const Icon(Icons.search,
+                                    color: Colors.blue),
+                                onPressed: _fetchAresData,
+                                tooltip: 'Hledat v ARES'),
+                        filled: true,
+                        fillColor:
+                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!,
+                                width: 1)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide:
+                                const BorderSide(color: Colors.blue, width: 2)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!,
+                                width: 1))),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
             _buildInput(
-              'Ulice a číslo',
-              Icons.location_on,
-              _uliceController,
-              isDark,
-            ),
+                'Ulice a číslo', Icons.location_on, _uliceController, isDark),
             const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
+            Row(children: [
+              Expanded(
                   flex: 2,
                   child: _buildInput(
-                    'Město',
-                    Icons.location_city,
-                    _mestoController,
-                    isDark,
-                  ),
-                ),
-                const SizedBox(width: 15),
-                Expanded(
+                      'Město', Icons.location_city, _mestoController, isDark)),
+              const SizedBox(width: 15),
+              Expanded(
                   flex: 1,
                   child: _buildInput(
-                    'PSČ',
-                    Icons.markunread_mailbox,
-                    _pscController,
-                    isDark,
-                    numbersOnly: true,
-                  ),
-                ),
-              ],
-            ),
+                      'PSČ', Icons.markunread_mailbox, _pscController, isDark,
+                      numbersOnly: true))
+            ]),
             const SizedBox(height: 20),
             _buildInput(
-              'Telefonní číslo',
-              Icons.phone,
-              _telefonController,
-              isDark,
-              numbersOnly: true,
-            ),
+                'Telefonní číslo', Icons.phone, _telefonController, isDark,
+                numbersOnly: true),
             const SizedBox(height: 20),
             _buildInput('E-mail', Icons.email, _emailZController, isDark),
           ],
@@ -1632,66 +1410,50 @@ class _MainWizardPageState extends State<MainWizardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Stav vozidla',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
+            const Text('Stav vozidla',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
             const SizedBox(height: 30),
-            _buildInput(
-              'Stav tachometru (km)',
-              Icons.speed,
-              _tachometrController,
-              isDark,
-              numbersOnly: true,
-            ),
+            _buildInput('Stav tachometru (km)', Icons.speed,
+                _tachometrController, isDark,
+                numbersOnly: true),
             const SizedBox(height: 25),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Stav paliva v nádrži (${_stavNadrze.toInt()} %)',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
-                  ),
-                ),
+                Text('Stav paliva v nádrži (${_stavNadrze.toInt()} %)',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 5),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                    ],
-                    border: Border.all(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                      width: 1,
-                    ),
-                  ),
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        if (!isDark)
+                          BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4))
+                      ],
+                      border: Border.all(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                          width: 1)),
                   child: Row(
                     children: [
-                      Icon(
-                        Icons.local_gas_station,
-                        color: _stavNadrze < 20 ? Colors.red : Colors.blue,
-                      ),
+                      Icon(Icons.local_gas_station,
+                          color: _stavNadrze < 20 ? Colors.red : Colors.blue),
                       Expanded(
-                        child: Slider(
-                          value: _stavNadrze,
-                          min: 0,
-                          max: 100,
-                          divisions: 4,
-                          label: '${_stavNadrze.toInt()} %',
-                          activeColor: Colors.blue,
-                          onChanged: (val) => setState(() => _stavNadrze = val),
-                        ),
-                      ),
+                          child: Slider(
+                              value: _stavNadrze,
+                              min: 0,
+                              max: 100,
+                              divisions: 4,
+                              label: '${_stavNadrze.toInt()} %',
+                              activeColor: Colors.blue,
+                              onChanged: (val) =>
+                                  setState(() => _stavNadrze = val)))
                     ],
                   ),
                 ),
@@ -1703,38 +1465,32 @@ class _MainWizardPageState extends State<MainWizardPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Zjištěné poškození (lze vybrat více)',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
+                const Text('Zjištěné poškození (lze vybrat více)',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(15),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                    ],
-                    border: Border.all(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                      width: 1,
-                    ),
-                  ),
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        if (!isDark)
+                          BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4))
+                      ],
+                      border: Border.all(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                          width: 1)),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Padding(
-                        padding: EdgeInsets.only(top: 4, right: 15),
-                        child: Icon(Icons.car_crash, color: Colors.blue),
-                      ),
+                          padding: EdgeInsets.only(top: 4, right: 15),
+                          child: Icon(Icons.car_crash, color: Colors.blue)),
                       Expanded(
                         child: Wrap(
                           spacing: 8.0,
@@ -1767,15 +1523,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
                               selectedColor: Colors.blue.withOpacity(0.2),
                               checkmarkColor: Colors.blue,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: BorderSide(
-                                  color: isSelected
-                                      ? Colors.blue
-                                      : (isDark
-                                          ? Colors.grey[800]!
-                                          : Colors.grey[300]!),
-                                ),
-                              ),
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: BorderSide(
+                                      color: isSelected
+                                          ? Colors.blue
+                                          : (isDark
+                                              ? Colors.grey[800]!
+                                              : Colors.grey[300]!))),
                               backgroundColor: isDark
                                   ? const Color(0xFF2C2C2C)
                                   : Colors.grey[50],
@@ -1792,150 +1546,113 @@ class _MainWizardPageState extends State<MainWizardPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Platnost STK',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
+                const Text('Platnost STK',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildHalfInput(
-                        'Měsíc',
-                        Icons.calendar_month,
-                        _stkMesicController,
-                        isDark,
-                        TextInputType.number,
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: _buildHalfInput(
-                        'Rok',
-                        Icons.edit_calendar,
-                        _stkRokController,
-                        isDark,
-                        TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
+                Row(children: [
+                  Expanded(
+                      child: _buildHalfInput('Měsíc', Icons.calendar_month,
+                          _stkMesicController, isDark, TextInputType.number)),
+                  const SizedBox(width: 15),
+                  Expanded(
+                      child: _buildHalfInput('Rok', Icons.edit_calendar,
+                          _stkRokController, isDark, TextInputType.number))
+                ]),
               ],
             ),
             const SizedBox(height: 25),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Hloubka dezénu pneu (v mm)',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
+                const Text('Hloubka dezénu pneu (v mm)',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
+                Row(children: [
+                  Expanded(
                       child: _buildHalfInput(
-                        'Levá př.',
-                        Icons.tire_repair,
-                        _pneuLPController,
-                        isDark,
-                        const TextInputType.numberWithOptions(decimal: true),
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
+                          'Levá př.',
+                          Icons.tire_repair,
+                          _pneuLPController,
+                          isDark,
+                          const TextInputType.numberWithOptions(
+                              decimal: true))),
+                  const SizedBox(width: 15),
+                  Expanded(
                       child: _buildHalfInput(
-                        'Pravá př.',
-                        Icons.tire_repair,
-                        _pneuPPController,
-                        isDark,
-                        const TextInputType.numberWithOptions(decimal: true),
-                      ),
-                    ),
-                  ],
-                ),
+                          'Pravá př.',
+                          Icons.tire_repair,
+                          _pneuPPController,
+                          isDark,
+                          const TextInputType.numberWithOptions(decimal: true)))
+                ]),
                 const SizedBox(height: 15),
-                Row(
-                  children: [
-                    Expanded(
+                Row(children: [
+                  Expanded(
                       child: _buildHalfInput(
-                        'Levá zad.',
-                        Icons.tire_repair,
-                        _pneuLZController,
-                        isDark,
-                        const TextInputType.numberWithOptions(decimal: true),
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
+                          'Levá zad.',
+                          Icons.tire_repair,
+                          _pneuLZController,
+                          isDark,
+                          const TextInputType.numberWithOptions(
+                              decimal: true))),
+                  const SizedBox(width: 15),
+                  Expanded(
                       child: _buildHalfInput(
-                        'Pravá zad.',
-                        Icons.tire_repair,
-                        _pneuPZController,
-                        isDark,
-                        const TextInputType.numberWithOptions(decimal: true),
-                      ),
-                    ),
-                  ],
-                ),
+                          'Pravá zad.',
+                          Icons.tire_repair,
+                          _pneuPZController,
+                          isDark,
+                          const TextInputType.numberWithOptions(decimal: true)))
+                ]),
               ],
             ),
             const SizedBox(height: 30),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Dodatečné poznámky k vozu',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey),
-                ),
+                const Text('Dodatečné poznámky k vozu',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
+                  decoration: BoxDecoration(boxShadow: [
+                    if (!isDark)
+                      BoxShadow(
                           color: Colors.black.withOpacity(0.05),
                           blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                    ],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+                          offset: const Offset(0, 4))
+                  ], borderRadius: BorderRadius.circular(15)),
                   child: TextField(
                     controller: _poskozeniController,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText: 'Jakékoliv další detaily k příjmu...',
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.only(bottom: 60),
-                        child: Icon(Icons.notes, color: Colors.blue),
-                      ),
-                      filled: true,
-                      fillColor:
-                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide:
-                            const BorderSide(color: Colors.blue, width: 2),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1,
-                        ),
-                      ),
-                    ),
+                        hintText: 'Jakékoliv další detaily k příjmu...',
+                        prefixIcon: const Padding(
+                            padding: EdgeInsets.only(bottom: 60),
+                            child: Icon(Icons.notes, color: Colors.blue)),
+                        filled: true,
+                        fillColor:
+                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!,
+                                width: 1)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide:
+                                const BorderSide(color: Colors.blue, width: 2)),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide(
+                                color: isDark
+                                    ? Colors.grey[800]!
+                                    : Colors.grey[300]!,
+                                width: 1))),
                   ),
                 ),
               ],
@@ -1949,15 +1666,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Fotodokumentace',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
+            const Text('Fotodokumentace',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            const Text(
-              'Vyfoťte sérii fotek, nebo vyberte hromadně z galerie.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
+            const Text('Vyfoťte sérii fotek, nebo vyberte hromadně z galerie.',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
             const SizedBox(height: 20),
             Expanded(
               child: ListView.separated(
@@ -1974,14 +1687,12 @@ class _MainWizardPageState extends State<MainWizardPage> {
                   return Card(
                     color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color: takenPhotos.isNotEmpty
-                            ? Colors.green.withOpacity(0.5)
-                            : Colors.grey.withOpacity(0.2),
-                        width: takenPhotos.isNotEmpty ? 2 : 1,
-                      ),
-                    ),
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                            color: takenPhotos.isNotEmpty
+                                ? Colors.green.withOpacity(0.5)
+                                : Colors.grey.withOpacity(0.2),
+                            width: takenPhotos.isNotEmpty ? 2 : 1)),
                     child: Padding(
                       padding: const EdgeInsets.all(15),
                       child: Column(
@@ -1992,30 +1703,20 @@ class _MainWizardPageState extends State<MainWizardPage> {
                               Icon(icon, color: Colors.blue, size: 30),
                               const SizedBox(width: 15),
                               Expanded(
-                                child: Text(
-                                  label,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
+                                  child: Text(label,
+                                      style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold))),
                               IconButton(
-                                onPressed: () => _pickFromGallery(key),
-                                icon: const Icon(
-                                  Icons.photo_library_rounded,
-                                  color: Colors.blueGrey,
-                                ),
-                                tooltip: 'Přidat z galerie',
-                              ),
+                                  onPressed: () => _pickFromGallery(key),
+                                  icon: const Icon(Icons.photo_library_rounded,
+                                      color: Colors.blueGrey),
+                                  tooltip: 'Přidat z galerie'),
                               IconButton(
-                                onPressed: () => _takePhotoSeries(key),
-                                icon: const Icon(
-                                  Icons.add_a_photo_rounded,
-                                  color: Colors.blue,
-                                ),
-                                tooltip: 'Sériové focení',
-                              ),
+                                  onPressed: () => _takePhotoSeries(key),
+                                  icon: const Icon(Icons.add_a_photo_rounded,
+                                      color: Colors.blue),
+                                  tooltip: 'Sériové focení'),
                             ],
                           ),
                           if (takenPhotos.isNotEmpty) ...[
@@ -2033,44 +1734,31 @@ class _MainWizardPageState extends State<MainWizardPage> {
                                         margin:
                                             const EdgeInsets.only(right: 10),
                                         child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: kIsWeb
-                                              ? Image.network(
-                                                  photo.path,
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Image.file(
-                                                  File(photo.path),
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                        ),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            child: kIsWeb
+                                                ? Image.network(photo.path,
+                                                    width: 80,
+                                                    height: 80,
+                                                    fit: BoxFit.cover)
+                                                : Image.file(File(photo.path),
+                                                    width: 80,
+                                                    height: 80,
+                                                    fit: BoxFit.cover)),
                                       ),
                                       Positioned(
-                                        top: 4,
-                                        right: 14,
-                                        child: GestureDetector(
-                                          onTap: () => setState(
-                                            () =>
-                                                _categoryImages[key]!.removeAt(
-                                              photoIndex,
-                                            ),
-                                          ),
-                                          child: const CircleAvatar(
-                                            radius: 10,
-                                            backgroundColor: Colors.white,
-                                            child: Icon(
-                                              Icons.close,
-                                              size: 14,
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                          top: 4,
+                                          right: 14,
+                                          child: GestureDetector(
+                                              onTap: () => setState(() =>
+                                                  _categoryImages[key]!
+                                                      .removeAt(photoIndex)),
+                                              child: const CircleAvatar(
+                                                  radius: 10,
+                                                  backgroundColor: Colors.white,
+                                                  child: Icon(Icons.close,
+                                                      size: 14,
+                                                      color: Colors.red)))),
                                     ],
                                   );
                                 },
@@ -2094,28 +1782,22 @@ class _MainWizardPageState extends State<MainWizardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Požadované práce',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
+          const Text('Požadované práce',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          const Text(
-            'Na čem jsme se se zákazníkem domluvili?',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
+          const Text('Na čem jsme se se zákazníkem domluvili?',
+              style: TextStyle(fontSize: 16, color: Colors.grey)),
           const SizedBox(height: 30),
           if (!_isLoadingUkony && _rychleUkony.isNotEmpty) ...[
-            const Text(
-              'Rychlý výběr nejčastějších úkonů:',
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
-            ),
+            const Text('Rychlý výběr nejčastějších úkonů:',
+                style:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
             const SizedBox(height: 10),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: _rychleUkony
-                  .map(
-                    (ukon) => ActionChip(
+                  .map((ukon) => ActionChip(
                       label: Text(ukon, style: const TextStyle(fontSize: 13)),
                       backgroundColor: isDark
                           ? const Color(0xFF2C2C2C)
@@ -2126,24 +1808,19 @@ class _MainWizardPageState extends State<MainWizardPage> {
                           if (_pozadavkyControllers.last.text.isEmpty) {
                             _pozadavkyControllers.last.text = ukon;
                           } else {
-                            _pozadavkyControllers.add(
-                              TextEditingController(text: ukon),
-                            );
+                            _pozadavkyControllers
+                                .add(TextEditingController(text: ukon));
                           }
                         });
-                      },
-                    ),
-                  )
+                      }))
                   .toList(),
             ),
             const SizedBox(height: 30),
             const Divider(),
             const SizedBox(height: 20),
           ],
-          const Text(
-            'Seznam požadavků k zakázce:',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
+          const Text('Seznam požadavků k zakázce:',
+              style: TextStyle(fontSize: 16, color: Colors.grey)),
           const SizedBox(height: 20),
           ...List.generate(_pozadavkyControllers.length, (index) {
             return Padding(
@@ -2152,42 +1829,30 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
-                    child: _buildInput(
-                      'Úkon ${index + 1}',
-                      Icons.build_circle_outlined,
-                      _pozadavkyControllers[index],
-                      isDark,
-                    ),
-                  ),
+                      child: _buildInput(
+                          'Úkon ${index + 1}',
+                          Icons.build_circle_outlined,
+                          _pozadavkyControllers[index],
+                          isDark)),
                   if (_pozadavkyControllers.length > 1)
                     Padding(
-                      padding: const EdgeInsets.only(left: 10, bottom: 5),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.remove_circle_outline,
-                          color: Colors.red,
-                          size: 30,
-                        ),
-                        onPressed: () => setState(
-                          () => _pozadavkyControllers.removeAt(index),
-                        ),
-                      ),
-                    ),
+                        padding: const EdgeInsets.only(left: 10, bottom: 5),
+                        child: IconButton(
+                            icon: const Icon(Icons.remove_circle_outline,
+                                color: Colors.red, size: 30),
+                            onPressed: () => setState(
+                                () => _pozadavkyControllers.removeAt(index)))),
                 ],
               ),
             );
           }),
           const SizedBox(height: 10),
           TextButton.icon(
-            onPressed: () => setState(
-              () => _pozadavkyControllers.add(TextEditingController()),
-            ),
-            icon: const Icon(Icons.add),
-            label: const Text(
-              'Přidat jiný úkon',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ),
+              onPressed: () => setState(
+                  () => _pozadavkyControllers.add(TextEditingController())),
+              icon: const Icon(Icons.add),
+              label: const Text('Přidat jiný úkon',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
         ],
       ),
     );
@@ -2202,76 +1867,54 @@ class _MainWizardPageState extends State<MainWizardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Shrnutí a podpis',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
+          const Text('Shrnutí a podpis',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 30),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
-            ),
+                color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.blue.withOpacity(0.3))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Zákazník: ${_jmenoController.text.isEmpty ? 'Neuvedeno' : _jmenoController.text}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+                    'Zákazník: ${_jmenoController.text.isEmpty ? 'Neuvedeno' : _jmenoController.text}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 5),
                 Text(
-                  'Adresa: ${_uliceController.text.isNotEmpty ? "${_uliceController.text}, " : ""}${_pscController.text} ${_mestoController.text}',
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
+                    'Adresa: ${_uliceController.text.isNotEmpty ? "${_uliceController.text}, " : ""}${_pscController.text} ${_mestoController.text}',
+                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
                 const SizedBox(height: 10),
                 Text(
-                  'Vozidlo: ${_spzController.text.toUpperCase()} ${_znackaController.text}',
-                  style: const TextStyle(fontSize: 16),
-                ),
+                    'Vozidlo: ${_spzController.text.toUpperCase()} ${_znackaController.text}',
+                    style: const TextStyle(fontSize: 16)),
                 if (validniPozadavky.isNotEmpty) ...[
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 15),
-                    child: Divider(),
-                  ),
-                  const Text(
-                    'Sjednané úkony:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                      fontSize: 16,
-                    ),
-                  ),
+                      padding: EdgeInsets.symmetric(vertical: 15),
+                      child: Divider()),
+                  const Text('Sjednané úkony:',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                          fontSize: 16)),
                   const SizedBox(height: 10),
-                  ...validniPozadavky.map(
-                    (c) => Padding(
+                  ...validniPozadavky.map((c) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            '• ',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              c.text,
-                              style: const TextStyle(fontSize: 15),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('• ',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue)),
+                            Expanded(
+                                child: Text(c.text,
+                                    style: const TextStyle(fontSize: 15)))
+                          ]))),
                 ],
               ],
             ),
@@ -2279,27 +1922,23 @@ class _MainWizardPageState extends State<MainWizardPage> {
           const SizedBox(height: 30),
           Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? const Color(0xFF1E1E1E)
-                  : Colors.blue.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
-            ),
+                color: isDark
+                    ? const Color(0xFF1E1E1E)
+                    : Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.blue.withOpacity(0.3))),
             child: CheckboxListTile(
-              title: const Text(
-                'Odeslat kopii protokolu na e-mail',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              title: const Text('Odeslat kopii protokolu na e-mail',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               subtitle: Text(
-                _emailZController.text.isEmpty
-                    ? 'U zákazníka (krok 2) není vyplněn žádný e-mail.'
-                    : 'Bude odesláno na: ${_emailZController.text}',
-                style: TextStyle(
-                  color:
-                      _emailZController.text.isEmpty ? Colors.red : Colors.grey,
-                  fontSize: 13,
-                ),
-              ),
+                  _emailZController.text.isEmpty
+                      ? 'U zákazníka (krok 2) není vyplněn žádný e-mail.'
+                      : 'Bude odesláno na: ${_emailZController.text}',
+                  style: TextStyle(
+                      color: _emailZController.text.isEmpty
+                          ? Colors.red
+                          : Colors.grey,
+                      fontSize: 13)),
               value: _odeslatEmail,
               activeColor: Colors.blue,
               checkColor: Colors.white,
@@ -2309,37 +1948,29 @@ class _MainWizardPageState extends State<MainWizardPage> {
           ),
           const SizedBox(height: 30),
           const Text(
-            'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
+              'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.',
+              style: TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 20),
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.blue, width: 2),
-              borderRadius: BorderRadius.circular(15),
-              color: Colors.white,
-            ),
+                border: Border.all(color: Colors.blue, width: 2),
+                borderRadius: BorderRadius.circular(15),
+                color: Colors.white),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(13),
-              child: Signature(
-                controller: _signatureController,
-                height: 250,
-                backgroundColor: Colors.white,
-              ),
-            ),
+                borderRadius: BorderRadius.circular(13),
+                child: Signature(
+                    controller: _signatureController,
+                    height: 250,
+                    backgroundColor: Colors.white)),
           ),
           const SizedBox(height: 10),
           Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => _signatureController.clear(),
-              icon: const Icon(Icons.clear, color: Colors.red),
-              label: const Text(
-                'Smazat podpis',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ),
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                  onPressed: () => _signatureController.clear(),
+                  icon: const Icon(Icons.clear, color: Colors.red),
+                  label: const Text('Smazat podpis',
+                      style: TextStyle(color: Colors.red)))),
         ],
       ),
     );
@@ -2348,45 +1979,37 @@ class _MainWizardPageState extends State<MainWizardPage> {
   Widget _buildBottomPanel(bool isDark) => Container(
         padding: const EdgeInsets.fromLTRB(30, 20, 30, 30),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF121212) : Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
+            color: isDark ? const Color(0xFF121212) : Colors.white,
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5))
+            ]),
         child: SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Row(
-                children: List.generate(
-                  _totalPages,
-                  (index) => Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: index <= _currentPage
-                            ? Colors.blue
-                            : Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+                  children: List.generate(
+                      _totalPages,
+                      (index) => Expanded(
+                          child: Container(
+                              height: 4,
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              decoration: BoxDecoration(
+                                  color: index <= _currentPage
+                                      ? Colors.blue
+                                      : Colors.grey[300],
+                                  borderRadius: BorderRadius.circular(2)))))),
               const SizedBox(height: 20),
               Row(
                 children: [
                   if (_currentPage > 0)
                     IconButton.filledTonal(
-                      onPressed: _moveBack,
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                      padding: const EdgeInsets.all(15),
-                    ),
+                        onPressed: _moveBack,
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                        padding: const EdgeInsets.all(15)),
                   if (_currentPage > 0) const SizedBox(width: 15),
                   Expanded(
                     child: ElevatedButton(
@@ -2396,13 +2019,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
                           ? null
                           : _moveNext,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18))),
                       child: (_isCheckingZakazka ||
                               _isUploading ||
                               _isGeneratingCislo)
@@ -2410,17 +2031,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
+                                  color: Colors.white, strokeWidth: 2))
                           : Text(
                               _currentPage == _totalPages - 1
                                   ? 'DOKONČIT A ODESLAT'
                                   : 'DALŠÍ KROK',
                               style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                                  const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -2430,36 +2047,26 @@ class _MainWizardPageState extends State<MainWizardPage> {
         ),
       );
 
-  Widget _buildInput(
-    String label,
-    IconData icon,
-    TextEditingController controller,
-    bool isDark, {
-    bool caps = false,
-    bool numbersOnly = false,
-    Widget? customSuffix,
-  }) =>
+  Widget _buildInput(String label, IconData icon,
+          TextEditingController controller, bool isDark,
+          {bool caps = false,
+          bool numbersOnly = false,
+          Widget? customSuffix}) =>
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.grey),
-          ),
+          Text(label,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           Container(
-            decoration: BoxDecoration(
-              boxShadow: [
-                if (!isDark)
-                  BoxShadow(
+            decoration: BoxDecoration(boxShadow: [
+              if (!isDark)
+                BoxShadow(
                     color: Colors.black.withOpacity(0.05),
                     blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-              ],
-              borderRadius: BorderRadius.circular(15),
-            ),
+                    offset: const Offset(0, 4))
+            ], borderRadius: BorderRadius.circular(15)),
             child: TextField(
               controller: controller,
               textCapitalization: caps
@@ -2468,69 +2075,49 @@ class _MainWizardPageState extends State<MainWizardPage> {
               keyboardType:
                   numbersOnly ? TextInputType.number : TextInputType.text,
               decoration: InputDecoration(
-                prefixIcon: Icon(icon, color: Colors.blue),
-                suffixIcon: customSuffix ??
-                    IconButton(
-                      icon: const Icon(Icons.document_scanner),
-                      onPressed: () => _scanText(controller, numbersOnly),
-                    ),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                    width: 1,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: const BorderSide(color: Colors.blue, width: 2),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                    width: 1,
-                  ),
-                ),
-              ),
+                  prefixIcon: Icon(icon, color: Colors.blue),
+                  suffixIcon: customSuffix ??
+                      IconButton(
+                          icon: const Icon(Icons.document_scanner),
+                          onPressed: () => _scanText(controller, numbersOnly)),
+                  filled: true,
+                  fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                          width: 1)),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide:
+                          const BorderSide(color: Colors.blue, width: 2)),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                          width: 1))),
             ),
           ),
         ],
       );
 
-  Widget _buildDropdown(
-    String label,
-    IconData icon,
-    String value,
-    List<String> items,
-    ValueChanged<String?> onChanged,
-    bool isDark,
-  ) {
+  Widget _buildDropdown(String label, IconData icon, String value,
+      List<String> items, ValueChanged<String?> onChanged, bool isDark) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-          ),
-        ),
+        Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.grey)),
         const SizedBox(height: 8),
         Container(
-          decoration: BoxDecoration(
-            boxShadow: [
-              if (!isDark)
-                BoxShadow(
+          decoration: BoxDecoration(boxShadow: [
+            if (!isDark)
+              BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-            ],
-            borderRadius: BorderRadius.circular(15),
-          ),
+                  offset: const Offset(0, 4))
+          ], borderRadius: BorderRadius.circular(15)),
           child: DropdownButtonFormField<String>(
             value: value,
             items: items
@@ -2538,81 +2125,60 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 .toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: Colors.blue),
-              filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(
-                  color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: const BorderSide(color: Colors.blue, width: 2),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(
-                  color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                  width: 1,
-                ),
-              ),
-            ),
+                prefixIcon: Icon(icon, color: Colors.blue),
+                filled: true,
+                fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(
+                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                        width: 1)),
+                focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: const BorderSide(color: Colors.blue, width: 2)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    borderSide: BorderSide(
+                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                        width: 1))),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHalfInput(
-    String hint,
-    IconData icon,
-    TextEditingController controller,
-    bool isDark,
-    TextInputType type,
-  ) {
+  Widget _buildHalfInput(String hint, IconData icon,
+      TextEditingController controller, bool isDark, TextInputType type) {
     return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
+      decoration: BoxDecoration(boxShadow: [
+        if (!isDark)
+          BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-        ],
-        borderRadius: BorderRadius.circular(15),
-      ),
+              offset: const Offset(0, 4))
+      ], borderRadius: BorderRadius.circular(15)),
       child: TextField(
         controller: controller,
         keyboardType: type,
         decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon, color: Colors.blue, size: 20),
-          filled: true,
-          fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(
-              color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: Colors.blue, width: 2),
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
-            borderSide: BorderSide(
-              color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-              width: 1,
-            ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
-        ),
+            hintText: hint,
+            prefixIcon: Icon(icon, color: Colors.blue, size: 20),
+            filled: true,
+            fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(
+                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    width: 1)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: const BorderSide(color: Colors.blue, width: 2)),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(
+                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                    width: 1)),
+            contentPadding: const EdgeInsets.symmetric(vertical: 15)),
       ),
     );
   }
@@ -2626,62 +2192,52 @@ class _VyberZakaznikaSheet extends StatefulWidget {
 }
 
 class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
+  String? get _sId => globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
   String _hledanyText = '';
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (globalServisId == null) {
+    if (_sId == null) {
       return const Center(child: CircularProgressIndicator());
     }
-
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
-      ),
+          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25))),
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10))),
           const SizedBox(height: 20),
-          const Text(
-            'Vybrat existujícího zákazníka',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          const Text('Vybrat existujícího zákazníka',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 15),
           TextField(
-            onChanged: (val) =>
-                setState(() => _hledanyText = val.toLowerCase()),
-            decoration: InputDecoration(
-              hintText: 'Hledat podle jména, IČO, telefonu...',
-              prefixIcon: const Icon(Icons.search),
-              filled: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide.none,
-              ),
-            ),
-          ),
+              onChanged: (val) =>
+                  setState(() => _hledanyText = val.toLowerCase()),
+              decoration: InputDecoration(
+                  hintText: 'Hledat podle jména, IČO, telefonu...',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none))),
           const SizedBox(height: 15),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection('zakaznici')
-                  .where('servis_id', isEqualTo: globalServisId)
+                  .where('servis_id', isEqualTo: _sId)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData)
                   return const Center(child: CircularProgressIndicator());
-                }
                 final zakaznici = snapshot.data!.docs
                     .map((d) => d.data() as Map<String, dynamic>)
                     .where((z) {
@@ -2692,9 +2248,8 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
                       ico.contains(_hledanyText) ||
                       tel.contains(_hledanyText);
                 }).toList();
-                if (zakaznici.isEmpty) {
+                if (zakaznici.isEmpty)
                   return const Center(child: Text('Žádný zákazník nenalezen.'));
-                }
                 return ListView.separated(
                   itemCount: zakaznici.length,
                   separatorBuilder: (c, i) => const Divider(),
@@ -2702,13 +2257,10 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
                     final z = zakaznici[index];
                     return ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.person)),
-                      title: Text(
-                        z['jmeno'] ?? 'Neznámé jméno',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      title: Text(z['jmeno'] ?? 'Neznámé jméno',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text(
-                        '${z['telefon'] ?? ''} ${z['ico'] != null && z['ico'].toString().isNotEmpty ? '• IČO: ${z['ico']}' : ''}',
-                      ),
+                          '${z['telefon'] ?? ''} ${z['ico'] != null && z['ico'].toString().isNotEmpty ? '• IČO: ${z['ico']}' : ''}'),
                       onTap: () {
                         widget.onVybrano(z);
                         Navigator.pop(context);

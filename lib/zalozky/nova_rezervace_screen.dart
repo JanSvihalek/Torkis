@@ -19,7 +19,6 @@ class NovaRezervaceScreen extends StatefulWidget {
 }
 
 class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
-  // PŘIDÁNO: Bezpečná pojistka pro ID servisu (odolná proti Hot Restartu)
   String? get _sId => globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
 
   final _spzController = TextEditingController();
@@ -70,7 +69,6 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
 
   Future<void> _nactiUkonyZDatabaze() async {
     if (_sId == null) {
-      // Pokud ID opravdu není, musíme vypnout načítání, ať to nevisí!
       if (mounted) setState(() => _isLoadingUkony = false);
       return;
     }
@@ -355,6 +353,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
         'zakaznik_email': _emailController.text.trim(),
         'zakaznik_id': _vybranyZakaznikId,
         'nazev_ukonu': _vybranyUkon,
+        'stav': 'Naplánováno', // --- PŘIDÁNO: Výchozí stav ---
         'datum': DateFormat('yyyy-MM-dd').format(_datumRezervace),
         'cas_od':
             '${_casOd.hour.toString().padLeft(2, '0')}:${_casOd.minute.toString().padLeft(2, '0')}',

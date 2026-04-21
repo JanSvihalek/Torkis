@@ -7,7 +7,6 @@ import 'auth_gate.dart';
 import 'prubeh.dart';
 import 'nova_rezervace_screen.dart';
 
-// Odkazujeme na stejné soubory lokálně
 import 'prijem_vozidla.dart' show rezervaceKeZpracovani;
 import 'main_screen.dart' show globalSwitchTabNotifier;
 
@@ -87,20 +86,11 @@ class _PlanovacPageState extends State<PlanovacPage> {
               child: ElevatedButton.icon(
                 onPressed: () {
                   final targetDocId = docId;
-
-                  // 1. Zavřeme vyskakovací okno (BottomSheet)
                   Navigator.pop(context);
-
-                  // 2. TOTO JE TA OPRAVA:
-                  // Pokud byl Plánovač otevřen přes vrchní vrstvu (např. z Menu mřížky),
-                  // nekompromisně ho zavřeme a vrátíme se na kořenovou obrazovku (MainScreen).
-                  // Pokud už na MainScreen jsme, tento příkaz bezpečně nedělá nic.
                   Navigator.of(context).popUntil((route) => route.isFirst);
 
-                  // 3. Předáme ID dokumentu do Příjmu vozidla
                   rezervaceKeZpracovani.value = targetDocId;
 
-                  // 4. Počkáme zlomek vteřiny na dokončení animace a přepneme spodní menu
                   Future.delayed(const Duration(milliseconds: 150), () {
                     globalSwitchTabNotifier.value = 'prijem';
                   });
@@ -183,7 +173,6 @@ class _PlanovacPageState extends State<PlanovacPage> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                // Řadíme v telefonu - firebase indexy nepotřebujeme!
                 final docs = snapshot.data!.docs.toList();
 
                 docs.sort((a, b) {
@@ -245,6 +234,29 @@ class _PlanovacPageState extends State<PlanovacPage> {
     final rez = doc.data() as Map<String, dynamic>;
     final docId = doc.id;
 
+    final stav = rez['stav'] ??
+        (rez['zakazka_doc_id'] != null ? 'Přijato na servis' : 'Naplánováno');
+    Color barvaStavu;
+    IconData ikonaStavu;
+
+    switch (stav) {
+      case 'Naplánováno':
+        barvaStavu = Colors.blue;
+        ikonaStavu = Icons.calendar_month;
+        break;
+      case 'Přijato na servis':
+        barvaStavu = Colors.orange;
+        ikonaStavu = Icons.build_circle;
+        break;
+      case 'Dokončeno':
+        barvaStavu = Colors.green;
+        ikonaStavu = Icons.check_circle;
+        break;
+      default:
+        barvaStavu = Colors.grey;
+        ikonaStavu = Icons.help_outline;
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -257,9 +269,7 @@ class _PlanovacPageState extends State<PlanovacPage> {
         leading: Container(
           width: 55,
           decoration: BoxDecoration(
-              color: rez['zakazka_doc_id'] != null
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.blue.withOpacity(0.1),
+              color: barvaStavu.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -267,25 +277,36 @@ class _PlanovacPageState extends State<PlanovacPage> {
               Text(rez['cas_od'] ?? '',
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: rez['zakazka_doc_id'] != null
-                          ? Colors.green
-                          : Colors.blue,
+                      color: barvaStavu,
                       fontSize: 13)),
               Text(rez['cas_do'] ?? '',
                   style: const TextStyle(fontSize: 10, color: Colors.grey)),
             ],
           ),
         ),
-        title: Text(rez['spz'] ?? '',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        title: Row(
+          children: [
+            Text(rez['spz'] ?? '',
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                  color: barvaStavu.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(5)),
+              child: Text(stav,
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: barvaStavu,
+                      fontWeight: FontWeight.bold)),
+            )
+          ],
+        ),
         subtitle: Text(rez['nazev_ukonu'] ?? '',
             style: const TextStyle(fontSize: 13)),
-        trailing: Icon(
-            rez['zakazka_doc_id'] != null
-                ? Icons.build_circle
-                : Icons.arrow_forward_ios,
-            size: rez['zakazka_doc_id'] != null ? 24 : 14,
-            color: rez['zakazka_doc_id'] != null ? Colors.green : Colors.grey),
+        trailing: Icon(ikonaStavu,
+            size: stav != 'Naplánováno' ? 24 : 18, color: barvaStavu),
         onTap: () {
           if (rez['zakazka_doc_id'] != null) {
             Navigator.push(
