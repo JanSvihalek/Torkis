@@ -108,9 +108,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _isLoadingUkony = true;
 
   Map<String, List<String>> _databazeZnacek = {};
+  Map<String, String> _logovaZnacek = {};
   List<String> _dostupneZnacky = [];
   List<String> _dostupneModely = [];
   String _vybranaZnackaString = '';
+  int _autocompleteResetKey = 0;
 
   final SignatureController _signatureController = SignatureController(
     penStrokeWidth: 3,
@@ -180,6 +182,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       if (doc.exists) {
         final data = doc.data()!;
         setState(() {
+          _autocompleteResetKey++;
           _spzController.text = data['spz'] ?? '';
           _znackaController.text = data['znacka'] ?? '';
           _modelController.text = data['model'] ?? '';
@@ -226,16 +229,21 @@ class _MainWizardPageState extends State<MainWizardPage> {
       final snapshot =
           await FirebaseFirestore.instance.collection('znacka').get();
       Map<String, List<String>> nacteno = {};
+      Map<String, String> loga = {};
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final nazev = data['nazev']?.toString() ?? doc.id;
         final modely = List<String>.from(data['model'] ?? []);
         nacteno[nazev] = modely;
+        if (data['logo'] != null && data['logo'].toString().isNotEmpty) {
+          loga[nazev] = data['logo'].toString();
+        }
       }
 
       if (mounted) {
         setState(() {
           _databazeZnacek = nacteno;
+          _logovaZnacek = loga;
           _dostupneZnacky = _databazeZnacek.keys.toList()..sort();
         });
       }
@@ -247,6 +255,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   void _aktualizujModely(String znacka) {
     setState(() {
       _vybranaZnackaString = znacka;
+      _autocompleteResetKey++;
       if (_databazeZnacek.containsKey(znacka)) {
         _dostupneModely = _databazeZnacek[znacka]!..sort();
       } else {
@@ -951,6 +960,7 @@ Future<void> _generujCisloZakazky() async {
     _stavNadrze = 50.0;
     _poskozeniController.clear();
     _signatureController.clear();
+    setState(() => _autocompleteResetKey++);
 
     for (var c in _pozadavkyControllers) {
       c.dispose();
@@ -1187,51 +1197,90 @@ Future<void> _generujCisloZakazky() async {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Značka (např. Škoda)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(boxShadow: [
-                    if (!isDark)
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4))
-                  ], borderRadius: BorderRadius.circular(15)),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return DropdownMenu<String>(
-                        width: constraints.maxWidth,
-                        controller: _znackaController,
-                        enableFilter: true,
-                        enableSearch: true,
-                        leadingIcon: const Icon(Icons.directions_car,
-                            color: Colors.blue),
-                        inputDecorationTheme: InputDecorationTheme(
-                            filled: true,
-                            fillColor:
-                                isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                                vertical: 15, horizontal: 15),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(
-                                    color: isDark
-                                        ? Colors.grey[800]!
-                                        : Colors.grey[300]!)),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: const BorderSide(
-                                    color: Colors.blue, width: 2))),
-                        dropdownMenuEntries: _dostupneZnacky
-                            .map((z) => DropdownMenuEntry(value: z, label: z))
-                            .toList(),
-                        onSelected: (val) {
-                          if (val != null) _aktualizujModely(val);
+                Autocomplete<String>(
+                  key: ValueKey('znacka_$_autocompleteResetKey'),
+                  initialValue: TextEditingValue(text: _znackaController.text),
+                  displayStringForOption: (z) => z,
+                  optionsBuilder: (TextEditingValue value) {
+                    if (value.text.isEmpty) return _dostupneZnacky;
+                    return _dostupneZnacky.where(
+                        (z) => z.toLowerCase().contains(value.text.toLowerCase()));
+                  },
+                  onSelected: (String val) {
+                    _znackaController.text = val;
+                    _aktualizujModely(val);
+                  },
+                  fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          if (!isDark)
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4))
+                        ],
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: TextField(
+                        controller: ctrl,
+                        focusNode: focusNode,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.directions_car, color: Colors.blue),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(color: Colors.blue, width: 2)),
+                        ),
+                        onChanged: (val) {
+                          _znackaController.text = val;
+                          if (_databazeZnacek.containsKey(val)) _aktualizujModely(val);
                         },
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
+                  optionsViewBuilder: (ctx, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(12),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 250),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: ListView.builder(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              itemCount: options.length,
+                              itemBuilder: (ctx, i) {
+                                final z = options.elementAt(i);
+                                final logo = _logovaZnacek[z];
+                                return ListTile(
+                                  leading: logo != null
+                                      ? Image.network(logo,
+                                          width: 28, height: 28,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Icon(Icons.directions_car, color: Colors.blue))
+                                      : const Icon(Icons.directions_car, color: Colors.blue),
+                                  title: Text(z, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                  onTap: () => onSelected(z),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -1240,48 +1289,79 @@ Future<void> _generujCisloZakazky() async {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Model (např. Octavia)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(boxShadow: [
-                    if (!isDark)
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4))
-                  ], borderRadius: BorderRadius.circular(15)),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return DropdownMenu<String>(
-                        width: constraints.maxWidth,
-                        controller: _modelController,
-                        enableFilter: true,
-                        enableSearch: true,
-                        leadingIcon: const Icon(Icons.directions_car_filled,
-                            color: Colors.blue),
-                        inputDecorationTheme: InputDecorationTheme(
-                            filled: true,
-                            fillColor:
-                                isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                            contentPadding: const EdgeInsets.symmetric(
-                                vertical: 15, horizontal: 15),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide(
-                                    color: isDark
-                                        ? Colors.grey[800]!
-                                        : Colors.grey[300]!)),
-                            focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                borderSide: const BorderSide(
-                                    color: Colors.blue, width: 2))),
-                        dropdownMenuEntries: _dostupneModely
-                            .map((m) => DropdownMenuEntry(value: m, label: m))
-                            .toList(),
-                      );
-                    },
-                  ),
+                Autocomplete<String>(
+                  key: ValueKey('model_$_autocompleteResetKey'),
+                  initialValue: TextEditingValue(text: _modelController.text),
+                  displayStringForOption: (m) => m,
+                  optionsBuilder: (TextEditingValue value) {
+                    if (_dostupneModely.isEmpty) return const Iterable<String>.empty();
+                    if (value.text.isEmpty) return _dostupneModely;
+                    return _dostupneModely.where(
+                        (m) => m.toLowerCase().contains(value.text.toLowerCase()));
+                  },
+                  onSelected: (String val) {
+                    _modelController.text = val;
+                  },
+                  fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          if (!isDark)
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4))
+                        ],
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: TextField(
+                        controller: ctrl,
+                        focusNode: focusNode,
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.directions_car_filled, color: Colors.blue),
+                          filled: true,
+                          fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(color: Colors.blue, width: 2)),
+                        ),
+                        onChanged: (val) => _modelController.text = val,
+                      ),
+                    );
+                  },
+                  optionsViewBuilder: (ctx, onSelected, options) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Material(
+                        elevation: 4,
+                        borderRadius: BorderRadius.circular(12),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 200),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: ListView.builder(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              itemCount: options.length,
+                              itemBuilder: (ctx, i) {
+                                final m = options.elementAt(i);
+                                return ListTile(
+                                  title: Text(m, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                  onTap: () => onSelected(m),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
