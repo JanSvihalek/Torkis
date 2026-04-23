@@ -839,13 +839,16 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
       String cisloFaktury = '';
 
-      if (zpusob == 'faktura') {
+     if (zpusob == 'faktura') {
         final ted = DateTime.now();
-        String datumPart = DateFormat('yyMMdd').format(ted);
+        
+        String yearPart = DateFormat('yyyy').format(ted);
+        String monthPart = DateFormat('MM').format(ted);
 
+        // Čítač v databázi zůstává roční
         final counterRef = FirebaseFirestore.instance
             .collection('citace_faktur')
-            .doc('${globalServisId}_$datumPart');
+            .doc('${globalServisId}_rok_$yearPart');
 
         cisloFaktury = await FirebaseFirestore.instance
             .runTransaction((transaction) async {
@@ -856,9 +859,15 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           }
           transaction.set(
               counterRef, {'pocet': currentCount}, SetOptions(merge: true));
-          String sequencePart = currentCount.toString().padLeft(4, '0');
-          return '$prefix$datumPart$sequencePart';
+              
+          // Formátování bez pomlček: PREFIX + ROK + MĚSÍC + INKREMENT (např. FAK20260400001)
+          String sequencePart = currentCount.toString().padLeft(5, '0');
+          return '$prefix$yearPart$monthPart$sequencePart';
         });
+
+        // ... Zbytek kódu (DateTime splatnost = ted.add(...) atd.)
+
+        // ... (Zbytek kódu pro uložení faktury zůstává stejný)
 
         DateTime splatnost = ted.add(Duration(days: splatnostDny));
 

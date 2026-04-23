@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart'; // Přidáno pro živý náhled data v konfigurátoru
+
 import 'auth_screen.dart';
 import '../core/constants.dart';
 import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
 import 'main_screen.dart'; // Kvůli navOrderNotifier
+import 'app_logger.dart'; // Přidán náš logger pro odchytávání chyb
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -28,8 +31,6 @@ class _SettingsPageState extends State<SettingsPage> {
   final _registraceCtrl = TextEditingController();
   final _sazbaCtrl = TextEditingController(text: '0');
   final _splatnostCtrl = TextEditingController(text: '14');
-  final _prefixZakazkaCtrl = TextEditingController(text: 'ZAK');
-  final _prefixFakturaCtrl = TextEditingController(text: 'FAK');
 
   bool _platceDph = false;
   bool _defaultEmail = true;
@@ -46,6 +47,23 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _loadSettings();
+  }
+
+  @override
+  void dispose() {
+    _nazevCtrl.dispose();
+    _icoCtrl.dispose();
+    _dicCtrl.dispose();
+    _adresaCtrl.dispose();
+    _mestoCtrl.dispose();
+    _pscCtrl.dispose();
+    _telefonCtrl.dispose();
+    _emailCtrl.dispose();
+    _bankaCtrl.dispose();
+    _registraceCtrl.dispose();
+    _sazbaCtrl.dispose();
+    _splatnostCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadSettings() async {
@@ -81,8 +99,6 @@ class _SettingsPageState extends State<SettingsPage> {
             _registraceCtrl.text = data['registrace_servisu'] ?? '';
             _sazbaCtrl.text = (data['hodinova_sazba'] ?? 0).toString();
             _splatnostCtrl.text = (data['splatnost_dny'] ?? 14).toString();
-            _prefixZakazkaCtrl.text = data['prefix_zakazky'] ?? 'ZAK';
-            _prefixFakturaCtrl.text = data['prefix_faktury'] ?? 'FAK';
             _platceDph = data['platce_dph'] ?? false;
             _defaultEmail = data['default_odesilat_emaily'] ?? true;
           });
@@ -119,8 +135,6 @@ class _SettingsPageState extends State<SettingsPage> {
             'email_servisu': _emailCtrl.text.trim(),
             'banka_servisu': _bankaCtrl.text.trim(),
             'registrace_servisu': _registraceCtrl.text.trim(),
-            'prefix_zakazky': _prefixZakazkaCtrl.text.trim().toUpperCase(),
-            'prefix_faktury': _prefixFakturaCtrl.text.trim().toUpperCase(),
             'hodinova_sazba':
                 double.tryParse(_sazbaCtrl.text.replaceAll(',', '.')) ?? 0.0,
             'splatnost_dny': int.tryParse(_splatnostCtrl.text) ?? 14,
@@ -138,10 +152,12 @@ class _SettingsPageState extends State<SettingsPage> {
               backgroundColor: Colors.green));
         }
       }
-    } catch (e) {
-      if (mounted)
+    } catch (e, stackTrace) {
+      await AppLogger.logError('Ukládání hlavního nastavení servisu', e, stackTrace);
+      if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Chyba: $e')));
+            .showSnackBar(SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red));
+      }
     }
     setState(() => _isSaving = false);
   }
@@ -177,11 +193,20 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  // --- FUNKCE PRO VYKRESLENÍ DIALOGU KONFIGURACE ČÍSLOVÁNÍ ---
+  void _otevritKonfiguratorCislovani(String typDokladu, bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _FormatCislovaniSheet(typDokladu: typDokladu),
+    );
+  }
+
   // --- FUNKCE PRO VYKRESLENÍ DIALOGU NA PŘESKLÁDÁNÍ A PŘIDÁVÁNÍ MODULŮ ---
   void _ukazatReorderingDialog(BuildContext context, bool isDark) {
     List<String> lokalniPoradi = List.from(navOrderNotifier.value);
 
-    // Kompletní seznam všech dostupných modulů
     final Map<String, Map<String, dynamic>> vizual = {
       'prijem': {'nazev': 'Příjem vozidla', 'ikona': Icons.add_circle_outline_rounded},
       'zakazky': {'nazev': 'Aktivní zakázky', 'ikona': Icons.build_circle_outlined},
@@ -228,7 +253,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   const Text('Můžete mít aktivních 2 až 5 záložek. Přetažením změníte pořadí.', style: TextStyle(color: Colors.grey, fontSize: 13)),
                   const SizedBox(height: 15),
                   
-                  // Interaktivní Reorderable list s možností mazání
                   Expanded(
                     child: ReorderableListView(
                       onReorder: (oldIndex, newIndex) async {
@@ -257,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (lokalniPoradi.length > 2) // Ochrana: nenecháme uživatele smazat všechno
+                                  if (lokalniPoradi.length > 2)
                                     IconButton(
                                       icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
                                       onPressed: () async {
@@ -278,18 +302,15 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   
-                  // Tlačítko na přidání, pokud jich je méně než 5
                   if (lokalniPoradi.length < 5)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 15),
                       child: Center(
                         child: OutlinedButton.icon(
                           onPressed: () {
-                            // Dialog s výběrem chybějících modulů
                             showDialog(
                               context: context,
                               builder: (ctx) {
-                                // Vytvoříme seznam jen těch, které ještě na liště nejsou
                                 final dostupne = vizual.keys.where((k) => !lokalniPoradi.contains(k)).toList();
                                 return AlertDialog(
                                   title: const Text('Vyberte modul pro lištu'),
@@ -513,18 +534,32 @@ class _SettingsPageState extends State<SettingsPage> {
                   color: Colors.purple,
                   isDark: isDark,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                            child: _buildInput(_prefixZakazkaCtrl,
-                                'Prefix zakázek', Icons.build, isDark)),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: _buildInput(_prefixFakturaCtrl,
-                                'Prefix faktur', Icons.receipt, isDark)),
-                      ],
+                    // NOVÁ TLAČÍTKA PRO KONFIGURÁTOR MÍSTO TEXTOVÝCH POLÍ
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                      ),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.build_circle_outlined, color: Colors.blue),
+                            title: const Text('Formát čísla zakázek', style: TextStyle(fontWeight: FontWeight.bold)),
+                            trailing: const Icon(Icons.edit, size: 18),
+                            onTap: () => _otevritKonfiguratorCislovani('zakazka', isDark),
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            leading: const Icon(Icons.receipt_outlined, color: Colors.orange),
+                            title: const Text('Formát čísla faktur', style: TextStyle(fontWeight: FontWeight.bold)),
+                            trailing: const Icon(Icons.edit, size: 18),
+                            onTap: () => _otevritKonfiguratorCislovani('faktura', isDark),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 15),
                     Container(
                       decoration: BoxDecoration(
                           color: isDark
@@ -555,7 +590,6 @@ class _SettingsPageState extends State<SettingsPage> {
                 color: Colors.pinkAccent,
                 isDark: isDark,
                 children: [
-                  // NOVÉ TLAČÍTKO PRO PŘESKLÁDÁNÍ A PŘIDÁNÍ DO MENU
                   Card(
                     color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
                     elevation: 0,
@@ -706,6 +740,307 @@ class _SettingsPageState extends State<SettingsPage> {
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// NOVÝ WIDGET: INTERAKTIVNÍ KONFIGURÁTOR ČÍSELNÝCH ŘAD
+// ============================================================================
+
+class _FormatCislovaniSheet extends StatefulWidget {
+  final String typDokladu; // 'faktura' nebo 'zakazka'
+  
+  const _FormatCislovaniSheet({required this.typDokladu});
+
+  @override
+  State<_FormatCislovaniSheet> createState() => _FormatCislovaniSheetState();
+}
+
+class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
+  String _prefix = '';
+  String _rokFormat = '{YYYY}'; // '{YYYY}', '{YY}', ''
+  String _mesicFormat = '{MM}'; // '{MM}', ''
+  String _oddelovac = '-'; // '-', '/', '_', ''
+  double _delkaPocitadla = 5.0; // 3 až 6
+  
+  bool _isLoading = true;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nactiStavajiciNastaveni();
+  }
+
+  Future<void> _nactiStavajiciNastaveni() async {
+    if (globalServisId == null) return;
+    
+    // Výchozí hodnoty podle typu
+    _prefix = widget.typDokladu == 'faktura' ? 'FAK' : 'ZAK';
+    
+    try {
+      final doc = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(globalServisId).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        if (data.containsKey('prefix_${widget.typDokladu}')) {
+          _prefix = data['prefix_${widget.typDokladu}'];
+        } else {
+          final pluralKey = widget.typDokladu == 'faktura' ? 'prefix_faktury' : 'prefix_zakazky';
+          if (data.containsKey(pluralKey)) _prefix = data[pluralKey];
+        }
+        
+        // Zkusíme načíst rozložené konfigurační parametry (pokud už si je někdy uložil)
+        if (data.containsKey('cfg_rok_${widget.typDokladu}')) _rokFormat = data['cfg_rok_${widget.typDokladu}'];
+        if (data.containsKey('cfg_mesic_${widget.typDokladu}')) _mesicFormat = data['cfg_mesic_${widget.typDokladu}'];
+        if (data.containsKey('cfg_oddelovac_${widget.typDokladu}')) _oddelovac = data['cfg_oddelovac_${widget.typDokladu}'];
+        if (data.containsKey('cfg_delka_${widget.typDokladu}')) {
+          _delkaPocitadla = (data['cfg_delka_${widget.typDokladu}'] as num).toDouble();
+        }
+      }
+    } catch (e) {
+      debugPrint('Chyba načítání masky: $e');
+    }
+    
+    setState(() => _isLoading = false);
+  }
+
+  String _vygenerujMasku() {
+    List<String> casti = [];
+    if (_prefix.isNotEmpty) casti.add('{PREFIX}');
+    if (_rokFormat.isNotEmpty) casti.add(_rokFormat);
+    if (_mesicFormat.isNotEmpty) casti.add(_mesicFormat);
+    casti.add('{NUM${_delkaPocitadla.toInt()}}');
+    
+    return casti.join(_oddelovac);
+  }
+
+  String _vygenerujNahled() {
+    final ted = DateTime.now();
+    String nahled = _vygenerujMasku();
+    
+    nahled = nahled.replaceAll('{PREFIX}', _prefix.toUpperCase());
+    nahled = nahled.replaceAll('{YYYY}', DateFormat('yyyy').format(ted));
+    nahled = nahled.replaceAll('{YY}', DateFormat('yy').format(ted));
+    nahled = nahled.replaceAll('{MM}', DateFormat('MM').format(ted));
+    
+    String cislice = '1'.padLeft(_delkaPocitadla.toInt(), '0');
+    nahled = nahled.replaceAll('{NUM${_delkaPocitadla.toInt()}}', cislice);
+    
+    return nahled;
+  }
+
+  Future<void> _ulozitNastaveni() async {
+    if (globalServisId == null) return;
+    setState(() => _isSaving = true);
+    
+    try {
+      final maska = _vygenerujMasku();
+      
+      // Uložíme jak finální masku pro generování, tak jednotlivé dílky pro budoucí úpravy v tomto konfigurátoru
+      await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(globalServisId).set({
+        'maska_${widget.typDokladu}': maska,
+        'prefix_${widget.typDokladu}': _prefix.toUpperCase(),
+        'cfg_rok_${widget.typDokladu}': _rokFormat,
+        'cfg_mesic_${widget.typDokladu}': _mesicFormat,
+        'cfg_oddelovac_${widget.typDokladu}': _oddelovac,
+        'cfg_delka_${widget.typDokladu}': _delkaPocitadla.toInt(),
+        'zmeneno': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      if (mounted) {
+        Navigator.pop(context); // Zavřít BottomSheet
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Formát číslování byl úspěšně uložen.'), backgroundColor: Colors.green));
+      }
+    } catch (e, stackTrace) {
+      await AppLogger.logError('Uložení masky číslování (${widget.typDokladu})', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.85, // Vyšší sheet kvůli klávesnici
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: _isLoading ? const Center(child: CircularProgressIndicator()) : Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40, height: 5,
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('Formát čísla pro: ${widget.typDokladu.toUpperCase()}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          
+          // Náhledový štítek
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.blue.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+            ),
+            child: Column(
+              children: [
+                const Text('Náhled budoucího dokladu:', style: TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Text(_vygenerujNahled(), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 2, color: Colors.blue)),
+                const SizedBox(height: 10),
+                Text('Interní maska: ${_vygenerujMasku()}', style: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: 'monospace')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 25),
+
+          // Konfigurační formulář
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          initialValue: _prefix,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            labelText: 'Prefix (Značka)', 
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                          ),
+                          onChanged: (val) => setState(() => _prefix = val.trim()),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _oddelovac,
+                          decoration: InputDecoration(
+                            labelText: 'Oddělovač', 
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: '-', child: Text('Pomlčka (-)')),
+                            DropdownMenuItem(value: '/', child: Text('Lomítko (/)')),
+                            DropdownMenuItem(value: '_', child: Text('Podtržítko (_)')),
+                            DropdownMenuItem(value: '', child: Text('Bez oddělovače')),
+                          ],
+                          onChanged: (val) => setState(() => _oddelovac = val!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _rokFormat,
+                          decoration: InputDecoration(
+                            labelText: 'Formát roku', 
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: '{YYYY}', child: Text('4 cifry (2026)')),
+                            DropdownMenuItem(value: '{YY}', child: Text('2 cifry (26)')),
+                            DropdownMenuItem(value: '', child: Text('Bez roku')),
+                          ],
+                          onChanged: (val) => setState(() => _rokFormat = val!),
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: _mesicFormat,
+                          decoration: InputDecoration(
+                            labelText: 'Formát měsíce', 
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            filled: true,
+                            fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: '{MM}', child: Text('2 cifry (04)')),
+                            DropdownMenuItem(value: '', child: Text('Bez měsíce')),
+                          ],
+                          onChanged: (val) => setState(() => _mesicFormat = val!),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 25),
+                  Text('Délka pořadového čísla na konci: ${_delkaPocitadla.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Slider(
+                    value: _delkaPocitadla,
+                    min: 3,
+                    max: 6,
+                    divisions: 3,
+                    activeColor: Colors.blue,
+                    label: _delkaPocitadla.toInt().toString(),
+                    onChanged: (val) => setState(() => _delkaPocitadla = val),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                      border: const Border(left: BorderSide(color: Colors.orange, width: 4)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.orange),
+                        SizedBox(width: 10),
+                        Expanded(child: Text('Pokud změníte formát v průběhu roku, stávající doklady zůstanou nedotčeny a nová řada začne navazovat od aktuálního čísla v databázi.', style: TextStyle(fontSize: 12))),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _isSaving ? null : _ulozitNastaveni,
+                  icon: _isSaving ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.save),
+                  label: const Text('ULOŽIT FORMÁT', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue, 
+                    foregroundColor: Colors.white, 
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

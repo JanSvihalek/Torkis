@@ -280,33 +280,38 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-  Future<void> _generujCisloZakazky() async {
+Future<void> _generujCisloZakazky() async {
     setState(() => _isGeneratingCislo = true);
-    String prefixBase = 'ZAK';
+    String prefixBase = '';
     try {
       if (_sId == null) return;
-      final nastaveniDoc = await FirebaseFirestore.instance
-          .collection('nastaveni_servisu')
-          .doc(_sId)
-          .get();
-      if (nastaveniDoc.exists &&
-          nastaveniDoc.data()!.containsKey('prefix_zakazky')) {
-        final storedPrefix =
-            nastaveniDoc.data()!['prefix_zakazky'].toString().trim();
+      
+      final nastaveniDoc = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(_sId).get();
+      if (nastaveniDoc.exists && nastaveniDoc.data()!.containsKey('prefix_zakazky')) {
+        final storedPrefix = nastaveniDoc.data()!['prefix_zakazky'].toString().trim();
         if (storedPrefix.isNotEmpty) prefixBase = storedPrefix;
       }
-      final todayPrefix = DateFormat('yyMMdd').format(DateTime.now());
-      final prefix = '$prefixBase$todayPrefix';
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('zakazky')
+      
+      final ted = DateTime.now();
+      final yearPart = DateFormat('yyyy').format(ted);
+      final monthPart = DateFormat('MM').format(ted);
+      
+      // Hledáme v databázi vše, co začíná na ZAK2026 (pro zachování roční řady)
+      final searchPrefix = '$prefixBase$yearPart';
+      
+      final querySnapshot = await FirebaseFirestore.instance.collection('zakazky')
           .where('servis_id', isEqualTo: _sId)
           .get();
+      
       int nextNumber = 1;
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
         final cislo = data['cislo_zakazky']?.toString() ?? '';
-        if (cislo.startsWith(prefix)) {
-          final koncovka = cislo.substring(prefix.length);
+        
+        // Zkontrolujeme, zda to začíná na ZAK2026 a je to dostatečně dlouhé
+        if (cislo.startsWith(searchPrefix) && cislo.length > searchPrefix.length + 2) {
+          // Přeskočíme prefix (např. ZAK2026) a 2 znaky měsíce (např. 04)
+          final koncovka = cislo.substring(searchPrefix.length + 2); 
           final currentNum = int.tryParse(koncovka) ?? 0;
           if (currentNum >= nextNumber) {
             nextNumber = currentNum + 1;
@@ -315,16 +320,18 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
       if (mounted) {
         setState(() {
-          _zakazkaController.text =
-              '$prefix${nextNumber.toString().padLeft(4, '0')}';
+          // Výsledek např: ZAK20260400001
+          _zakazkaController.text = '$prefixBase$yearPart$monthPart${nextNumber.toString().padLeft(5, '0')}';
         });
       }
     } catch (e) {
       debugPrint('Chyba při generování čísla: $e');
       if (mounted) {
-        final todayPrefix = DateFormat('yyMMdd').format(DateTime.now());
+        final ted = DateTime.now();
+        final yearPart = DateFormat('yyyy').format(ted);
+        final monthPart = DateFormat('MM').format(ted);
         setState(() {
-          _zakazkaController.text = '$prefixBase${todayPrefix}0001';
+          _zakazkaController.text = '$prefixBase$yearPart${monthPart}00001';
         });
       }
     } finally {

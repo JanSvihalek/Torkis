@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'auth_gate.dart';
 import '../core/constants.dart';
@@ -36,6 +37,18 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   bool _jePlatceDph = false;
   bool _defaultOdeslatEmaily = true;
   bool _tmavyRezim = false;
+
+  // Číslování - Zakázky
+  String _zakazkaRokFormat = '{YYYY}';
+  String _zakazkaMessicFormat = '{MM}';
+  String _zakazkaOddelovac = '-';
+  double _zakazkaDelkaPocitadla = 5.0;
+
+  // Číslování - Faktury
+  String _fakturaRokFormat = '{YYYY}';
+  String _fakturaMessicFormat = '{MM}';
+  String _fakturaOddelovac = '-';
+  double _fakturaDelkaPocitadla = 5.0;
 
   // KROK 3: Předpřipravené úkony
   final List<TextEditingController> _ukonyControllers = [];
@@ -159,9 +172,29 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               'prefix_zakazky': _prefixZakazkaController.text.trim().isEmpty
                   ? 'ZAK'
                   : _prefixZakazkaController.text.trim().toUpperCase(),
+              'prefix_zakazka': _prefixZakazkaController.text.trim().isEmpty
+                  ? 'ZAK'
+                  : _prefixZakazkaController.text.trim().toUpperCase(),
               'prefix_faktury': _prefixFakturaController.text.trim().isEmpty
                   ? 'FAK'
                   : _prefixFakturaController.text.trim().toUpperCase(),
+              'prefix_faktura': _prefixFakturaController.text.trim().isEmpty
+                  ? 'FAK'
+                  : _prefixFakturaController.text.trim().toUpperCase(),
+              'maska_zakazka': _vygenerujMasku(
+                  _prefixZakazkaController.text.trim().isEmpty ? 'ZAK' : _prefixZakazkaController.text.trim().toUpperCase(),
+                  _zakazkaRokFormat, _zakazkaMessicFormat, _zakazkaOddelovac, _zakazkaDelkaPocitadla.toInt()),
+              'cfg_rok_zakazka': _zakazkaRokFormat,
+              'cfg_mesic_zakazka': _zakazkaMessicFormat,
+              'cfg_oddelovac_zakazka': _zakazkaOddelovac,
+              'cfg_delka_zakazka': _zakazkaDelkaPocitadla.toInt(),
+              'maska_faktura': _vygenerujMasku(
+                  _prefixFakturaController.text.trim().isEmpty ? 'FAK' : _prefixFakturaController.text.trim().toUpperCase(),
+                  _fakturaRokFormat, _fakturaMessicFormat, _fakturaOddelovac, _fakturaDelkaPocitadla.toInt()),
+              'cfg_rok_faktura': _fakturaRokFormat,
+              'cfg_mesic_faktura': _fakturaMessicFormat,
+              'cfg_oddelovac_faktura': _fakturaOddelovac,
+              'cfg_delka_faktura': _fakturaDelkaPocitadla.toInt(),
               // Pole 'rychle_ukony' bylo smazáno, ukládáme to teď do samostatné kolekce (viz krok 3)
               'prvni_spusteni_dokonceno': true,
               'vytvoreno': FieldValue.serverTimestamp(),
@@ -346,6 +379,181 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             )
           ],
         ),
+      ),
+    );
+  }
+
+  String _vygenerujMasku(String prefix, String rokFormat, String mesicFormat, String oddelovac, int delka) {
+    List<String> casti = [];
+    if (prefix.isNotEmpty) casti.add('{PREFIX}');
+    if (rokFormat.isNotEmpty) casti.add(rokFormat);
+    if (mesicFormat.isNotEmpty) casti.add(mesicFormat);
+    casti.add('{NUM$delka}');
+    return casti.join(oddelovac);
+  }
+
+  String _vygenerujNahled(String prefix, String rokFormat, String mesicFormat, String oddelovac, int delka) {
+    final ted = DateTime.now();
+    String nahled = _vygenerujMasku(prefix, rokFormat, mesicFormat, oddelovac, delka);
+    nahled = nahled.replaceAll('{PREFIX}', prefix.toUpperCase());
+    nahled = nahled.replaceAll('{YYYY}', DateFormat('yyyy').format(ted));
+    nahled = nahled.replaceAll('{YY}', DateFormat('yy').format(ted));
+    nahled = nahled.replaceAll('{MM}', DateFormat('MM').format(ted));
+    nahled = nahled.replaceAll('{NUM$delka}', '1'.padLeft(delka, '0'));
+    return nahled;
+  }
+
+  Widget _buildCislovaniSekce({
+    required String nazev,
+    required Color barva,
+    required IconData ikona,
+    required TextEditingController prefixCtrl,
+    required String rokFormat,
+    required String mesicFormat,
+    required String oddelovac,
+    required double delkaPocitadla,
+    required void Function(String) onRokChanged,
+    required void Function(String) onMesicChanged,
+    required void Function(String) onOddelovacChanged,
+    required void Function(double) onDelkaChanged,
+    required bool isDark,
+  }) {
+    final prefix = prefixCtrl.text.trim().isEmpty
+        ? (nazev == 'Faktury' ? 'FAK' : 'ZAK')
+        : prefixCtrl.text.trim().toUpperCase();
+    final nahled = _vygenerujNahled(prefix, rokFormat, mesicFormat, oddelovac, delkaPocitadla.toInt());
+
+    final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
+    final fillColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[50]!;
+    final inputBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(10));
+    final enabledBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor));
+
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(ikona, color: barva, size: 20),
+              const SizedBox(width: 8),
+              Text(nazev, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: barva)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
+            decoration: BoxDecoration(
+              color: barva.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: barva.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              children: [
+                Text('Náhled:', style: TextStyle(color: barva, fontSize: 12, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(nahled, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: barva)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: prefixCtrl,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                  decoration: InputDecoration(
+                    labelText: 'Prefix',
+                    filled: true,
+                    fillColor: fillColor,
+                    border: inputBorder,
+                    enabledBorder: enabledBorder,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: oddelovac,
+                  decoration: InputDecoration(
+                    labelText: 'Oddělovač',
+                    filled: true,
+                    fillColor: fillColor,
+                    border: inputBorder,
+                    enabledBorder: enabledBorder,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '-', child: Text('Pomlčka (-)')),
+                    DropdownMenuItem(value: '/', child: Text('Lomítko (/)')),
+                    DropdownMenuItem(value: '_', child: Text('Podtržítko (_)')),
+                    DropdownMenuItem(value: '', child: Text('Bez oddělovače')),
+                  ],
+                  onChanged: (val) => onOddelovacChanged(val!),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: rokFormat,
+                  decoration: InputDecoration(
+                    labelText: 'Formát roku',
+                    filled: true,
+                    fillColor: fillColor,
+                    border: inputBorder,
+                    enabledBorder: enabledBorder,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '{YYYY}', child: Text('4 cifry (2026)')),
+                    DropdownMenuItem(value: '{YY}', child: Text('2 cifry (26)')),
+                    DropdownMenuItem(value: '', child: Text('Bez roku')),
+                  ],
+                  onChanged: (val) => onRokChanged(val!),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: mesicFormat,
+                  decoration: InputDecoration(
+                    labelText: 'Formát měsíce',
+                    filled: true,
+                    fillColor: fillColor,
+                    border: inputBorder,
+                    enabledBorder: enabledBorder,
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: '{MM}', child: Text('2 cifry (04)')),
+                    DropdownMenuItem(value: '', child: Text('Bez měsíce')),
+                  ],
+                  onChanged: (val) => onMesicChanged(val!),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('Délka pořadového čísla: ${delkaPocitadla.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Slider(
+            value: delkaPocitadla,
+            min: 3,
+            max: 6,
+            divisions: 3,
+            activeColor: barva,
+            label: delkaPocitadla.toInt().toString(),
+            onChanged: onDelkaChanged,
+          ),
+        ],
       ),
     );
   }
@@ -630,84 +838,46 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
+          const SizedBox(height: 30),
+          const Divider(),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Prefix pro zakázky',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.grey)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _prefixZakazkaController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: InputDecoration(
-                        hintText: 'ZAK',
-                        prefixIcon: const Icon(Icons.build, color: Colors.blue),
-                        filled: true,
-                        fillColor:
-                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[400]!)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Prefix pro faktury',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.grey)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _prefixFakturaController,
-                      textCapitalization: TextCapitalization.characters,
-                      decoration: InputDecoration(
-                        hintText: 'FAK',
-                        prefixIcon:
-                            const Icon(Icons.receipt, color: Colors.green),
-                        filled: true,
-                        fillColor:
-                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[400]!)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!)),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          const Text('Číslování dokladů',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          const Text('Např. ZAK-240410-0001 nebo FAK-240410-0001.',
-              style: TextStyle(fontSize: 12, color: Colors.grey)),
+          const Text('Nastavte formát čísel pro zakázky a faktury.',
+              style: TextStyle(fontSize: 14, color: Colors.grey)),
+          const SizedBox(height: 15),
+          _buildCislovaniSekce(
+            nazev: 'Zakázky',
+            barva: Colors.blue,
+            ikona: Icons.build_circle_outlined,
+            prefixCtrl: _prefixZakazkaController,
+            rokFormat: _zakazkaRokFormat,
+            mesicFormat: _zakazkaMessicFormat,
+            oddelovac: _zakazkaOddelovac,
+            delkaPocitadla: _zakazkaDelkaPocitadla,
+            onRokChanged: (val) => setState(() => _zakazkaRokFormat = val),
+            onMesicChanged: (val) => setState(() => _zakazkaMessicFormat = val),
+            onOddelovacChanged: (val) => setState(() => _zakazkaOddelovac = val),
+            onDelkaChanged: (val) => setState(() => _zakazkaDelkaPocitadla = val),
+            isDark: isDark,
+          ),
+          const SizedBox(height: 15),
+          _buildCislovaniSekce(
+            nazev: 'Faktury',
+            barva: Colors.green,
+            ikona: Icons.receipt_outlined,
+            prefixCtrl: _prefixFakturaController,
+            rokFormat: _fakturaRokFormat,
+            mesicFormat: _fakturaMessicFormat,
+            oddelovac: _fakturaOddelovac,
+            delkaPocitadla: _fakturaDelkaPocitadla,
+            onRokChanged: (val) => setState(() => _fakturaRokFormat = val),
+            onMesicChanged: (val) => setState(() => _fakturaMessicFormat = val),
+            onOddelovacChanged: (val) => setState(() => _fakturaOddelovac = val),
+            onDelkaChanged: (val) => setState(() => _fakturaDelkaPocitadla = val),
+            isDark: isDark,
+          ),
         ],
       ),
     );

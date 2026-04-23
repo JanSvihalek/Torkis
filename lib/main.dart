@@ -6,13 +6,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'dart:ui'; // Potřebné pro PlatformDispatcher
-
 import 'firebase_options.dart';
 import 'core/constants.dart';
 import 'zalozky/auth_screen.dart';
 import 'zalozky/main_screen.dart';
-
-// Zde uprav cestu podle toho, do jaké složky sis uložil svůj logger
 import 'zalozky/app_logger.dart';
 
 void main() async {
@@ -20,7 +17,6 @@ void main() async {
   
   // Inicializace Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  
   // Tvoje původní inicializace českého formátování času
   await initializeDateFormatting('cs_CZ', null);
 
@@ -55,7 +51,7 @@ class VistoApp extends StatelessWidget {
       builder: (_, ThemeMode currentMode, __) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Visto',
+          title: 'TORKIS',
           
           // --- PŘIDÁNO: Podpora češtiny pro úplně všechny systémové dialogy ---
           localizationsDelegates: const [
