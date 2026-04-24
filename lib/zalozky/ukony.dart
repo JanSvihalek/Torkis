@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'auth_gate.dart'; // Kvůli globalServisId
 
@@ -16,6 +15,7 @@ class _UkonyPageState extends State<UkonyPage> {
   final _casController = TextEditingController(text: '1.0');
 
   String _vybranaKategorie = 'Mechanika';
+  String _vybranaJednotka = 'hod';
   final List<String> _kategorie = [
     'Mechanika',
     'Pneuservis',
@@ -60,6 +60,7 @@ class _UkonyPageState extends State<UkonyPage> {
         'sazba_dph':
             21, // Výchozí sazba, případně ji můžeš napojit na plátce DPH z nastavení
         'odhadovany_cas': cas,
+        'jednotka_casu': _vybranaJednotka,
         'kategorie': _vybranaKategorie,
         'aktivni': true,
         'vytvoreno': FieldValue.serverTimestamp(),
@@ -68,6 +69,7 @@ class _UkonyPageState extends State<UkonyPage> {
       _nazevController.clear();
       _cenaController.clear();
       _casController.text = '1.0';
+      setState(() => _vybranaJednotka = 'hod');
       FocusScope.of(context).unfocus(); // Zavře klávesnici
 
       if (mounted) {
@@ -204,7 +206,7 @@ class _UkonyPageState extends State<UkonyPage> {
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             decoration: InputDecoration(
-                              labelText: 'Čas (hod)',
+                              labelText: 'Čas',
                               prefixIcon: const Icon(Icons.schedule,
                                   color: Colors.orange),
                               filled: true,
@@ -216,6 +218,14 @@ class _UkonyPageState extends State<UkonyPage> {
                                   borderSide: BorderSide.none),
                             ),
                           ),
+                        ),
+                        const SizedBox(width: 10),
+                        ToggleButtons(
+                          isSelected: [_vybranaJednotka == 'hod', _vybranaJednotka == 'min'],
+                          onPressed: (i) => setState(() => _vybranaJednotka = i == 0 ? 'hod' : 'min'),
+                          borderRadius: BorderRadius.circular(12),
+                          constraints: const BoxConstraints(minWidth: 44, minHeight: 55),
+                          children: const [Text('hod'), Text('min')],
                         ),
                       ],
                     ),

@@ -186,11 +186,7 @@ class GlobalPdfGenerator {
     } else if (typ == PdfTyp.naceneni) {
       titulek = "CENOVÁ NABÍDKA";
       zobrazitCeny = true;
-      if (data['cislo_nabidky'] != null && data['cislo_nabidky'].toString().isNotEmpty) {
-        cisloDokladu = data['cislo_nabidky'].toString();
-      } else {
-        cisloDokladu = puvodniCislo;
-      }
+      cisloDokladu = puvodniCislo;
     }
 
     double celkovaSuma = 0.0;

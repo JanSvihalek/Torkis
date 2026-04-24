@@ -1025,7 +1025,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                   if (!isManual)
                                     _buildClickableRow(
                                       isDark: isDark,
-                                      title: 'K zakázce',
+                                      title: 'Zakázce',
                                       value: '${fData['cislo_zakazky']}',
                                       onTap: () {
                                         final docId =

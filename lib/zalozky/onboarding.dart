@@ -8,6 +8,25 @@ import 'package:intl/intl.dart';
 import 'auth_gate.dart';
 import '../core/constants.dart';
 
+class _UkonData {
+  final TextEditingController nazev;
+  final TextEditingController cena;
+  final TextEditingController cas;
+  String kategorie;
+  String jednotkaCasu;
+
+  _UkonData({String nazevText = '', this.kategorie = 'Mechanika', this.jednotkaCasu = 'hod'})
+      : nazev = TextEditingController(text: nazevText),
+        cena = TextEditingController(),
+        cas = TextEditingController(text: '1.0');
+
+  void dispose() {
+    nazev.dispose();
+    cena.dispose();
+    cas.dispose();
+  }
+}
+
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
 
@@ -51,23 +70,27 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   double _fakturaDelkaPocitadla = 5.0;
 
   // KROK 3: Předpřipravené úkony
-  final List<TextEditingController> _ukonyControllers = [];
+  final List<_UkonData> _ukony = [];
 
-  final List<String> _vychoziUkony = [
+  static const List<String> _kategorieUkonu = [
+    'Mechanika', 'Pneuservis', 'Elektrika', 'Lakovna', 'Karosárna', 'Ostatní'
+  ];
+
+  static const List<String> _vychoziUkony = [
     'Výměna oleje a filtrů',
     'Kontrola brzd',
     'Servis klimatizace',
     'Příprava a provedení STK',
     'Geometrie kol',
     'Pneuservis (přezutí)',
-    'Diagnostika závad'
+    'Diagnostika závad',
   ];
 
   @override
   void initState() {
     super.initState();
-    for (String ukon in _vychoziUkony) {
-      _ukonyControllers.add(TextEditingController(text: ukon));
+    for (final nazev in _vychoziUkony) {
+      _ukony.add(_UkonData(nazevText: nazev));
     }
   }
 
@@ -82,8 +105,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     _dicController.dispose();
     _prefixZakazkaController.dispose();
     _prefixFakturaController.dispose();
-    for (var c in _ukonyControllers) {
-      c.dispose();
+    for (final u in _ukony) {
+      u.dispose();
     }
     _pageController.dispose();
     super.dispose();
@@ -125,14 +148,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   void _pridatPrazdnyUkon() {
     setState(() {
-      _ukonyControllers.add(TextEditingController());
+      _ukony.add(_UkonData());
     });
   }
 
   void _odebratUkon(int index) {
     setState(() {
-      _ukonyControllers[index].dispose();
-      _ukonyControllers.removeAt(index);
+      _ukony[index].dispose();
+      _ukony.removeAt(index);
     });
   }
 
@@ -142,9 +165,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        List<String> finalniUkony = _ukonyControllers
-            .map((c) => c.text.trim())
-            .where((text) => text.isNotEmpty)
+        final finalniUkony = _ukony
+            .where((u) => u.nazev.text.trim().isNotEmpty)
             .toList();
 
         // POUŽIJEME BATCH ZÁPIS - Zapíše všechny dokumenty najednou a bezpečně
@@ -224,17 +246,16 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         });
 
         // 3. VYTVOŘENÍ JEDNOTLIVÝCH ÚKONŮ DO SAMOSTATNÉ KOLEKCE
-        for (String nazevUkonu in finalniUkony) {
-          DocumentReference ukonRef = FirebaseFirestore.instance
-              .collection('ukony')
-              .doc(); // Vygeneruje nové náhodné ID
+        for (final ukon in finalniUkony) {
+          final ukonRef = FirebaseFirestore.instance.collection('ukony').doc();
           batch.set(ukonRef, {
             'servis_id': user.uid,
-            'nazev': nazevUkonu,
-            'cena_bez_dph': 0.0, // Výchozí cena nula, může si ji pak nastavit
-            'sazba_dph': _jePlatceDph ? 21 : 0, // Dle toho, zda je plátce DPH
-            'odhadovany_cas': 1.0, // Výchozí čas 1 hodina
-            'kategorie': 'Běžný servis',
+            'nazev': ukon.nazev.text.trim(),
+            'cena_bez_dph': double.tryParse(ukon.cena.text.replaceAll(',', '.')) ?? 0.0,
+            'sazba_dph': _jePlatceDph ? 21 : 0,
+            'odhadovany_cas': double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 1.0,
+            'jednotka_casu': ukon.jednotkaCasu,
+            'kategorie': ukon.kategorie,
             'aktivni': true,
           });
         }
@@ -940,31 +961,103 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             'Připravili jsme pro vás seznam typických úkonů. Můžete je libovolně přepsat, smazat nebo si přidat další. Budou se vám nabízet pro rychlé přidání při příjmu vozu.',
             style: TextStyle(fontSize: 14, color: Colors.grey)),
         const SizedBox(height: 30),
-        ...List.generate(_ukonyControllers.length, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Row(
+        ...List.generate(_ukony.length, (index) {
+          final ukon = _ukony[index];
+          final fillColor = isDark ? const Color(0xFF1E1E1E) : Colors.grey[50]!;
+          final border = OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+          );
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+            ),
+            child: Column(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _ukonyControllers[index],
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor:
-                          isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 15, vertical: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: ukon.nazev,
+                        decoration: InputDecoration(
+                          labelText: 'Název úkonu',
+                          filled: true,
+                          fillColor: fillColor,
+                          border: border,
+                          enabledBorder: border,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.redAccent, size: 20),
+                      onPressed: () => _odebratUkon(index),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  onPressed: () => _odebratUkon(index),
-                  tooltip: 'Smazat úkon',
-                )
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: ukon.cena,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Cena (Kč)',
+                          filled: true,
+                          fillColor: fillColor,
+                          border: border,
+                          enabledBorder: border,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: ukon.cas,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Čas',
+                          filled: true,
+                          fillColor: fillColor,
+                          border: border,
+                          enabledBorder: border,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ToggleButtons(
+                      isSelected: [ukon.jednotkaCasu == 'hod', ukon.jednotkaCasu == 'min'],
+                      onPressed: (i) => setState(() => ukon.jednotkaCasu = i == 0 ? 'hod' : 'min'),
+                      borderRadius: BorderRadius.circular(10),
+                      constraints: const BoxConstraints(minWidth: 40, minHeight: 48),
+                      children: const [Text('hod'), Text('min')],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: ukon.kategorie,
+                  decoration: InputDecoration(
+                    labelText: 'Kategorie',
+                    filled: true,
+                    fillColor: fillColor,
+                    border: border,
+                    enabledBorder: border,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                  items: _kategorieUkonu
+                      .map((k) => DropdownMenuItem(value: k, child: Text(k)))
+                      .toList(),
+                  onChanged: (val) => setState(() => ukon.kategorie = val ?? ukon.kategorie),
+                ),
               ],
             ),
           );

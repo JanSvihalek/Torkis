@@ -333,31 +333,54 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
   Future<void> _odeslatKNaceneni(
       BuildContext context, Map<String, dynamic> data) async {
+    final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
+    final emailCtrl = TextEditingController(text: zakaznik['email']?.toString() ?? '');
+
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Odeslat nacenění zákazníkovi?'),
-        content: const Text(
-          'Aplikace vygeneruje PDF s rozpočtem a odešle jej na e-mail zákazníka.',
+        title: const Text('Generovat nacenění',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+                'Aplikace vygeneruje PDF s cenovou nabídkou a odešle ji zákazníkovi.'),
+            const SizedBox(height: 15),
+            TextField(
+              controller: emailCtrl,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'E-mail zákazníka',
+                prefixIcon: const Icon(Icons.email_outlined),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10)),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ZRUŠIT'),
+            child: const Text('Zrušit'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'ODESLAT',
-              style:
-                  TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Odeslat',
+                style: TextStyle(
+                    color: Colors.purple, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
 
-    if (confirm == true) {
+    final finalEmail = emailCtrl.text.trim();
+    emailCtrl.dispose();
+
+    if (confirm == true && context.mounted) {
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -381,8 +404,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           sEmail = docNast.data()?['email_servisu'] ?? '';
         }
 
-        final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
-        final zakaznikEmail = zakaznik['email']?.toString() ?? '';
+        final zakaznikEmail = finalEmail;
 
         final pdfBytes = await GlobalPdfGenerator.generateDocument(
           data: data,
