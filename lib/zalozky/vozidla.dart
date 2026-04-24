@@ -8,6 +8,13 @@ import 'prubeh.dart';
 import 'fakturace.dart';
 import '../core/constants.dart'; // Předpokládám, že zde máte getStatusColor
 
+// Databáze vozidel servisu.
+// [VozidlaPage]          — seznam všech vozidel s full-text vyhledáváním (SPZ, značka, VIN).
+//                          Kliknutím se otevře detail.
+// [VozidloDetailScreen]  — detail vozidla se třemi záložkami:
+//   • Info       — technické parametry (SPZ, VIN, palivo, STK…)
+//   • Zakázky    — historie všech zakázek tohoto vozidla
+//   • Faktury    — faktury vystavené za opravy tohoto vozidla
 class VozidlaPage extends StatefulWidget {
   const VozidlaPage({super.key});
 
@@ -730,7 +737,7 @@ class VozidloDetailScreen extends StatelessWidget {
 
   // =======================================================
   // ZÁLOŽKA 1: INFO A ZÁKAZNÍK
-  // =======================================================
+  // ── Záložka 1: Info — technické parametry vozidla + tlačítko „Přijmout na servis" ──
   Widget _buildInfoTab(
       BuildContext context,
       bool isDark,
@@ -963,7 +970,7 @@ class VozidloDetailScreen extends StatelessWidget {
 
   // =======================================================
   // ZÁLOŽKA 2: ZAKÁZKY
-  // =======================================================
+  // ── Záložka 2: Zakázky — chronologický seznam všech zakázek vozidla ──────
   Widget _buildZakazkyTab(
       BuildContext context, bool isDark, User user, String spz) {
     return SingleChildScrollView(
@@ -1119,7 +1126,7 @@ class VozidloDetailScreen extends StatelessWidget {
 
   // =======================================================
   // ZÁLOŽKA 3: FAKTURY
-  // =======================================================
+  // ── Záložka 3: Faktury — faktury vystavené za opravy tohoto vozidla ─────
   Widget _buildFakturyTab(
       BuildContext context, bool isDark, User user, String spz) {
     return SingleChildScrollView(

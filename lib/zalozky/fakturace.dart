@@ -117,6 +117,16 @@ Future<void> syncAndRegenerateFaktura(
   }
 }
 
+// Modul fakturace — čtyři třídy:
+//
+// [FakturacePage]        — seznam všech faktur (zakázkové + pultový prodej) s filtrací
+//                          a přehledem celkových příjmů. FAB otevírá ManualInvoiceScreen.
+// [FakturaDetailScreen]  — detail faktury: položky prací, celková cena, DPH, QR platba,
+//                          odeslání e-mailem, možnost editace a storna pultového prodeje.
+// [EditFakturaWorkScreen]— editace jednoho záznamu práce uvnitř faktury
+//                          (synchronizuje se i zpět do zakázky přes syncAndRegenerateFaktura).
+// [ManualInvoiceScreen]  — ruční vystavení faktury (pultový prodej) bez zakázky.
+
 class FakturacePage extends StatefulWidget {
   const FakturacePage({super.key});
 
@@ -133,6 +143,7 @@ class _FakturacePageState extends State<FakturacePage> {
     return DateFormat('dd.MM.yyyy').format(dt);
   }
 
+  /// Přepne stav platby faktury na 'Uhrazeno' — zobrazí se zelený štítek v seznamu.
   Future<void> _oznacitJakoUhrazene(String docId) async {
     try {
       await FirebaseFirestore.instance.collection('faktury').doc(docId).update({
@@ -512,6 +523,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
     );
   }
 
+  /// Odešle zákazníkovi PDF faktury jako přílohu e-mailu přes Firebase funkci (HTTP endpoint).
   Future<void> _odeslatFakturuEmailem(Map<String, dynamic> fData, String vychoziEmail) async {
     final String pdfUrl = fData['pdf_url']?.toString() ?? '';
     final String cisloFaktury = fData['cislo_faktury']?.toString() ?? '';
@@ -622,6 +634,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
     }
   }
 
+  /// Stornuje pultový prodej — nastaví stav na 'Stornováno' (fyzicky nesmaže).
   Future<void> _stornovatPultovyProdej(Map<String, dynamic> fData) async {
     bool? confirm = await showDialog<bool>(
       context: context,

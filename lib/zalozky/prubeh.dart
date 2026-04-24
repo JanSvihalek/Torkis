@@ -13,6 +13,14 @@ import 'zakaznici.dart';
 import 'vozidla.dart';
 import 'auth_gate.dart';
 
+// Modul průběhu zakázek — skládá se ze čtyř obrazovek:
+//
+// [ServiceProgressPage]  — seznam aktivních zakázek (search + StreamBuilder karet)
+// [ActiveJobScreen]      — detail zakázky: záložky Přehled / Cenová nabídka /
+//                          Foto / Zákazník / Vozidlo + akce Dokončit / Storno
+// [AddWorkScreen]        — dialog pro záznam provedené práce (úkon + díly + foto)
+// [FotodokumentaceScreen]— fullscreen galerie fotek přiložených k zakázce
+
 class ServiceProgressPage extends StatefulWidget {
   const ServiceProgressPage({super.key});
   @override
@@ -228,6 +236,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     _nactiSplatnost();
   }
 
+  /// Načte výchozí počet dnů splatnosti z nastavení servisu (používá se při generování faktury).
   Future<void> _nactiSplatnost() async {
     if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
@@ -268,6 +277,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
+  /// Smaže jeden řádek z pole 'pozadavky_zakaznika' v dokumentu zakázky.
   Future<void> _deletePozadavek(BuildContext context, String pozadavek) async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -298,6 +308,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  /// Odstraní záznam provedené práce ze zakázky a přegeneruje PDF cenové nabídky.
   Future<void> _deleteWork(
     BuildContext context,
     Map<String, dynamic> workItem,
@@ -331,6 +342,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  /// Vygeneruje PDF cenové nabídky a odešle ji zákazníkovi na e-mail.
+  /// Zobrazí dialog pro potvrzení / úpravu e-mailové adresy před odesláním.
   Future<void> _odeslatKNaceneni(
       BuildContext context, Map<String, dynamic> data) async {
     final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
@@ -489,6 +502,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  /// Nastaví stav zakázky na 'Stornováno' — zakázka zmizí z aktivního seznamu,
+  /// ale zůstane v historii (není fyzicky smazána).
   Future<void> _stornovatZakazku(BuildContext context) async {
     bool? confirm = await showDialog<bool>(
       context: context,
@@ -574,6 +589,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  /// Přepne stav zakázky (např. „Přijato" → „V opravě" → „Čeká na díly").
+  /// Stav se zobrazuje jako barevný štítek v kartě zakázky.
   Future<void> _zmenitStav(BuildContext context, String novyStav) async {
     await FirebaseFirestore.instance
         .collection('zakazky')
@@ -784,6 +801,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
+  /// Ukončí zakázku: vygeneruje finální fakturu (PDF), uloží ji do Storage,
+  /// vytvoří dokument v kolekci 'faktury', aktualizuje záznam vozidla (tachometr, STK)
+  /// a přesune zakázku do stavu 'Dokončeno'.
   Future<void> _zpracovatUkonceni(
     BuildContext context,
     String zpusob,
@@ -1876,6 +1896,10 @@ class PolozkaInput {
   }
 }
 
+// Obrazovka pro záznam provedené práce.
+// Obsahuje: název úkonu, volitelné položky (materiál/práce s cenou a DPH),
+// přidání fotek z galerie/fotoaparátu a pole pro počet hodin.
+// Lze použít jak pro nový záznam, tak pro editaci existujícího (editIndex != null).
 class AddWorkScreen extends StatefulWidget {
   final String documentId;
   final String zakazkaId;
@@ -2934,6 +2958,8 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
   }
 }
 
+// Fullscreen galerie fotek zakázky — zobrazí seznam URL z Firebase Storage.
+// Kliknutím na miniaturu se otevře FullScreenImage pro detail.
 class FotodokumentaceScreen extends StatelessWidget {
   final List<String> fotografieUrls;
   final String titulek;

@@ -17,6 +17,14 @@ import 'zakaznici.dart';
 import 'vozidla.dart';
 import 'auth_gate.dart';
 
+// Formulář příjmu vozidla — 6stránkový průvodce (PageView).
+// Stránky: 1) Vozidlo, 2) Zákazník, 3) Stav při příjmu, 4) Fotodokumentace,
+//          5) Požadované práce, 6) Podpis a odeslání protokolu.
+// Po dokončení se zakázka zapíše do Firestore (kolekce 'zakazky') a
+// volitelně se zákazníkovi pošle protokol o příjmu na e-mail jako PDF.
+
+// Notifier používaný Plánovákem: když dispatcher klikne „Přijmout na servis",
+// sem pošle ID rezervace a formulář se přednaplní jejími daty.
 final ValueNotifier<String?> rezervaceKeZpracovani = ValueNotifier(null);
 
 class MainWizardPage extends StatefulWidget {
@@ -131,6 +139,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     rezervaceKeZpracovani.addListener(_zpracujRezervaciZPlanovace);
   }
 
+  /// Načte katalog úkonů servisu — zobrazí se jako rychlé čipy na straně 5 (Požadované práce).
   Future<void> _nactiUkonyZDatabaze() async {
     if (_sId == null) {
       if (mounted) setState(() => _isLoadingUkony = false);
@@ -170,6 +179,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
+  /// Přednaplní formulář daty z rezervace v plánovači.
+  /// Volá se automaticky přes listener na [rezervaceKeZpracovani].
+  /// Přednaplní formulář daty z rezervace v plánovači.
+  /// Volá se automaticky přes listener na [rezervaceKeZpracovani].
   Future<void> _zpracujRezervaciZPlanovace() async {
     final id = rezervaceKeZpracovani.value;
     if (id == null) return;
@@ -224,6 +237,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
+  /// Načte databázi značek a modelů z Firestore (kolekce 'znacka').
+  /// Výsledek se použije pro autocomplete na straně 1 a pro loga v dropdownu.
   Future<void> _nactiDatabaziZnacek() async {
     try {
       final snapshot =
@@ -265,6 +280,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     });
   }
 
+  /// Načte výchozí nastavení servisu — konkrétně příznak „automaticky odesílat e-maily",
+  /// který přednaplní checkbox na poslední stránce průvodce.
   Future<void> _nactiNastaveni() async {
     if (_sId != null) {
       try {
@@ -289,7 +306,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-Future<void> _generujCisloZakazky() async {
+/// Vygeneruje unikátní číslo zakázky podle formátu nastaveného v nastavení servisu.
+  /// Čte prefix, rok/měsíc formát a délku počítadla, pak prohledá existující zakázky
+  /// a přidá o 1 vyšší číslo než dosavadní maximum ve stejné sérii.
+  Future<void> _generujCisloZakazky() async {
     setState(() => _isGeneratingCislo = true);
     try {
       if (_sId == null) return;
@@ -362,6 +382,8 @@ Future<void> _generujCisloZakazky() async {
     }
   }
 
+  /// Vyhledá vozidlo v databázi servisu podle SPZ (prefixová shoda).
+  /// Při jediném výsledku přednaplní formulář okamžitě, při více zobrazí výběrový dialog.
   Future<void> _hledatPodleSpz() async {
     final spz = _spzController.text.trim().toUpperCase().replaceAll(' ', '');
     if (spz.isEmpty) {
@@ -407,6 +429,7 @@ Future<void> _generujCisloZakazky() async {
     }
   }
 
+  /// Přenese data nalezeného vozidla (SPZ, VIN, značka…) i navázaného zákazníka do formuláře.
   Future<void> _aplikovatVybraneVozidlo(
       Map<String, dynamic> vozidloData) async {
     if (_sId == null) return;
@@ -537,6 +560,7 @@ Future<void> _generujCisloZakazky() async {
     super.dispose();
   }
 
+  /// Dotáže ARES API na IČO a přednaplní jméno a adresu zákazníka (strana 2).
   Future<void> _fetchAresData() async {
     final ico = _icoController.text.trim();
     if (ico.isEmpty || ico.length != 8) {
@@ -864,7 +888,7 @@ Future<void> _generujCisloZakazky() async {
       'fotografie_urls': imageUrlsByCategory,
       'podpis_url': podpisUrl,
       'provedene_prace': [],
-      'cas_prijeti': Timestamp.now(),
+      'cas_prijeti': FieldValue.serverTimestamp(),
     };
 
     await FirebaseFirestore.instance
@@ -1106,6 +1130,9 @@ Future<void> _generujCisloZakazky() async {
     );
   }
 
+  // ── STRANA 1: Identifikace vozidla ──────────────────────────────────────
+  // Pole: SPZ (s vyhledáváním v databázi), značka + model (autocomplete + loga),
+  // VIN, rok výroby, palivo, převodovka, motorizace, poznámka.
   Widget _buildVozidloStep(bool isDark) => SingleChildScrollView(
         padding: const EdgeInsets.all(30),
         child: Column(
@@ -1232,7 +1259,7 @@ Future<void> _generujCisloZakazky() async {
                         boxShadow: [
                           if (!isDark)
                             BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4))
                         ],
@@ -1324,7 +1351,7 @@ Future<void> _generujCisloZakazky() async {
                         boxShadow: [
                           if (!isDark)
                             BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4))
                         ],
@@ -1406,6 +1433,9 @@ Future<void> _generujCisloZakazky() async {
         ),
       );
 
+  // ── STRANA 2: Zákazník ──────────────────────────────────────────────────
+  // Pole: jméno/firma, IČO (s ARES dotazem), ulice, město, PSČ, telefon, e-mail.
+  // Při zadání IČO se přednaplní jméno a adresa z ARES registru.
   Widget _buildZakaznikStep(bool isDark) => SingleChildScrollView(
         padding: const EdgeInsets.all(30),
         child: Column(
@@ -1506,6 +1536,9 @@ Future<void> _generujCisloZakazky() async {
         ),
       );
 
+  // ── STRANA 3: Stav vozidla při příjmu ───────────────────────────────────
+  // Pole: tachometr (km), stav nádrže (slider 0–100 %), STK (měsíc/rok),
+  // hloubka pneu (LP/PP/LZ/PZ), zaznamenané poškození (checkboxy + textové pole).
   Widget _buildCheckStep(bool isDark) => SingleChildScrollView(
         padding: const EdgeInsets.all(30),
         child: Column(
@@ -1762,6 +1795,9 @@ Future<void> _generujCisloZakazky() async {
         ),
       );
 
+  // ── STRANA 4: Fotodokumentace ────────────────────────────────────────────
+  // Fotky se řadí do kategorií (Karosérie, Motor, Interiér…).
+  // Nahrávají se do Firebase Storage; URL se ukládají do mapy _categoryImages.
   Widget _buildPhotoStep(bool isDark) => Padding(
         padding: const EdgeInsets.all(30),
         child: Column(
@@ -1877,6 +1913,9 @@ Future<void> _generujCisloZakazky() async {
         ),
       );
 
+  // ── STRANA 5: Požadované práce ───────────────────────────────────────────
+  // Textová pole pro volný popis + rychlé čipy z katalogu úkonů servisu.
+  // Každý řádek = jeden požadavek zákazníka; lze přidávat/mazat dynamicky.
   Widget _buildPraceStep(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
@@ -1959,6 +1998,10 @@ Future<void> _generujCisloZakazky() async {
     );
   }
 
+  // ── STRANA 6: Podpis a odeslání ─────────────────────────────────────────
+  // Zákazník podepíše prstem na SignatureController plátno.
+  // Po potvrzení se: podpis nahraje do Storage, zakázka zapíše do Firestore,
+  // vygeneruje PDF protokol a volitelně se odešle zákazníkovi e-mailem.
   Widget _buildPodpisStep(bool isDark) {
     final validniPozadavky =
         _pozadavkyControllers.where((c) => c.text.trim().isNotEmpty).toList();
@@ -2077,6 +2120,7 @@ Future<void> _generujCisloZakazky() async {
     );
   }
 
+  // ── Spodní navigační panel (Zpět / Další / Dokončit) ────────────────────
   Widget _buildBottomPanel(bool isDark) => Container(
         padding: const EdgeInsets.fromLTRB(30, 20, 30, 30),
         decoration: BoxDecoration(

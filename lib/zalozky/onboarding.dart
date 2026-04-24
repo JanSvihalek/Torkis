@@ -27,6 +27,12 @@ class _UkonData {
   }
 }
 
+// Průvodce prvním spuštěním (onboarding) — zobrazí se novému uživateli místo hlavní obrazovky.
+// Po dokončení se vše uloží batch zápisem do Firestore a uživatel je přesměrován do aplikace.
+// Kroky:
+//   1) Informace o servisu + profil majitele (admin účet)
+//   2) Fakturace: DPH, banka, formát číslování zakázek a faktur
+//   3) Přednastavený katalog úkonů (název, cena, čas, kategorie)
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
 
@@ -624,6 +630,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     );
   }
 
+  // ── KROK 1: Základní informace ──────────────────────────────────────────
+  // IČO (ARES lookup), název servisu, zápis v rejstříku, e-mail, přepínač e-mailů,
+  // tmavý režim, jméno majitele (vytvoří se jako admin účet v kolekci 'uzivatele').
   Widget _buildStep1(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
@@ -825,6 +834,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       ),
     );
   }
+  // ── KROK 2: Fakturace a číslování ───────────────────────────────────────
+  // Hodinová sazba, plátce DPH + DIČ, číslo bankovního účtu,
+  // konfigurátor formátu čísel zakázek a faktur (prefix, rok, měsíc, délka počítadla).
   Widget _buildStep2(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
@@ -981,6 +993,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     );
   }
 
+  // ── KROK 3: Katalog úkonů ───────────────────────────────────────────────
+  // Přednastavené úkony servisu — každý má název, cenu bez DPH, odhadovaný čas,
+  // jednotku času (hod/min) a kategorii. Uloží se do samostatné kolekce 'ukony'.
   Widget _buildStep3(bool isDark) {
     return ListView(
       padding: const EdgeInsets.all(30),
