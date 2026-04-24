@@ -9,6 +9,7 @@ import 'main_screen.dart';
 // --- NOVÉ: GLOBÁLNÍ PROMĚNNÉ PRO CELOU APLIKACI ---
 String? globalServisId;
 String? globalUserRole;
+Map<String, bool> globalPrava = {};
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -54,9 +55,10 @@ class AuthGate extends StatelessWidget {
             if (userSnap.hasData && userSnap.data!.exists) {
               final userData = userSnap.data!.data() as Map<String, dynamic>;
 
-              // ULOŽÍME ID SERVISU A ROLI DO PAMĚTI PRO ZBYTEK APLIKACE
+              // ULOŽÍME ID SERVISU, ROLI A PRÁVA DO PAMĚTI PRO ZBYTEK APLIKACE
               globalServisId = userData['servis_id'];
               globalUserRole = userData['role'];
+              globalPrava = Map<String, bool>.from(userData['prava'] ?? {});
 
               return const MainScreen();
             }

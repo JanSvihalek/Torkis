@@ -45,6 +45,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   final _icoController = TextEditingController();
   final _registraceController = TextEditingController();
   final _emailServisuController = TextEditingController();
+  final _jmenoMajiteleController = TextEditingController();
 
   // KROK 2: Fakturace a Ceny
   final _sazbaController = TextEditingController();
@@ -100,6 +101,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     _icoController.dispose();
     _registraceController.dispose();
     _emailServisuController.dispose();
+    _jmenoMajiteleController.dispose();
     _sazbaController.dispose();
     _bankaController.dispose();
     _dicController.dispose();
@@ -241,7 +243,16 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           'email': user.email,
           'role': 'admin',
           'servis_id': user.uid,
-          'jmeno': _nazevController.text.trim(),
+          'jmeno': _jmenoMajiteleController.text.trim().isNotEmpty
+              ? _jmenoMajiteleController.text.trim()
+              : (user.email ?? ''),
+          'prava': {
+            'zakazky': true,
+            'sklad': true,
+            'fakturace': true,
+            'zamestnanci': true,
+            'nastaveni': true,
+          },
           'vytvoreno': FieldValue.serverTimestamp(),
         });
 
@@ -757,6 +768,35 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               value: _defaultOdeslatEmaily,
               activeColor: Colors.blue,
               onChanged: (val) => setState(() => _defaultOdeslatEmaily = val),
+            ),
+          ),
+          const SizedBox(height: 30),
+          const Divider(),
+          const SizedBox(height: 20),
+          const Text('Váš účet (administrátor)',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 5),
+          const Text(
+              'Zadejte své jméno — budete přidáni jako hlavní správce servisu.',
+              style: TextStyle(fontSize: 13, color: Colors.grey)),
+          const SizedBox(height: 15),
+          TextField(
+            controller: _jmenoMajiteleController,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Jméno a příjmení *',
+              hintText: 'Např. Jan Novák',
+              prefixIcon: const Icon(Icons.person, color: Colors.blue),
+              filled: true,
+              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+              enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
           ),
           const SizedBox(height: 15),

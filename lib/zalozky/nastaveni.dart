@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart'; // Přidáno pro živý náhled data v konfigurátoru
 
-import 'auth_screen.dart';
 import '../core/constants.dart';
 import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
 import 'main_screen.dart'; // Kvůli navOrderNotifier
@@ -162,36 +161,6 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isSaving = false);
   }
 
-  Future<void> _odhlasitSe() async {
-    bool? potvrdit = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Odhlášení'),
-        content: const Text('Opravdu se chcete odhlásit ze svého účtu?'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('ZRUŠIT')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('ODHLÁSIT',
-                style:
-                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-
-    if (potvrdit == true) {
-      await FirebaseAuth.instance.signOut();
-      if (mounted) {
-        Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const AuthScreen()),
-            (route) => false);
-      }
-    }
-  }
 
   // --- FUNKCE PRO VYKRESLENÍ DIALOGU KONFIGURACE ČÍSLOVÁNÍ ---
   void _otevritKonfiguratorCislovani(String typDokladu, bool isDark) {
@@ -633,31 +602,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ],
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _odhlasitSe,
-                  icon: const Icon(Icons.logout),
-                  label: const Text('ODHLÁSIT SE',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold, letterSpacing: 1)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isDark ? const Color(0xFF3A1C1C) : Colors.red[50],
-                    foregroundColor: Colors.redAccent,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      side:
-                          const BorderSide(color: Colors.redAccent, width: 1.5),
-                    ),
-                  ),
-                ),
               ),
 
               const SizedBox(height: 50),

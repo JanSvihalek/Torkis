@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants.dart';
 import 'auth_gate.dart';
+import 'auth_screen.dart';
 
 // Sjednocené relativní importy!
 import 'planovac.dart';
@@ -24,6 +25,31 @@ import 'sklad.dart';
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
 final ValueNotifier<List<String>> navOrderNotifier =
     ValueNotifier(['prijem', 'zakazky', 'historie', 'menu']);
+
+// Mapování nav ID na klíč v prava mapě (null = vždy viditelné)
+const Map<String, String?> _navIdPravKlic = {
+  'prijem': 'zakazky',
+  'zakazky': 'zakazky',
+  'historie': 'zakazky',
+  'planovac': 'zakazky',
+  'sklad': 'sklad',
+  'fakturace': 'fakturace',
+  'ucetnictvi': 'fakturace',
+  'statistiky': 'fakturace',
+  'zamestnanci': 'zamestnanci',
+  'nastaveni': 'nastaveni',
+  'ukony': 'nastaveni',
+  'vozidla': 'nastaveni',
+  'zakaznici': 'nastaveni',
+  'menu': null,
+};
+
+bool maPristup(String navId) {
+  if (globalUserRole == 'admin') return true;
+  final klic = _navIdPravKlic[navId];
+  if (klic == null) return true;
+  return globalPrava[klic] ?? false;
+}
 
 // DÁLKOVÝ OVLADAČ PRO PŘEPÍNÁNÍ ZÁLOŽEK ZVENČÍ
 final ValueNotifier<String?> globalSwitchTabNotifier = ValueNotifier(null);
@@ -155,13 +181,22 @@ class _MainScreenState extends State<MainScreen> {
     return ValueListenableBuilder<List<String>>(
         valueListenable: navOrderNotifier,
         builder: (context, navOrder, child) {
-          int currentIndex = navOrder.indexOf(_currentTabId);
-          if (currentIndex == -1) currentIndex = 0;
+          final filteredNavOrder =
+              navOrder.where((id) => maPristup(id)).toList();
+
+          int currentIndex = filteredNavOrder.indexOf(_currentTabId);
+          if (currentIndex == -1) {
+            currentIndex = 0;
+            if (filteredNavOrder.isNotEmpty) {
+              Future.microtask(
+                  () => setState(() => _currentTabId = filteredNavOrder.first));
+            }
+          }
 
           final List<Widget> currentPages =
-              navOrder.map((id) => _allNavItems[id]!.page).toList();
+              filteredNavOrder.map((id) => _allNavItems[id]!.page).toList();
           final List<NavigationDestination> currentDestinations =
-              navOrder.map((id) {
+              filteredNavOrder.map((id) {
             final item = _allNavItems[id]!;
             return NavigationDestination(
               icon: Icon(item.icon),
@@ -227,12 +262,12 @@ class _MainScreenState extends State<MainScreen> {
               selectedIndex: currentIndex,
               onDestinationSelected: (index) {
                 setState(() {
-                  _currentTabId = navOrder[index];
+                  _currentTabId = filteredNavOrder[index];
                 });
               },
               backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
               indicatorColor:
-                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               destinations: currentDestinations,
             ),
@@ -260,8 +295,7 @@ class MenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final role = globalUserRole ?? 'mechanik';
-    final isAdmin = role == 'admin';
+    final role = globalUserRole ?? 'zamestnanec';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -287,37 +321,97 @@ class MenuPage extends StatelessWidget {
             crossAxisSpacing: 15,
             childAspectRatio: 1.1,
             children: [
-              _buildMenuCard(context, 'Vozidla', Icons.directions_car,
-                  Colors.teal, const VozidlaPage(), isDark),
-              _buildMenuCard(context, 'Zákazníci', Icons.people_alt,
-                  Colors.blue, const ZakazniciPage(), isDark),
-              _buildMenuCard(
-                  context,
-                  'Zakázky',
-                  Icons.build_circle,
-                  const Color.fromARGB(255, 68, 134, 70),
-                  const ServiceProgressPage(),
-                  isDark),
-              _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2,
-                  Colors.orange, const SkladPage(), isDark,
-                  hasOwnScaffold: true),
-              _buildMenuCard(context, 'Faktury', Icons.receipt_long,
-                  Colors.green, const FakturacePage(), isDark),
-              _buildMenuCard(context, 'Plánování', Icons.calendar_today,
-                  Colors.green, const PlanovacPage(), isDark),
-              _buildMenuCard(context, 'Úkony', Icons.playlist_add_check_circle,
-                  Colors.deepOrange, const UkonyPage(), isDark),
-              _buildMenuCard(context, 'Zaměstnanci', Icons.badge,
-                  Colors.redAccent, const ZamestnanciPage(), isDark),
-              _buildMenuCard(context, 'Účetnictví', Icons.pie_chart,
-                  Colors.indigo, const UcetnictviPage(), isDark),
-              _buildMenuCard(context, 'Statistiky', Icons.bar_chart,
-                  Colors.purple, const StatisticsPage(), isDark),
-              _buildMenuCard(context, 'Nastavení', Icons.settings,
-                  Colors.blueGrey, const SettingsPage(), isDark),
+              if (maPristup('vozidla'))
+                _buildMenuCard(context, 'Vozidla', Icons.directions_car,
+                    Colors.teal, const VozidlaPage(), isDark),
+              if (maPristup('zakaznici'))
+                _buildMenuCard(context, 'Zákazníci', Icons.people_alt,
+                    Colors.blue, const ZakazniciPage(), isDark),
+              if (maPristup('zakazky'))
+                _buildMenuCard(
+                    context,
+                    'Zakázky',
+                    Icons.build_circle,
+                    const Color.fromARGB(255, 68, 134, 70),
+                    const ServiceProgressPage(),
+                    isDark),
+              if (maPristup('sklad'))
+                _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2,
+                    Colors.orange, const SkladPage(), isDark,
+                    hasOwnScaffold: true),
+              if (maPristup('fakturace'))
+                _buildMenuCard(context, 'Faktury', Icons.receipt_long,
+                    Colors.green, const FakturacePage(), isDark),
+              if (maPristup('planovac'))
+                _buildMenuCard(context, 'Plánování', Icons.calendar_today,
+                    Colors.green, const PlanovacPage(), isDark),
+              if (maPristup('ukony'))
+                _buildMenuCard(
+                    context,
+                    'Úkony',
+                    Icons.playlist_add_check_circle,
+                    Colors.deepOrange,
+                    const UkonyPage(),
+                    isDark),
+              if (maPristup('zamestnanci'))
+                _buildMenuCard(context, 'Zaměstnanci', Icons.badge,
+                    Colors.redAccent, const ZamestnanciPage(), isDark),
+              if (maPristup('ucetnictvi'))
+                _buildMenuCard(context, 'Účetnictví', Icons.pie_chart,
+                    Colors.indigo, const UcetnictviPage(), isDark),
+              if (maPristup('statistiky'))
+                _buildMenuCard(context, 'Statistiky', Icons.bar_chart,
+                    Colors.purple, const StatisticsPage(), isDark),
+              if (maPristup('nastaveni'))
+                _buildMenuCard(context, 'Nastavení', Icons.settings,
+                    Colors.blueGrey, const SettingsPage(), isDark),
             ],
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final potvrdit = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Odhlášení'),
+                    content: const Text('Opravdu se chcete odhlásit?'),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('ZRUŠIT')),
+                      TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('ODHLÁSIT',
+                              style: TextStyle(color: Colors.red))),
+                    ],
+                  ),
+                );
+                if (potvrdit == true) {
+                  await FirebaseAuth.instance.signOut();
+                  if (context.mounted) {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AuthScreen()),
+                      (route) => false,
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.logout, color: Colors.red),
+              label: const Text('Odhlásit se',
+                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 30),
         ],
       ),
     );
@@ -352,13 +446,13 @@ class MenuPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: isLocked
-                  ? Colors.grey.withOpacity(0.2)
-                  : color.withOpacity(0.3),
+                  ? Colors.grey.withValues(alpha: 0.2)
+                  : color.withValues(alpha: 0.3),
               width: 2),
           boxShadow: [
             if (!isDark)
               BoxShadow(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 5))
           ],

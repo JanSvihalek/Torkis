@@ -87,7 +87,9 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                     final docId = docs[index].id;
                     final String jmeno = data['jmeno'] ?? 'Bez jména';
                     final String email = data['email'] ?? '-';
-                    
+                    final String role = data['role'] ?? 'zamestnanec';
+                    final bool jeAdmin = role == 'admin';
+
                     // Bezpečné načtení práv
                     final Map<String, dynamic> prava = data['prava'] ?? {
                       'zakazky': true,
@@ -101,12 +103,10 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                     prava.forEach((key, value) {
                       if (value == true) aktivniModuly.add(_prelozModul(key));
                     });
-                    
-                    String podnadpis = aktivniModuly.isEmpty 
-                        ? 'Bez přístupu' 
-                        : 'Přístup: ${aktivniModuly.join(', ')}';
 
-                    bool jeAdmin = aktivniModuly.length >= 5;
+                    String podnadpis = aktivniModuly.isEmpty
+                        ? 'Bez přístupu'
+                        : 'Přístup: ${aktivniModuly.join(', ')}';
 
                     return Card(
                       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -121,13 +121,34 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                             color: jeAdmin ? Colors.red : Colors.blue
                           ),
                         ),
-                        title: Text(jmeno, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Row(
+                          children: [
+                            Expanded(child: Text(jmeno, style: const TextStyle(fontWeight: FontWeight.bold))),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: jeAdmin ? Colors.red.withValues(alpha: 0.1) : Colors.blue.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                jeAdmin ? 'Admin' : 'Zaměstnanec',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: jeAdmin ? Colors.red : Colors.blue,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                         subtitle: Text('$email\n$podnadpis', style: const TextStyle(fontSize: 12)),
                         isThreeLine: true,
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () => _showEditPravaDialog(context, docId, jmeno, prava),
-                        ),
+                        trailing: jeAdmin
+                            ? const Icon(Icons.lock_outline, color: Colors.grey)
+                            : IconButton(
+                                icon: const Icon(Icons.edit_outlined),
+                                onPressed: () => _showEditPravaDialog(context, docId, jmeno, prava),
+                              ),
                       ),
                     );
                   },
@@ -285,9 +306,11 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
 
                         // 3. Uložení práv do Firestore přímo pod jeho vygenerovaným UID
                         await FirebaseFirestore.instance.collection('uzivatele').doc(novyUid).set({
+                          'uid': novyUid,
                           'jmeno': jmenoCtrl.text.trim(),
                           'email': emailCtrl.text.trim(),
                           'servis_id': globalServisId,
+                          'role': 'zamestnanec',
                           'prava': novaPrava,
                           'vytvoreno': FieldValue.serverTimestamp(),
                         });
