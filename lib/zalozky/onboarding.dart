@@ -182,15 +182,25 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   ? 'FAK'
                   : _prefixFakturaController.text.trim().toUpperCase(),
               'maska_zakazka': _vygenerujMasku(
-                  _prefixZakazkaController.text.trim().isEmpty ? 'ZAK' : _prefixZakazkaController.text.trim().toUpperCase(),
-                  _zakazkaRokFormat, _zakazkaMessicFormat, _zakazkaOddelovac, _zakazkaDelkaPocitadla.toInt()),
+                  _prefixZakazkaController.text.trim().isEmpty
+                      ? 'ZAK'
+                      : _prefixZakazkaController.text.trim().toUpperCase(),
+                  _zakazkaRokFormat,
+                  _zakazkaMessicFormat,
+                  _zakazkaOddelovac,
+                  _zakazkaDelkaPocitadla.toInt()),
               'cfg_rok_zakazka': _zakazkaRokFormat,
               'cfg_mesic_zakazka': _zakazkaMessicFormat,
               'cfg_oddelovac_zakazka': _zakazkaOddelovac,
               'cfg_delka_zakazka': _zakazkaDelkaPocitadla.toInt(),
               'maska_faktura': _vygenerujMasku(
-                  _prefixFakturaController.text.trim().isEmpty ? 'FAK' : _prefixFakturaController.text.trim().toUpperCase(),
-                  _fakturaRokFormat, _fakturaMessicFormat, _fakturaOddelovac, _fakturaDelkaPocitadla.toInt()),
+                  _prefixFakturaController.text.trim().isEmpty
+                      ? 'FAK'
+                      : _prefixFakturaController.text.trim().toUpperCase(),
+                  _fakturaRokFormat,
+                  _fakturaMessicFormat,
+                  _fakturaOddelovac,
+                  _fakturaDelkaPocitadla.toInt()),
               'cfg_rok_faktura': _fakturaRokFormat,
               'cfg_mesic_faktura': _fakturaMessicFormat,
               'cfg_oddelovac_faktura': _fakturaOddelovac,
@@ -383,7 +393,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     );
   }
 
-  String _vygenerujMasku(String prefix, String rokFormat, String mesicFormat, String oddelovac, int delka) {
+  String _vygenerujMasku(String prefix, String rokFormat, String mesicFormat,
+      String oddelovac, int delka) {
     List<String> casti = [];
     if (prefix.isNotEmpty) casti.add('{PREFIX}');
     if (rokFormat.isNotEmpty) casti.add(rokFormat);
@@ -392,9 +403,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     return casti.join(oddelovac);
   }
 
-  String _vygenerujNahled(String prefix, String rokFormat, String mesicFormat, String oddelovac, int delka) {
+  String _vygenerujNahled(String prefix, String rokFormat, String mesicFormat,
+      String oddelovac, int delka) {
     final ted = DateTime.now();
-    String nahled = _vygenerujMasku(prefix, rokFormat, mesicFormat, oddelovac, delka);
+    String nahled =
+        _vygenerujMasku(prefix, rokFormat, mesicFormat, oddelovac, delka);
     nahled = nahled.replaceAll('{PREFIX}', prefix.toUpperCase());
     nahled = nahled.replaceAll('{YYYY}', DateFormat('yyyy').format(ted));
     nahled = nahled.replaceAll('{YY}', DateFormat('yy').format(ted));
@@ -421,19 +434,24 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     final prefix = prefixCtrl.text.trim().isEmpty
         ? (nazev == 'Faktury' ? 'FAK' : 'ZAK')
         : prefixCtrl.text.trim().toUpperCase();
-    final nahled = _vygenerujNahled(prefix, rokFormat, mesicFormat, oddelovac, delkaPocitadla.toInt());
+    final nahled = _vygenerujNahled(
+        prefix, rokFormat, mesicFormat, oddelovac, delkaPocitadla.toInt());
 
     final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
     final fillColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[50]!;
-    final inputBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(10));
-    final enabledBorder = OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: borderColor));
+    final inputBorder =
+        OutlineInputBorder(borderRadius: BorderRadius.circular(10));
+    final enabledBorder = OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: borderColor));
 
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+        border:
+            Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,7 +460,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             children: [
               Icon(ikona, color: barva, size: 20),
               const SizedBox(width: 8),
-              Text(nazev, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: barva)),
+              Text(nazev,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16, color: barva)),
             ],
           ),
           const SizedBox(height: 12),
@@ -450,15 +470,24 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
             decoration: BoxDecoration(
-              color: barva.withValues(alpha: 0.05),
+              color: barva.withOpacity(0.05),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: barva.withValues(alpha: 0.3)),
+              border: Border.all(color: barva.withOpacity(0.3)),
             ),
             child: Column(
               children: [
-                Text('Náhled:', style: TextStyle(color: barva, fontSize: 12, fontWeight: FontWeight.bold)),
+                Text('Náhled:',
+                    style: TextStyle(
+                        color: barva,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
                 const SizedBox(height: 4),
-                Text(nahled, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: barva)),
+                Text(nahled,
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        color: barva)),
               ],
             ),
           ),
@@ -515,8 +544,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     enabledBorder: enabledBorder,
                   ),
                   items: const [
-                    DropdownMenuItem(value: '{YYYY}', child: Text('4 cifry (2026)')),
-                    DropdownMenuItem(value: '{YY}', child: Text('2 cifry (26)')),
+                    DropdownMenuItem(
+                        value: '{YYYY}', child: Text('4 cifry (2026)')),
+                    DropdownMenuItem(
+                        value: '{YY}', child: Text('2 cifry (26)')),
                     DropdownMenuItem(value: '', child: Text('Bez roku')),
                   ],
                   onChanged: (val) => onRokChanged(val!),
@@ -534,7 +565,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     enabledBorder: enabledBorder,
                   ),
                   items: const [
-                    DropdownMenuItem(value: '{MM}', child: Text('2 cifry (04)')),
+                    DropdownMenuItem(
+                        value: '{MM}', child: Text('2 cifry (04)')),
                     DropdownMenuItem(value: '', child: Text('Bez měsíce')),
                   ],
                   onChanged: (val) => onMesicChanged(val!),
@@ -543,7 +575,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Text('Délka pořadového čísla: ${delkaPocitadla.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text('Délka pořadového čísla: ${delkaPocitadla.toInt()}',
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           Slider(
             value: delkaPocitadla,
             min: 3,
@@ -730,7 +764,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       ),
     );
   }
-
   Widget _buildStep2(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
@@ -858,8 +891,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             delkaPocitadla: _zakazkaDelkaPocitadla,
             onRokChanged: (val) => setState(() => _zakazkaRokFormat = val),
             onMesicChanged: (val) => setState(() => _zakazkaMessicFormat = val),
-            onOddelovacChanged: (val) => setState(() => _zakazkaOddelovac = val),
-            onDelkaChanged: (val) => setState(() => _zakazkaDelkaPocitadla = val),
+            onOddelovacChanged: (val) =>
+                setState(() => _zakazkaOddelovac = val),
+            onDelkaChanged: (val) =>
+                setState(() => _zakazkaDelkaPocitadla = val),
             isDark: isDark,
           ),
           const SizedBox(height: 15),
@@ -874,8 +909,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             delkaPocitadla: _fakturaDelkaPocitadla,
             onRokChanged: (val) => setState(() => _fakturaRokFormat = val),
             onMesicChanged: (val) => setState(() => _fakturaMessicFormat = val),
-            onOddelovacChanged: (val) => setState(() => _fakturaOddelovac = val),
-            onDelkaChanged: (val) => setState(() => _fakturaDelkaPocitadla = val),
+            onOddelovacChanged: (val) =>
+                setState(() => _fakturaOddelovac = val),
+            onDelkaChanged: (val) =>
+                setState(() => _fakturaDelkaPocitadla = val),
             isDark: isDark,
           ),
         ],

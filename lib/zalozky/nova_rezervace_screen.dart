@@ -33,13 +33,13 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
 
   String? _vybranyUkon;
   List<String> _dostupneUkony = [];
-  Map<String, double> _delkyUkonu = {}; 
-  bool _isLoadingUkony = true; 
-  
+  Map<String, double> _delkyUkonu = {};
+  bool _isLoadingUkony = true;
+
   late DateTime _datumRezervace;
   TimeOfDay _casOd = const TimeOfDay(hour: 8, minute: 0);
   TimeOfDay _casDo = const TimeOfDay(hour: 9, minute: 0);
-  
+
   bool _isLoading = false;
   bool _isLoadingSpz = false;
 
@@ -72,7 +72,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
       if (mounted) setState(() => _isLoadingUkony = false);
       return;
     }
-    
+
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('ukony')
@@ -94,8 +94,8 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
             nacteneDelky[nazev] = cas;
           }
         }
-        
-        nacteneUkony.sort(); 
+
+        nacteneUkony.sort();
 
         if (mounted) {
           setState(() {
@@ -135,27 +135,35 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
 
   Future<void> _scanText(TextEditingController controller) async {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Skenování pomocí AI funguje pouze v aplikaci.'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Skenování pomocí AI funguje pouze v aplikaci.'),
+          backgroundColor: Colors.orange));
       return;
     }
     try {
       final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
       if (photo == null) return;
       final inputImage = InputImage.fromFilePath(photo.path);
-      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+      final textRecognizer =
+          TextRecognizer(script: TextRecognitionScript.latin);
       final recognizedText = await textRecognizer.processImage(inputImage);
-      String result = recognizedText.text.replaceAll(RegExp(r'[^A-Z0-9]'), '').toUpperCase();
+      String result = recognizedText.text
+          .replaceAll(RegExp(r'[^A-Z0-9]'), '')
+          .toUpperCase();
       setState(() => controller.text = result);
       textRecognizer.close();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chyba skenování: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Chyba skenování: $e'), backgroundColor: Colors.red));
     }
   }
 
   Future<void> _hledatPodleSpz() async {
     final spz = _spzController.text.trim().toUpperCase().replaceAll(' ', '');
     if (spz.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zadejte alespoň část SPZ pro vyhledání.'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Zadejte alespoň část SPZ pro vyhledání.'),
+          backgroundColor: Colors.orange));
       return;
     }
 
@@ -163,18 +171,25 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
 
     try {
       if (_sId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Chyba: ID Servisu se nepodařilo načíst.'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Chyba: ID Servisu se nepodařilo načíst.'),
+            backgroundColor: Colors.red));
         return;
       }
 
-      final vozidlaQuery = await FirebaseFirestore.instance.collection('vozidla').where('servis_id', isEqualTo: _sId).get();
+      final vozidlaQuery = await FirebaseFirestore.instance
+          .collection('vozidla')
+          .where('servis_id', isEqualTo: _sId)
+          .get();
       final nalezenaVozidla = vozidlaQuery.docs.map((d) => d.data()).where((v) {
         final ulozenoSpz = (v['spz'] ?? '').toString().toUpperCase();
         return ulozenoSpz.startsWith(spz);
       }).toList();
 
       if (nalezenaVozidla.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Žádné vozidlo s touto SPZ nebylo nalezeno.'), backgroundColor: Colors.blueGrey));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Žádné vozidlo s touto SPZ nebylo nalezeno.'),
+            backgroundColor: Colors.blueGrey));
         return;
       }
 
@@ -184,13 +199,16 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
         _otevritVyberNalezenychVozidel(nalezenaVozidla);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chyba při vyhledávání: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Chyba při vyhledávání: $e'),
+          backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoadingSpz = false);
     }
   }
 
-  Future<void> _aplikovatVybraneVozidlo(Map<String, dynamic> vozidloData) async {
+  Future<void> _aplikovatVybraneVozidlo(
+      Map<String, dynamic> vozidloData) async {
     if (_sId == null) return;
 
     setState(() {
@@ -221,7 +239,9 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Údaje o vozidle a zákazníkovi byly načteny.'), backgroundColor: Colors.green));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Údaje o vozidle a zákazníkovi byly načteny.'),
+          backgroundColor: Colors.green));
     }
   }
 
@@ -238,11 +258,18 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10))),
             const SizedBox(height: 20),
-            const Text('Nalezeno více vozidel', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const Text('Nalezeno více vozidel',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            const Text('Vyberte konkrétní vozidlo ze seznamu:', style: TextStyle(color: Colors.grey)),
+            const Text('Vyberte konkrétní vozidlo ze seznamu:',
+                style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 15),
             Expanded(
               child: ListView.separated(
@@ -251,8 +278,12 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                 itemBuilder: (context, index) {
                   final v = vozidla[index];
                   return ListTile(
-                    leading: const CircleAvatar(backgroundColor: Colors.blue, foregroundColor: Colors.white, child: Icon(Icons.directions_car)),
-                    title: Text(v['spz'] ?? 'Neznámá SPZ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    leading: const CircleAvatar(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        child: Icon(Icons.directions_car)),
+                    title: Text(v['spz'] ?? 'Neznámá SPZ',
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text('${v['znacka'] ?? ''} ${v['model'] ?? ''}'),
                     onTap: () {
                       Navigator.pop(context);
@@ -299,8 +330,11 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
   }
 
   Future<void> _ulozitRezervaci() async {
-    if (_spzController.text.trim().isEmpty || _vybranyUkon == null || _zakaznikController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Zadejte minimálně SPZ, jméno a vyberte úkon.')));
+    if (_spzController.text.trim().isEmpty ||
+        _vybranyUkon == null ||
+        _zakaznikController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Zadejte minimálně SPZ, jméno a vyberte úkon.')));
       return;
     }
 
@@ -321,17 +355,24 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
         'nazev_ukonu': _vybranyUkon,
         'stav': 'Naplánováno',
         'datum': DateFormat('yyyy-MM-dd').format(_datumRezervace),
-        'cas_od': '${_casOd.hour.toString().padLeft(2, '0')}:${_casOd.minute.toString().padLeft(2, '0')}',
-        'cas_do': '${_casDo.hour.toString().padLeft(2, '0')}:${_casDo.minute.toString().padLeft(2, '0')}',
+        'cas_od':
+            '${_casOd.hour.toString().padLeft(2, '0')}:${_casOd.minute.toString().padLeft(2, '0')}',
+        'cas_do':
+            '${_casDo.hour.toString().padLeft(2, '0')}:${_casDo.minute.toString().padLeft(2, '0')}',
         'zakazka_doc_id': null,
       });
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rezervace byla přidána do plánovače.'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Rezervace byla přidána do plánovače.'),
+            backgroundColor: Colors.green));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chyba při ukládání: $e'), backgroundColor: Colors.red));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Chyba při ukládání: $e'),
+            backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -344,7 +385,8 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Nová rezervace', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Nová rezervace',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -358,7 +400,10 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
               _buildSectionTitle('1. Termín a úkon', Icons.calendar_month),
               Card(
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    side: BorderSide(
+                        color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(15),
@@ -366,24 +411,46 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                     children: [
                       DropdownButtonFormField<String>(
                         value: _vybranyUkon,
-                        decoration: _buildInputDecoration('Plánovaný úkon', Icons.build_circle, isDark),
-                        hint: Text(_isLoadingUkony ? 'Načítám úkony...' : (_dostupneUkony.isEmpty ? 'Žádné úkony nenalezeny' : 'Vyberte úkon')),
-                        items: _dostupneUkony.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-                        onChanged: _dostupneUkony.isEmpty ? null : (val) {
-                          setState(() {
-                            _vybranyUkon = val;
-                          });
-                          _prepocitatCasDo(val);
-                        },
+                        decoration: _buildInputDecoration(
+                            'Plánovaný úkon', Icons.build_circle, isDark),
+                        hint: Text(_isLoadingUkony
+                            ? 'Načítám úkony...'
+                            : (_dostupneUkony.isEmpty
+                                ? 'Žádné úkony nenalezeny'
+                                : 'Vyberte úkon')),
+                        items: _dostupneUkony
+                            .map((u) =>
+                                DropdownMenuItem(value: u, child: Text(u)))
+                            .toList(),
+                        onChanged: _dostupneUkony.isEmpty
+                            ? null
+                            : (val) {
+                                setState(() {
+                                  _vybranyUkon = val;
+                                });
+                                _prepocitatCasDo(val);
+                              },
                       ),
                       const SizedBox(height: 15),
                       ListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Datum rezervace', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                        subtitle: Text(DateFormat('EEEE, d. MMMM yyyy', 'cs_CZ').format(_datumRezervace), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        trailing: const Icon(Icons.edit_calendar, color: Colors.blue),
+                        title: const Text('Datum rezervace',
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        subtitle: Text(
+                            DateFormat('EEEE, d. MMMM yyyy', 'cs_CZ')
+                                .format(_datumRezervace),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
+                        trailing:
+                            const Icon(Icons.edit_calendar, color: Colors.blue),
                         onTap: () async {
-                          final d = await showDatePicker(context: context, initialDate: _datumRezervace, firstDate: DateTime.now().subtract(const Duration(days: 30)), lastDate: DateTime.now().add(const Duration(days: 365)));
+                          final d = await showDatePicker(
+                              context: context,
+                              initialDate: _datumRezervace,
+                              firstDate: DateTime.now()
+                                  .subtract(const Duration(days: 30)),
+                              lastDate: DateTime.now()
+                                  .add(const Duration(days: 365)));
                           if (d != null) setState(() => _datumRezervace = d);
                         },
                       ),
@@ -393,16 +460,25 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                           Expanded(
                             child: ListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: const Text('Od', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              subtitle: Text('${_casOd.hour.toString().padLeft(2, '0')}:${_casOd.minute.toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              trailing: const Icon(Icons.access_time, color: Colors.blue),
+                              title: const Text('Od',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey)),
+                              subtitle: Text(
+                                  '${_casOd.hour.toString().padLeft(2, '0')}:${_casOd.minute.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                              trailing: const Icon(Icons.access_time,
+                                  color: Colors.blue),
                               onTap: () async {
                                 final t = await showTimePicker(
-                                  context: context, 
+                                  context: context,
                                   initialTime: _casOd,
-                                  builder: (BuildContext context, Widget? child) {
+                                  builder:
+                                      (BuildContext context, Widget? child) {
                                     return MediaQuery(
-                                      data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+                                      data: MediaQuery.of(context).copyWith(
+                                          alwaysUse24HourFormat: true),
                                       child: child!,
                                     );
                                   },
@@ -411,7 +487,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                                   setState(() {
                                     _casOd = t;
                                   });
-                                  _prepocitatCasDo(_vybranyUkon); 
+                                  _prepocitatCasDo(_vybranyUkon);
                                 }
                               },
                             ),
@@ -420,16 +496,25 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                           Expanded(
                             child: ListTile(
                               contentPadding: EdgeInsets.zero,
-                              title: const Text('Do', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                              subtitle: Text('${_casDo.hour.toString().padLeft(2, '0')}:${_casDo.minute.toString().padLeft(2, '0')}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                              trailing: const Icon(Icons.access_time, color: Colors.blue),
+                              title: const Text('Do',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey)),
+                              subtitle: Text(
+                                  '${_casDo.hour.toString().padLeft(2, '0')}:${_casDo.minute.toString().padLeft(2, '0')}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                              trailing: const Icon(Icons.access_time,
+                                  color: Colors.blue),
                               onTap: () async {
                                 final t = await showTimePicker(
-                                  context: context, 
+                                  context: context,
                                   initialTime: _casDo,
-                                  builder: (BuildContext context, Widget? child) {
+                                  builder:
+                                      (BuildContext context, Widget? child) {
                                     return MediaQuery(
-                                      data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+                                      data: MediaQuery.of(context).copyWith(
+                                          alwaysUse24HourFormat: true),
                                       child: child!,
                                     );
                                   },
@@ -445,9 +530,8 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                 ),
               ),
               const SizedBox(height: 25),
-
-              _buildSectionTitle('2. Identifikace vozidla', Icons.directions_car),
-              
+              _buildSectionTitle(
+                  '2. Identifikace vozidla', Icons.directions_car),
               if (_nalezenaVozidla.isNotEmpty) ...[
                 Container(
                   width: double.infinity,
@@ -462,30 +546,44 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.directions_car, color: Colors.blue, size: 20),
+                          Icon(Icons.directions_car,
+                              color: Colors.blue, size: 20),
                           SizedBox(width: 8),
-                          Text('Uložená vozidla zákazníka:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
+                          Text('Uložená vozidla zákazníka:',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue)),
                         ],
                       ),
                       const SizedBox(height: 10),
                       Wrap(
-                        spacing: 8, runSpacing: 8,
-                        children: _nalezenaVozidla.map((v) => ActionChip(
-                          backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
-                          side: const BorderSide(color: Colors.blue),
-                          label: Text('${v['spz']} ${v['znacka'] != null ? '(${v['znacka']})' : ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          onPressed: () => _aplikovatVybraneVozidlo(v),
-                        )).toList(),
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _nalezenaVozidla
+                            .map((v) => ActionChip(
+                                  backgroundColor: isDark
+                                      ? const Color(0xFF2C2C2C)
+                                      : Colors.white,
+                                  side: const BorderSide(color: Colors.blue),
+                                  label: Text(
+                                      '${v['spz']} ${v['znacka'] != null ? '(${v['znacka']})' : ''}',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  onPressed: () => _aplikovatVybraneVozidlo(v),
+                                ))
+                            .toList(),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 15),
               ],
-
               Card(
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    side: BorderSide(
+                        color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(15),
@@ -497,34 +595,64 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                         decoration: InputDecoration(
                           labelText: 'SPZ vozidla',
                           labelStyle: const TextStyle(fontSize: 14),
-                          prefixIcon: const Icon(Icons.directions_car, color: Colors.blueGrey, size: 20),
+                          prefixIcon: const Icon(Icons.directions_car,
+                              color: Colors.blueGrey, size: 20),
                           suffixIcon: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              IconButton(icon: const Icon(Icons.document_scanner), onPressed: () => _scanText(_spzController), tooltip: 'Skenovat SPZ'),
+                              IconButton(
+                                  icon: const Icon(Icons.document_scanner),
+                                  onPressed: () => _scanText(_spzController),
+                                  tooltip: 'Skenovat SPZ'),
                               _isLoadingSpz
-                                  ? const Padding(padding: EdgeInsets.all(14.0), child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)))
-                                  : IconButton(icon: const Icon(Icons.search, color: Colors.blue), onPressed: _hledatPodleSpz, tooltip: 'Hledat auto v databázi'),
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(14.0),
+                                      child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2)))
+                                  : IconButton(
+                                      icon: const Icon(Icons.search,
+                                          color: Colors.blue),
+                                      onPressed: _hledatPodleSpz,
+                                      tooltip: 'Hledat auto v databázi'),
                             ],
                           ),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                          fillColor: isDark
+                              ? const Color(0xFF2C2C2C)
+                              : Colors.grey[100],
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 15),
                         ),
                       ),
                       const SizedBox(height: 15),
                       TextField(
                         controller: _vinController,
                         textCapitalization: TextCapitalization.characters,
-                        decoration: _buildInputDecoration('VIN kód (nepovinné)', Icons.pin, isDark),
+                        decoration: _buildInputDecoration(
+                            'VIN kód (nepovinné)', Icons.pin, isDark),
                       ),
                       const SizedBox(height: 15),
                       Row(
                         children: [
-                          Expanded(child: TextField(controller: _znackaController, decoration: _buildInputDecoration('Značka', Icons.directions_car_filled_outlined, isDark))),
+                          Expanded(
+                              child: TextField(
+                                  controller: _znackaController,
+                                  decoration: _buildInputDecoration(
+                                      'Značka',
+                                      Icons.directions_car_filled_outlined,
+                                      isDark))),
                           const SizedBox(width: 10),
-                          Expanded(child: TextField(controller: _modelController, decoration: _buildInputDecoration('Model', Icons.info_outline, isDark))),
+                          Expanded(
+                              child: TextField(
+                                  controller: _modelController,
+                                  decoration: _buildInputDecoration(
+                                      'Model', Icons.info_outline, isDark))),
                         ],
                       ),
                     ],
@@ -532,11 +660,13 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                 ),
               ),
               const SizedBox(height: 25),
-
               _buildSectionTitle('3. Údaje o zákazníkovi', Icons.person),
               Card(
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                    side: BorderSide(
+                        color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
                 color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(15),
@@ -547,26 +677,47 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                         decoration: InputDecoration(
                           labelText: 'Jméno a příjmení / Název firmy',
                           labelStyle: const TextStyle(fontSize: 14),
-                          prefixIcon: const Icon(Icons.person, color: Colors.blueGrey, size: 20),
-                          suffixIcon: IconButton(icon: const Icon(Icons.person_search, color: Colors.blue), onPressed: _otevritVyberZakaznika, tooltip: 'Hledat uloženého zákazníka'),
+                          prefixIcon: const Icon(Icons.person,
+                              color: Colors.blueGrey, size: 20),
+                          suffixIcon: IconButton(
+                              icon: const Icon(Icons.person_search,
+                                  color: Colors.blue),
+                              onPressed: _otevritVyberZakaznika,
+                              tooltip: 'Hledat uloženého zákazníka'),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                          fillColor: isDark
+                              ? const Color(0xFF2C2C2C)
+                              : Colors.grey[100],
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 15),
                         ),
                       ),
                       const SizedBox(height: 15),
                       TextField(
                         controller: _icoController,
                         keyboardType: TextInputType.number,
-                        decoration: _buildInputDecoration('IČO (pro firmy)', Icons.business, isDark),
+                        decoration: _buildInputDecoration(
+                            'IČO (pro firmy)', Icons.business, isDark),
                       ),
                       const SizedBox(height: 15),
                       Row(
                         children: [
-                          Expanded(child: TextField(controller: _telefonController, keyboardType: TextInputType.phone, decoration: _buildInputDecoration('Telefon', Icons.phone, isDark))),
+                          Expanded(
+                              child: TextField(
+                                  controller: _telefonController,
+                                  keyboardType: TextInputType.phone,
+                                  decoration: _buildInputDecoration(
+                                      'Telefon', Icons.phone, isDark))),
                           const SizedBox(width: 10),
-                          Expanded(child: TextField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: _buildInputDecoration('E-mail', Icons.email, isDark))),
+                          Expanded(
+                              child: TextField(
+                                  controller: _emailController,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: _buildInputDecoration(
+                                      'E-mail', Icons.email, isDark))),
                         ],
                       ),
                     ],
@@ -574,7 +725,6 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                 ),
               ),
               const SizedBox(height: 35),
-
               SizedBox(
                 height: 60,
                 child: ElevatedButton(
@@ -582,12 +732,17 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)),
                     elevation: 5,
                   ),
-                  child: _isLoading 
-                      ? const CircularProgressIndicator(color: Colors.white) 
-                      : const Text('ULOŽIT DO KALENDÁŘE', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('ULOŽIT DO KALENDÁŘE',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5)),
                 ),
               ),
               const SizedBox(height: 40),
@@ -605,20 +760,26 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
         children: [
           Icon(icon, color: Colors.blue, size: 20),
           const SizedBox(width: 8),
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey)),
         ],
       ),
     );
   }
 
-  InputDecoration _buildInputDecoration(String label, IconData icon, bool isDark) {
+  InputDecoration _buildInputDecoration(
+      String label, IconData icon, bool isDark) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(fontSize: 14),
       prefixIcon: Icon(icon, color: Colors.blueGrey, size: 20),
       filled: true,
       fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
     );
   }
@@ -634,7 +795,7 @@ class _VyberZakaznikaSheet extends StatefulWidget {
 class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
   String? get _sId => globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
   String _hledanyText = '';
-  
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -650,35 +811,53 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+          Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10))),
           const SizedBox(height: 20),
-          const Text('Vybrat existujícího zákazníka', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text('Vybrat existujícího zákazníka',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 15),
           TextField(
-            onChanged: (val) => setState(() => _hledanyText = val.toLowerCase()),
+            onChanged: (val) =>
+                setState(() => _hledanyText = val.toLowerCase()),
             decoration: InputDecoration(
               hintText: 'Hledat podle jména, IČO, telefonu...',
               prefixIcon: const Icon(Icons.search),
               filled: true,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide.none),
             ),
           ),
           const SizedBox(height: 15),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('zakaznici').where('servis_id', isEqualTo: _sId).snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('zakaznici')
+                  .where('servis_id', isEqualTo: _sId)
+                  .snapshots(),
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                
-                final zakaznici = snapshot.data!.docs.map((d) => d.data() as Map<String, dynamic>).where((z) {
+                if (!snapshot.hasData)
+                  return const Center(child: CircularProgressIndicator());
+
+                final zakaznici = snapshot.data!.docs
+                    .map((d) => d.data() as Map<String, dynamic>)
+                    .where((z) {
                   final jmeno = (z['jmeno'] ?? '').toString().toLowerCase();
                   final ico = (z['ico'] ?? '').toString().toLowerCase();
                   final tel = (z['telefon'] ?? '').toString().toLowerCase();
-                  return jmeno.contains(_hledanyText) || ico.contains(_hledanyText) || tel.contains(_hledanyText);
+                  return jmeno.contains(_hledanyText) ||
+                      ico.contains(_hledanyText) ||
+                      tel.contains(_hledanyText);
                 }).toList();
-                
-                if (zakaznici.isEmpty) return const Center(child: Text('Žádný zákazník nenalezen.'));
-                
+
+                if (zakaznici.isEmpty)
+                  return const Center(child: Text('Žádný zákazník nenalezen.'));
+
                 return ListView.separated(
                   itemCount: zakaznici.length,
                   separatorBuilder: (c, i) => const Divider(),
@@ -686,8 +865,10 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
                     final z = zakaznici[index];
                     return ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.person)),
-                      title: Text(z['jmeno'] ?? 'Neznámé jméno', style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text('${z['telefon'] ?? ''} ${z['ico'] != null && z['ico'].toString().isNotEmpty ? '• IČO: ${z['ico']}' : ''}'),
+                      title: Text(z['jmeno'] ?? 'Neznámé jméno',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(
+                          '${z['telefon'] ?? ''} ${z['ico'] != null && z['ico'].toString().isNotEmpty ? '• IČO: ${z['ico']}' : ''}'),
                       onTap: () {
                         widget.onVybrano(z);
                         Navigator.pop(context);

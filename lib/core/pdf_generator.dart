@@ -93,6 +93,10 @@ class GlobalPdfGenerator {
     String sBanka = '';
     String sRegistrace = '';
     String sPrefix = 'FAK';
+    String sFakRokFormat = '{YYYY}';
+    String sFakMesicFormat = '{MM}';
+    String sFakOddelovac = '';
+    int sFakDelka = 5;
 
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -111,7 +115,13 @@ class GlobalPdfGenerator {
           sDic = nd['dic_servisu'] ?? '';
           sBanka = nd['banka_servisu'] ?? '';
           sRegistrace = nd['registrace_servisu'] ?? '';
-          sPrefix = nd['prefix_faktury'] ?? 'FAK';
+          sPrefix = nd['prefix_faktura']?.toString().trim().isNotEmpty == true
+              ? nd['prefix_faktura'].toString().trim()
+              : nd['prefix_faktury']?.toString().trim() ?? 'FAK';
+          sFakRokFormat = nd['cfg_rok_faktura']?.toString() ?? '{YYYY}';
+          sFakMesicFormat = nd['cfg_mesic_faktura']?.toString() ?? '{MM}';
+          sFakOddelovac = nd['cfg_oddelovac_faktura']?.toString() ?? '';
+          sFakDelka = (nd['cfg_delka_faktura'] as num?)?.toInt() ?? 5;
         }
       } catch (e) {
         debugPrint("Chyba načítání detailů servisu: $e");
@@ -131,22 +141,55 @@ class GlobalPdfGenerator {
     } else if (typ == PdfTyp.faktura) {
       titulek = "FAKTURA - DAŇOVÝ DOKLAD";
       zobrazitCeny = true;
-      // TVRDĚ se načte to, co je v databázi, jinak se generuje záloha z prefixu
       if (data['cislo_faktury'] != null && data['cislo_faktury'].toString().isNotEmpty) {
         cisloDokladu = data['cislo_faktury'].toString();
       } else {
-        String cisloIba = puvodniCislo.replaceAll(RegExp(r'[^0-9]'), '');
-        cisloDokladu = '$sPrefix$cisloIba'; 
+        final ted = DateTime.now();
+        String rokPart = '';
+        if (sFakRokFormat == '{YYYY}') rokPart = DateFormat('yyyy').format(ted);
+        else if (sFakRokFormat == '{YY}') rokPart = DateFormat('yy').format(ted);
+        String mesicPart = '';
+        if (sFakMesicFormat == '{MM}') mesicPart = DateFormat('MM').format(ted);
+        List<String> casti = [sPrefix];
+        if (rokPart.isNotEmpty) casti.add(rokPart);
+        if (mesicPart.isNotEmpty) casti.add(mesicPart);
+        final hledanyPrefix = casti.join(sFakOddelovac);
+        try {
+          final sUid = data['servis_id']?.toString() ?? user?.uid;
+          if (sUid != null) {
+            final q = await FirebaseFirestore.instance
+                .collection('faktury')
+                .where('servis_id', isEqualTo: sUid)
+                .get();
+            int nextNumber = 1;
+            for (var doc in q.docs) {
+              final cislo = doc.data()['cislo_faktury']?.toString() ?? '';
+              if (cislo.startsWith(hledanyPrefix)) {
+                String koncovka = cislo.substring(hledanyPrefix.length);
+                if (sFakOddelovac.isNotEmpty && koncovka.startsWith(sFakOddelovac)) {
+                  koncovka = koncovka.substring(sFakOddelovac.length);
+                }
+                final n = int.tryParse(koncovka) ?? 0;
+                if (n >= nextNumber) nextNumber = n + 1;
+              }
+            }
+            casti.add(nextNumber.toString().padLeft(sFakDelka, '0'));
+          } else {
+            casti.add('1'.padLeft(sFakDelka, '0'));
+          }
+        } catch (e) {
+          debugPrint('Chyba generování čísla faktury: $e');
+          casti.add('1'.padLeft(sFakDelka, '0'));
+        }
+        cisloDokladu = casti.join(sFakOddelovac);
       }
     } else if (typ == PdfTyp.naceneni) {
       titulek = "CENOVÁ NABÍDKA";
       zobrazitCeny = true;
       if (data['cislo_nabidky'] != null && data['cislo_nabidky'].toString().isNotEmpty) {
         cisloDokladu = data['cislo_nabidky'].toString();
-      } else if (data['cislo_faktury'] != null) {
-        cisloDokladu = data['cislo_faktury'].toString().replaceFirst(RegExp(r'^[A-Za-z]+'), 'NAB');
       } else {
-        cisloDokladu = 'NAB${puvodniCislo.replaceAll(RegExp(r'[^0-9]'), '')}';
+        cisloDokladu = puvodniCislo;
       }
     }
 
