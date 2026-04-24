@@ -83,6 +83,12 @@ class GlobalPdfGenerator {
     final datumVystaveni = DateTime.now();
     final datumSplatnosti = datumVystaveni.add(Duration(days: splatnostDny));
 
+    // DATUM PŘÍJMU VOZIDLA (pro protokol)
+    final casPrijetiRaw = data['cas_prijeti'];
+    final DateTime? datumPrijeti = casPrijetiRaw is Timestamp
+        ? casPrijetiRaw.toDate()
+        : null;
+
     // NAČTENÍ INFO O SERVISU
     String sAdresa = '';
     String sMesto = '';
@@ -273,7 +279,12 @@ class GlobalPdfGenerator {
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
                   pw.Text('Číslo: $cisloDokladu', style: pw.TextStyle(font: fontBold, fontSize: 14)),
-                  pw.Text('Vystaveno: ${DateFormat('dd.MM.yyyy').format(datumVystaveni)}', style: pw.TextStyle(fontSize: 10, color: PdfColors.grey600)),
+                  pw.Text(
+                    typ == PdfTyp.protokol
+                        ? 'Datum příjmu: ${datumPrijeti != null ? DateFormat('dd.MM.yyyy HH:mm').format(datumPrijeti) : DateFormat('dd.MM.yyyy').format(datumVystaveni)}'
+                        : 'Vystaveno: ${DateFormat('dd.MM.yyyy').format(datumVystaveni)}',
+                    style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey600),
+                  ),
                   if (typ == PdfTyp.faktura) pw.Text('Splatnost: ${DateFormat('dd.MM.yyyy').format(datumSplatnosti)}', style: pw.TextStyle(font: fontBold, fontSize: 10, color: PdfColors.red800)),
                 ],
               ),

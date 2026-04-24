@@ -864,7 +864,7 @@ Future<void> _generujCisloZakazky() async {
       'fotografie_urls': imageUrlsByCategory,
       'podpis_url': podpisUrl,
       'provedene_prace': [],
-      'cas_prijeti': FieldValue.serverTimestamp(),
+      'cas_prijeti': Timestamp.now(),
     };
 
     await FirebaseFirestore.instance
