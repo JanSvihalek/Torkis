@@ -236,6 +236,10 @@ class _MainScreenState extends State<MainScreen> {
                     themeNotifier.value =
                         newIsDark ? ThemeMode.dark : ThemeMode.light;
 
+                    // Uložení do SharedPreferences — načte se při příštím startu
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('tmavy_rezim', newIsDark);
+
                     final user = FirebaseAuth.instance.currentUser;
                     if (user != null) {
                       try {

@@ -145,6 +145,10 @@ class _SettingsPageState extends State<SettingsPage> {
 
         themeNotifier.value = _tmavyRezim ? ThemeMode.dark : ThemeMode.light;
 
+        // Uložení do SharedPreferences — načte se při příštím startu
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('tmavy_rezim', _tmavyRezim);
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Nastavení uloženo.'),
@@ -161,6 +165,23 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isSaving = false);
   }
 
+
+  /// Uloží pořadí záložek do Firestore (uzivatele/{uid}) i do SharedPreferences.
+  /// Firestore = zdrojová pravda (sync mezi zařízeními),
+  /// SharedPreferences = lokální cache pro okamžité načtení při příštím startu.
+  Future<void> _saveNavOrder(List<String> order) async {
+    navOrderNotifier.value = List.from(order);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('nav_order', order);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('uzivatele')
+          .doc(user.uid)
+          .set({'nav_order': order}, SetOptions(merge: true))
+          .catchError((e) => debugPrint('Chyba uložení nav_order: $e'));
+    }
+  }
 
   // --- FUNKCE PRO VYKRESLENÍ DIALOGU KONFIGURACE ČÍSLOVÁNÍ ---
   void _otevritKonfiguratorCislovani(String typDokladu, bool isDark) {
@@ -232,10 +253,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           final item = lokalniPoradi.removeAt(oldIndex);
                           lokalniPoradi.insert(newIndex, item);
                         });
-                        
-                        navOrderNotifier.value = List.from(lokalniPoradi);
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setStringList('nav_order', lokalniPoradi);
+                        await _saveNavOrder(lokalniPoradi);
                       },
                       children: [
                         for (int i = 0; i < lokalniPoradi.length; i++)
@@ -250,16 +268,22 @@ class _SettingsPageState extends State<SettingsPage> {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  if (lokalniPoradi.length > 2)
+                                  if (lokalniPoradi[i] == 'menu')
+                                    const Tooltip(
+                                      message: 'Menu nelze odebrat',
+                                      child: Padding(
+                                        padding: EdgeInsets.symmetric(horizontal: 12),
+                                        child: Icon(Icons.lock_outline, color: Colors.grey, size: 20),
+                                      ),
+                                    )
+                                  else if (lokalniPoradi.length > 2)
                                     IconButton(
                                       icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent),
                                       onPressed: () async {
                                         setModalState(() {
                                           lokalniPoradi.removeAt(i);
                                         });
-                                        navOrderNotifier.value = List.from(lokalniPoradi);
-                                        final prefs = await SharedPreferences.getInstance();
-                                        await prefs.setStringList('nav_order', lokalniPoradi);
+                                        await _saveNavOrder(lokalniPoradi);
                                       },
                                     ),
                                   const Icon(Icons.drag_handle, color: Colors.grey),
@@ -297,9 +321,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                             setModalState(() {
                                               lokalniPoradi.add(key);
                                             });
-                                            navOrderNotifier.value = List.from(lokalniPoradi);
-                                            final prefs = await SharedPreferences.getInstance();
-                                            await prefs.setStringList('nav_order', lokalniPoradi);
+                                            await _saveNavOrder(lokalniPoradi);
                                             if (context.mounted) Navigator.pop(ctx);
                                           },
                                         );
@@ -491,7 +513,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: const Text('Plátce DPH',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                         value: _platceDph,
-                        activeColor: Colors.blue,
+                        activeThumbColor: Colors.blue,
                         onChanged: (v) => setState(() => _platceDph = v),
                       ),
                     ),
@@ -508,7 +530,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                       ),
                       child: Column(
                         children: [
@@ -542,7 +564,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             'Přednastaví odesílání PDF nabídek a faktur.',
                             style: TextStyle(fontSize: 12)),
                         value: _defaultEmail,
-                        activeColor: Colors.blue,
+                        activeThumbColor: Colors.blue,
                         onChanged: (v) => setState(() => _defaultEmail = v),
                       ),
                     ),
@@ -564,14 +586,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                      side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
                     ),
                     margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: Colors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.view_column, color: Colors.blue),
@@ -588,7 +610,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       color:
                           isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                      border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                     ),
                     child: SwitchListTile(
                       title: const Text('Vynutit tmavý režim',
@@ -597,7 +619,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           'Aplikace bude tmavá bez ohledu na systém.',
                           style: TextStyle(fontSize: 11)),
                       value: _tmavyRezim,
-                      activeColor: Colors.blue,
+                      activeThumbColor: Colors.blue,
                       onChanged: (v) => setState(() => _tmavyRezim = v),
                     ),
                   ),
@@ -627,7 +649,7 @@ class _SettingsPageState extends State<SettingsPage> {
         boxShadow: [
           if (!isDark)
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 15,
                 offset: const Offset(0, 5)),
         ],
@@ -640,7 +662,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
+                      color: color.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10)),
                   child: Icon(icon, color: color)),
               const SizedBox(width: 15),
@@ -836,9 +858,9 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.05),
+              color: Colors.blue.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
             ),
             child: Column(
               children: [
@@ -948,7 +970,7 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                   Container(
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.05),
+                      color: Colors.orange.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
                       border: const Border(left: BorderSide(color: Colors.orange, width: 4)),
                     ),

@@ -8,6 +8,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 
+// Univerzální generátor PDF dokumentů pro celou aplikaci.
+// Jeden vstupní bod — metoda [generateDocument] — vygeneruje různý dokument
+// podle hodnoty [PdfTyp]:
+//   protokol  → Protokol o příjmu vozidla (bez cen, s podpisem zákazníka)
+//   naceneni  → Cenová nabídka (položky prací + ceny, bez QR platby)
+//   faktura   → Faktura / daňový doklad (položky, DPH, splatnost, QR platba)
+//
+// Generátor si sám načte nastavení servisu z Firestore (adresa, banka, prefix…),
+// takže volající předává pouze surová data zakázky a typ dokumentu.
+
+// Typ výsledného PDF dokumentu.
 enum PdfTyp { protokol, naceneni, faktura }
 
 class GlobalPdfGenerator {
@@ -19,6 +30,8 @@ class GlobalPdfGenerator {
     return "-";
   }
 
+  /// Převede číslo bankovního účtu ve formátu "123456/0100" na IBAN (CZ...).
+  /// Výstupem je SPAYD řetězec pro QR kód platby, který se tiskne na fakturu.
   static String _generateSpayd(String banka, double amount, String vs) {
     try {
       String cleanBanka = banka.replaceAll(' ', '').toUpperCase();
@@ -60,6 +73,11 @@ class GlobalPdfGenerator {
     }
   }
 
+  /// Hlavní metoda — vygeneruje PDF a vrátí ho jako bajty [Uint8List].
+  /// [data]        — dokument zakázky/faktury z Firestore
+  /// [servisNazev] — název servisu (přepíše se hodnotou z nastavení, pokud existuje)
+  /// [servisIco]   — IČO servisu (stejně jako výše)
+  /// [typ]         — určuje titulek, zobrazení cen a číslo dokladu
   static Future<Uint8List> generateDocument({
     required Map<String, dynamic> data,
     required String servisNazev,
@@ -218,6 +236,7 @@ class GlobalPdfGenerator {
       } catch (e) { debugPrint("Logo error: $e"); }
     }
 
+    // Pro protokol stáhneme obrázek podpisu zákazníka z Firebase Storage.
     pw.MemoryImage? podpisImage;
     if (typ == PdfTyp.protokol) {
       final podpisUrl = data['podpis_url']?.toString();
@@ -229,6 +248,7 @@ class GlobalPdfGenerator {
       }
     }
 
+    // Pomocný widget — jeden řádek štítek + hodnota v sekcích Vozidlo & Zákazník.
     pw.Widget buildInfoRow(String label, String value) {
       return pw.Padding(
         padding: const pw.EdgeInsets.only(bottom: 6),
@@ -242,6 +262,7 @@ class GlobalPdfGenerator {
       );
     }
 
+    // Spočítáme celkovou sumu ze všech provedených prací a použitých dílů.
     for (var prace in provedenePrace) {
       final polozky = prace['polozky'] as List<dynamic>?;
       if (polozky != null) {

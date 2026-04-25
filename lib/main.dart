@@ -1,24 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui'; // Potřebné pro PlatformDispatcher
 import 'firebase_options.dart';
 import 'core/constants.dart';
-import 'zalozky/auth_screen.dart';
-import 'zalozky/main_screen.dart';
-import 'zalozky/app_logger.dart';
+import 'zalozky/auth_gate.dart';
+import 'zalozky/main_screen.dart'; // kvůli navOrderNotifier
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Inicializace Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Tvoje původní inicializace českého formátování času
   await initializeDateFormatting('cs_CZ', null);
+
+  // Načteme uložené preference PŘED prvním snímkem, aby nedošlo k záblesku
+  // světlého motivu nebo nesprávného pořadí záložek.
+  final prefs = await SharedPreferences.getInstance();
+
+  final tmavyRezim = prefs.getBool('tmavy_rezim') ?? false;
+  themeNotifier.value = tmavyRezim ? ThemeMode.dark : ThemeMode.light;
+
+  final savedNavOrder = prefs.getStringList('nav_order');
+  if (savedNavOrder != null && savedNavOrder.isNotEmpty) {
+    navOrderNotifier.value = savedNavOrder;
+  }
 
   // --- NASTAVENÍ CRASHLYTICS A ZACHYTÁVÁNÍ CHYB ---
   if (!kIsWeb) {
@@ -89,21 +100,7 @@ class VistoApp extends StatelessWidget {
           ),
           themeMode: currentMode,
           
-          // Tvoje původní logika pro přihlašování a směrování
-          home: StreamBuilder<User?>(
-            stream: FirebaseAuth.instance.authStateChanges(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Scaffold(
-                  body: Center(child: CircularProgressIndicator()),
-                );
-              }
-              if (snapshot.hasData) {
-                return const MainScreen();
-              }
-              return const AuthScreen();
-            },
-          ),
+          home: const AuthGate(),
         );
       },
     );

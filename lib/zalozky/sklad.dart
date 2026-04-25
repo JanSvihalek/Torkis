@@ -1,3 +1,8 @@
+// Modul skladového hospodářství — 4 záložky:
+//   1. Stav skladu  – přehled skladových karet s rychlým vyhledáváním
+//   2. Příjem       – naskladnění nových dílů (ručně nebo skenováním čárového kódu)
+//   3. Pultový prodej – přímý prodej z regálu zákazníkovi s generováním faktury
+//   4. Historie     – log všech příjemek a výdejek s proklikem na zdrojový doklad
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +14,7 @@ import 'prubeh.dart'; // Pro proklik do zakázky
 import 'fakturace.dart'; // Pro proklik do faktury
 import '../core/pdf_generator.dart'; // Pro generování PDF při pultovém prodeji
 
+/// Hlavní obrazovka skladu s TabControllerem pro 4 záložky.
 class SkladPage extends StatefulWidget {
   const SkladPage({super.key});
   @override
@@ -64,6 +70,10 @@ class _SkladPageState extends State<SkladPage> {
 // ============================================================================
 // 1. ZÁLOŽKA: STAV SKLADU (KARTY DÍLŮ)
 // ============================================================================
+
+/// Přehledová záložka skladových karet. Karty se načítají real-time ze Firestore
+/// a filtrují se dle vyhledávacího dotazu. Karty pod minimálním stavem jsou
+/// zvýrazněny červeným okrajem a varovnou ikonou.
 class _StavSkladuTab extends StatefulWidget {
   const _StavSkladuTab();
 
@@ -91,7 +101,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 15),
             ),
@@ -140,14 +150,14 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                       side: BorderSide(
-                        color: isLowStock ? Colors.red.withOpacity(0.5) : Colors.transparent,
+                        color: isLowStock ? Colors.red.withValues(alpha: 0.5) : Colors.transparent,
                         width: isLowStock ? 2 : 0,
                       ),
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                       leading: CircleAvatar(
-                        backgroundColor: isLowStock ? Colors.red.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                        backgroundColor: isLowStock ? Colors.red.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
                         child: Icon(
                           isLowStock ? Icons.warning_amber_rounded : Icons.inventory_2, 
                           color: isLowStock ? Colors.red : Colors.orange,
@@ -182,6 +192,9 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
     );
   }
 
+  /// Otevře bottom sheet pro úpravu metadat existující skladové karty (název, kód,
+  /// ceny, jednotka, minimální stav). Aktuální množství se zde nemění — to se
+  /// provádí výhradně přes záložky Příjem a Prodej.
   void _showEditPartDialog(BuildContext context, String docId, Map<String, dynamic> existingData, bool isDark) {
     final nazevCtrl = TextEditingController(text: existingData['nazev'] ?? '');
     final kodCtrl = TextEditingController(text: existingData['kod'] ?? '');
@@ -357,6 +370,12 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
 // ============================================================================
 // 2. ZÁLOŽKA: PŘÍJEM (NASKLADNĚNÍ A ZAKLÁDÁNÍ SE SKENOVÁNÍM)
 // ============================================================================
+
+/// Záložka pro příjem dílů na sklad. Umožňuje:
+/// - vybrat existující díl z roletky nebo naskenovat čárový kód,
+/// - vyplnit údaje pro nový díl a naskladnit ho jako novou kartu,
+/// - zvýšit množství u existující karty a aktualizovat ceny.
+/// Po každém úspěšném naskladnění se zapíše záznam do kolekce `skladove_pohyby`.
 class _PrijemSkladuTab extends StatefulWidget {
   const _PrijemSkladuTab();
 
@@ -405,6 +424,9 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
     _vybranaJednotka = 'ks';
   }
 
+  /// Otevře nativní skener čárového kódu. Pokud naskenovaný kód odpovídá
+  /// existující skladové kartě, předvyplní formulář jejími daty. Pokud kód
+  /// v databázi neexistuje, předvyplní pouze pole kódu pro nové vytvoření.
   Future<void> _skenovatKod(List<QueryDocumentSnapshot> dily) async {
     try {
       String naskenovanyKod = await FlutterBarcodeScanner.scanBarcode(
@@ -474,7 +496,7 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.grey.withOpacity(0.2)),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -642,6 +664,9 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
     );
   }
 
+  /// Zpracuje naskladnění: pokud je vybrán existující díl (`_vybranyDilId != null`),
+  /// inkrementuje jeho množství a aktualizuje ceny; jinak vytvoří novou skladovou kartu.
+  /// V obou případech přidá záznam do `skladove_pohyby` (typ: příjem).
   Future<void> _prijmoutNaSklad() async {
     if (_nazevCtrl.text.trim().isEmpty || _mnozstviCtrl.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Název dílu a množství jsou povinné!'), backgroundColor: Colors.orange));
@@ -716,6 +741,14 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
 // ============================================================================
 // 3. ZÁLOŽKA: PULTOVÝ PRODEJ (S KOŠÍKEM, SLEVOU A VLASTNÍMI POLOŽKAMI)
 // ============================================================================
+
+/// Záložka pro přímý prodej zákazníkovi bez vazby na servisní zakázku.
+/// Funguje jako jednoduchá pokladna: díly se vkládají do košíku (z roletky nebo
+/// skenem), lze přidat ruční položky mimo sklad, nastavit slevu a formu úhrady.
+/// Po dokončení prodeje se automaticky:
+///   - odečtou množství ze skladu,
+///   - zapíší výdejky do `skladove_pohyby`,
+///   - vygeneruje a uloží faktura (PDF + Firestore dokument).
 class _PultovyProdejTab extends StatefulWidget {
   const _PultovyProdejTab();
 
@@ -975,6 +1008,10 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
     );
   }
 
+  /// Dokončí pultový prodej: vygeneruje sekvenční číslo faktury, odečte skladová
+  /// množství pro každou položku s `sklad_id`, zapíše výdejky do `skladove_pohyby`,
+  /// vygeneruje PDF faktury, nahraje ho do Firebase Storage a uloží dokument do
+  /// kolekce `faktury`. Hotovostní/kartové platby jsou ihned označeny jako Uhrazeno.
   Future<void> _dokoncitProdej() async {
     setState(() => _isSaving = true);
 
@@ -1148,7 +1185,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                             return DropdownButtonFormField<String>(
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: isDark ? Colors.white10 : Colors.blue.withOpacity(0.05),
+                                fillColor: isDark ? Colors.white10 : Colors.blue.withValues(alpha: 0.05),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                               ),
                               hint: const Text('Vyberte uloženého zákazníka...', style: TextStyle(color: Colors.blue)),
@@ -1286,9 +1323,9 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                           Container(
                             padding: const EdgeInsets.all(15),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.05),
+                              color: Colors.blue.withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.blue.withOpacity(0.2)),
+                              border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1409,6 +1446,10 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
 // ============================================================================
 // 4. ZÁLOŽKA: HISTORIE POHYBŮ
 // ============================================================================
+
+/// Záložka zobrazující posledních 100 pohybů (příjemky + výdejky) seřazených
+/// od nejnovějšího. Klepnutím na řádek se otevře detail pohybu s proklikem
+/// na původní zakázku nebo fakturu.
 class _HistorieSkladuTab extends StatelessWidget {
   const _HistorieSkladuTab();
 
@@ -1418,6 +1459,8 @@ class _HistorieSkladuTab extends StatelessWidget {
     return DateFormat('dd.MM.yyyy HH:mm').format(dt);
   }
 
+  /// Pokusí se najít zdrojový doklad k pohybu nejprve v kolekci `zakazky`,
+  /// poté v `faktury`. Vrátí první nalezený dokument nebo null.
   Future<DocumentSnapshot?> _fetchRelatedDoc(String zakazkaId) async {
     if (globalServisId == null) return null;
     
@@ -1430,6 +1473,8 @@ class _HistorieSkladuTab extends StatelessWidget {
     return null;
   }
 
+  /// Otevře bottom sheet s detailem skladového pohybu — zobrazí typ, množství,
+  /// datum, poznámku a případnou vazbu na zakázku nebo fakturu (s proklikem).
   void _showPohybDetail(BuildContext context, Map<String, dynamic> data, bool isDark) {
     final isPrijem = data['typ_pohybu'] == 'příjem';
     final color = isPrijem ? Colors.green : Colors.red;
@@ -1461,7 +1506,7 @@ class _HistorieSkladuTab extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: color.withOpacity(0.1),
+                    backgroundColor: color.withValues(alpha: 0.1),
                     child: Icon(isPrijem ? Icons.arrow_downward : Icons.arrow_upward, color: color),
                   ),
                   const SizedBox(width: 15),
@@ -1485,7 +1530,7 @@ class _HistorieSkladuTab extends StatelessWidget {
               Card(
                 color: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: Colors.grey.withOpacity(0.2))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -1516,7 +1561,7 @@ class _HistorieSkladuTab extends StatelessWidget {
                     
                     if (!snap.hasData || snap.data == null || !snap.data!.exists) {
                       return Card(
-                        color: Colors.orange.withOpacity(0.1),
+                        color: Colors.orange.withValues(alpha: 0.1),
                         elevation: 0,
                         child: ListTile(
                           leading: const Icon(Icons.link_off, color: Colors.orange),
@@ -1537,11 +1582,11 @@ class _HistorieSkladuTab extends StatelessWidget {
                     }
 
                     return Card(
-                      color: Colors.blue.withOpacity(0.05),
+                      color: Colors.blue.withValues(alpha: 0.05),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15), 
-                        side: BorderSide(color: Colors.blue.withOpacity(0.2))
+                        borderRadius: BorderRadius.circular(15),
+                        side: BorderSide(color: Colors.blue.withValues(alpha: 0.2))
                       ),
                       child: ListTile(
                         leading: CircleAvatar(
@@ -1632,7 +1677,7 @@ class _HistorieSkladuTab extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: color.withOpacity(0.1),
+                    backgroundColor: color.withValues(alpha: 0.1),
                     child: Icon(isPrijem ? Icons.arrow_downward : Icons.arrow_upward, color: color),
                   ),
                   title: Text(data['nazev_dilu'] ?? 'Neznámý díl', style: const TextStyle(fontWeight: FontWeight.bold)),

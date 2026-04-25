@@ -1,3 +1,6 @@
+// Modul zákazníků — 2 obrazovky:
+//   ZakazniciPage       – seznam zákazníků s vyhledáváním (jméno, telefon, IČO)
+//   ZakaznikDetailScreen – detail zákazníka se 3 záložkami: Info & Auta, Zakázky, Faktury
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -6,6 +9,7 @@ import 'prubeh.dart'; // Pro proklik na zakázku
 import 'fakturace.dart'; // Pro proklik na fakturu
 import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO globalServisId
 
+/// Seznam všech zákazníků servisu s live vyhledáváním.
 class ZakazniciPage extends StatefulWidget {
   const ZakazniciPage({super.key});
 
@@ -47,7 +51,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                   boxShadow: [
                     if (!isDark)
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -146,7 +150,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(15),
                       leading: CircleAvatar(
-                        backgroundColor: Colors.blue.withOpacity(0.1),
+                        backgroundColor: Colors.blue.withValues(alpha: 0.1),
                         foregroundColor: Colors.blue,
                         radius: 25,
                         child: const Icon(Icons.person),
@@ -195,6 +199,8 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
   }
 }
 
+/// Detail zákazníka — subscribuje se na živá data zákazníka ze Firestore
+/// a zobrazuje 3 záložky: základní info + vozidla, servisní zakázky, faktury.
 class ZakaznikDetailScreen extends StatelessWidget {
   final Map<String, dynamic> zakaznikData;
 
@@ -212,6 +218,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
     return DateFormat('dd.MM.yyyy').format(dt);
   }
 
+  /// Otevře bottom sheet pro úpravu kontaktních údajů zákazníka (jméno, telefon,
+  /// e-mail, adresa, IČO, DIČ) a uloží změny do Firestore.
   void _otevritEditaci(
     BuildContext context,
     String docId,
@@ -485,7 +493,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: Colors.blue.withOpacity(0.1),
+                        backgroundColor: Colors.blue.withValues(alpha: 0.1),
                         foregroundColor: Colors.blue,
                         radius: 30,
                         child: const Icon(Icons.person, size: 30),
@@ -760,7 +768,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: barvaStavu.withOpacity(0.1),
+                                    color: barvaStavu.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: barvaStavu,
@@ -941,7 +949,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: platbaColor.withOpacity(0.1),
+                                    color: platbaColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                         color: platbaColor, width: 0.5),

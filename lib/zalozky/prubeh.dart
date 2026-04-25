@@ -2319,24 +2319,25 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
       }
 
       List<Map<String, dynamic>> zpracovanePolozky = _polozkyInputs
-          .map((p) => {
-                'typ': p.typ,
-                'cislo': p.cislo.text.trim(),
-                'nazev': p.nazev.text.trim(),
-                'mnozstvi':
-                    double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ??
-                        1.0,
-                'jednotka': p.jednotka,
-                'cena_bez_dph':
-                    double.tryParse(p.cenaBezDph.text.replaceAll(',', '.')) ??
-                        0.0,
-                'cena_s_dph':
-                    double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ??
-                        0.0,
-                'sleva':
-                    double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
-                'sklad_id': p.skladDocId,
-              })
+          .map((p) {
+            final m = <String, dynamic>{
+              'typ': p.typ,
+              'cislo': p.cislo.text.trim(),
+              'nazev': p.nazev.text.trim(),
+              'mnozstvi':
+                  double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 1.0,
+              'jednotka': p.jednotka,
+              'cena_bez_dph':
+                  double.tryParse(p.cenaBezDph.text.replaceAll(',', '.')) ??
+                      0.0,
+              'cena_s_dph':
+                  double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
+              'sleva':
+                  double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
+            };
+            if (p.skladDocId != null) m['sklad_id'] = p.skladDocId;
+            return m;
+          })
           .where((d) => d['nazev'].toString().isNotEmpty)
           .toList();
 
@@ -2369,8 +2370,16 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
               .update({'provedene_prace': prace});
         }
       } else {
-        Map<String, dynamic> updates = {
-          'provedene_prace': FieldValue.arrayUnion([novyUkon]),
+        final doc = await FirebaseFirestore.instance
+            .collection('zakazky')
+            .doc(widget.documentId)
+            .get();
+        final List<dynamic> prace =
+            List.from(doc.data()?['provedene_prace'] ?? []);
+        prace.add(novyUkon);
+
+        final Map<String, dynamic> updates = {
+          'provedene_prace': prace,
         };
 
         if (widget.initialTitle != null) {
