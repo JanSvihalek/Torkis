@@ -11,6 +11,7 @@ import 'auth_screen.dart';
 import 'planovac.dart';
 import 'prubeh.dart';
 import 'prijem_vozidla.dart';
+import 'historie_prijmu.dart';
 import 'zakaznici.dart';
 import 'vozidla.dart';
 import 'ukony.dart';
@@ -39,6 +40,7 @@ const Map<String, String?> _navIdPravKlic = {
   'ukony': 'nastaveni',
   'vozidla': 'nastaveni',
   'zakaznici': 'nastaveni',
+  'historie_prijmu': 'zakazky',
   'menu': null,
 };
 
@@ -128,6 +130,11 @@ class _MainScreenState extends State<MainScreen> {
         icon: Icons.settings_outlined,
         activeIcon: Icons.settings,
         label: 'Nastavení'),
+    'historie_prijmu': _NavData(
+        page: const HistoriePrijmuPage(),
+        icon: Icons.assignment_add,
+        activeIcon: Icons.assignment_add,
+        label: 'Příjmy'),
   };
 
   @override
@@ -332,6 +339,9 @@ class MenuPage extends StatelessWidget {
                     const Color.fromARGB(255, 68, 134, 70),
                     const ServiceProgressPage(),
                     isDark),
+              if (maPristup('historie_prijmu'))
+                _buildMenuCard(context, 'Historie příjmů', Icons.assignment_add,
+                    Colors.blue, const HistoriePrijmuPage(), isDark),
               if (maPristup('sklad'))
                 _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2,
                     Colors.orange, const SkladPage(), isDark,
