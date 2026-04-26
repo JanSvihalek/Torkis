@@ -27,13 +27,34 @@ class ServiceProgressPage extends StatefulWidget {
   State<ServiceProgressPage> createState() => _ServiceProgressPageState();
 }
 
-class _ServiceProgressPageState extends State<ServiceProgressPage> {
-  String _searchQuery = '';
+class _ServiceProgressPageState extends State<ServiceProgressPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String _searchOpen = '';
+  String _searchClosed = '';
 
   String _formatDate(dynamic timestamp) {
     if (timestamp == null) return "Zpracovává se...";
     DateTime dt = (timestamp as Timestamp).toDate();
     return DateFormat('dd.MM.yyyy HH:mm').format(dt);
+  }
+
+  String _formatDateShort(dynamic timestamp) {
+    if (timestamp == null) return "Neuvedeno";
+    DateTime dt = (timestamp as Timestamp).toDate();
+    return DateFormat('dd.MM.yyyy').format(dt);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -47,7 +68,7 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(30, 30, 30, 10),
+          padding: const EdgeInsets.fromLTRB(30, 30, 30, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -55,38 +76,74 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
                 'Zakázky',
                 style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'Aktivní zakázky v řešení.',
-                style: TextStyle(color: Colors.grey),
-              ),
               const SizedBox(height: 15),
-              Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    if (!isDark)
-                      const BoxShadow(
-                          color: Color(0x0D000000),
-                          blurRadius: 10,
-                          offset: Offset(0, 4)),
-                  ],
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: TextField(
-                  onChanged: (value) =>
-                      setState(() => _searchQuery = value.toLowerCase()),
-                  decoration: InputDecoration(
-                    hintText: 'Hledat SPZ, VIN nebo číslo...',
-                    prefixIcon: const Icon(Icons.search, color: Colors.blue),
-                    filled: true,
-                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15)),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                ),
+              TabBar(
+                controller: _tabController,
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                unselectedLabelStyle: const TextStyle(fontSize: 15),
+                indicatorSize: TabBarIndicatorSize.tab,
+                tabs: const [
+                  Tab(text: 'Otevřené'),
+                  Tab(text: 'Ukončené'),
+                ],
               ),
             ],
+          ),
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildOtevrenTab(isDark),
+              _buildUkonceneTab(isDark),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar({
+    required bool isDark,
+    required String hint,
+    required IconData icon,
+    required void Function(String) onChanged,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          if (!isDark)
+            const BoxShadow(
+                color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 4)),
+        ],
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: TextField(
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: Icon(icon, color: Colors.blue),
+          filled: true,
+          fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: BorderSide.none),
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOtevrenTab(bool isDark) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(30, 15, 30, 10),
+          child: _buildSearchBar(
+            isDark: isDark,
+            hint: 'Hledat SPZ, VIN nebo číslo...',
+            icon: Icons.search,
+            onChanged: (v) => setState(() => _searchOpen = v.toLowerCase()),
           ),
         ),
         Expanded(
@@ -96,12 +153,10 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
                 .where('servis_id', isEqualTo: globalServisId)
                 .snapshots(),
             builder: (context, snapshot) {
-              if (snapshot.hasError) {
+              if (snapshot.hasError)
                 return Center(child: Text("Chyba databáze: ${snapshot.error}"));
-              }
-              if (!snapshot.hasData) {
+              if (!snapshot.hasData)
                 return const Center(child: CircularProgressIndicator());
-              }
 
               final docs = snapshot.data!.docs.where((doc) {
                 final data = doc.data() as Map<String, dynamic>;
@@ -110,16 +165,16 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
                     data['cislo_zakazky']?.toString().toLowerCase() ?? '';
                 final spz = data['spz']?.toString().toLowerCase() ?? '';
                 final vin = data['vin']?.toString().toLowerCase() ?? '';
-                return cislo.contains(_searchQuery) ||
-                    spz.contains(_searchQuery) ||
-                    vin.contains(_searchQuery);
+                return cislo.contains(_searchOpen) ||
+                    spz.contains(_searchOpen) ||
+                    vin.contains(_searchOpen);
               }).toList();
 
               docs.sort((a, b) {
-                final dataA = a.data() as Map<String, dynamic>;
-                final dataB = b.data() as Map<String, dynamic>;
-                final timeA = dataA['cas_prijeti'] as Timestamp?;
-                final timeB = dataB['cas_prijeti'] as Timestamp?;
+                final timeA =
+                    (a.data() as Map)['cas_prijeti'] as Timestamp?;
+                final timeB =
+                    (b.data() as Map)['cas_prijeti'] as Timestamp?;
                 if (timeA == null && timeB == null) return 0;
                 if (timeA == null) return 1;
                 if (timeB == null) return -1;
@@ -128,17 +183,22 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
 
               if (docs.isEmpty) {
                 return const Center(
-                  child: Text('Žádné aktivní zakázky k zobrazení.'),
-                );
+                    child: Text('Žádné aktivní zakázky k zobrazení.'));
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
                 itemCount: docs.length,
                 itemBuilder: (context, index) {
                   final data = docs[index].data() as Map<String, dynamic>;
                   final docId = docs[index].id;
                   final stav = data['stav_zakazky'] ?? 'Přijato';
+
+                  final znacka = data['znacka']?.toString() ?? '';
+                  final model = data['model']?.toString() ?? '';
+                  final vin = data['vin']?.toString() ?? '';
+                  final zakaznikJmeno =
+                      data['zakaznik']?['jmeno']?.toString() ?? '';
 
                   return Card(
                     color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -149,46 +209,196 @@ class _ServiceProgressPageState extends State<ServiceProgressPage> {
                       title: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '${data['spz']}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
+                          Text('${data['spz']}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 20)),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: getStatusColor(stav).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Text(
-                              stav,
-                              style: TextStyle(
-                                color: getStatusColor(stav),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
+                            child: Text(stav,
+                                style: TextStyle(
+                                    color: getStatusColor(stav),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12)),
                           ),
                         ],
                       ),
                       subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          'Zakázka: ${data['cislo_zakazky']}' +
-                              (data['znacka'] != null &&
-                                      data['znacka'].toString().isNotEmpty
-                                  ? '\n${data['znacka']} ${data['model'] ?? ''}'
-                                  : '') +
-                              '\nČas příjmu: ${_formatDate(data['cas_prijeti'])}',
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Zakázka: ${data['cislo_zakazky']}',
+                                style: const TextStyle(fontSize: 13)),
+                            if (zakaznikJmeno.isNotEmpty)
+                              Text(zakaznikJmeno,
+                                  style: TextStyle(
+                                      fontSize: 13, color: Colors.grey[500])),
+                            if (znacka.isNotEmpty)
+                              Text('$znacka $model'.trim(),
+                                  style: TextStyle(
+                                      fontSize: 13, color: Colors.grey[500])),
+                            if (vin.isNotEmpty)
+                              Text('VIN: $vin',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey[500])),
+                            const SizedBox(height: 2),
+                            Text(
+                                'Příjem: ${_formatDate(data['cas_prijeti'])}',
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey)),
+                          ],
                         ),
                       ),
-                      isThreeLine: true,
-                      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                      trailing:
+                          const Icon(Icons.arrow_forward_ios, size: 16),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ActiveJobScreen(
+                            documentId: docId,
+                            zakazkaId: data['cislo_zakazky'].toString(),
+                            spz: data['spz'].toString(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUkonceneTab(bool isDark) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(30, 15, 30, 10),
+          child: _buildSearchBar(
+            isDark: isDark,
+            hint: 'Hledat v historii (SPZ, VIN, číslo)...',
+            icon: Icons.history,
+            onChanged: (v) => setState(() => _searchClosed = v.toLowerCase()),
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('zakazky')
+                .where('servis_id', isEqualTo: globalServisId)
+                .where('stav_zakazky', isEqualTo: 'Dokončeno')
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError)
+                return Center(child: Text("Chyba: ${snapshot.error}"));
+              if (!snapshot.hasData)
+                return const Center(child: CircularProgressIndicator());
+
+              final docs = snapshot.data!.docs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final cislo =
+                    data['cislo_zakazky']?.toString().toLowerCase() ?? '';
+                final spz = data['spz']?.toString().toLowerCase() ?? '';
+                final vin = data['vin']?.toString().toLowerCase() ?? '';
+                final zakaznik =
+                    data['zakaznik']?['jmeno']?.toString().toLowerCase() ?? '';
+                return cislo.contains(_searchClosed) ||
+                    spz.contains(_searchClosed) ||
+                    vin.contains(_searchClosed) ||
+                    zakaznik.contains(_searchClosed);
+              }).toList();
+
+              docs.sort((a, b) {
+                final timeA =
+                    (a.data() as Map)['cas_ukonceni'] as Timestamp?;
+                final timeB =
+                    (b.data() as Map)['cas_ukonceni'] as Timestamp?;
+                if (timeA == null || timeB == null) return 0;
+                return timeB.compareTo(timeA);
+              });
+
+              if (docs.isEmpty) {
+                return const Center(
+                    child: Text('Historie je zatím prázdná.'));
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
+                itemCount: docs.length,
+                itemBuilder: (context, index) {
+                  final data = docs[index].data() as Map<String, dynamic>;
+                  final docId = docs[index].id;
+                  final bool isMechanik = globalUserRole == 'mechanik';
+                  final double celkovaCena =
+                      (data['celkova_castka'] as num?)?.toDouble() ?? 0.0;
+                  final znacka = data['znacka']?.toString() ?? '';
+                  final model = data['model']?.toString() ?? '';
+                  final vin = data['vin']?.toString() ?? '';
+                  final zakaznikJmeno =
+                      data['zakaznik']?['jmeno']?.toString() ?? 'Neuvedeno';
+
+                  return Card(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15)),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(15),
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.green.withOpacity(0.1),
+                        child: const Icon(Icons.check_circle,
+                            color: Colors.green),
+                      ),
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('${data['spz']}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 18)),
+                          if (!isMechanik && celkovaCena > 0)
+                            Text(
+                              '${celkovaCena.toStringAsFixed(0)} Kč',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue),
+                            ),
+                        ],
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Zakázka: ${data['cislo_zakazky']}',
+                                style: const TextStyle(fontSize: 13)),
+                            Text(zakaznikJmeno,
+                                style: TextStyle(
+                                    fontSize: 13, color: Colors.grey[500])),
+                            if (znacka.isNotEmpty)
+                              Text('$znacka $model'.trim(),
+                                  style: TextStyle(
+                                      fontSize: 13, color: Colors.grey[500])),
+                            if (vin.isNotEmpty)
+                              Text('VIN: $vin',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey[500])),
+                            const SizedBox(height: 2),
+                            Text(
+                                'Ukončeno: ${_formatDateShort(data['cas_ukonceni'])}',
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -309,6 +519,40 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  /// Vrátí všechny díly ze seznamu provedených prací zpět na sklad.
+  Future<void> _vratDilyNaSklad(
+    List<dynamic> provedenePrace,
+    String popis,
+  ) async {
+    for (var prace in provedenePrace) {
+      final polozky = prace['polozky'] as List<dynamic>? ?? [];
+      for (var item in polozky) {
+        final skladId = item['sklad_id']?.toString() ?? '';
+        if (skladId.isEmpty) continue;
+        final double mnozstvi =
+            double.tryParse(item['mnozstvi'].toString()) ?? 0.0;
+        if (mnozstvi <= 0) continue;
+        await FirebaseFirestore.instance
+            .collection('sklad')
+            .doc(skladId)
+            .update({'skladem': FieldValue.increment(mnozstvi)});
+        await FirebaseFirestore.instance
+            .collection('skladove_pohyby')
+            .add({
+          'servis_id': globalServisId,
+          'sklad_id': skladId,
+          'nazev_dilu': item['nazev'],
+          'typ_pohybu': 'příjem',
+          'mnozstvi': mnozstvi,
+          'poznamka': popis,
+          'zakazka_id': widget.zakazkaId,
+          'datum': FieldValue.serverTimestamp(),
+          'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
+        });
+      }
+    }
+  }
+
   /// Odstraní záznam provedené práce ze zakázky a přegeneruje PDF cenové nabídky.
   Future<void> _deleteWork(
     BuildContext context,
@@ -334,6 +578,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       ),
     );
     if (confirm == true) {
+      await _vratDilyNaSklad(
+        [workItem],
+        'Odebrání položky ze zakázky ${widget.zakazkaId}',
+      );
       await FirebaseFirestore.instance
           .collection('zakazky')
           .doc(widget.documentId)
@@ -536,8 +784,16 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               .doc(widget.documentId)
               .get();
               
-          String fakturaCislo = zakazkaSnap.data()?['faktura_cislo'] ?? '';
-          String rezervaceId = zakazkaSnap.data()?['rezervace_id'] ?? '';
+          final snapData = zakazkaSnap.data() ?? {};
+          String fakturaCislo = snapData['faktura_cislo'] ?? '';
+          String rezervaceId = snapData['rezervace_id'] ?? '';
+
+          final provedenePrace =
+              snapData['provedene_prace'] as List<dynamic>? ?? [];
+          await _vratDilyNaSklad(
+            provedenePrace,
+            'Storno zakázky ${widget.zakazkaId}',
+          );
 
           if (fakturaCislo.isNotEmpty) {
             final fakturaRef = FirebaseFirestore.instance
@@ -982,6 +1238,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         'zpusob_ukonceni': zpusob,
         'forma_uhrady': platba,
         'splatnost_dny': splatnostDny,
+        'celkova_castka': celkovaSuma,
         'cas_ukonceni': FieldValue.serverTimestamp(),
         if (cisloFaktury.isNotEmpty) 'faktura_cislo': cisloFaktury,
         if (pdfUrl.isNotEmpty) 'vystupni_protokol_url': pdfUrl,
@@ -1887,7 +2144,10 @@ class PolozkaInput {
   final cenaSDph = TextEditingController(text: '0');
   final sleva = TextEditingController(text: '0');
 
+  // ID skladu pro novou položku (bude dekrementována při uložení, pak nulována)
   String? skladDocId;
+  // ID skladu pro existující položku (načtena z Firestore – nikdy nulována)
+  String? existingSkladId;
 
   void dispose() {
     cislo.dispose();
@@ -1960,6 +2220,8 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
           input.jednotka = p['jednotka'] ?? 'ks';
           input.cenaBezDph.text = (p['cena_bez_dph'] ?? 0.0).toStringAsFixed(2);
           input.cenaSDph.text = (p['cena_s_dph'] ?? 0.0).toStringAsFixed(2);
+          final skolSkladId = p['sklad_id']?.toString() ?? '';
+          if (skolSkladId.isNotEmpty) input.existingSkladId = skolSkladId;
 
           String slevaVal = (p['sleva'] ?? 0.0).toString();
           input.sleva.text = slevaVal.endsWith('.0')
@@ -2294,6 +2556,33 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
         uploadedUrls.add(await ref.getDownloadURL());
       }
 
+      // Mapa se sestaví PŘED dekrementací — sklad_id musí být v dokumentu uložen,
+      // aby ho bylo možné použít při pozdějším mazání nebo stornu zakázky.
+      List<Map<String, dynamic>> zpracovanePolozky = _polozkyInputs
+          .map((p) {
+            final m = <String, dynamic>{
+              'typ': p.typ,
+              'cislo': p.cislo.text.trim(),
+              'nazev': p.nazev.text.trim(),
+              'mnozstvi':
+                  double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 1.0,
+              'jednotka': p.jednotka,
+              'cena_bez_dph':
+                  double.tryParse(p.cenaBezDph.text.replaceAll(',', '.')) ??
+                      0.0,
+              'cena_s_dph':
+                  double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
+              'sleva':
+                  double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
+            };
+            final effectiveSkladId = p.existingSkladId ?? p.skladDocId;
+            if (effectiveSkladId != null) m['sklad_id'] = effectiveSkladId;
+            return m;
+          })
+          .where((d) => d['nazev'].toString().isNotEmpty)
+          .toList();
+
+      // Dekrement skladu pro nově přidané položky (existingSkladId = null → nové)
       for (var p in _polozkyInputs) {
         if (p.skladDocId != null) {
           double qty =
@@ -2315,34 +2604,10 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
               'datum': FieldValue.serverTimestamp(),
               'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
             });
-
             p.skladDocId = null;
           }
         }
       }
-
-      List<Map<String, dynamic>> zpracovanePolozky = _polozkyInputs
-          .map((p) {
-            final m = <String, dynamic>{
-              'typ': p.typ,
-              'cislo': p.cislo.text.trim(),
-              'nazev': p.nazev.text.trim(),
-              'mnozstvi':
-                  double.tryParse(p.mnozstvi.text.replaceAll(',', '.')) ?? 1.0,
-              'jednotka': p.jednotka,
-              'cena_bez_dph':
-                  double.tryParse(p.cenaBezDph.text.replaceAll(',', '.')) ??
-                      0.0,
-              'cena_s_dph':
-                  double.tryParse(p.cenaSDph.text.replaceAll(',', '.')) ?? 0.0,
-              'sleva':
-                  double.tryParse(p.sleva.text.replaceAll(',', '.')) ?? 0.0,
-            };
-            if (p.skladDocId != null) m['sklad_id'] = p.skladDocId;
-            return m;
-          })
-          .where((d) => d['nazev'].toString().isNotEmpty)
-          .toList();
 
       List<String> finalFotky = [];
       if (widget.existingWork != null) {
@@ -2580,12 +2845,41 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                             color: Colors.red, size: 20),
                                         padding: EdgeInsets.zero,
                                         constraints: const BoxConstraints(),
-                                        onPressed: () {
-                                          setState(() {
-                                            polozka.dispose();
-                                            _polozkyInputs.removeAt(index);
-                                            _prepocitatCelkem();
-                                          });
+                                        onPressed: () async {
+                                          // Pokud položka pochází ze skladu (existingSkladId),
+                                          // vrátíme ji zpět před odstraněním.
+                                          final retSkladId = polozka.existingSkladId;
+                                          if (retSkladId != null) {
+                                            final qty = double.tryParse(
+                                                    polozka.mnozstvi.text.replaceAll(',', '.')) ??
+                                                0.0;
+                                            if (qty > 0) {
+                                              await FirebaseFirestore.instance
+                                                  .collection('sklad')
+                                                  .doc(retSkladId)
+                                                  .update({'skladem': FieldValue.increment(qty)});
+                                              await FirebaseFirestore.instance
+                                                  .collection('skladove_pohyby')
+                                                  .add({
+                                                'servis_id': globalServisId,
+                                                'sklad_id': retSkladId,
+                                                'nazev_dilu': polozka.nazev.text.trim(),
+                                                'typ_pohybu': 'příjem',
+                                                'mnozstvi': qty,
+                                                'poznamka': 'Odebrání položky z úkonu v zakázce ${widget.zakazkaId}',
+                                                'zakazka_id': widget.zakazkaId,
+                                                'datum': FieldValue.serverTimestamp(),
+                                                'uzivatel_id': FirebaseAuth.instance.currentUser?.uid,
+                                              });
+                                            }
+                                          }
+                                          if (mounted) {
+                                            setState(() {
+                                              polozka.dispose();
+                                              _polozkyInputs.removeAt(index);
+                                              _prepocitatCelkem();
+                                            });
+                                          }
                                         },
                                       ),
                                     ],

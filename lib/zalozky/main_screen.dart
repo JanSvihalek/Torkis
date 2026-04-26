@@ -11,7 +11,6 @@ import 'auth_screen.dart';
 import 'planovac.dart';
 import 'prubeh.dart';
 import 'prijem_vozidla.dart';
-import 'historie.dart';
 import 'zakaznici.dart';
 import 'vozidla.dart';
 import 'ukony.dart';
@@ -24,13 +23,12 @@ import 'sklad.dart';
 
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
 final ValueNotifier<List<String>> navOrderNotifier =
-    ValueNotifier(['prijem', 'zakazky', 'historie', 'menu']);
+    ValueNotifier(['prijem', 'zakazky', 'menu']);
 
 // Mapování nav ID na klíč v prava mapě (null = vždy viditelné)
 const Map<String, String?> _navIdPravKlic = {
   'prijem': 'zakazky',
   'zakazky': 'zakazky',
-  'historie': 'zakazky',
   'planovac': 'zakazky',
   'sklad': 'sklad',
   'fakturace': 'fakturace',
@@ -75,11 +73,6 @@ class _MainScreenState extends State<MainScreen> {
         icon: Icons.build_circle_outlined,
         activeIcon: Icons.build_circle,
         label: 'Zakázky'),
-    'historie': _NavData(
-        page: const HistoryPage(),
-        icon: Icons.history_rounded,
-        activeIcon: Icons.history_rounded,
-        label: 'Historie'),
     'menu': _NavData(
         page: const MenuPage(),
         icon: Icons.grid_view,

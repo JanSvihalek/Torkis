@@ -634,6 +634,73 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
     }
   }
 
+  /// Stornuje zakázkovou fakturu — nastaví stav na 'Stornováno' a zakázku
+  /// znovu otevře se stavem 'V řešení'. Díly zůstávají vydané v zakázce.
+  Future<void> _stornovatZakazkovouFakturu(Map<String, dynamic> fData) async {
+    bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Stornovat fakturu?'),
+        content: const Text(
+          'Faktura bude označena jako stornovaná a zakázka se znovu otevře se stavem "V řešení".\n\nProvedené práce a vydané díly zůstanou v zakázce zachovány — budete je moci upravit a zakázku znovu uzavřít.\n\nOpravdu chcete fakturu stornovat?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ZRUŠIT'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('STORNOVAT',
+                style: TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('faktury')
+          .doc(widget.fakturaDocId)
+          .update({'stav_platby': 'Stornováno'});
+
+      if (globalServisId != null) {
+        await FirebaseFirestore.instance
+            .collection('zakazky')
+            .doc('${globalServisId}_${widget.zakazkaId}')
+            .update({
+          'stav_zakazky': 'V řešení',
+          'cas_ukonceni': FieldValue.delete(),
+          'celkova_castka': FieldValue.delete(),
+          'faktura_cislo': FieldValue.delete(),
+          'vystupni_protokol_url': FieldValue.delete(),
+        });
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Faktura stornována, zakázka znovu otevřena.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Chyba storna: $e'),
+              backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
   /// Stornuje pultový prodej — nastaví stav na 'Stornováno' (fyzicky nesmaže).
   Future<void> _stornovatPultovyProdej(Map<String, dynamic> fData) async {
     bool? confirm = await showDialog<bool>(
@@ -1329,29 +1396,64 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                         ],
                       ),
                       child: SafeArea(
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _openEditDialog(
-                              context,
-                              null,
-                              null,
-                              provedenePrace,
-                            ),
-                            icon: const Icon(Icons.add),
-                            label: const Text(
-                              'PŘIDAT ÚKON DO FAKTURY',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _openEditDialog(
+                                  context,
+                                  null,
+                                  null,
+                                  provedenePrace,
+                                ),
+                                icon: const Icon(Icons.add),
+                                label: const Text(
+                                  'PŘIDAT ÚKON DO FAKTURY',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15),
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
+                            if (!isMechanik) ...[
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () =>
+                                      _stornovatZakazkovouFakturu(fData),
+                                  icon: const Icon(
+                                      Icons.settings_backup_restore,
+                                      color: Colors.red),
+                                  label: const Text(
+                                    'STORNOVAT FAKTURU',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                        color: Colors.red, width: 1.5),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 14),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     ),
