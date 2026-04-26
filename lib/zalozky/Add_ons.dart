@@ -40,34 +40,56 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
     }
   }
 
-  Future<void> _prepnoutDoplnek(String klic, bool novaHodnota) async {
+  Future<void> _odeslatPoptavku(String nazevDoplnku) async {
     if (globalServisId == null) return;
-    
-    // Zde by v reálné produkci byla integrace na platební bránu (Stripe/GoPay),
-    // která po úspěšné platbě změní hodnotu v databázi. 
-    // Pro ukázku to přepínáme rovnou.
-    
-    setState(() {
-      _aktivniDoplnky[klic] = novaHodnota;
-    });
+
+    // Potvrzovací dialog pro uživatele
+    bool? potvrdit = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Zájem o doplněk'),
+        content: Text('Chcete odeslat nezávaznou poptávku na aktivaci doplňku "$nazevDoplnku"? Ozveme se Vám pro domluvení detailů nastavení.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ZRUŠIT', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+            child: const Text('ODESLAT POPTÁVKU'),
+          ),
+        ],
+      ),
+    );
+
+    if (potvrdit != true) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('nastaveni_servisu')
-          .doc(globalServisId)
-          .set({
-        'doplnky': _aktivniDoplnky
-      }, SetOptions(merge: true));
-      
+      // Uložení poptávky do nové kolekce pro administrátora (tebe)
+      await FirebaseFirestore.instance.collection('poptavky_doplnky').add({
+        'servis_id': globalServisId,
+        'doplnek': nazevDoplnku,
+        'stav': 'nova',
+        'cas_poptavky': FieldValue.serverTimestamp(),
+      });
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(novaHodnota ? 'Doplněk byl úspěšně aktivován.' : 'Doplněk byl deaktivován.'),
-          backgroundColor: novaHodnota ? Colors.green : Colors.blueGrey,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Poptávka byla odeslána. Brzy se Vám ozveme!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 4),
+          ),
+        );
       }
     } catch (e, stackTrace) {
-      AppLogger.logError('Chyba při ukládání doplňku $klic', e, stackTrace);
-      setState(() => _aktivniDoplnky[klic] = !novaHodnota); // Revert při chybě
+      AppLogger.logError('Chyba při odesílání poptávky na doplněk: $nazevDoplnku', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Chyba při odesílání poptávky.'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -112,7 +134,7 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
                       children: [
                         Text('Rozšiřte možnosti TORKISu', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                         SizedBox(height: 5),
-                        Text('Přidejte si moduly podle toho, co Váš servis aktuálně potřebuje.', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                        Text('Některé funkce vyžadují individuální nastavení. Rádi s Vámi vše probereme.', style: TextStyle(color: Colors.white70, fontSize: 13)),
                       ],
                     ),
                   )
@@ -125,8 +147,8 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
             _buildDoplnekCard(
               klic: 'etl_sync',
               nazev: 'Automatická synchronizace s ERP',
-              popis: 'Propojte Torkis s Vaším stávajícím účetním programem (Pohoda, Money, Kros). Vozidla a zákazníci se budou 2x denně automaticky stahovat do Vašeho tabletu.',
-              cena: '+ 390 Kč / měsíc',
+              popis: 'Propojte Torkis s Vaším stávajícím účetním programem (Pohoda, Money, Kros). Vozidla a zákazníci se budou automaticky stahovat přímo do Vašeho tabletu na příjmu.',
+              cena: 'Individuální nacenění',
               ikona: Icons.sync,
               barva: Colors.purple,
               isDark: isDark,
@@ -137,7 +159,7 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
             _buildDoplnekCard(
               klic: 'sms_modul',
               nazev: 'SMS notifikace zákazníkům',
-              popis: 'Aplikace bude automaticky posílat SMS zprávy zákazníkům ("Vaše vozidlo bylo přijato", "Vozidlo je opravené a připravené k vyzvednutí").',
+              popis: 'Aplikace bude automaticky posílat SMS zprávy zákazníkům (např. "Vaše vozidlo bylo přijato", "Vozidlo je opravené a připravené k vyzvednutí").',
               cena: '+ 190 Kč / měsíc',
               ikona: Icons.sms,
               barva: Colors.orange,
@@ -166,7 +188,7 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isAktivni ? barva : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
+          color: isAktivni ? Colors.green : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),
           width: isAktivni ? 2 : 1,
         ),
         boxShadow: [
@@ -186,10 +208,10 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: barva.withOpacity(0.1),
+                  color: isAktivni ? Colors.green.withOpacity(0.1) : barva.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(ikona, color: barva, size: 28),
+                child: Icon(isAktivni ? Icons.check_circle : ikona, color: isAktivni ? Colors.green : barva, size: 28),
               ),
               const SizedBox(width: 15),
               Expanded(
@@ -198,24 +220,55 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
                   children: [
                     Text(nazev, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 5),
-                    Text(cena, style: TextStyle(color: barva, fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(
+                      isAktivni ? 'Aktivní' : cena, 
+                      style: TextStyle(color: isAktivni ? Colors.green : barva, fontWeight: FontWeight.bold, fontSize: 14)
+                    ),
                   ],
                 ),
               ),
-              Switch(
-                value: isAktivni,
-                activeColor: barva,
-                onChanged: (val) => _prepnoutDoplnek(klic, val),
-              ),
             ],
           ),
-          const SizedBox(height: 15),
-          const Divider(),
           const SizedBox(height: 15),
           Text(
             popis,
             style: const TextStyle(color: Colors.grey, height: 1.4),
           ),
+          const SizedBox(height: 20),
+          
+          // Tlačítko se zobrazí pouze pokud doplněk ještě není aktivní
+          if (!isAktivni)
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _odeslatPoptavku(nazev),
+                icon: const Icon(Icons.mail_outline),
+                label: const Text('MÁM ZÁJEM O NASTAVENÍ'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: barva,
+                  side: BorderSide(color: barva.withOpacity(0.5)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check, color: Colors.green, size: 18),
+                  SizedBox(width: 8),
+                  Text('Tento modul již využíváte', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
         ],
       ),
     );
