@@ -21,6 +21,8 @@ import 'nastaveni.dart';
 import 'ucetnictvi.dart';
 import 'zamestnanci.dart';
 import 'sklad.dart';
+import 'welcome_screen.dart';
+import 'Add_ons.dart';
 
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
 final ValueNotifier<List<String>> navOrderNotifier =
@@ -372,6 +374,12 @@ class MenuPage extends StatelessWidget {
               if (maPristup('nastaveni'))
                 _buildMenuCard(context, 'Nastavení', Icons.settings,
                     Colors.blueGrey, const SettingsPage(), isDark),
+              if (globalUserRole == 'admin')
+                _buildMenuCard(context, 'Vítací stránka', Icons.public,
+                    Colors.cyan, const LandingPage(), isDark),
+              if (globalUserRole == 'admin')
+                _buildMenuCard(context, 'Doplňky', Icons.extension,
+                    Colors.deepPurple, const DoplnkyNastaveniPage(), isDark),
             ],
           ),
           const SizedBox(height: 30),
