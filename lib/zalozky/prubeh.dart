@@ -2526,6 +2526,12 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                                 polozka.typ = val;
                                                 if (val == 'Práce') {
                                                   polozka.jednotka = 'h';
+                                                  if (polozka.nazev.text
+                                                      .trim()
+                                                      .isEmpty) {
+                                                    polozka.nazev.text =
+                                                        'Práce mechanika';
+                                                  }
                                                   if (_hodinovaSazba > 0) {
                                                     polozka.cenaBezDph.text =
                                                         _hodinovaSazba

@@ -13,8 +13,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
-import 'zakaznici.dart';
-import 'vozidla.dart';
 import 'auth_gate.dart';
 
 // Formulář příjmu vozidla — 6stránkový průvodce (PageView).
