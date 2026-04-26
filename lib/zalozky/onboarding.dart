@@ -55,12 +55,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   // KROK 2: Fakturace a Ceny
   final _sazbaController = TextEditingController();
-  final _bankaController = TextEditingController();
+  final _ucetCisloController = TextEditingController();
+  final _ucetKodController = TextEditingController();
   final _dicController = TextEditingController();
   final _prefixZakazkaController = TextEditingController(text: 'ZAK');
   final _prefixFakturaController = TextEditingController(text: 'FAK');
 
   bool _jePlatceDph = false;
+  String _zpusobUhrady = 'Převodem';
   bool _defaultOdeslatEmaily = true;
   bool _tmavyRezim = false;
 
@@ -109,7 +111,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     _emailServisuController.dispose();
     _jmenoMajiteleController.dispose();
     _sazbaController.dispose();
-    _bankaController.dispose();
+    _ucetCisloController.dispose();
+    _ucetKodController.dispose();
     _dicController.dispose();
     _prefixZakazkaController.dispose();
     _prefixFakturaController.dispose();
@@ -198,7 +201,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       0.0,
               'platce_dph': _jePlatceDph,
               'dic_servisu': _dicController.text.trim(),
-              'banka_servisu': _bankaController.text.trim(),
+              'banka_servisu': '${_ucetCisloController.text.trim()}/${_ucetKodController.text.trim()}',
+              'zpusob_uhrady': _zpusobUhrady,
               'prefix_zakazky': _prefixZakazkaController.text.trim().isEmpty
                   ? 'ZAK'
                   : _prefixZakazkaController.text.trim().toUpperCase(),
@@ -926,23 +930,96 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               style:
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
-          TextField(
-            controller: _bankaController,
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: TextField(
+                  controller: _ucetCisloController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Číslo účtu',
+                    prefixIcon: const Icon(Icons.account_balance,
+                        color: Colors.blueGrey),
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(
+                            color: isDark
+                                ? Colors.grey[800]!
+                                : Colors.grey[400]!)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(
+                            color: isDark
+                                ? Colors.grey[800]!
+                                : Colors.grey[300]!)),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text('/',
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[500])),
+              ),
+              Expanded(
+                flex: 2,
+                child: TextField(
+                  controller: _ucetKodController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Kód banky',
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(
+                            color: isDark
+                                ? Colors.grey[800]!
+                                : Colors.grey[400]!)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(
+                            color: isDark
+                                ? Colors.grey[800]!
+                                : Colors.grey[300]!)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          const Text('Výchozí způsob úhrady',
+              style:
+                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          const SizedBox(height: 8),
+          DropdownButtonFormField<String>(
+            initialValue: _zpusobUhrady,
             decoration: InputDecoration(
-              hintText: 'Číslo účtu / Kód banky',
               prefixIcon:
-                  const Icon(Icons.account_balance, color: Colors.blueGrey),
+                  const Icon(Icons.payment, color: Colors.blueGrey),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+                      color:
+                          isDark ? Colors.grey[800]! : Colors.grey[400]!)),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+                      color:
+                          isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
+            items: ['Převodem', 'Hotově', 'Kartou']
+                .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                .toList(),
+            onChanged: (val) =>
+                setState(() => _zpusobUhrady = val ?? 'Převodem'),
           ),
           const SizedBox(height: 30),
           const Divider(),

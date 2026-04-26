@@ -88,6 +88,189 @@ class _UkonyPageState extends State<UkonyPage> {
     }
   }
 
+  Future<void> _editovatUkon(String docId, Map<String, dynamic> data) async {
+    final nazevCtrl =
+        TextEditingController(text: data['nazev']?.toString() ?? '');
+    final cenaCtrl = TextEditingController(
+        text: (data['cena_bez_dph'] ?? 0.0).toString());
+    final casCtrl = TextEditingController(
+        text: (data['odhadovany_cas'] ?? 1.0).toString());
+    String jednotka = data['jednotka_casu']?.toString() ?? 'hod';
+    String kategorie = data['kategorie']?.toString() ?? 'Mechanika';
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => StatefulBuilder(
+        builder: (context, setSheet) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(25)),
+          ),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const Text('Upravit úkon',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: nazevCtrl,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: InputDecoration(
+                    labelText: 'Název úkonu',
+                    prefixIcon:
+                        const Icon(Icons.build_circle, color: Colors.blue),
+                    filled: true,
+                    fillColor:
+                        isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: cenaCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Cena bez DPH (Kč)',
+                          prefixIcon: const Icon(Icons.attach_money,
+                              color: Colors.green),
+                          filled: true,
+                          fillColor: isDark
+                              ? const Color(0xFF2C2C2C)
+                              : Colors.grey[50],
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: casCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Čas',
+                          prefixIcon: const Icon(Icons.schedule,
+                              color: Colors.orange),
+                          filled: true,
+                          fillColor: isDark
+                              ? const Color(0xFF2C2C2C)
+                              : Colors.grey[50],
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ToggleButtons(
+                      isSelected: [
+                        jednotka == 'hod',
+                        jednotka == 'min'
+                      ],
+                      onPressed: (i) =>
+                          setSheet(() => jednotka = i == 0 ? 'hod' : 'min'),
+                      borderRadius: BorderRadius.circular(12),
+                      constraints: const BoxConstraints(
+                          minWidth: 44, minHeight: 55),
+                      children: const [Text('hod'), Text('min')],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                DropdownButtonFormField<String>(
+                  initialValue: kategorie,
+                  decoration: InputDecoration(
+                    labelText: 'Kategorie',
+                    prefixIcon:
+                        const Icon(Icons.category, color: Colors.purple),
+                    filled: true,
+                    fillColor:
+                        isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none),
+                  ),
+                  items: _kategorie
+                      .map((k) =>
+                          DropdownMenuItem(value: k, child: Text(k)))
+                      .toList(),
+                  onChanged: (val) =>
+                      setSheet(() => kategorie = val!),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 55,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15)),
+                    ),
+                    onPressed: () async {
+                      final nazev = nazevCtrl.text.trim();
+                      if (nazev.isEmpty) return;
+                      await FirebaseFirestore.instance
+                          .collection('ukony')
+                          .doc(docId)
+                          .update({
+                        'nazev': nazev,
+                        'cena_bez_dph': double.tryParse(
+                                cenaCtrl.text.replaceAll(',', '.')) ??
+                            0.0,
+                        'odhadovany_cas': double.tryParse(
+                                casCtrl.text.replaceAll(',', '.')) ??
+                            1.0,
+                        'jednotka_casu': jednotka,
+                        'kategorie': kategorie,
+                      });
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    child: const Text('ULOŽIT ZMĚNY',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _skrytUkon(String docId) async {
     if (globalServisId == null) return;
 
@@ -386,7 +569,12 @@ class _UkonyPageState extends State<UkonyPage> {
                                 color: Colors.green,
                                 fontSize: 16),
                           ),
-                          const SizedBox(width: 10),
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined,
+                                color: Colors.blue),
+                            onPressed: () => _editovatUkon(doc.id, data),
+                            tooltip: 'Upravit úkon',
+                          ),
                           IconButton(
                             icon: const Icon(Icons.delete_outline,
                                 color: Colors.red),

@@ -26,13 +26,15 @@ class _SettingsPageState extends State<SettingsPage> {
   final _pscCtrl = TextEditingController();
   final _telefonCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
-  final _bankaCtrl = TextEditingController();
+  final _ucetCisloCtrl = TextEditingController();
+  final _ucetKodCtrl = TextEditingController();
   final _registraceCtrl = TextEditingController();
   final _sazbaCtrl = TextEditingController(text: '0');
   final _splatnostCtrl = TextEditingController(text: '14');
 
   bool _platceDph = false;
   bool _defaultEmail = true;
+  String _zpusobUhrady = 'Převodem';
 
   // Uživatelské nastavení (pro všechny)
   bool _tmavyRezim = false;
@@ -58,7 +60,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _pscCtrl.dispose();
     _telefonCtrl.dispose();
     _emailCtrl.dispose();
-    _bankaCtrl.dispose();
+    _ucetCisloCtrl.dispose();
+    _ucetKodCtrl.dispose();
     _registraceCtrl.dispose();
     _sazbaCtrl.dispose();
     _splatnostCtrl.dispose();
@@ -94,11 +97,15 @@ class _SettingsPageState extends State<SettingsPage> {
             _pscCtrl.text = data['psc_servisu'] ?? '';
             _telefonCtrl.text = data['telefon_servisu'] ?? '';
             _emailCtrl.text = data['email_servisu'] ?? '';
-            _bankaCtrl.text = data['banka_servisu'] ?? '';
+            final banka = data['banka_servisu'] as String? ?? '';
+            final bankaParts = banka.split('/');
+            _ucetCisloCtrl.text = bankaParts.isNotEmpty ? bankaParts[0].trim() : '';
+            _ucetKodCtrl.text = bankaParts.length > 1 ? bankaParts[1].trim() : '';
             _registraceCtrl.text = data['registrace_servisu'] ?? '';
             _sazbaCtrl.text = (data['hodinova_sazba'] ?? 0).toString();
             _splatnostCtrl.text = (data['splatnost_dny'] ?? 14).toString();
             _platceDph = data['platce_dph'] ?? false;
+            _zpusobUhrady = data['zpusob_uhrady'] ?? 'Převodem';
             _defaultEmail = data['default_odesilat_emaily'] ?? true;
           });
         }
@@ -132,7 +139,8 @@ class _SettingsPageState extends State<SettingsPage> {
             'psc_servisu': _pscCtrl.text.trim(),
             'telefon_servisu': _telefonCtrl.text.trim(),
             'email_servisu': _emailCtrl.text.trim(),
-            'banka_servisu': _bankaCtrl.text.trim(),
+            'banka_servisu': '${_ucetCisloCtrl.text.trim()}/${_ucetKodCtrl.text.trim()}',
+            'zpusob_uhrady': _zpusobUhrady,
             'registrace_servisu': _registraceCtrl.text.trim(),
             'hodinova_sazba':
                 double.tryParse(_sazbaCtrl.text.replaceAll(',', '.')) ?? 0.0,
@@ -487,8 +495,79 @@ class _SettingsPageState extends State<SettingsPage> {
                   color: Colors.green,
                   isDark: isDark,
                   children: [
-                    _buildInput(_bankaCtrl, 'Bankovní účet',
-                        Icons.account_balance, isDark),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: _ucetCisloCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Číslo účtu',
+                                prefixIcon: const Icon(Icons.account_balance,
+                                    color: Colors.blueGrey),
+                                filled: true,
+                                fillColor: isDark
+                                    ? const Color(0xFF2C2C2C)
+                                    : Colors.grey[50],
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8),
+                            child: Text('/',
+                                style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[500])),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              controller: _ucetKodCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Kód banky',
+                                filled: true,
+                                fillColor: isDark
+                                    ? const Color(0xFF2C2C2C)
+                                    : Colors.grey[50],
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15),
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _zpusobUhrady,
+                        decoration: InputDecoration(
+                          labelText: 'Výchozí způsob úhrady',
+                          prefixIcon: const Icon(Icons.payment,
+                              color: Colors.blueGrey),
+                          filled: true,
+                          fillColor: isDark
+                              ? const Color(0xFF2C2C2C)
+                              : Colors.grey[50],
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                        items: ['Převodem', 'Hotově', 'Kartou']
+                            .map((v) =>
+                                DropdownMenuItem(value: v, child: Text(v)))
+                            .toList(),
+                        onChanged: (val) =>
+                            setState(() => _zpusobUhrady = val ?? 'Převodem'),
+                      ),
+                    ),
                     Row(
                       children: [
                         Expanded(

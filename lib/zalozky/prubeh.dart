@@ -229,15 +229,15 @@ class ActiveJobScreen extends StatefulWidget {
 
 class _ActiveJobScreenState extends State<ActiveJobScreen> {
   int _vychoziSplatnost = 14;
+  String _zpusobUhrady = 'Převodem';
 
   @override
   void initState() {
     super.initState();
-    _nactiSplatnost();
+    _nactiNastaveni();
   }
 
-  /// Načte výchozí počet dnů splatnosti z nastavení servisu (používá se při generování faktury).
-  Future<void> _nactiSplatnost() async {
+  Future<void> _nactiNastaveni() async {
     if (globalServisId != null) {
       final doc = await FirebaseFirestore.instance
           .collection('nastaveni_servisu')
@@ -246,6 +246,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       if (doc.exists) {
         setState(() {
           _vychoziSplatnost = doc.data()?['splatnost_dny'] ?? 14;
+          _zpusobUhrady = doc.data()?['zpusob_uhrady'] ?? 'Převodem';
         });
       }
     }
@@ -606,7 +607,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     Map<String, dynamic> imageUrls,
   ) {
     final List<String> moznostiPlatby = ['Převodem', 'Hotově', 'Kartou'];
-    String vybranaPlatba = moznostiPlatby[0];
+    String vybranaPlatba = moznostiPlatby.contains(_zpusobUhrady)
+        ? _zpusobUhrady
+        : moznostiPlatby[0];
     final splatnostController =
         TextEditingController(text: _vychoziSplatnost.toString());
     bool isFinishing = false;

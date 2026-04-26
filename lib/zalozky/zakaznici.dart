@@ -9,6 +9,28 @@ import 'prubeh.dart'; // Pro proklik na zakázku
 import 'fakturace.dart'; // Pro proklik na fakturu
 import 'auth_gate.dart'; // <--- PŘIDÁN IMPORT PRO globalServisId
 
+const List<Map<String, String>> _kPredvolby = [
+  {'kod': '+420', 'vlajka': '🇨🇿', 'nazev': 'Česká republika'},
+  {'kod': '+421', 'vlajka': '🇸🇰', 'nazev': 'Slovensko'},
+  {'kod': '+49', 'vlajka': '🇩🇪', 'nazev': 'Německo'},
+  {'kod': '+43', 'vlajka': '🇦🇹', 'nazev': 'Rakousko'},
+  {'kod': '+48', 'vlajka': '🇵🇱', 'nazev': 'Polsko'},
+  {'kod': '+36', 'vlajka': '🇭🇺', 'nazev': 'Maďarsko'},
+  {'kod': '+380', 'vlajka': '🇺🇦', 'nazev': 'Ukrajina'},
+  {'kod': '+44', 'vlajka': '🇬🇧', 'nazev': 'Velká Británie'},
+  {'kod': '+1', 'vlajka': '🇺🇸', 'nazev': 'USA'},
+  {'kod': '+7', 'vlajka': '🇷🇺', 'nazev': 'Rusko'},
+];
+
+String _formatTelefon(String? tel) {
+  if (tel == null || tel.isEmpty) return '';
+  for (final p in _kPredvolby) {
+    final kod = p['kod']!;
+    if (tel.startsWith(kod)) return '$kod ${tel.substring(kod.length).trim()}';
+  }
+  return tel;
+}
+
 /// Seznam všech zákazníků servisu s live vyhledáváním.
 class ZakazniciPage extends StatefulWidget {
   const ZakazniciPage({super.key});
@@ -169,7 +191,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                           children: [
                             if (data['telefon'] != null &&
                                 data['telefon'].toString().isNotEmpty)
-                              Text('📞 ${data['telefon']}'),
+                              Text('📞 ${_formatTelefon(data['telefon']?.toString())}'),
                             if (data['email'] != null &&
                                 data['email'].toString().isNotEmpty)
                               Text('✉️ ${data['email']}'),
@@ -227,8 +249,16 @@ class ZakaznikDetailScreen extends StatelessWidget {
   ) {
     final jmenoCtrl =
         TextEditingController(text: data['jmeno']?.toString() ?? '');
-    final telCtrl =
-        TextEditingController(text: data['telefon']?.toString() ?? '');
+    String telPredvolba = '+420';
+    String telefonRaw = data['telefon']?.toString() ?? '';
+    for (final p in _kPredvolby) {
+      if (telefonRaw.startsWith(p['kod']!)) {
+        telPredvolba = p['kod']!;
+        telefonRaw = telefonRaw.substring(p['kod']!.length).trim();
+        break;
+      }
+    }
+    final telCtrl = TextEditingController(text: telefonRaw);
     final emailCtrl =
         TextEditingController(text: data['email']?.toString() ?? '');
     final adresaCtrl =
@@ -243,7 +273,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (context) {
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
         return Padding(
           padding: EdgeInsets.only(
             left: 20,
@@ -284,28 +315,111 @@ class ZakaznikDetailScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 15),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: telCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Telefon',
-                          border: OutlineInputBorder(),
+                const Text('Telefon',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
+                const SizedBox(height: 8),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.vertical(
+                                  top: Radius.circular(25)),
+                            ),
+                            padding:
+                                const EdgeInsets.fromLTRB(20, 16, 20, 30),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 40, height: 4,
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  decoration: BoxDecoration(
+                                      color: Colors.grey[400],
+                                      borderRadius:
+                                          BorderRadius.circular(10)),
+                                ),
+                                const Text('Vyberte předvolbu',
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 12),
+                                ..._kPredvolby.map((p) => ListTile(
+                                      leading: Text(p['vlajka']!,
+                                          style: const TextStyle(
+                                              fontSize: 24)),
+                                      title: Text(p['nazev']!),
+                                      trailing: Text(p['kod']!,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blue)),
+                                      selected:
+                                          p['kod'] == telPredvolba,
+                                      selectedColor: Colors.blue,
+                                      onTap: () {
+                                        setSheetState(() =>
+                                            telPredvolba = p['kod']!);
+                                        Navigator.pop(context);
+                                      },
+                                    )),
+                              ],
+                            ),
+                          ),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _kPredvolby.firstWhere(
+                                    (p) => p['kod'] == telPredvolba,
+                                    orElse: () =>
+                                        _kPredvolby.first)['vlajka']!,
+                                style: const TextStyle(fontSize: 20),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(telPredvolba,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              const Icon(Icons.arrow_drop_down, size: 18),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 15),
-                    Expanded(
-                      child: TextField(
-                        controller: emailCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'E-mail',
-                          border: OutlineInputBorder(),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: telCtrl,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Číslo',
+                            border: OutlineInputBorder(),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 15),
+                TextField(
+                  controller: emailCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'E-mail',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 15),
                 TextField(
@@ -354,7 +468,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                           .doc(docId)
                           .update({
                         'jmeno': jmenoCtrl.text.trim(),
-                        'telefon': telCtrl.text.trim(),
+                        'telefon': '$telPredvolba${telCtrl.text.trim()}',
                         'email': emailCtrl.text.trim(),
                         'adresa': adresaCtrl.text.trim(),
                         'ico': icoCtrl.text.trim(),
@@ -372,7 +486,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
             ),
           ),
         );
-      },
+      }),
     );
   }
 
@@ -525,7 +639,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                   _buildInfoRow(
                     Icons.phone,
                     'Telefon',
-                    dataZakaznika['telefon'],
+                    _formatTelefon(dataZakaznika['telefon']?.toString()),
                   ),
                   const SizedBox(height: 10),
                   _buildInfoRow(Icons.email, 'E-mail', dataZakaznika['email']),

@@ -2231,8 +2231,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
         const Text('Telefonní číslo',
             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
         const SizedBox(height: 8),
-        Row(
-          children: [
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
             Container(
               decoration: BoxDecoration(
                 boxShadow: [
@@ -2290,8 +2292,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                   ),
                 ),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                     borderRadius: BorderRadius.circular(15),
@@ -2361,6 +2362,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
               ),
             ),
           ],
+          ),
         ),
       ],
     );
