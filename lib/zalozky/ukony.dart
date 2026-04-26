@@ -13,6 +13,7 @@ class _UkonyPageState extends State<UkonyPage> {
   final _nazevController = TextEditingController();
   final _cenaController = TextEditingController();
   final _casController = TextEditingController(text: '1.0');
+  final _celkovaCenaController = TextEditingController();
 
   String _vybranaKategorie = 'Mechanika';
   String _vybranaJednotka = 'hod';
@@ -26,6 +27,39 @@ class _UkonyPageState extends State<UkonyPage> {
   ];
 
   bool _isSaving = false;
+  bool _syncing = false;
+
+  void _onJednotkovaCenaChanged(String val) {
+    if (_syncing) return;
+    _syncing = true;
+    final cena = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+    final cas = double.tryParse(_casController.text.replaceAll(',', '.')) ?? 0.0;
+    _celkovaCenaController.text = (cena * cas).toStringAsFixed(2);
+    _syncing = false;
+    setState(() {});
+  }
+
+  void _onCelkovaCenaChanged(String val) {
+    if (_syncing) return;
+    _syncing = true;
+    final celkova = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+    final cas = double.tryParse(_casController.text.replaceAll(',', '.')) ?? 0.0;
+    _cenaController.text =
+        cas > 0 ? (celkova / cas).toStringAsFixed(2) : '0.00';
+    _syncing = false;
+    setState(() {});
+  }
+
+  void _onCasChanged(String val) {
+    if (_syncing) return;
+    _syncing = true;
+    final cas = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+    final cena =
+        double.tryParse(_cenaController.text.replaceAll(',', '.')) ?? 0.0;
+    _celkovaCenaController.text = (cena * cas).toStringAsFixed(2);
+    _syncing = false;
+    setState(() {});
+  }
 
   Future<void> _pridatUkon() async {
     final nazev = _nazevController.text.trim();
@@ -69,6 +103,7 @@ class _UkonyPageState extends State<UkonyPage> {
       _nazevController.clear();
       _cenaController.clear();
       _casController.text = '1.0';
+      _celkovaCenaController.clear();
       setState(() => _vybranaJednotka = 'hod');
       FocusScope.of(context).unfocus(); // Zavře klávesnici
 
@@ -91,10 +126,13 @@ class _UkonyPageState extends State<UkonyPage> {
   Future<void> _editovatUkon(String docId, Map<String, dynamic> data) async {
     final nazevCtrl =
         TextEditingController(text: data['nazev']?.toString() ?? '');
-    final cenaCtrl = TextEditingController(
-        text: (data['cena_bez_dph'] ?? 0.0).toString());
-    final casCtrl = TextEditingController(
-        text: (data['odhadovany_cas'] ?? 1.0).toString());
+    final double initCena = (data['cena_bez_dph'] as num?)?.toDouble() ?? 0.0;
+    final double initCas = (data['odhadovany_cas'] as num?)?.toDouble() ?? 1.0;
+    final cenaCtrl = TextEditingController(text: initCena.toString());
+    final casCtrl = TextEditingController(text: initCas.toString());
+    final celkovaCenaCtrl = TextEditingController(
+        text: (initCena * initCas).toStringAsFixed(2));
+    bool syncing = false;
     String jednotka = data['jednotka_casu']?.toString() ?? 'hod';
     String kategorie = data['kategorie']?.toString() ?? 'Mechanika';
 
@@ -159,8 +197,17 @@ class _UkonyPageState extends State<UkonyPage> {
                         controller: cenaCtrl,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
+                        onChanged: (val) {
+                          if (syncing) return;
+                          syncing = true;
+                          final cena = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                          final cas = double.tryParse(casCtrl.text.replaceAll(',', '.')) ?? 0.0;
+                          celkovaCenaCtrl.text = (cena * cas).toStringAsFixed(2);
+                          syncing = false;
+                          setSheet(() {});
+                        },
                         decoration: InputDecoration(
-                          labelText: 'Cena bez DPH (Kč)',
+                          labelText: 'Jedn. cena bez DPH',
                           prefixIcon: const Icon(Icons.attach_money,
                               color: Colors.green),
                           filled: true,
@@ -179,6 +226,15 @@ class _UkonyPageState extends State<UkonyPage> {
                         controller: casCtrl,
                         keyboardType: const TextInputType.numberWithOptions(
                             decimal: true),
+                        onChanged: (val) {
+                          if (syncing) return;
+                          syncing = true;
+                          final cas = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                          final cena = double.tryParse(cenaCtrl.text.replaceAll(',', '.')) ?? 0.0;
+                          celkovaCenaCtrl.text = (cena * cas).toStringAsFixed(2);
+                          syncing = false;
+                          setSheet(() {});
+                        },
                         decoration: InputDecoration(
                           labelText: 'Čas',
                           prefixIcon: const Icon(Icons.schedule,
@@ -207,6 +263,30 @@ class _UkonyPageState extends State<UkonyPage> {
                       children: const [Text('hod'), Text('min')],
                     ),
                   ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: celkovaCenaCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true),
+                  onChanged: (val) {
+                    if (syncing) return;
+                    syncing = true;
+                    final celkova = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                    final cas = double.tryParse(casCtrl.text.replaceAll(',', '.')) ?? 0.0;
+                    cenaCtrl.text = cas > 0 ? (celkova / cas).toStringAsFixed(2) : '0.00';
+                    syncing = false;
+                    setSheet(() {});
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Celková cena bez DPH (Kč)',
+                    prefixIcon: const Icon(Icons.price_check, color: Colors.green),
+                    filled: true,
+                    fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide.none),
+                  ),
                 ),
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
@@ -300,6 +380,7 @@ class _UkonyPageState extends State<UkonyPage> {
     _nazevController.dispose();
     _cenaController.dispose();
     _casController.dispose();
+    _celkovaCenaController.dispose();
     super.dispose();
   }
 
@@ -368,8 +449,9 @@ class _UkonyPageState extends State<UkonyPage> {
                             controller: _cenaController,
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
+                            onChanged: _onJednotkovaCenaChanged,
                             decoration: InputDecoration(
-                              labelText: 'Cena bez DPH (Kč)',
+                              labelText: 'Jedn. cena bez DPH',
                               prefixIcon: const Icon(Icons.attach_money,
                                   color: Colors.green),
                               filled: true,
@@ -388,6 +470,7 @@ class _UkonyPageState extends State<UkonyPage> {
                             controller: _casController,
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
+                            onChanged: _onCasChanged,
                             decoration: InputDecoration(
                               labelText: 'Čas',
                               prefixIcon: const Icon(Icons.schedule,
@@ -411,6 +494,24 @@ class _UkonyPageState extends State<UkonyPage> {
                           children: const [Text('hod'), Text('min')],
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: _celkovaCenaController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true),
+                      onChanged: _onCelkovaCenaChanged,
+                      decoration: InputDecoration(
+                        labelText: 'Celková cena bez DPH (Kč)',
+                        prefixIcon: const Icon(Icons.price_check,
+                            color: Colors.green),
+                        filled: true,
+                        fillColor:
+                            isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none),
+                      ),
                     ),
                     const SizedBox(height: 15),
                     Row(
@@ -515,9 +616,11 @@ class _UkonyPageState extends State<UkonyPage> {
                   final data = doc.data() as Map<String, dynamic>;
 
                   final nazev = data['nazev'] ?? 'Neznámý úkon';
-                  final cena = data['cena_bez_dph'] ?? 0.0;
-                  final cas = data['odhadovany_cas'] ?? 1.0;
+                  final cena = (data['cena_bez_dph'] ?? 0.0) as num;
+                  final cas = (data['odhadovany_cas'] ?? 1.0) as num;
+                  final jednotka = data['jednotka_casu'] ?? 'hod';
                   final kategorie = data['kategorie'] ?? 'Ostatní';
+                  final celkem = cena * cas;
 
                   return Card(
                     elevation: 0,
@@ -541,40 +644,56 @@ class _UkonyPageState extends State<UkonyPage> {
                           style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 8.0),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.category,
-                                size: 14, color: Colors.grey[600]),
-                            const SizedBox(width: 4),
-                            Text(kategorie,
-                                style: TextStyle(
-                                    color: Colors.grey[600], fontSize: 12)),
-                            const SizedBox(width: 15),
-                            Icon(Icons.schedule,
-                                size: 14, color: Colors.grey[600]),
-                            const SizedBox(width: 4),
-                            Text('$cas h',
-                                style: TextStyle(
-                                    color: Colors.grey[600], fontSize: 12)),
+                            Row(
+                              children: [
+                                Icon(Icons.category,
+                                    size: 14, color: Colors.grey[600]),
+                                const SizedBox(width: 4),
+                                Text(kategorie,
+                                    style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12)),
+                                const SizedBox(width: 15),
+                                Icon(Icons.schedule,
+                                    size: 14, color: Colors.grey[600]),
+                                const SizedBox(width: 4),
+                                Text('$cas $jednotka',
+                                    style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12)),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Text('${cena.toStringAsFixed(2)} Kč/$jednotka',
+                                    style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12)),
+                                const SizedBox(width: 10),
+                                Text('Celkem: ${celkem.toStringAsFixed(2)} Kč',
+                                    style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12)),
+                              ],
+                            ),
                           ],
                         ),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            '$cena Kč',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                                fontSize: 16),
-                          ),
                           IconButton(
                             icon: const Icon(Icons.edit_outlined,
                                 color: Colors.blue),
                             onPressed: () => _editovatUkon(doc.id, data),
                             tooltip: 'Upravit úkon',
                           ),
+
                           IconButton(
                             icon: const Icon(Icons.delete_outline,
                                 color: Colors.red),

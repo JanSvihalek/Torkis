@@ -12,18 +12,22 @@ class _UkonData {
   final TextEditingController nazev;
   final TextEditingController cena;
   final TextEditingController cas;
+  final TextEditingController celkovaCena;
+  bool syncing = false;
   String kategorie;
   String jednotkaCasu;
 
   _UkonData({String nazevText = '', this.kategorie = 'Mechanika', this.jednotkaCasu = 'hod'})
       : nazev = TextEditingController(text: nazevText),
         cena = TextEditingController(),
-        cas = TextEditingController(text: '1.0');
+        cas = TextEditingController(text: '1.0'),
+        celkovaCena = TextEditingController(text: '0.00');
 
   void dispose() {
     nazev.dispose();
     cena.dispose();
     cas.dispose();
+    celkovaCena.dispose();
   }
 }
 
@@ -1139,8 +1143,17 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       child: TextField(
                         controller: ukon.cena,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (val) {
+                          if (ukon.syncing) return;
+                          ukon.syncing = true;
+                          final c = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                          final t = double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 0.0;
+                          ukon.celkovaCena.text = (c * t).toStringAsFixed(2);
+                          ukon.syncing = false;
+                          setState(() {});
+                        },
                         decoration: InputDecoration(
-                          labelText: 'Cena (Kč)',
+                          labelText: 'Jedn. cena (Kč)',
                           filled: true,
                           fillColor: fillColor,
                           border: border,
@@ -1154,6 +1167,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       child: TextField(
                         controller: ukon.cas,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (val) {
+                          if (ukon.syncing) return;
+                          ukon.syncing = true;
+                          final t = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                          final c = double.tryParse(ukon.cena.text.replaceAll(',', '.')) ?? 0.0;
+                          ukon.celkovaCena.text = (c * t).toStringAsFixed(2);
+                          ukon.syncing = false;
+                          setState(() {});
+                        },
                         decoration: InputDecoration(
                           labelText: 'Čas',
                           filled: true,
@@ -1173,6 +1195,28 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       children: const [Text('hod'), Text('min')],
                     ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: ukon.celkovaCena,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (val) {
+                    if (ukon.syncing) return;
+                    ukon.syncing = true;
+                    final celkova = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                    final t = double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 0.0;
+                    ukon.cena.text = t > 0 ? (celkova / t).toStringAsFixed(2) : '0.00';
+                    ukon.syncing = false;
+                    setState(() {});
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Celková cena (Kč)',
+                    filled: true,
+                    fillColor: fillColor,
+                    border: border,
+                    enabledBorder: border,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
