@@ -51,6 +51,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   final _telefonController = TextEditingController();
   final _emailZController = TextEditingController();
+  String _telPredvolba = '+420';
 
   bool _odeslatEmail = true;
   bool _defaultOdeslatEmail = true;
@@ -201,7 +202,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
           _jmenoController.text = data['zakaznik_jmeno'] ?? '';
           _icoController.text = data['zakaznik_ico'] ?? '';
-          _telefonController.text = data['zakaznik_telefon'] ?? '';
+          _nastavitTelefon(data['zakaznik_telefon'] ?? '');
           _emailZController.text = data['zakaznik_email'] ?? '';
           _vybranyZakaznikId = data['zakaznik_id'];
 
@@ -470,7 +471,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
               z['ulice']?.toString() ?? (z['adresa']?.toString() ?? '');
           _mestoController.text = z['mesto']?.toString() ?? '';
           _pscController.text = z['psc']?.toString() ?? '';
-          _telefonController.text = z['telefon']?.toString() ?? '';
+          _nastavitTelefon(z['telefon']?.toString() ?? '');
           _emailZController.text = z['email']?.toString() ?? '';
         });
       }
@@ -558,6 +559,36 @@ class _MainWizardPageState extends State<MainWizardPage> {
     super.dispose();
   }
 
+  static const List<Map<String, String>> _predvolby = [
+    {'kod': '+420', 'vlajka': '🇨🇿', 'nazev': 'Česká republika'},
+    {'kod': '+421', 'vlajka': '🇸🇰', 'nazev': 'Slovensko'},
+    {'kod': '+49', 'vlajka': '🇩🇪', 'nazev': 'Německo'},
+    {'kod': '+43', 'vlajka': '🇦🇹', 'nazev': 'Rakousko'},
+    {'kod': '+48', 'vlajka': '🇵🇱', 'nazev': 'Polsko'},
+    {'kod': '+36', 'vlajka': '🇭🇺', 'nazev': 'Maďarsko'},
+    {'kod': '+380', 'vlajka': '🇺🇦', 'nazev': 'Ukrajina'},
+    {'kod': '+44', 'vlajka': '🇬🇧', 'nazev': 'Velká Británie'},
+    {'kod': '+1', 'vlajka': '🇺🇸', 'nazev': 'USA'},
+    {'kod': '+7', 'vlajka': '🇷🇺', 'nazev': 'Rusko'},
+  ];
+
+  // Rozloží uložené číslo ("+420731901003") na předvolbu a samotné číslo.
+  // Stará čísla bez předvolby zůstanou v _telefonController beze změny.
+  void _nastavitTelefon(String telefon) {
+    for (final p in _predvolby) {
+      final kod = p['kod']!;
+      if (telefon.startsWith(kod)) {
+        setState(() => _telPredvolba = kod);
+        _telefonController.text = telefon.substring(kod.length).trim();
+        return;
+      }
+    }
+    _telefonController.text = telefon;
+  }
+
+  String get _plneTelCislo =>
+      '$_telPredvolba${_telefonController.text.trim()}';
+
   /// Dotáže ARES API na IČO a přednaplní jméno a adresu zákazníka (strana 2).
   Future<void> _fetchAresData() async {
     final ico = _icoController.text.trim();
@@ -626,7 +657,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 (zakaznik['adresa']?.toString() ?? '');
             _mestoController.text = zakaznik['mesto']?.toString() ?? '';
             _pscController.text = zakaznik['psc']?.toString() ?? '';
-            _telefonController.text = zakaznik['telefon'] ?? '';
+            _nastavitTelefon(zakaznik['telefon'] ?? '');
             _emailZController.text = zakaznik['email'] ?? '';
           });
           if (_sId != null && _vybranyZakaznikId != null) {
@@ -761,7 +792,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (_vybranyZakaznikId != null && _vybranyZakaznikId!.isNotEmpty) {
       zakaznikId = _vybranyZakaznikId!;
     } else {
-      final telefon = _telefonController.text.trim();
+      final telefon = _plneTelCislo;
       final ico = _icoController.text.trim();
       QuerySnapshot? existujici;
 
@@ -810,7 +841,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'mesto': mesto,
         'psc': psc,
         'adresa': kombinovanaAdresa,
-        'telefon': _telefonController.text.trim(),
+        'telefon': _plneTelCislo,
         'email': _emailZController.text.trim(),
         'posledni_navsteva': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
@@ -866,7 +897,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'mesto': mesto,
         'psc': psc,
         'adresa': kombinovanaAdresa,
-        'telefon': _telefonController.text.trim(),
+        'telefon': _plneTelCislo,
         'email': _emailZController.text.trim(),
       },
       'stav_vozidla': {
@@ -1525,9 +1556,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                       numbersOnly: true))
             ]),
             const SizedBox(height: 20),
-            _buildInput(
-                'Telefonní číslo', Icons.phone, _telefonController, isDark,
-                numbersOnly: true),
+            _buildPhoneField(isDark),
             const SizedBox(height: 20),
             _buildInput('E-mail', Icons.email, _emailZController, isDark),
           ],
@@ -2189,6 +2218,153 @@ class _MainWizardPageState extends State<MainWizardPage> {
           ),
         ),
       );
+
+  Widget _buildPhoneField(bool isDark) {
+    final selectedEntry = _predvolby.firstWhere(
+      (p) => p['kod'] == _telPredvolba,
+      orElse: () => _predvolby.first,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Telefonní číslo',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                boxShadow: [
+                  if (!isDark)
+                    BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4))
+                ],
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(15),
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(25)),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 40, height: 4,
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                              color: Colors.grey[400],
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        const Text('Vyberte předvolbu',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        ..._predvolby.map((p) => ListTile(
+                              leading: Text(p['vlajka']!,
+                                  style: const TextStyle(fontSize: 24)),
+                              title: Text(p['nazev']!),
+                              trailing: Text(p['kod']!,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue)),
+                              selected: p['kod'] == _telPredvolba,
+                              selectedColor: Colors.blue,
+                              onTap: () {
+                                setState(() => _telPredvolba = p['kod']!);
+                                Navigator.pop(context);
+                              },
+                            )),
+                      ],
+                    ),
+                  ),
+                ),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    border: Border.all(
+                        color:
+                            isDark ? Colors.grey[800]! : Colors.grey[300]!),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(selectedEntry['vlajka']!,
+                          style: const TextStyle(fontSize: 20)),
+                      const SizedBox(width: 6),
+                      Text(selectedEntry['kod']!,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.arrow_drop_down, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    if (!isDark)
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4))
+                  ],
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: TextField(
+                  controller: _telefonController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    hintText: 'Telefonní číslo',
+                    prefixIcon:
+                        const Icon(Icons.phone, color: Colors.blue),
+                    filled: true,
+                    fillColor:
+                        isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(
+                            color: isDark
+                                ? Colors.grey[800]!
+                                : Colors.grey[300]!,
+                            width: 1)),
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(
+                            color: Colors.blue, width: 2)),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(
+                            color: isDark
+                                ? Colors.grey[800]!
+                                : Colors.grey[300]!,
+                            width: 1)),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
   Widget _buildInput(String label, IconData icon,
           TextEditingController controller, bool isDark,
