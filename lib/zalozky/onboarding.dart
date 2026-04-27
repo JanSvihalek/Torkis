@@ -17,7 +17,10 @@ class _UkonData {
   String kategorie;
   String jednotkaCasu;
 
-  _UkonData({String nazevText = '', this.kategorie = 'Mechanika', this.jednotkaCasu = 'hod'})
+  _UkonData(
+      {String nazevText = '',
+      this.kategorie = 'Mechanika',
+      this.jednotkaCasu = 'hod'})
       : nazev = TextEditingController(text: nazevText),
         cena = TextEditingController(),
         cas = TextEditingController(text: '1.0'),
@@ -86,7 +89,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   final List<_UkonData> _ukony = [];
 
   static const List<String> _kategorieUkonu = [
-    'Mechanika', 'Pneuservis', 'Elektrika', 'Lakovna', 'Karosárna', 'Ostatní'
+    'Mechanika',
+    'Pneuservis',
+    'Elektrika',
+    'Lakovna',
+    'Karosárna',
+    'Ostatní'
   ];
 
   static const List<String> _vychoziUkony = [
@@ -180,9 +188,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user != null) {
-        final finalniUkony = _ukony
-            .where((u) => u.nazev.text.trim().isNotEmpty)
-            .toList();
+        final finalniUkony =
+            _ukony.where((u) => u.nazev.text.trim().isNotEmpty).toList();
 
         // POUŽIJEME BATCH ZÁPIS - Zapíše všechny dokumenty najednou a bezpečně
         WriteBatch batch = FirebaseFirestore.instance.batch();
@@ -205,7 +212,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       0.0,
               'platce_dph': _jePlatceDph,
               'dic_servisu': _dicController.text.trim(),
-              'banka_servisu': '${_ucetCisloController.text.trim()}/${_ucetKodController.text.trim()}',
+              'banka_servisu':
+                  '${_ucetCisloController.text.trim()}/${_ucetKodController.text.trim()}',
               'zpusob_uhrady': _zpusobUhrady,
               'prefix_zakazky': _prefixZakazkaController.text.trim().isEmpty
                   ? 'ZAK'
@@ -276,9 +284,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           batch.set(ukonRef, {
             'servis_id': user.uid,
             'nazev': ukon.nazev.text.trim(),
-            'cena_bez_dph': double.tryParse(ukon.cena.text.replaceAll(',', '.')) ?? 0.0,
+            'cena_bez_dph':
+                double.tryParse(ukon.cena.text.replaceAll(',', '.')) ?? 0.0,
             'sazba_dph': _jePlatceDph ? 21 : 0,
-            'odhadovany_cas': double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 1.0,
+            'odhadovany_cas':
+                double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 1.0,
             'jednotka_casu': ukon.jednotkaCasu,
             'kategorie': ukon.kategorie,
             'aktivni': true,
@@ -842,6 +852,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       ),
     );
   }
+
   // ── KROK 2: Fakturace a číslování ───────────────────────────────────────
   // Hodinová sazba, plátce DPH + DIČ, číslo bankovního účtu,
   // konfigurátor formátu čísel zakázek a faktur (prefix, rok, měsíc, délka počítadla).
@@ -1002,22 +1013,19 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            initialValue: _zpusobUhrady,
+            value: _zpusobUhrady,
             decoration: InputDecoration(
-              prefixIcon:
-                  const Icon(Icons.payment, color: Colors.blueGrey),
+              prefixIcon: const Icon(Icons.payment, color: Colors.blueGrey),
               filled: true,
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
-                      color:
-                          isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
               enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
-                      color:
-                          isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             ),
             items: ['Převodem', 'Hotově', 'Kartou']
                 .map((v) => DropdownMenuItem(value: v, child: Text(v)))
@@ -1102,7 +1110,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           final fillColor = isDark ? const Color(0xFF1E1E1E) : Colors.grey[50]!;
           final border = OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+            borderSide: BorderSide(
+                color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
           );
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -1110,7 +1119,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+              border: Border.all(
+                  color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
             ),
             child: Column(
               children: [
@@ -1125,13 +1135,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                           fillColor: fillColor,
                           border: border,
                           enabledBorder: border,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.redAccent, size: 20),
+                      icon: const Icon(Icons.close,
+                          color: Colors.redAccent, size: 20),
                       onPressed: () => _odebratUkon(index),
                     ),
                   ],
@@ -1142,12 +1154,16 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     Expanded(
                       child: TextField(
                         controller: ukon.cena,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                         onChanged: (val) {
                           if (ukon.syncing) return;
                           ukon.syncing = true;
-                          final c = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                          final t = double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 0.0;
+                          final c =
+                              double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                          final t = double.tryParse(
+                                  ukon.cas.text.replaceAll(',', '.')) ??
+                              0.0;
                           ukon.celkovaCena.text = (c * t).toStringAsFixed(2);
                           ukon.syncing = false;
                           setState(() {});
@@ -1158,7 +1174,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                           fillColor: fillColor,
                           border: border,
                           enabledBorder: border,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                         ),
                       ),
                     ),
@@ -1166,12 +1183,16 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     Expanded(
                       child: TextField(
                         controller: ukon.cas,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
                         onChanged: (val) {
                           if (ukon.syncing) return;
                           ukon.syncing = true;
-                          final t = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                          final c = double.tryParse(ukon.cena.text.replaceAll(',', '.')) ?? 0.0;
+                          final t =
+                              double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                          final c = double.tryParse(
+                                  ukon.cena.text.replaceAll(',', '.')) ??
+                              0.0;
                           ukon.celkovaCena.text = (c * t).toStringAsFixed(2);
                           ukon.syncing = false;
                           setState(() {});
@@ -1182,16 +1203,22 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                           fillColor: fillColor,
                           border: border,
                           enabledBorder: border,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 12),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     ToggleButtons(
-                      isSelected: [ukon.jednotkaCasu == 'hod', ukon.jednotkaCasu == 'min'],
-                      onPressed: (i) => setState(() => ukon.jednotkaCasu = i == 0 ? 'hod' : 'min'),
+                      isSelected: [
+                        ukon.jednotkaCasu == 'hod',
+                        ukon.jednotkaCasu == 'min'
+                      ],
+                      onPressed: (i) => setState(
+                          () => ukon.jednotkaCasu = i == 0 ? 'hod' : 'min'),
                       borderRadius: BorderRadius.circular(10),
-                      constraints: const BoxConstraints(minWidth: 40, minHeight: 48),
+                      constraints:
+                          const BoxConstraints(minWidth: 40, minHeight: 48),
                       children: const [Text('hod'), Text('min')],
                     ),
                   ],
@@ -1199,13 +1226,18 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 const SizedBox(height: 6),
                 TextField(
                   controller: ukon.celkovaCena,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
                   onChanged: (val) {
                     if (ukon.syncing) return;
                     ukon.syncing = true;
-                    final celkova = double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
-                    final t = double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 0.0;
-                    ukon.cena.text = t > 0 ? (celkova / t).toStringAsFixed(2) : '0.00';
+                    final celkova =
+                        double.tryParse(val.replaceAll(',', '.')) ?? 0.0;
+                    final t =
+                        double.tryParse(ukon.cas.text.replaceAll(',', '.')) ??
+                            0.0;
+                    ukon.cena.text =
+                        t > 0 ? (celkova / t).toStringAsFixed(2) : '0.00';
                     ukon.syncing = false;
                     setState(() {});
                   },
@@ -1215,7 +1247,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     fillColor: fillColor,
                     border: border,
                     enabledBorder: border,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1227,12 +1260,14 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     fillColor: fillColor,
                     border: border,
                     enabledBorder: border,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 12),
                   ),
                   items: _kategorieUkonu
                       .map((k) => DropdownMenuItem(value: k, child: Text(k)))
                       .toList(),
-                  onChanged: (val) => setState(() => ukon.kategorie = val ?? ukon.kategorie),
+                  onChanged: (val) =>
+                      setState(() => ukon.kategorie = val ?? ukon.kategorie),
                 ),
               ],
             ),

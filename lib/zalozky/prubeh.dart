@@ -1495,8 +1495,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 horizontal: 10,
                                 vertical: 5,
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
                                     'Informace o zakázce',
@@ -1506,6 +1506,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                       color: Colors.blue,
                                     ),
                                   ),
+                                  const SizedBox(height: 2),
                                   Text(
                                     'Přijato: ${_formatDate(data['cas_prijeti'])}',
                                     style: TextStyle(
@@ -1514,6 +1515,14 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
+                                  if (data['prijal_jmeno'] != null)
+                                    Text(
+                                      'Přijal: ${data['prijal_jmeno']}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: isDark ? Colors.grey[400] : Colors.grey[700],
+                                      ),
+                                    ),
                                 ],
                               ),
                             ),
@@ -2078,51 +2087,65 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     ],
                   ),
                   child: SafeArea(
-                    child: Row(
-                      children: [
-                        if (!isMechanik)
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              onPressed: () => _ukoncitZakazkuDialog(context,
-                                  data, stav, zakaznik, imageUrlsByCategoryRaw),
-                              icon: const Icon(Icons.flag),
-                              label: const Text(
-                                'UKONČIT A VYFAKTUROVAT',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                                textAlign: TextAlign.center,
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.orange,
-                                foregroundColor: Colors.white,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 20),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final narrow = constraints.maxWidth < 380;
+                        final buttonUkoncit = ElevatedButton.icon(
+                          onPressed: () => _ukoncitZakazkuDialog(context,
+                              data, stav, zakaznik, imageUrlsByCategoryRaw),
+                          icon: const Icon(Icons.flag),
+                          label: Text(
+                            narrow ? 'UKONČIT A\nVYFAKTUROVAT' : 'UKONČIT A VYFAKTUROVAT',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                                vertical: narrow ? 14 : 20),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                        if (!isMechanik) const SizedBox(width: 15),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () => _openAddWorkDialog(context),
-                            icon: const Icon(Icons.add),
-                            label: const Text(
-                              'PŘIDAT ÚKON',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
+                        );
+                        final buttonPridat = ElevatedButton.icon(
+                          onPressed: () => _openAddWorkDialog(context),
+                          icon: const Icon(Icons.add),
+                          label: const Text(
+                            'PŘIDAT ÚKON',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                                vertical: narrow ? 14 : 20),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                        ),
-                      ],
+                        );
+                        if (narrow) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (!isMechanik) buttonUkoncit,
+                              if (!isMechanik) const SizedBox(height: 8),
+                              buttonPridat,
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            if (!isMechanik) Expanded(child: buttonUkoncit),
+                            if (!isMechanik) const SizedBox(width: 15),
+                            Expanded(child: buttonPridat),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),

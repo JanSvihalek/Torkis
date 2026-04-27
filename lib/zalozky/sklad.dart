@@ -101,7 +101,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
               fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
               ),
               contentPadding: const EdgeInsets.symmetric(vertical: 15),
             ),
@@ -150,14 +150,14 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                       side: BorderSide(
-                        color: isLowStock ? Colors.red.withValues(alpha: 0.5) : Colors.transparent,
+                        color: isLowStock ? Colors.red.withOpacity(0.5) : Colors.transparent,
                         width: isLowStock ? 2 : 0,
                       ),
                     ),
                     child: ListTile(
                       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                       leading: CircleAvatar(
-                        backgroundColor: isLowStock ? Colors.red.withValues(alpha: 0.1) : Colors.orange.withValues(alpha: 0.1),
+                        backgroundColor: isLowStock ? Colors.red.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
                         child: Icon(
                           isLowStock ? Icons.warning_amber_rounded : Icons.inventory_2, 
                           color: isLowStock ? Colors.red : Colors.orange,
@@ -496,7 +496,7 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+              border: Border.all(color: Colors.grey.withOpacity(0.2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1185,7 +1185,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                             return DropdownButtonFormField<String>(
                               decoration: InputDecoration(
                                 filled: true,
-                                fillColor: isDark ? Colors.white10 : Colors.blue.withValues(alpha: 0.05),
+                                fillColor: isDark ? Colors.white10 : Colors.blue.withOpacity(0.05),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                               ),
                               hint: const Text('Vyberte uloženého zákazníka...', style: TextStyle(color: Colors.blue)),
@@ -1323,9 +1323,9 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                           Container(
                             padding: const EdgeInsets.all(15),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withValues(alpha: 0.05),
+                              color: Colors.blue.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+                              border: Border.all(color: Colors.blue.withOpacity(0.2)),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1506,7 +1506,7 @@ class _HistorieSkladuTab extends StatelessWidget {
               Row(
                 children: [
                   CircleAvatar(
-                    backgroundColor: color.withValues(alpha: 0.1),
+                    backgroundColor: color.withOpacity(0.1),
                     child: Icon(isPrijem ? Icons.arrow_downward : Icons.arrow_upward, color: color),
                   ),
                   const SizedBox(width: 15),
@@ -1530,7 +1530,7 @@ class _HistorieSkladuTab extends StatelessWidget {
               Card(
                 color: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: Colors.grey.withValues(alpha: 0.2))),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: Colors.grey.withOpacity(0.2))),
                 child: Padding(
                   padding: const EdgeInsets.all(20),
                   child: Column(
@@ -1561,7 +1561,7 @@ class _HistorieSkladuTab extends StatelessWidget {
                     
                     if (!snap.hasData || snap.data == null || !snap.data!.exists) {
                       return Card(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: Colors.orange.withOpacity(0.1),
                         elevation: 0,
                         child: ListTile(
                           leading: const Icon(Icons.link_off, color: Colors.orange),
@@ -1582,11 +1582,11 @@ class _HistorieSkladuTab extends StatelessWidget {
                     }
 
                     return Card(
-                      color: Colors.blue.withValues(alpha: 0.05),
+                      color: Colors.blue.withOpacity(0.05),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
-                        side: BorderSide(color: Colors.blue.withValues(alpha: 0.2))
+                        side: BorderSide(color: Colors.blue.withOpacity(0.2))
                       ),
                       child: ListTile(
                         leading: CircleAvatar(
@@ -1677,7 +1677,7 @@ class _HistorieSkladuTab extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: color.withValues(alpha: 0.1),
+                    backgroundColor: color.withOpacity(0.1),
                     child: Icon(isPrijem ? Icons.arrow_downward : Icons.arrow_upward, color: color),
                   ),
                   title: Text(data['nazev_dilu'] ?? 'Neznámý díl', style: const TextStyle(fontWeight: FontWeight.bold)),

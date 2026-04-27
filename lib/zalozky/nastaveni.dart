@@ -548,7 +548,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 15),
                       child: DropdownButtonFormField<String>(
-                        initialValue: _zpusobUhrady,
+                        value: _zpusobUhrady,
                         decoration: InputDecoration(
                           labelText: 'Výchozí způsob úhrady',
                           prefixIcon: const Icon(Icons.payment,
@@ -592,7 +592,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: const Text('Plátce DPH',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                         value: _platceDph,
-                        activeThumbColor: Colors.blue,
+                        activeColor: Colors.blue,
                         onChanged: (v) => setState(() => _platceDph = v),
                       ),
                     ),
@@ -609,7 +609,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       decoration: BoxDecoration(
                         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
                       ),
                       child: Column(
                         children: [
@@ -643,7 +643,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             'Přednastaví odesílání PDF nabídek a faktur.',
                             style: TextStyle(fontSize: 12)),
                         value: _defaultEmail,
-                        activeThumbColor: Colors.blue,
+                        activeColor: Colors.blue,
                         onChanged: (v) => setState(() => _defaultEmail = v),
                       ),
                     ),
@@ -665,14 +665,14 @@ class _SettingsPageState extends State<SettingsPage> {
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
-                      side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+                      side: BorderSide(color: Colors.grey.withOpacity(0.2)),
                     ),
                     margin: const EdgeInsets.only(bottom: 10),
                     child: ListTile(
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withValues(alpha: 0.1),
+                          color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.view_column, color: Colors.blue),
@@ -689,7 +689,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       color:
                           isDark ? const Color(0xFF1E1E1E) : Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
                     ),
                     child: SwitchListTile(
                       title: const Text('Vynutit tmavý režim',
@@ -698,7 +698,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           'Aplikace bude tmavá bez ohledu na systém.',
                           style: TextStyle(fontSize: 11)),
                       value: _tmavyRezim,
-                      activeThumbColor: Colors.blue,
+                      activeColor: Colors.blue,
                       onChanged: (v) => setState(() => _tmavyRezim = v),
                     ),
                   ),
@@ -728,7 +728,7 @@ class _SettingsPageState extends State<SettingsPage> {
         boxShadow: [
           if (!isDark)
             BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 15,
                 offset: const Offset(0, 5)),
         ],
@@ -741,7 +741,7 @@ class _SettingsPageState extends State<SettingsPage> {
               Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(10)),
                   child: Icon(icon, color: color)),
               const SizedBox(width: 15),
@@ -937,9 +937,9 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.05),
+              color: Colors.blue.withOpacity(0.05),
               borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+              border: Border.all(color: Colors.blue.withOpacity(0.3)),
             ),
             child: Column(
               children: [
@@ -1049,7 +1049,7 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                   Container(
                     padding: const EdgeInsets.all(15),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.05),
+                      color: Colors.orange.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(10),
                       border: const Border(left: BorderSide(color: Colors.orange, width: 4)),
                     ),

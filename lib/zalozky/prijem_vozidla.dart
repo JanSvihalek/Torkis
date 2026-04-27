@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'dart:typed_data';
@@ -918,6 +919,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'podpis_url': podpisUrl,
       'provedene_prace': [],
       'cas_prijeti': FieldValue.serverTimestamp(),
+      'prijal_uid': user?.uid,
+      'prijal_jmeno': globalUserJmeno ?? user?.email ?? 'Neznámý',
     };
 
     await FirebaseFirestore.instance
@@ -1044,25 +1047,27 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   Future<void> _takePhotoSeries(String categoryKey) async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'Sériové focení zapnuto. Foťák se bude otevírat, dokud nedáte "Zpět/Zrušit".'),
-        duration: Duration(seconds: 3)));
-    while (true) {
+    if (kIsWeb) {
+      // Web nemá přímý přístup ke kameře přes camera package — použijeme image_picker
       final XFile? photo = await _picker.pickImage(
-          source: ImageSource.camera,
-          imageQuality: 60,
-          maxWidth: 1280,
-          maxHeight: 1280);
+          source: ImageSource.camera, imageQuality: 60, maxWidth: 1280, maxHeight: 1280);
       if (photo != null) {
         setState(() {
-          if (_categoryImages[categoryKey] == null)
-            _categoryImages[categoryKey] = [];
+          _categoryImages[categoryKey] ??= [];
           _categoryImages[categoryKey]!.add(photo);
         });
-      } else {
-        break;
       }
+      return;
+    }
+    final result = await Navigator.push<List<XFile>>(
+      context,
+      MaterialPageRoute(builder: (_) => const _MultiShotCameraPage()),
+    );
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _categoryImages[categoryKey] ??= [];
+        _categoryImages[categoryKey]!.addAll(result);
+      });
     }
   }
 
@@ -1288,7 +1293,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                         boxShadow: [
                           if (!isDark)
                             BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: Colors.black.withOpacity(0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4))
                         ],
@@ -1380,7 +1385,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                         boxShadow: [
                           if (!isDark)
                             BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
+                                color: Colors.black.withOpacity(0.05),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4))
                         ],
@@ -2240,7 +2245,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 boxShadow: [
                   if (!isDark)
                     BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4))
                 ],
@@ -2323,7 +2328,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                   boxShadow: [
                     if (!isDark)
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color: Colors.black.withOpacity(0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 4))
                   ],
@@ -2593,6 +2598,164 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Vlastní kamera pro pořízení více snímků bez potvrzování každého foto.
+class _MultiShotCameraPage extends StatefulWidget {
+  const _MultiShotCameraPage();
+
+  @override
+  State<_MultiShotCameraPage> createState() => _MultiShotCameraPageState();
+}
+
+class _MultiShotCameraPageState extends State<_MultiShotCameraPage> {
+  CameraController? _controller;
+  final List<XFile> _photos = [];
+  bool _isCapturing = false;
+  bool _isInitialized = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _initCamera();
+  }
+
+  Future<void> _initCamera() async {
+    try {
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        if (mounted) setState(() => _error = 'Kamera není dostupná.');
+        return;
+      }
+      final camera = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
+      _controller = CameraController(
+        camera,
+        ResolutionPreset.high,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+        enableAudio: false,
+      );
+      await _controller!.initialize();
+      if (mounted) setState(() => _isInitialized = true);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Chyba inicializace kamery: $e');
+    }
+  }
+
+  Future<void> _capture() async {
+    if (!_isInitialized || _isCapturing || _controller == null) return;
+    setState(() => _isCapturing = true);
+    try {
+      final photo = await _controller!.takePicture();
+      if (mounted) setState(() => _photos.add(photo));
+    } catch (e) {
+      debugPrint('Chyba focení: $e');
+    } finally {
+      if (mounted) setState(() => _isCapturing = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context, _photos),
+                  ),
+                  Expanded(
+                    child: Text(
+                      _photos.isEmpty
+                          ? 'Foťte libovolný počet snímků'
+                          : '${_photos.length} foto pořízeno',
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, _photos),
+                    child: const Text('Hotovo',
+                        style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _error != null
+                  ? Center(
+                      child: Text(_error!,
+                          style: const TextStyle(color: Colors.white)))
+                  : _isInitialized
+                      ? CameraPreview(_controller!)
+                      : const Center(
+                          child: CircularProgressIndicator(color: Colors.white)),
+            ),
+            if (_photos.isNotEmpty)
+              SizedBox(
+                height: 76,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  itemCount: _photos.length,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(File(_photos[i].path),
+                          width: 60, height: 60, fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: GestureDetector(
+                onTap: _capture,
+                child: Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 4),
+                    color: _isCapturing
+                        ? Colors.grey.withOpacity(0.5)
+                        : Colors.white.withOpacity(0.2),
+                  ),
+                  child: _isCapturing
+                      ? const Padding(
+                          padding: EdgeInsets.all(22),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.camera_alt,
+                          color: Colors.white, size: 32),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -290,7 +290,7 @@ class _UkonyPageState extends State<UkonyPage> {
                 ),
                 const SizedBox(height: 15),
                 DropdownButtonFormField<String>(
-                  initialValue: kategorie,
+                  value: kategorie,
                   decoration: InputDecoration(
                     labelText: 'Kategorie',
                     prefixIcon:

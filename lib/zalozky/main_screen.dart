@@ -272,7 +272,7 @@ class _MainScreenState extends State<MainScreen> {
               },
               backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
               indicatorColor:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               destinations: currentDestinations,
             ),
@@ -460,13 +460,13 @@ class MenuPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: isLocked
-                  ? Colors.grey.withValues(alpha: 0.2)
-                  : color.withValues(alpha: 0.3),
+                  ? Colors.grey.withOpacity(0.2)
+                  : color.withOpacity(0.3),
               width: 2),
           boxShadow: [
             if (!isDark)
               BoxShadow(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withOpacity(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 5))
           ],

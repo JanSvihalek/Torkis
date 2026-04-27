@@ -74,7 +74,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                   boxShadow: [
                     if (!isDark)
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -173,7 +173,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(15),
                       leading: CircleAvatar(
-                        backgroundColor: Colors.blue.withValues(alpha: 0.1),
+                        backgroundColor: Colors.blue.withOpacity(0.1),
                         foregroundColor: Colors.blue,
                         radius: 25,
                         child: const Icon(Icons.person),
@@ -608,7 +608,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                   Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: Colors.blue.withValues(alpha: 0.1),
+                        backgroundColor: Colors.blue.withOpacity(0.1),
                         foregroundColor: Colors.blue,
                         radius: 30,
                         child: const Icon(Icons.person, size: 30),
@@ -816,8 +816,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
                 contentPadding: const EdgeInsets.all(15),
                 leading: CircleAvatar(
                   backgroundColor: jeDokonceno
-                      ? Colors.green.withValues(alpha: 0.1)
-                      : getStatusColor(stav).withValues(alpha: 0.1),
+                      ? Colors.green.withOpacity(0.1)
+                      : getStatusColor(stav).withOpacity(0.1),
                   child: Icon(
                     jeDokonceno ? Icons.check_circle : Icons.build,
                     color: jeDokonceno ? Colors.green : getStatusColor(stav),
@@ -843,7 +843,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: getStatusColor(stav).withValues(alpha: 0.1),
+                          color: getStatusColor(stav).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(

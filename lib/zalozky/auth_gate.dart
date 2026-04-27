@@ -11,6 +11,7 @@ import 'main_screen.dart';
 // --- NOVÉ: GLOBÁLNÍ PROMĚNNÉ PRO CELOU APLIKACI ---
 String? globalServisId;
 String? globalUserRole;
+String? globalUserJmeno;
 Map<String, bool> globalPrava = {};
 
 class AuthGate extends StatelessWidget {
@@ -60,6 +61,7 @@ class AuthGate extends StatelessWidget {
               // ULOŽÍME ID SERVISU, ROLI A PRÁVA DO PAMĚTI PRO ZBYTEK APLIKACE
               globalServisId = userData['servis_id'];
               globalUserRole = userData['role'];
+              globalUserJmeno = userData['jmeno']?.toString();
               globalPrava = Map<String, bool>.from(userData['prava'] ?? {});
 
               // Aplikujeme osobní preference uživatele — téma a pořadí záložek.

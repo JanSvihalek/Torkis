@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
+import 'dart:typed_data';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 import 'auth_gate.dart';
@@ -54,7 +55,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                   boxShadow: [
                     if (!isDark)
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -174,7 +175,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                       contentPadding: const EdgeInsets.all(15),
                       leading: CircleAvatar(
                         backgroundColor:
-                            Colors.blue.withValues(alpha: 0.1),
+                            Colors.blue.withOpacity(0.1),
                         child: const Icon(Icons.car_repair,
                             color: Colors.blue, size: 20),
                       ),
@@ -193,7 +194,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                 horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: getStatusColor(stav)
-                                  .withValues(alpha: 0.1),
+                                  .withOpacity(0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
@@ -228,6 +229,12 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                               style: const TextStyle(
                                   fontSize: 11, color: Colors.grey),
                             ),
+                            if (data['prijal_jmeno'] != null)
+                              Text(
+                                'Přijal: ${data['prijal_jmeno']}',
+                                style: const TextStyle(
+                                    fontSize: 11, color: Colors.grey),
+                              ),
                           ],
                         ),
                       ),
@@ -276,42 +283,74 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     return DateFormat('dd.MM.yyyy HH:mm').format(dt);
   }
 
+  Future<Uint8List> _generatePdfBytes() async {
+    String servisNazev = 'Torkis Servis';
+    String servisIco = '';
+    final servisId = widget.data['servis_id']?.toString() ?? '';
+    if (servisId.isNotEmpty) {
+      final doc = await FirebaseFirestore.instance
+          .collection('nastaveni_servisu')
+          .doc(servisId)
+          .get();
+      if (doc.exists) {
+        servisNazev = doc.data()?['nazev_servisu'] ?? 'Torkis Servis';
+        servisIco = doc.data()?['ico_servisu'] ?? '';
+      }
+    }
+    return GlobalPdfGenerator.generateDocument(
+      data: widget.data,
+      servisNazev: servisNazev,
+      servisIco: servisIco,
+      typ: PdfTyp.protokol,
+    );
+  }
+
   Future<void> _tiskniProtokol() async {
     setState(() => _isTisku = true);
     try {
-      String servisNazev = 'Torkis Servis';
-      String servisIco = '';
-      final servisId = widget.data['servis_id']?.toString() ?? '';
-      if (servisId.isNotEmpty) {
-        final doc = await FirebaseFirestore.instance
-            .collection('nastaveni_servisu')
-            .doc(servisId)
-            .get();
-        if (doc.exists) {
-          servisNazev = doc.data()?['nazev_servisu'] ?? 'Torkis Servis';
-          servisIco = doc.data()?['ico_servisu'] ?? '';
-        }
-      }
-
-      final pdfBytes = await GlobalPdfGenerator.generateDocument(
-        data: widget.data,
-        servisNazev: servisNazev,
-        servisIco: servisIco,
-        typ: PdfTyp.protokol,
-      );
-
+      final pdfBytes = await _generatePdfBytes();
       await Printing.layoutPdf(
         onLayout: (_) async => pdfBytes,
-        name:
-            'Protokol_${widget.data['cislo_zakazky'] ?? widget.docId}.pdf',
+        name: 'Protokol_${widget.data['cislo_zakazky'] ?? widget.docId}.pdf',
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Chyba při tisku: $e'),
-              backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Chyba při tisku: $e'),
+            backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _isTisku = false);
+    }
+  }
+
+  Future<void> _zobrazitProtokol() async {
+    setState(() => _isTisku = true);
+    try {
+      final pdfBytes = await _generatePdfBytes();
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(
+              title: Text(
+                  'Protokol ${widget.data['cislo_zakazky'] ?? ''}'),
+            ),
+            body: PdfPreview(
+              build: (_) async => pdfBytes,
+              allowPrinting: true,
+              allowSharing: true,
+              canChangePageFormat: false,
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Chyba při zobrazení: $e'),
+            backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isTisku = false);
@@ -340,13 +379,18 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.visibility_outlined),
+            tooltip: 'Zobrazit protokol',
+            onPressed: _isTisku ? null : _zobrazitProtokol,
+          ),
+          IconButton(
             icon: _isTisku
                 ? const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.print_outlined),
-            tooltip: 'Tisknout protokol příjmu',
+            tooltip: 'Tisknout protokol',
             onPressed: _isTisku ? null : _tiskniProtokol,
           ),
         ],
@@ -362,26 +406,46 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.08),
+                color: Colors.blue.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: Colors.blue.withValues(alpha: 0.2)),
+                    color: Colors.blue.withOpacity(0.2)),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.schedule, color: Colors.blue, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Přijato: ${_formatDate(d['cas_prijeti'])}',
-                    style: const TextStyle(
-                        color: Colors.blue, fontWeight: FontWeight.w600),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule, color: Colors.blue, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Přijato: ${_formatDate(d['cas_prijeti'])}',
+                          style: const TextStyle(
+                              color: Colors.blue, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      Text(
+                        'Zakázka: ${d['cislo_zakazky'] ?? ''}',
+                        style: const TextStyle(
+                            color: Colors.blue, fontSize: 12),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  Text(
-                    'Zakázka: ${d['cislo_zakazky'] ?? ''}',
-                    style: const TextStyle(
-                        color: Colors.blue, fontSize: 12),
-                  ),
+                  if (d['prijal_jmeno'] != null) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.person_outline, color: Colors.blue, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Přijal: ${d['prijal_jmeno']}',
+                          style: TextStyle(
+                              color: Colors.blue.withOpacity(0.8), fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -506,10 +570,8 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
               ),
             ],
 
-            if (fotoUrls.isNotEmpty) ...[
-              const SizedBox(height: 15),
-              _buildFotoSection(isDark, fotoUrls),
-            ],
+            const SizedBox(height: 15),
+            _buildFotoSection(isDark, fotoUrls),
 
             if (podpisUrl.isNotEmpty) ...[
               const SizedBox(height: 15),
@@ -519,47 +581,61 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             const SizedBox(height: 20),
 
             // AKCE
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isTisku ? null : _tiskniProtokol,
-                    icon: _isTisku
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2))
-                        : const Icon(Icons.print_outlined),
-                    label: const Text('Tisk protokolu'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ActiveJobScreen(
-                          documentId: widget.docId,
-                          zakazkaId:
-                              d['cislo_zakazky']?.toString() ?? '',
-                          spz: d['spz']?.toString() ?? '',
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isTisku ? null : _zobrazitProtokol,
+                        icon: _isTisku
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.visibility_outlined),
+                        label: const Text('Zobrazit'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
-                    icon: const Icon(Icons.build_circle_outlined),
-                    label: const Text('Otevřít zakázku'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _isTisku ? null : _tiskniProtokol,
+                        icon: const Icon(Icons.print_outlined),
+                        label: const Text('Tisk'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ActiveJobScreen(
+                        documentId: widget.docId,
+                        zakazkaId: d['cislo_zakazky']?.toString() ?? '',
+                        spz: d['spz']?.toString() ?? '',
+                      ),
+                    ),
+                  ),
+                  icon: const Icon(Icons.build_circle_outlined),
+                  label: const Text('Otevřít zakázku'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
               ],
@@ -639,7 +715,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     final entries = fotoUrls.entries
         .where((e) => (e.value as List<dynamic>? ?? []).isNotEmpty)
         .toList();
-    if (entries.isEmpty) return const SizedBox();
 
     return Container(
       decoration: BoxDecoration(
@@ -665,6 +740,19 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             ],
           ),
           const Divider(height: 20),
+          if (entries.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.no_photography_outlined,
+                      color: Colors.grey, size: 18),
+                  SizedBox(width: 8),
+                  Text('Nebyly pořízeny žádné fotografie.',
+                      style: TextStyle(color: Colors.grey)),
+                ],
+              ),
+            ),
           ...entries.map((entry) {
             final kategorie = entry.key;
             final urls =
