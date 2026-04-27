@@ -40,7 +40,18 @@
       letter-spacing: 2px;
       display: inline-block;
     }
-    .vehicle-name { font-size: 16px; font-weight: 600; margin-top: 10px; color: #222; }
+    .vehicle-name { font-size: 20px; font-weight: 700; margin-top: 10px; color: #222; }
+    .vehicle-sub  { font-size: 13px; color: #888; margin-top: 3px; }
+
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 14px;
+      margin-top: 4px;
+    }
+    .vg-label { font-size: 12px; color: #999; white-space: nowrap; padding-top: 1px; }
+    .vg-value { font-size: 13px; color: #222; font-weight: 500; word-break: break-all; }
+
     .info-row {
       display: flex;
       align-items: center;
@@ -242,19 +253,48 @@
   // ── render ────────────────────────────────────────────────────
 
   function renderVehicleCard(data) {
-    const spz       = escHtml(data.spz || '');
-    const znacka    = escHtml(data.znacka || '');
-    const model     = escHtml(data.model || '');
-    const zakazkaId = escHtml(data.cislo_zakazky || '');
-    const jmeno     = escHtml(data.zakaznik?.jmeno || '');
-    const prijeto   = formatDate(data.cas_prijeti);
+    const spz        = escHtml(data.spz || '');
+    const znacka     = escHtml(data.znacka || '');
+    const model      = escHtml(data.model || '');
+    const vin        = escHtml(data.vin || '');
+    const rok        = escHtml(data.rok_vyroby || '');
+    const motorizace = escHtml(data.motorizace || '');
+    const palivo     = escHtml(data.palivo_typ || '');
+    const prevodovka = escHtml(data.prevodovka || '');
+    const zakazkaId  = escHtml(data.cislo_zakazky || '');
+    const prijeto    = formatDate(data.cas_prijeti);
+
+    const z          = data.zakaznik || {};
+    const jmeno      = escHtml(z.jmeno || '');
+    const telefon    = escHtml(z.telefon || '');
+    const email      = escHtml(z.email || '');
+    const adresa     = escHtml(z.adresa || '');
+
+    // Zákazník nahoře
+    const zakaznikRows = [
+      jmeno   ? `<div class="info-row" style="font-size:15px;font-weight:600;color:#222;">👤 ${jmeno}</div>` : '',
+      adresa  ? `<div class="info-row">📍 <span>${adresa}</span></div>` : '',
+      telefon ? `<div class="info-row">📞 <span>${telefon}</span></div>` : '',
+      email   ? `<div class="info-row">✉️ <span>${email}</span></div>` : '',
+    ].filter(Boolean).join('');
+
+    // Technické údaje vozidla
+    const detailRows = [
+      vin        ? `<span class="vg-label">VIN</span><span class="vg-value">${vin}</span>` : '',
+      rok        ? `<span class="vg-label">Rok výroby</span><span class="vg-value">${rok}</span>` : '',
+      motorizace ? `<span class="vg-label">Motorizace</span><span class="vg-value">${motorizace}</span>` : '',
+      palivo     ? `<span class="vg-label">Palivo</span><span class="vg-value">${palivo}</span>` : '',
+      prevodovka ? `<span class="vg-label">Převodovka</span><span class="vg-value">${prevodovka}</span>` : '',
+    ].filter(Boolean).join('');
 
     document.getElementById('vehicle-card').innerHTML = `
+      ${zakaznikRows}
+      <hr class="divider">
       <span class="spz-badge">${spz || '–'}</span>
       ${(znacka || model) ? `<div class="vehicle-name">${znacka} ${model}</div>` : ''}
+      ${detailRows ? `<hr class="divider"><div class="vehicle-grid">${detailRows}</div>` : ''}
       <hr class="divider">
       ${zakazkaId ? `<div class="info-row">📋 <span>Zakázka: <b>${zakazkaId}</b></span></div>` : ''}
-      ${jmeno     ? `<div class="info-row">👤 <span>${jmeno}</span></div>` : ''}
       <div class="info-row">🕐 <span>Přijato: ${prijeto}</span></div>
     `;
   }

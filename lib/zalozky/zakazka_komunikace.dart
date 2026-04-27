@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'dart:io';
 import 'auth_gate.dart';
 
-const String _portalBaseUrl = 'https://visto-51cb7.web.app/zakazka';
+const String _portalBaseUrl = 'https://app.torkis.cz/zakazka';
 
 class ZakazkaKomunikacePage extends StatefulWidget {
   final String documentId;
@@ -53,7 +53,11 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
           .doc(widget.documentId)
           .update({'portal_token': token});
     }
-    if (mounted) setState(() { _portalToken = token; _isLoadingToken = false; });
+    if (mounted)
+      setState(() {
+        _portalToken = token;
+        _isLoadingToken = false;
+      });
   }
 
   String _generateToken() {
@@ -128,16 +132,21 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
                       children: [
                         Icon(Icons.chat_bubble_outline,
                             size: 64,
-                            color: isDark ? Colors.grey[700] : Colors.grey[300]),
+                            color:
+                                isDark ? Colors.grey[700] : Colors.grey[300]),
                         const SizedBox(height: 16),
                         Text('Zatím žádné zprávy',
                             style: TextStyle(
-                                color: isDark ? Colors.grey[500] : Colors.grey[600],
+                                color: isDark
+                                    ? Colors.grey[500]
+                                    : Colors.grey[600],
                                 fontSize: 16)),
                         const SizedBox(height: 8),
                         Text('Přidejte první zprávu pro zákazníka',
                             style: TextStyle(
-                                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                                color: isDark
+                                    ? Colors.grey[600]
+                                    : Colors.grey[400],
                                 fontSize: 13)),
                       ],
                     ),
@@ -174,8 +183,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-            color: Colors.blue.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: Colors.blue.withOpacity(0.3), width: 1.5),
         boxShadow: isDark
             ? []
             : [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
@@ -213,12 +221,11 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
               children: [
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? const Color(0xFF2C2C2C)
-                          : Colors.grey[100],
+                      color:
+                          isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -276,8 +283,8 @@ class _ZpravaKarta extends StatelessWidget {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-            color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        border:
+            Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,9 +322,12 @@ class _ZpravaKarta extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(fotoUrls[i],
-                          width: 80, height: 80, fit: BoxFit.cover,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => const Icon(
-                              Icons.broken_image, color: Colors.grey)),
+                              Icons.broken_image,
+                              color: Colors.grey)),
                     ),
                   ),
                 ),
@@ -369,7 +379,8 @@ class _FotoNahledState extends State<_FotoNahled> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white),
+      appBar:
+          AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white),
       body: PageView.builder(
         controller: _ctrl,
         itemCount: widget.urls.length,
@@ -377,8 +388,8 @@ class _FotoNahledState extends State<_FotoNahled> {
           child: Center(
             child: Image.network(widget.urls[i],
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.broken_image, color: Colors.white, size: 64)),
+                errorBuilder: (_, __, ___) => const Icon(Icons.broken_image,
+                    color: Colors.white, size: 64)),
           ),
         ),
       ),
@@ -422,9 +433,59 @@ class _PridatZpravuSheetState extends State<_PridatZpravuSheet> {
     super.dispose();
   }
 
+  Future<void> _fotitFoto() async {
+    final photo = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+      maxWidth: 1280,
+    );
+    if (photo != null) setState(() => _foto.add(photo));
+  }
+
   Future<void> _pridatFoto() async {
-    final photos = await _picker.pickMultiImage(imageQuality: 70, maxWidth: 1280);
+    final photos =
+        await _picker.pickMultiImage(imageQuality: 70, maxWidth: 1280);
     if (photos.isNotEmpty) setState(() => _foto.addAll(photos));
+  }
+
+  void _vyberZdrojFota() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFE3F2FD),
+                child: Icon(Icons.camera_alt_outlined, color: Colors.blue),
+              ),
+              title: const Text('Vyfotit'),
+              onTap: () {
+                Navigator.pop(context);
+                _fotitFoto();
+              },
+            ),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFE3F2FD),
+                child: Icon(Icons.photo_library_outlined, color: Colors.blue),
+              ),
+              title: const Text('Vybrat z galerie'),
+              onTap: () {
+                Navigator.pop(context);
+                _pridatFoto();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _odeslat() async {
@@ -498,8 +559,8 @@ class _PridatZpravuSheetState extends State<_PridatZpravuSheet> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Chyba: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -531,8 +592,8 @@ class _PridatZpravuSheetState extends State<_PridatZpravuSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
@@ -610,8 +671,8 @@ class _PridatZpravuSheetState extends State<_PridatZpravuSheet> {
             Row(
               children: [
                 OutlinedButton.icon(
-                  onPressed: _pridatFoto,
-                  icon: const Icon(Icons.photo_library_outlined, size: 18),
+                  onPressed: _vyberZdrojFota,
+                  icon: const Icon(Icons.add_a_photo_outlined, size: 18),
                   label: const Text('Foto'),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
