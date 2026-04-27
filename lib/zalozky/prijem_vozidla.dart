@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'dart:typed_data';
@@ -22,7 +23,7 @@ import 'auth_gate.dart';
 // Po dokončení se zakázka zapíše do Firestore (kolekce 'zakazky') a
 // volitelně se zákazníkovi pošle protokol o příjmu na e-mail jako PDF.
 
-// Notifier používaný Plánovákem: když dispatcher klikne „Přijmout na servis",
+// Notifier používaný Plánovačem: když dispatcher klikne „Přijmout na servis",
 // sem pošle ID rezervace a formulář se přednaplní jejími daty.
 final ValueNotifier<String?> rezervaceKeZpracovani = ValueNotifier(null);
 
@@ -306,7 +307,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-/// Vygeneruje unikátní číslo zakázky podle formátu nastaveného v nastavení servisu.
+  /// Vygeneruje unikátní číslo zakázky podle formátu nastaveného v nastavení servisu.
   /// Čte prefix, rok/měsíc formát a délku počítadla, pak prohledá existující zakázky
   /// a přidá o 1 vyšší číslo než dosavadní maximum ve stejné sérii.
   Future<void> _generujCisloZakazky() async {
@@ -314,12 +315,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
     try {
       if (_sId == null) return;
 
-      final nastaveniDoc = await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(_sId).get();
-      final data = nastaveniDoc.exists ? nastaveniDoc.data()! : <String, dynamic>{};
+      final nastaveniDoc = await FirebaseFirestore.instance
+          .collection('nastaveni_servisu')
+          .doc(_sId)
+          .get();
+      final data =
+          nastaveniDoc.exists ? nastaveniDoc.data()! : <String, dynamic>{};
 
       // Prefix: priorita prefix_zakazka (nastaveni.dart), fallback prefix_zakazky (starší onboarding)
       String prefix = data['prefix_zakazka']?.toString().trim() ?? '';
-      if (prefix.isEmpty) prefix = data['prefix_zakazky']?.toString().trim() ?? '';
+      if (prefix.isEmpty)
+        prefix = data['prefix_zakazky']?.toString().trim() ?? '';
       if (prefix.isEmpty) prefix = 'ZAK';
 
       final rokFormat = data['cfg_rok_zakazka']?.toString() ?? '{YYYY}';
@@ -346,7 +352,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
       if (mesicPart.isNotEmpty) casti.add(mesicPart);
       final hledanyPrefix = casti.join(oddelovac);
 
-      final querySnapshot = await FirebaseFirestore.instance.collection('zakazky')
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('zakazky')
           .where('servis_id', isEqualTo: _sId)
           .get();
 
@@ -374,7 +381,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
       if (mounted) {
         final ted = DateTime.now();
         setState(() {
-          _zakazkaController.text = 'ZAK${DateFormat('yyyyMM').format(ted)}00001';
+          _zakazkaController.text =
+              'ZAK${DateFormat('yyyyMM').format(ted)}00001';
         });
       }
     } finally {
@@ -587,8 +595,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _telefonController.text = telefon;
   }
 
-  String get _plneTelCislo =>
-      '$_telPredvolba${_telefonController.text.trim()}';
+  String get _plneTelCislo => '$_telPredvolba${_telefonController.text.trim()}';
 
   /// Dotáže ARES API na IČO a přednaplní jméno a adresu zákazníka (strana 2).
   Future<void> _fetchAresData() async {
@@ -753,6 +760,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  String _generatePortalToken(String docId) {
+    final rand = DateTime.now().millisecondsSinceEpoch;
+    final extra = docId.hashCode.abs();
+    final combined = (rand ^ extra).toRadixString(36);
+    return (combined + combined).substring(0, 12);
   }
 
   Future<void> _uploadToFirebase() async {
@@ -921,6 +935,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'cas_prijeti': FieldValue.serverTimestamp(),
       'prijal_uid': user?.uid,
       'prijal_jmeno': globalUserJmeno ?? user?.email ?? 'Neznámý',
+      'portal_token': _generatePortalToken('${_sId}_$zakazkaId'),
     };
 
     await FirebaseFirestore.instance
@@ -1050,7 +1065,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (kIsWeb) {
       // Web nemá přímý přístup ke kameře přes camera package — použijeme image_picker
       final XFile? photo = await _picker.pickImage(
-          source: ImageSource.camera, imageQuality: 60, maxWidth: 1280, maxHeight: 1280);
+          source: ImageSource.camera,
+          imageQuality: 60,
+          maxWidth: 1280,
+          maxHeight: 1280);
       if (photo != null) {
         setState(() {
           _categoryImages[categoryKey] ??= [];
@@ -1272,7 +1290,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Značka (např. Škoda)',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 Autocomplete<String>(
                   key: ValueKey('znacka_$_autocompleteResetKey'),
@@ -1280,8 +1299,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
                   displayStringForOption: (z) => z,
                   optionsBuilder: (TextEditingValue value) {
                     if (value.text.isEmpty) return _dostupneZnacky;
-                    return _dostupneZnacky.where(
-                        (z) => z.toLowerCase().contains(value.text.toLowerCase()));
+                    return _dostupneZnacky.where((z) =>
+                        z.toLowerCase().contains(value.text.toLowerCase()));
                   },
                   onSelected: (String val) {
                     _znackaController.text = val;
@@ -1303,20 +1322,28 @@ class _MainWizardPageState extends State<MainWizardPage> {
                         controller: ctrl,
                         focusNode: focusNode,
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.directions_car, color: Colors.blue),
+                          prefixIcon: const Icon(Icons.directions_car,
+                              color: Colors.blue),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                          fillColor:
+                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15, horizontal: 15),
                           enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+                              borderSide: BorderSide(
+                                  color: isDark
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!)),
                           focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(color: Colors.blue, width: 2)),
+                              borderSide: const BorderSide(
+                                  color: Colors.blue, width: 2)),
                         ),
                         onChanged: (val) {
                           _znackaController.text = val;
-                          if (_databazeZnacek.containsKey(val)) _aktualizujModely(val);
+                          if (_databazeZnacek.containsKey(val))
+                            _aktualizujModely(val);
                         },
                       ),
                     );
@@ -1341,12 +1368,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
                                 return ListTile(
                                   leading: logo != null
                                       ? Image.network(logo,
-                                          width: 28, height: 28,
+                                          width: 28,
+                                          height: 28,
                                           fit: BoxFit.contain,
                                           errorBuilder: (_, __, ___) =>
-                                              const Icon(Icons.directions_car, color: Colors.blue))
-                                      : const Icon(Icons.directions_car, color: Colors.blue),
-                                  title: Text(z, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                              const Icon(Icons.directions_car,
+                                                  color: Colors.blue))
+                                      : const Icon(Icons.directions_car,
+                                          color: Colors.blue),
+                                  title: Text(z,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w500)),
                                   onTap: () => onSelected(z),
                                 );
                               },
@@ -1364,17 +1396,19 @@ class _MainWizardPageState extends State<MainWizardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Model (např. Octavia)',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.grey)),
                 const SizedBox(height: 8),
                 Autocomplete<String>(
                   key: ValueKey('model_$_autocompleteResetKey'),
                   initialValue: TextEditingValue(text: _modelController.text),
                   displayStringForOption: (m) => m,
                   optionsBuilder: (TextEditingValue value) {
-                    if (_dostupneModely.isEmpty) return const Iterable<String>.empty();
+                    if (_dostupneModely.isEmpty)
+                      return const Iterable<String>.empty();
                     if (value.text.isEmpty) return _dostupneModely;
-                    return _dostupneModely.where(
-                        (m) => m.toLowerCase().contains(value.text.toLowerCase()));
+                    return _dostupneModely.where((m) =>
+                        m.toLowerCase().contains(value.text.toLowerCase()));
                   },
                   onSelected: (String val) {
                     _modelController.text = val;
@@ -1395,16 +1429,23 @@ class _MainWizardPageState extends State<MainWizardPage> {
                         controller: ctrl,
                         focusNode: focusNode,
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.directions_car_filled, color: Colors.blue),
+                          prefixIcon: const Icon(Icons.directions_car_filled,
+                              color: Colors.blue),
                           filled: true,
-                          fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                          fillColor:
+                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 15, horizontal: 15),
                           enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+                              borderSide: BorderSide(
+                                  color: isDark
+                                      ? Colors.grey[800]!
+                                      : Colors.grey[300]!)),
                           focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(color: Colors.blue, width: 2)),
+                              borderSide: const BorderSide(
+                                  color: Colors.blue, width: 2)),
                         ),
                         onChanged: (val) => _modelController.text = val,
                       ),
@@ -1427,7 +1468,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
                               itemBuilder: (ctx, i) {
                                 final m = options.elementAt(i);
                                 return ListTile(
-                                  title: Text(m, style: const TextStyle(fontWeight: FontWeight.w500)),
+                                  title: Text(m,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w500)),
                                   onTap: () => onSelected(m),
                                 );
                               },
@@ -2240,90 +2283,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-            Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  if (!isDark)
-                    BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4))
-                ],
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(15),
-                onTap: () => showModalBottomSheet(
-                  context: context,
-                  backgroundColor: Colors.transparent,
-                  builder: (_) => Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(25)),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 40, height: 4,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                              color: Colors.grey[400],
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                        const Text('Vyberte předvolbu',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        ..._predvolby.map((p) => ListTile(
-                              leading: Text(p['vlajka']!,
-                                  style: const TextStyle(fontSize: 24)),
-                              title: Text(p['nazev']!),
-                              trailing: Text(p['kod']!,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue)),
-                              selected: p['kod'] == _telPredvolba,
-                              selectedColor: Colors.blue,
-                              onTap: () {
-                                setState(() => _telPredvolba = p['kod']!);
-                                Navigator.pop(context);
-                              },
-                            )),
-                      ],
-                    ),
-                  ),
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(15),
-                    border: Border.all(
-                        color:
-                            isDark ? Colors.grey[800]! : Colors.grey[300]!),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(selectedEntry['vlajka']!,
-                          style: const TextStyle(fontSize: 20)),
-                      const SizedBox(width: 6),
-                      Text(selectedEntry['kod']!,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_drop_down, size: 18),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Container(
+              Container(
                 decoration: BoxDecoration(
                   boxShadow: [
                     if (!isDark)
@@ -2334,39 +2294,122 @@ class _MainWizardPageState extends State<MainWizardPage> {
                   ],
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: TextField(
-                  controller: _telefonController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    hintText: 'Telefonní číslo',
-                    prefixIcon:
-                        const Icon(Icons.phone, color: Colors.blue),
-                    filled: true,
-                    fillColor:
-                        isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                            color: isDark
-                                ? Colors.grey[800]!
-                                : Colors.grey[300]!,
-                            width: 1)),
-                    focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: const BorderSide(
-                            color: Colors.blue, width: 2)),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                            color: isDark
-                                ? Colors.grey[800]!
-                                : Colors.grey[300]!,
-                            width: 1)),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(15),
+                  onTap: () => showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(25)),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                                color: Colors.grey[400],
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                          const Text('Vyberte předvolbu',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+                          ..._predvolby.map((p) => ListTile(
+                                leading: Text(p['vlajka']!,
+                                    style: const TextStyle(fontSize: 24)),
+                                title: Text(p['nazev']!),
+                                trailing: Text(p['kod']!,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue)),
+                                selected: p['kod'] == _telPredvolba,
+                                selectedColor: Colors.blue,
+                                onTap: () {
+                                  setState(() => _telPredvolba = p['kod']!);
+                                  Navigator.pop(context);
+                                },
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(
+                          color:
+                              isDark ? Colors.grey[800]! : Colors.grey[300]!),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(selectedEntry['vlajka']!,
+                            style: const TextStyle(fontSize: 20)),
+                        const SizedBox(width: 6),
+                        Text(selectedEntry['kod']!,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                        const SizedBox(width: 4),
+                        const Icon(Icons.arrow_drop_down, size: 18),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      if (!isDark)
+                        BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4))
+                    ],
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: TextField(
+                    controller: _telefonController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      hintText: 'Telefonní číslo',
+                      prefixIcon: const Icon(Icons.phone, color: Colors.blue),
+                      filled: true,
+                      fillColor:
+                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.grey[800]!
+                                  : Colors.grey[300]!,
+                              width: 1)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide:
+                              const BorderSide(color: Colors.blue, width: 2)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.grey[800]!
+                                  : Colors.grey[300]!,
+                              width: 1)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -2625,6 +2668,14 @@ class _MultiShotCameraPageState extends State<_MultiShotCameraPage> {
   }
 
   Future<void> _initCamera() async {
+    final status = await Permission.camera.request();
+    if (!status.isGranted) {
+      if (mounted) {
+        setState(() => _error =
+            'Přístup ke kameře nebyl povolen.\nPovolte ho v nastavení aplikace.');
+      }
+      return;
+    }
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
@@ -2644,6 +2695,7 @@ class _MultiShotCameraPageState extends State<_MultiShotCameraPage> {
       await _controller!.initialize();
       if (mounted) setState(() => _isInitialized = true);
     } catch (e) {
+      debugPrint('Camera init error: $e');
       if (mounted) setState(() => _error = 'Chyba inicializace kamery: $e');
     }
   }
@@ -2705,12 +2757,33 @@ class _MultiShotCameraPageState extends State<_MultiShotCameraPage> {
             Expanded(
               child: _error != null
                   ? Center(
-                      child: Text(_error!,
-                          style: const TextStyle(color: Colors.white)))
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.no_photography,
+                                color: Colors.white54, size: 64),
+                            const SizedBox(height: 16),
+                            Text(_error!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 15)),
+                            const SizedBox(height: 20),
+                            ElevatedButton.icon(
+                              onPressed: () => openAppSettings(),
+                              icon: const Icon(Icons.settings),
+                              label: const Text('Otevřít nastavení'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
                   : _isInitialized
                       ? CameraPreview(_controller!)
                       : const Center(
-                          child: CircularProgressIndicator(color: Colors.white)),
+                          child:
+                              CircularProgressIndicator(color: Colors.white)),
             ),
             if (_photos.isNotEmpty)
               SizedBox(

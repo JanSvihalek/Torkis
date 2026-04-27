@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pomocná funkce: anonymní přihlášení (zákaznický portál)
+    function isAnonymous() {
+      return request.auth != null
+          && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    // ── Přihlášení uživatelé (mechanici, majitelé) ────────────────────────
+    // Catch-all: plný přístup ke všemu pro ne-anonymní přihlášené uživatele.
+    // Toto odpovídá stávajícímu chování před přidáním portálu.
+    match /{document=**} {
+      allow read, write: if request.auth != null && !isAnonymous();
+    }
+
+    // ── Zákaznický portál (anonymní přihlášení) ───────────────────────────
+    // Anonymní uživatel smí číst POUZE:
+    //   • zakázku, která má vyplněný portal_token (tj. byla přijata po aktualizaci)
+    //   • zprávy zákazníka patřící k dané zakázce
+    // Žádná jiná kolekce (zákazníci, sklad, faktury, nastavení…) není přístupná.
+
+    match /zakazky/{docId} {
+      allow read: if isAnonymous()
+                  && resource.data.portal_token != null;
+
+      match /zakaznik_zpravy/{msgId} {
+        allow read: if isAnonymous();
+      }
+    }
+
+  }
+}

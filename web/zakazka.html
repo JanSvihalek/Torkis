@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zakázka online – TORKIS</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fb; color: #333; min-height: 100vh; }
+
+    .topbar {
+      background: #2196F3;
+      color: white;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .topbar-logo { font-weight: 700; font-size: 20px; letter-spacing: 1px; }
+    .topbar-sep { opacity: 0.4; margin: 0 4px; }
+    .topbar-sub { font-size: 14px; opacity: 0.85; }
+
+    .container { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+
+    .spz-badge {
+      background: #2196F3;
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 6px;
+      letter-spacing: 2px;
+      display: inline-block;
+    }
+    .vehicle-name { font-size: 16px; font-weight: 600; margin-top: 10px; color: #222; }
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      color: #666;
+      margin-top: 7px;
+    }
+    .info-row b { color: #333; }
+    .divider { border: none; border-top: 1px solid #f0f0f0; margin: 12px 0; }
+
+    .status-row { display: flex; align-items: center; gap: 12px; }
+    .status-label { font-size: 14px; color: #666; }
+    .status-chip {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 14px;
+    }
+
+    .message-card {
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .message-author {
+      background: rgba(33,150,243,0.1);
+      color: #2196F3;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 5px;
+    }
+    .message-time { font-size: 11px; color: #aaa; }
+    .message-text { font-size: 14px; line-height: 1.6; color: #333; }
+
+    .photos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .photos img {
+      width: 82px; height: 82px;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .photos img:hover { opacity: 0.85; }
+
+    .empty-msgs { text-align: center; padding: 28px 16px; color: #bbb; font-size: 14px; }
+
+    .loading { text-align: center; padding: 70px 20px; }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #2196F3;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: #aaa; font-size: 14px; }
+
+    .error-state { text-align: center; padding: 60px 20px; display: none; }
+    .error-icon { font-size: 52px; }
+    .error-msg { font-size: 17px; color: #666; margin-top: 14px; }
+
+    #content { display: none; }
+
+    .footer { text-align: center; font-size: 11px; color: #bbb; margin-top: 20px; padding-bottom: 28px; }
+
+    /* Lightbox */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: 4px; }
+    .lb-close {
+      position: absolute;
+      top: 14px; right: 18px;
+      color: white; font-size: 30px;
+      cursor: pointer; background: none; border: none;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="topbar-logo">TORKIS</span>
+  <span class="topbar-sep">|</span>
+  <span class="topbar-sub">Zákaznický portál</span>
+</div>
+
+<div class="container">
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Načítám zakázku...</p>
+  </div>
+
+  <div class="error-state" id="error-state">
+    <div class="error-icon">🔍</div>
+    <div class="error-msg" id="error-msg">Zakázka nenalezena.</div>
+  </div>
+
+  <div id="content">
+    <div class="card" id="vehicle-card"></div>
+    <div class="card" id="status-card"></div>
+    <div class="card" id="messages-card">
+      <div class="section-title">Zprávy od servisu</div>
+      <div id="messages-list"></div>
+    </div>
+    <div class="footer">Powered by TORKIS – servisní software</div>
+  </div>
+
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lb-close">&#x2715;</button>
+  <img id="lb-img" src="" alt="">
+</div>
+
+<script type="module">
+  import { initializeApp }
+    from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+  import { getFirestore, collection, query, where, getDocs, onSnapshot, orderBy, limit }
+    from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+  import { getAuth, signInAnonymously }
+    from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
+  const firebaseConfig = {
+    apiKey:            'AIzaSyDUQflnV2GaXGZVlO59LGy7zNH27AzdMtg',
+    authDomain:        'visto-51cb7.firebaseapp.com',
+    projectId:         'visto-51cb7',
+    storageBucket:     'visto-51cb7.firebasestorage.app',
+    messagingSenderId: '283147372379',
+    appId:             '1:283147372379:web:4bed6764149d487be67c7e',
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+  const auth = getAuth(app);
+
+  // Token z URL: /zakazka/TOKEN
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const token = pathParts[pathParts.length - 1];
+
+  // ── helpers ───────────────────────────────────────────────────
+
+  function showError(msg) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-state').style.display = 'block';
+    document.getElementById('error-msg').textContent = msg;
+  }
+
+  function formatDate(ts) {
+    if (!ts) return '–';
+    const d = ts.toDate ? ts.toDate() : new Date(ts.seconds * 1000);
+    return d.toLocaleDateString('cs-CZ', { day: '2-digit', month: '2-digit', year: 'numeric' })
+         + ' ' + d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function stavStyle(stav) {
+    const map = {
+      'Přijato':      { bg: '#e3f2fd', color: '#1565c0' },
+      'K nacenění':   { bg: '#fff3e0', color: '#e65100' },
+      'Čeká na díly': { bg: '#fff8e1', color: '#f57f17' },
+      'V opravě':     { bg: '#e8f5e9', color: '#2e7d32' },
+      'Hotovo':       { bg: '#e8f5e9', color: '#1b5e20' },
+      'Ukončeno':     { bg: '#f5f5f5', color: '#616161' },
+      'Stornováno':   { bg: '#ffebee', color: '#c62828' },
+    };
+    return map[stav] || { bg: '#eceff1', color: '#546e7a' };
+  }
+
+  function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── render ────────────────────────────────────────────────────
+
+  function renderVehicleCard(data) {
+    const spz       = escHtml(data.spz || '');
+    const znacka    = escHtml(data.znacka || '');
+    const model     = escHtml(data.model || '');
+    const zakazkaId = escHtml(data.cislo_zakazky || '');
+    const jmeno     = escHtml(data.zakaznik?.jmeno || '');
+    const prijeto   = formatDate(data.cas_prijeti);
+
+    document.getElementById('vehicle-card').innerHTML = `
+      <span class="spz-badge">${spz || '–'}</span>
+      ${(znacka || model) ? `<div class="vehicle-name">${znacka} ${model}</div>` : ''}
+      <hr class="divider">
+      ${zakazkaId ? `<div class="info-row">📋 <span>Zakázka: <b>${zakazkaId}</b></span></div>` : ''}
+      ${jmeno     ? `<div class="info-row">👤 <span>${jmeno}</span></div>` : ''}
+      <div class="info-row">🕐 <span>Přijato: ${prijeto}</span></div>
+    `;
+  }
+
+  function renderStatusCard(stav) {
+    const s = stavStyle(stav);
+    document.getElementById('status-card').innerHTML = `
+      <div class="status-row">
+        <span class="status-label">Aktuální stav:</span>
+        <span class="status-chip" style="background:${s.bg};color:${s.color};">${escHtml(stav)}</span>
+      </div>
+    `;
+  }
+
+  function renderMessages(docs) {
+    const list = document.getElementById('messages-list');
+    if (!docs.length) {
+      list.innerHTML = '<div class="empty-msgs">💬<br><br>Servis zatím neodeslal žádné zprávy.</div>';
+      return;
+    }
+    list.innerHTML = docs.map(d => {
+      const autor  = escHtml(d.autor || 'Servis');
+      const text   = escHtml(d.text || '').replace(/\n/g, '<br>');
+      const urls   = d.foto_urls || [];
+      const photos = urls.map(u =>
+        `<img src="${escHtml(u)}" alt="foto" data-url="${escHtml(u)}">`
+      ).join('');
+      return `
+        <div class="message-card">
+          <div class="message-header">
+            <span class="message-author">${autor}</span>
+            <span class="message-time">${formatDate(d.cas)}</span>
+          </div>
+          <div class="message-text">${text}</div>
+          ${urls.length ? `<div class="photos">${photos}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    // attach lightbox listeners
+    list.querySelectorAll('.photos img').forEach(img => {
+      img.addEventListener('click', () => openLightbox(img.dataset.url));
+    });
+  }
+
+  // ── init ──────────────────────────────────────────────────────
+
+  async function init() {
+    if (!token || token === 'zakazka') {
+      showError('Neplatný odkaz zakázky.');
+      return;
+    }
+
+    try {
+      // Anonymní přihlášení pro Firestore pravidla
+      await signInAnonymously(auth);
+
+      const q = query(
+        collection(db, 'zakazky'),
+        where('portal_token', '==', token),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        showError('Zakázka nenalezena nebo odkaz je neplatný.');
+        return;
+      }
+
+      const docRef = snap.docs[0].ref;
+      const data   = snap.docs[0].data();
+      const docId  = snap.docs[0].id;
+
+      renderVehicleCard(data);
+      renderStatusCard(data.stav_zakazky || 'Přijato');
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+
+      // Real-time aktualizace stavu
+      onSnapshot(docRef, docSnap => {
+        if (docSnap.exists()) {
+          renderStatusCard(docSnap.data().stav_zakazky || 'Přijato');
+        }
+      });
+
+      // Real-time zprávy
+      const msgsQ = query(
+        collection(db, 'zakazky', docId, 'zakaznik_zpravy'),
+        orderBy('cas', 'asc')
+      );
+      onSnapshot(msgsQ, msgsSnap => {
+        renderMessages(msgsSnap.docs.map(d => d.data()));
+      });
+
+    } catch (e) {
+      showError('Chyba při načítání: ' + e.message);
+    }
+  }
+
+  init();
+</script>
+
+<script>
+  // Lightbox (non-module, aby byl dostupný globálně)
+  const lightbox = document.getElementById('lightbox');
+  const lbImg    = document.getElementById('lb-img');
+
+  function openLightbox(url) {
+    lbImg.src = url;
+    lightbox.classList.add('open');
+  }
+
+  document.getElementById('lb-close').addEventListener('click', () => {
+    lightbox.classList.remove('open');
+    lbImg.src = '';
+  });
+  lightbox.addEventListener('click', e => {
+    if (e.target === lightbox) {
+      lightbox.classList.remove('open');
+      lbImg.src = '';
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -7,6 +7,7 @@ import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 import 'auth_gate.dart';
 import 'prubeh.dart';
+import 'zakazka_komunikace.dart';
 
 class HistoriePrijmuPage extends StatefulWidget {
   const HistoriePrijmuPage({super.key});
@@ -378,6 +379,22 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
         backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_outlined),
+            tooltip: 'Komunikace se zákazníkem',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ZakazkaKomunikacePage(
+                  documentId: widget.docId,
+                  zakazkaId: d['cislo_zakazky']?.toString() ?? '',
+                  spz: d['spz']?.toString() ?? '',
+                  zakaznikJmeno: zakaznik['jmeno']?.toString() ?? '',
+                  zakaznikEmail: zakaznik['email']?.toString() ?? '',
+                ),
+              ),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.visibility_outlined),
             tooltip: 'Zobrazit protokol',

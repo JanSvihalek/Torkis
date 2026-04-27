@@ -99,7 +99,7 @@ class VistoApp extends StatelessWidget {
             fontFamily: 'Roboto',
           ),
           themeMode: currentMode,
-          
+
           home: const AuthGate(),
         );
       },

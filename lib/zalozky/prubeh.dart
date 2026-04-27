@@ -12,6 +12,7 @@ import '../core/pdf_generator.dart';
 import 'zakaznici.dart';
 import 'vozidla.dart';
 import 'auth_gate.dart';
+import 'zakazka_komunikace.dart';
 
 // Modul průběhu zakázek — skládá se ze čtyř obrazovek:
 //
@@ -440,6 +441,8 @@ class ActiveJobScreen extends StatefulWidget {
 class _ActiveJobScreenState extends State<ActiveJobScreen> {
   int _vychoziSplatnost = 14;
   String _zpusobUhrady = 'Převodem';
+  String _zakaznikJmeno = '';
+  String _zakaznikEmail = '';
 
   @override
   void initState() {
@@ -1299,6 +1302,24 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           'Oprava: ${widget.zakazkaId} (${widget.spz})',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_outlined),
+            tooltip: 'Komunikace se zákazníkem',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ZakazkaKomunikacePage(
+                  documentId: widget.documentId,
+                  zakazkaId: widget.zakazkaId,
+                  spz: widget.spz,
+                  zakaznikJmeno: _zakaznikJmeno,
+                  zakaznikEmail: _zakaznikEmail,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -1320,6 +1341,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           final aktualniStav = data['stav_zakazky'] ?? 'Přijato';
           final stav = data['stav_vozidla'] as Map<String, dynamic>? ?? {};
           final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
+          _zakaznikJmeno = zakaznik['jmeno']?.toString() ?? '';
+          _zakaznikEmail = zakaznik['email']?.toString() ?? '';
           
           final rawUrls = data['fotografie_urls'];
           final Map<String, dynamic> imageUrlsByCategoryRaw = {};
