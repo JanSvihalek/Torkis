@@ -1288,6 +1288,34 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
+  Widget _buildActionBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 10, color: color, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1302,24 +1330,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           'Oprava: ${widget.zakazkaId} (${widget.spz})',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_outlined),
-            tooltip: 'Komunikace se zákazníkem',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ZakazkaKomunikacePage(
-                  documentId: widget.documentId,
-                  zakazkaId: widget.zakazkaId,
-                  spz: widget.spz,
-                  zakaznikJmeno: _zakaznikJmeno,
-                  zakaznikEmail: _zakaznikEmail,
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -1434,65 +1444,6 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                 ),
                               ),
                       ),
-                    ),
-                    const SizedBox(width: 5),
-                    if (!isCompleted && !isMechanik)
-                      IconButton(
-                        icon: const Icon(
-                          Icons.request_quote,
-                          color: Colors.purple,
-                        ),
-                        tooltip: 'Generovat nabídku a odeslat e-mailem',
-                        onPressed: () => _odeslatKNaceneni(context, data),
-                      ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.picture_as_pdf,
-                        color: Colors.redAccent,
-                      ),
-                      tooltip: 'Zobrazit zakázkový protokol',
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Scaffold(
-                              appBar: AppBar(
-                                title: const Text('Náhled protokolu'),
-                              ),
-                              body: PdfPreview(
-                                build: (format) async {
-                                  String sNazev = 'Servis';
-                                  String sIco = '';
-                                  if (globalServisId != null) {
-                                    final docNast = await FirebaseFirestore
-                                        .instance
-                                        .collection('nastaveni_servisu')
-                                        .doc(globalServisId)
-                                        .get();
-                                    sNazev = docNast.data()?['nazev_servisu'] ??
-                                        'Servis';
-                                    sIco = docNast.data()?['ico_servisu'] ?? '';
-                                  }
-                                  return await GlobalPdfGenerator
-                                      .generateDocument(
-                                    data: data,
-                                    servisNazev: sNazev,
-                                    servisIco: sIco,
-                                    typ: PdfTyp.protokol,
-                                  );
-                                },
-                                allowSharing: true,
-                                allowPrinting: true,
-                                canChangeOrientation: false,
-                                canChangePageFormat: false,
-                                loadingWidget: const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
                     ),
                   ],
                 ),
@@ -2058,120 +2009,122 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   ],
                 ),
               ),
-              if (isCompleted && !isMechanik)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _stornovatZakazku(context),
-                        icon: const Icon(Icons.settings_backup_restore),
-                        label: const Text(
-                          'STORNOVAT FAKTURU A ZNOVU OTEVŘÍT ZAKÁZKU',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red[50],
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red, width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
+              // ŘÁDEK AKCÍ (dole)
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        if (!isCompleted)
+                          _buildActionBtn(
+                            icon: Icons.add_circle_outline,
+                            label: 'Přidat\núkon',
+                            color: Colors.blue,
+                            onTap: () => _openAddWorkDialog(context),
+                          ),
+                        if (!isCompleted && !isMechanik)
+                          _buildActionBtn(
+                            icon: Icons.flag_outlined,
+                            label: 'Fakturovat/\nUkončit',
+                            color: Colors.orange,
+                            onTap: () => _ukoncitZakazkuDialog(context, data,
+                                stav, zakaznik, imageUrlsByCategoryRaw),
+                          ),
+                        _buildActionBtn(
+                          icon: Icons.chat_outlined,
+                          label: 'Komunikace',
+                          color: Colors.teal,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ZakazkaKomunikacePage(
+                                documentId: widget.documentId,
+                                zakazkaId: widget.zakazkaId,
+                                spz: widget.spz,
+                                zakaznikJmeno: _zakaznikJmeno,
+                                zakaznikEmail: _zakaznikEmail,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        if (!isCompleted && !isMechanik)
+                          _buildActionBtn(
+                            icon: Icons.request_quote_outlined,
+                            label: 'Nacenění',
+                            color: Colors.purple,
+                            onTap: () => _odeslatKNaceneni(context, data),
+                          ),
+                        _buildActionBtn(
+                          icon: Icons.picture_as_pdf_outlined,
+                          label: 'Protokol',
+                          color: Colors.redAccent,
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => Scaffold(
+                                appBar: AppBar(
+                                    title: const Text('Náhled protokolu')),
+                                body: PdfPreview(
+                                  build: (format) async {
+                                    String sNazev = 'Servis';
+                                    String sIco = '';
+                                    if (globalServisId != null) {
+                                      final docNast = await FirebaseFirestore
+                                          .instance
+                                          .collection('nastaveni_servisu')
+                                          .doc(globalServisId)
+                                          .get();
+                                      sNazev =
+                                          docNast.data()?['nazev_servisu'] ??
+                                              'Servis';
+                                      sIco =
+                                          docNast.data()?['ico_servisu'] ?? '';
+                                    }
+                                    return await GlobalPdfGenerator
+                                        .generateDocument(
+                                      data: data,
+                                      servisNazev: sNazev,
+                                      servisIco: sIco,
+                                      typ: PdfTyp.protokol,
+                                    );
+                                  },
+                                  allowSharing: true,
+                                  allowPrinting: true,
+                                  canChangeOrientation: false,
+                                  canChangePageFormat: false,
+                                  loadingWidget: const Center(
+                                      child: CircularProgressIndicator()),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (isCompleted && !isMechanik)
+                          _buildActionBtn(
+                            icon: Icons.settings_backup_restore,
+                            label: 'Stornovat\nfakturu',
+                            color: Colors.red,
+                            onTap: () => _stornovatZakazku(context),
+                          ),
+                      ],
                     ),
                   ),
                 ),
-              if (!isCompleted)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final narrow = constraints.maxWidth < 380;
-                        final buttonUkoncit = ElevatedButton.icon(
-                          onPressed: () => _ukoncitZakazkuDialog(context,
-                              data, stav, zakaznik, imageUrlsByCategoryRaw),
-                          icon: const Icon(Icons.flag),
-                          label: Text(
-                            narrow ? 'UKONČIT A\nVYFAKTUROVAT' : 'UKONČIT A VYFAKTUROVAT',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                                vertical: narrow ? 14 : 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                        );
-                        final buttonPridat = ElevatedButton.icon(
-                          onPressed: () => _openAddWorkDialog(context),
-                          icon: const Icon(Icons.add),
-                          label: const Text(
-                            'PŘIDAT ÚKON',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                                vertical: narrow ? 14 : 20),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                        );
-                        if (narrow) {
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              if (!isMechanik) buttonUkoncit,
-                              if (!isMechanik) const SizedBox(height: 8),
-                              buttonPridat,
-                            ],
-                          );
-                        }
-                        return Row(
-                          children: [
-                            if (!isMechanik) Expanded(child: buttonUkoncit),
-                            if (!isMechanik) const SizedBox(width: 15),
-                            Expanded(child: buttonPridat),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
+              ),
             ],
           );
         },
