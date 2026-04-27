@@ -47,15 +47,21 @@ const Map<String, String?> _navIdPravKlic = {
 };
 
 bool maPristup(String navId) {
-  if (globalUserRole == 'admin') return true;
-  // Kontrola rolí
-  final klic = _navIdPravKlic[navId];
-  if (klic != null && !(globalPrava[klic] ?? false)) return false;
-  // Kontrola předplatného (pokud je předplatné expirované, zamkneme vše kromě menu)
+  // 1. Platnost předplatného — blokuje všechny role
   if (!globalPredplatneAktivni && navId != 'menu') return false;
+
+  // 2. Moduly předplatného — blokuje všechny role včetně admina servisu
   final modulKlic = navIdToModulKlic[navId];
-  if (modulKlic == null) return true;
-  return globalModuly[modulKlic] ?? false;
+  if (modulKlic != null && !(globalModuly[modulKlic] ?? false)) return false;
+
+  // 3. Admin servisu má přístup ke všemu co předplatné povoluje
+  if (globalUserRole == 'admin') return true;
+
+  // 4. Zaměstnanci — kontrola individuálních práv
+  final pravKlic = _navIdPravKlic[navId];
+  if (pravKlic != null && !(globalPrava[pravKlic] ?? false)) return false;
+
+  return true;
 }
 
 // DÁLKOVÝ OVLADAČ PRO PŘEPÍNÁNÍ ZÁLOŽEK ZVENČÍ
