@@ -22,6 +22,7 @@ import 'zamestnanci.dart';
 import 'sklad.dart';
 import 'welcome_screen.dart';
 import 'Add_ons.dart';
+import 'predplatne_page.dart';
 
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
 final ValueNotifier<List<String>> navOrderNotifier =
@@ -47,9 +48,14 @@ const Map<String, String?> _navIdPravKlic = {
 
 bool maPristup(String navId) {
   if (globalUserRole == 'admin') return true;
+  // Kontrola rolí
   final klic = _navIdPravKlic[navId];
-  if (klic == null) return true;
-  return globalPrava[klic] ?? false;
+  if (klic != null && !(globalPrava[klic] ?? false)) return false;
+  // Kontrola předplatného (pokud je předplatné expirované, zamkneme vše kromě menu)
+  if (!globalPredplatneAktivni && navId != 'menu') return false;
+  final modulKlic = navIdToModulKlic[navId];
+  if (modulKlic == null) return true;
+  return globalModuly[modulKlic] ?? false;
 }
 
 // DÁLKOVÝ OVLADAČ PRO PŘEPÍNÁNÍ ZÁLOŽEK ZVENČÍ
@@ -272,7 +278,7 @@ class _MainScreenState extends State<MainScreen> {
               },
               backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
               indicatorColor:
-                  Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               destinations: currentDestinations,
             ),
@@ -374,6 +380,9 @@ class MenuPage extends StatelessWidget {
                 _buildMenuCard(context, 'Nastavení', Icons.settings,
                     Colors.blueGrey, const SettingsPage(), isDark),
               if (globalUserRole == 'admin')
+                _buildMenuCard(context, 'Předplatné', Icons.workspace_premium,
+                    Colors.amber, const PredplatnePage(), isDark),
+              if (globalUserRole == 'admin')
                 _buildMenuCard(context, 'Vítací stránka', Icons.public,
                     Colors.cyan, const LandingPage(), isDark),
               if (globalUserRole == 'admin')
@@ -460,13 +469,13 @@ class MenuPage extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: isLocked
-                  ? Colors.grey.withOpacity(0.2)
-                  : color.withOpacity(0.3),
+                  ? Colors.grey.withValues(alpha: 0.2)
+                  : color.withValues(alpha: 0.3),
               width: 2),
           boxShadow: [
             if (!isDark)
               BoxShadow(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 5))
           ],

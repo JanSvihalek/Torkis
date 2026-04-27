@@ -46,6 +46,63 @@ final Map<String, Map<String, dynamic>> photoCategories = {
   'ostatni': {'label': 'Ostatní dokumentace', 'icon': Icons.camera_alt},
 };
 
+// ============================================================
+// PŘEDPLATNÉ — výchozí moduly podle plánu
+// ============================================================
+
+/// Výchozí moduly povolené pro každý typ plánu.
+const Map<String, List<String>> kPlanModuly = {
+  'basic': [
+    'prijem',
+    'zakaznici',
+    'vozidla',
+    'historie_prijmu',
+    'zamestnanci',
+  ],
+  'pro': [
+    'prijem',
+    'zakazky',
+    'zakaznici',
+    'vozidla',
+    'historie_prijmu',
+    'planovac',
+    'sklad',
+    'fakturace',
+    'ucetnictvi',
+    'statistiky',
+    'zamestnanci',
+  ],
+};
+
+/// Mapování nav ID → klíč v globalModuly (null = vždy přístupné bez ohledu na plán).
+const Map<String, String?> navIdToModulKlic = {
+  'prijem':          'prijem',
+  'zakazky':         'zakazky',
+  'planovac':        'planovac',
+  'sklad':           'sklad',
+  'fakturace':       'fakturace',
+  'ucetnictvi':      'ucetnictvi',
+  'statistiky':      'statistiky',
+  'zamestnanci':     'zamestnanci',
+  'historie_prijmu': 'prijem',
+  'nastaveni':       null,
+  'ukony':           null,
+  'vozidla':         null,
+  'zakaznici':       null,
+  'menu':            null,
+};
+
+// Globální stav předplatného (nastaven v auth_gate.dart při přihlášení)
+String globalPlanTyp = 'basic';
+Map<String, bool> globalModuly = {};
+DateTime? globalPredplatnePlatnost;
+
+bool get globalPredplatneAktivni {
+  if (globalPredplatnePlatnost == null) return true;
+  return globalPredplatnePlatnost!.isAfter(DateTime.now());
+}
+
+// ============================================================
 // Třída pro dynamické zadávání použitých dílů (používá se v prubeh.dart)
 class DilInput {
   final TextEditingController cislo = TextEditingController();

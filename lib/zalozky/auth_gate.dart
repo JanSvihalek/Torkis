@@ -8,11 +8,70 @@ import 'auth_screen.dart';
 import 'onboarding.dart';
 import 'main_screen.dart';
 
-// --- NOVÉ: GLOBÁLNÍ PROMĚNNÉ PRO CELOU APLIKACI ---
+// --- GLOBÁLNÍ PROMĚNNÉ PRO CELOU APLIKACI ---
 String? globalServisId;
 String? globalUserRole;
 String? globalUserJmeno;
 Map<String, bool> globalPrava = {};
+
+// Sdružená data pro přihlášení (uživatel + předplatné)
+class _AuthData {
+  final DocumentSnapshot userDoc;
+  final DocumentSnapshot? predDoc;
+  _AuthData({required this.userDoc, this.predDoc});
+}
+
+Future<_AuthData> _loadAuthData(String uid) async {
+  final userDoc = await FirebaseFirestore.instance
+      .collection('uzivatele')
+      .doc(uid)
+      .get();
+
+  if (!userDoc.exists) return _AuthData(userDoc: userDoc);
+
+  final servisId =
+      (userDoc.data() as Map<String, dynamic>)['servis_id']?.toString();
+  if (servisId == null) return _AuthData(userDoc: userDoc);
+
+  final predDoc = await FirebaseFirestore.instance
+      .collection('predplatne')
+      .doc(servisId)
+      .get();
+
+  return _AuthData(userDoc: userDoc, predDoc: predDoc);
+}
+
+void _applySubscription(DocumentSnapshot? predDoc) {
+  if (predDoc == null || !predDoc.exists) {
+    // Žádný dokument → Basic plan bez vypršení
+    globalPlanTyp = 'basic';
+    globalPredplatnePlatnost = null;
+    globalModuly = {for (final m in kPlanModuly['basic']!) m: true};
+    return;
+  }
+
+  final data = predDoc.data() as Map<String, dynamic>;
+  globalPlanTyp = data['plan_typ']?.toString() ?? 'basic';
+
+  final platnostTs = data['platnost_do'] as Timestamp?;
+  globalPredplatnePlatnost = platnostTs?.toDate();
+
+  final modulyPovolene =
+      Map<String, dynamic>.from(data['moduly_povolene'] ?? {});
+
+  if (globalPlanTyp == 'custom') {
+    globalModuly = modulyPovolene
+        .map((k, v) => MapEntry(k, v == true));
+  } else {
+    // Výchozí moduly podle plánu + případné přepisy
+    final defaults =
+        kPlanModuly[globalPlanTyp] ?? kPlanModuly['basic']!;
+    globalModuly = {for (final m in defaults) m: true};
+    for (final entry in modulyPovolene.entries) {
+      globalModuly[entry.key] = entry.value == true;
+    }
+  }
+}
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -22,52 +81,46 @@ class AuthGate extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, authSnapshot) {
-        // 1. Čekáme na zjištění stavu
         if (authSnapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
               body: Center(child: CircularProgressIndicator()));
         }
 
-        // 2. Uživatel není přihlášen -> Login
         if (!authSnapshot.hasData || authSnapshot.data == null) {
           return const AuthScreen();
         }
 
         final user = authSnapshot.data!;
 
-        // 3. ZMĚNA: Už nehledáme v 'nastaveni_servisu', ale v 'uzivatele'
-        return FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
-              .collection('uzivatele')
-              .doc(user.uid)
-              .get(),
-          builder: (context, userSnap) {
-            if (userSnap.connectionState == ConnectionState.waiting) {
+        return FutureBuilder<_AuthData>(
+          future: _loadAuthData(user.uid),
+          builder: (context, snap) {
+            if (snap.connectionState == ConnectionState.waiting) {
               return const Scaffold(
                   body: Center(child: CircularProgressIndicator()));
             }
 
-            if (userSnap.hasError) {
+            if (snap.hasError) {
               return Scaffold(
                   body: Center(
-                      child:
-                          Text('Chyba načítání profilu: ${userSnap.error}')));
+                      child: Text(
+                          'Chyba načítání profilu: ${snap.error}')));
             }
 
-            // 4. Kontrola, zda má uživatel vytvořený profil a roli
-            if (userSnap.hasData && userSnap.data!.exists) {
-              final userData = userSnap.data!.data() as Map<String, dynamic>;
+            final userDoc = snap.data!.userDoc;
 
-              // ULOŽÍME ID SERVISU, ROLI A PRÁVA DO PAMĚTI PRO ZBYTEK APLIKACE
+            if (userDoc.exists) {
+              final userData =
+                  userDoc.data() as Map<String, dynamic>;
+
               globalServisId = userData['servis_id'];
               globalUserRole = userData['role'];
               globalUserJmeno = userData['jmeno']?.toString();
-              globalPrava = Map<String, bool>.from(userData['prava'] ?? {});
+              globalPrava =
+                  Map<String, bool>.from(userData['prava'] ?? {});
 
-              // Aplikujeme osobní preference uživatele — téma a pořadí záložek.
-              // Firestore je zdrojová pravda (sync mezi zařízeními), SharedPreferences
-              // slouží jen jako rychlá lokální cache pro příští spuštění (main.dart).
-              final tmavyRezim = userData['tmavy_rezim'] as bool? ?? false;
+              final tmavyRezim =
+                  userData['tmavy_rezim'] as bool? ?? false;
               themeNotifier.value =
                   tmavyRezim ? ThemeMode.dark : ThemeMode.light;
 
@@ -83,10 +136,12 @@ class AuthGate extends StatelessWidget {
                 (p) => p.setBool('tmavy_rezim', tmavyRezim),
               );
 
+              // Načtení a aplikace předplatného
+              _applySubscription(snap.data!.predDoc);
+
               return const MainScreen();
             }
 
-            // 5. Pokud profil v 'uzivatele' neexistuje, je to nově registrovaný majitel -> Průvodce
             return const SetupWizardScreen();
           },
         );
