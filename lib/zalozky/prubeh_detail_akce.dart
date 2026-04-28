@@ -1,0 +1,189 @@
+import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/pdf_generator.dart';
+import 'auth_gate.dart';
+import 'zakazka_komunikace.dart';
+
+/// Spodní lišta akcí na detailu zakázky.
+class AkceLista extends StatelessWidget {
+  final bool isDark;
+  final bool isCompleted;
+  final bool isMechanik;
+  final Map<String, dynamic> data;
+  final Map<String, dynamic> stav;
+  final Map<String, dynamic> zakaznik;
+  final Map<String, dynamic> imageUrls;
+  final String documentId;
+  final String zakazkaId;
+  final String spz;
+  final String zakaznikJmeno;
+  final String zakaznikEmail;
+
+  final VoidCallback onPridatUkon;
+  final VoidCallback onUkoncit;
+  final VoidCallback onNaceneni;
+  final VoidCallback onStornovat;
+
+  const AkceLista({
+    super.key,
+    required this.isDark,
+    required this.isCompleted,
+    required this.isMechanik,
+    required this.data,
+    required this.stav,
+    required this.zakaznik,
+    required this.imageUrls,
+    required this.documentId,
+    required this.zakazkaId,
+    required this.spz,
+    required this.zakaznikJmeno,
+    required this.zakaznikEmail,
+    required this.onPridatUkon,
+    required this.onUkoncit,
+    required this.onNaceneni,
+    required this.onStornovat,
+  });
+
+  Widget _buildActionBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 10, color: color, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (!isCompleted)
+                _buildActionBtn(
+                  icon: Icons.add_circle_outline,
+                  label: 'Přidat\núkon',
+                  color: Colors.blue,
+                  onTap: onPridatUkon,
+                ),
+              if (!isCompleted && !isMechanik)
+                _buildActionBtn(
+                  icon: Icons.flag_outlined,
+                  label: 'Fakturovat/\nUkončit',
+                  color: Colors.orange,
+                  onTap: onUkoncit,
+                ),
+              _buildActionBtn(
+                icon: Icons.chat_outlined,
+                label: 'Komunikace',
+                color: Colors.teal,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ZakazkaKomunikacePage(
+                      documentId: documentId,
+                      zakazkaId: zakazkaId,
+                      spz: spz,
+                      zakaznikJmeno: zakaznikJmeno,
+                      zakaznikEmail: zakaznikEmail,
+                    ),
+                  ),
+                ),
+              ),
+              if (!isCompleted && !isMechanik)
+                _buildActionBtn(
+                  icon: Icons.request_quote_outlined,
+                  label: 'Nacenění',
+                  color: Colors.purple,
+                  onTap: onNaceneni,
+                ),
+              _buildActionBtn(
+                icon: Icons.picture_as_pdf_outlined,
+                label: 'Protokol',
+                color: Colors.redAccent,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar:
+                          AppBar(title: const Text('Náhled protokolu')),
+                      body: PdfPreview(
+                        build: (format) async {
+                          String sNazev = 'Servis';
+                          String sIco = '';
+                          if (globalServisId != null) {
+                            final docNast = await FirebaseFirestore.instance
+                                .collection('nastaveni_servisu')
+                                .doc(globalServisId)
+                                .get();
+                            sNazev =
+                                docNast.data()?['nazev_servisu'] ?? 'Servis';
+                            sIco = docNast.data()?['ico_servisu'] ?? '';
+                          }
+                          return await GlobalPdfGenerator.generateDocument(
+                            data: data,
+                            servisNazev: sNazev,
+                            servisIco: sIco,
+                            typ: PdfTyp.protokol,
+                          );
+                        },
+                        allowSharing: true,
+                        allowPrinting: true,
+                        canChangeOrientation: false,
+                        canChangePageFormat: false,
+                        loadingWidget:
+                            const Center(child: CircularProgressIndicator()),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (isCompleted && !isMechanik)
+                _buildActionBtn(
+                  icon: Icons.settings_backup_restore,
+                  label: 'Stornovat\nfakturu',
+                  color: Colors.red,
+                  onTap: onStornovat,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

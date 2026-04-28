@@ -1,28 +1,26 @@
-﻿import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:printing/printing.dart';
-import 'dart:io';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
-import 'zakaznici.dart';
-import 'vozidla.dart';
 import 'auth_gate.dart';
-import 'zakazka_komunikace.dart';
 import 'prubeh_add_work.dart';
-import 'prubeh_fotodokumentace.dart';
+import 'prubeh_tab_otevrenot.dart';
+import 'prubeh_tab_ukoncene.dart';
+import 'prubeh_detail_zakaznik_vozidlo.dart';
+import 'prubeh_detail_prehled.dart';
+import 'prubeh_detail_akce.dart';
 
-// Modul prĹŻbÄ›hu zakĂˇzek â€” sklĂˇdĂˇ se ze ÄŤtyĹ™ obrazovek:
+// Modul průběhu zakázek — skládá se ze čtyř obrazovek:
 //
-// [ServiceProgressPage]  â€” seznam aktivnĂ­ch zakĂˇzek (search + StreamBuilder karet)
-// [ActiveJobScreen]      â€” detail zakĂˇzky: zĂˇloĹľky PĹ™ehled / CenovĂˇ nabĂ­dka /
-//                          Foto / ZĂˇkaznĂ­k / Vozidlo + akce DokonÄŤit / Storno
-// [AddWorkScreen]        â€” dialog pro zĂˇznam provedenĂ© prĂˇce (Ăşkon + dĂ­ly + foto)
-// [FotodokumentaceScreen]â€” fullscreen galerie fotek pĹ™iloĹľenĂ˝ch k zakĂˇzce
+// [ServiceProgressPage]  – seznam aktivních zakázek (search + StreamBuilder karet)
+// [ActiveJobScreen]      – detail zakázky: záložky Přehled / Cenová nabídka /
+//                          Foto / Zákazník / Vozidlo + akce Dokončit / Storno
+// [AddWorkScreen]        – dialog pro záznam provedené práce (úkon + díly + foto)
+// [FotodokumentaceScreen]– fullscreen galerie fotek přiložených k zakázce
 
 class ServiceProgressPage extends StatefulWidget {
   const ServiceProgressPage({super.key});
@@ -36,18 +34,6 @@ class _ServiceProgressPageState extends State<ServiceProgressPage>
   String _searchOpen = '';
   String _searchClosed = '';
 
-  String _formatDate(dynamic timestamp) {
-    if (timestamp == null) return "ZpracovĂˇvĂˇ se...";
-    DateTime dt = (timestamp as Timestamp).toDate();
-    return DateFormat('dd.MM.yyyy HH:mm').format(dt);
-  }
-
-  String _formatDateShort(dynamic timestamp) {
-    if (timestamp == null) return "Neuvedeno";
-    DateTime dt = (timestamp as Timestamp).toDate();
-    return DateFormat('dd.MM.yyyy').format(dt);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -60,12 +46,27 @@ class _ServiceProgressPageState extends State<ServiceProgressPage>
     super.dispose();
   }
 
+  void _navigateToJob(
+      BuildContext context, String docId, String cisloZakazky, String spz) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ActiveJobScreen(
+          documentId: docId,
+          zakazkaId: cisloZakazky,
+          spz: spz,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    if (globalServisId == null)
+    if (globalServisId == null) {
       return const Center(child: CircularProgressIndicator());
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,18 +77,19 @@ class _ServiceProgressPageState extends State<ServiceProgressPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'ZakĂˇzky',
+                'Zakázky',
                 style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 15),
               TabBar(
                 controller: _tabController,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                labelStyle:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 unselectedLabelStyle: const TextStyle(fontSize: 15),
                 indicatorSize: TabBarIndicatorSize.tab,
                 tabs: const [
-                  Tab(text: 'OtevĹ™enĂ©'),
-                  Tab(text: 'UkonÄŤenĂ©'),
+                  Tab(text: 'Otevřené'),
+                  Tab(text: 'Ukončené'),
                 ],
               ),
             ],
@@ -97,326 +99,23 @@ class _ServiceProgressPageState extends State<ServiceProgressPage>
           child: TabBarView(
             controller: _tabController,
             children: [
-              _buildOtevrenTab(isDark),
-              _buildUkonceneTab(isDark),
+              OtevrenTab(
+                isDark: isDark,
+                searchOpen: _searchOpen,
+                onSearchChanged: (v) =>
+                    setState(() => _searchOpen = v.toLowerCase()),
+                onTapZakazka: (docId, cislo, spz) =>
+                    _navigateToJob(context, docId, cislo, spz),
+              ),
+              UkonceneTab(
+                isDark: isDark,
+                searchClosed: _searchClosed,
+                onSearchChanged: (v) =>
+                    setState(() => _searchClosed = v.toLowerCase()),
+                onTapZakazka: (docId, cislo, spz) =>
+                    _navigateToJob(context, docId, cislo, spz),
+              ),
             ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar({
-    required bool isDark,
-    required String hint,
-    required IconData icon,
-    required void Function(String) onChanged,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          if (!isDark)
-            const BoxShadow(
-                color: Color(0x0D000000), blurRadius: 10, offset: Offset(0, 4)),
-        ],
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: TextField(
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          hintText: hint,
-          prefixIcon: Icon(icon, color: Colors.blue),
-          filled: true,
-          fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(15),
-              borderSide: BorderSide.none),
-          contentPadding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOtevrenTab(bool isDark) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(30, 15, 30, 10),
-          child: _buildSearchBar(
-            isDark: isDark,
-            hint: 'Hledat SPZ, VIN nebo ÄŤĂ­slo...',
-            icon: Icons.search,
-            onChanged: (v) => setState(() => _searchOpen = v.toLowerCase()),
-          ),
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('zakazky')
-                .where('servis_id', isEqualTo: globalServisId)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError)
-                return Center(child: Text("Chyba databĂˇze: ${snapshot.error}"));
-              if (!snapshot.hasData)
-                return const Center(child: CircularProgressIndicator());
-
-              final docs = snapshot.data!.docs.where((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                if (data['stav_zakazky'] == 'DokonÄŤeno') return false;
-                final cislo =
-                    data['cislo_zakazky']?.toString().toLowerCase() ?? '';
-                final spz = data['spz']?.toString().toLowerCase() ?? '';
-                final vin = data['vin']?.toString().toLowerCase() ?? '';
-                return cislo.contains(_searchOpen) ||
-                    spz.contains(_searchOpen) ||
-                    vin.contains(_searchOpen);
-              }).toList();
-
-              docs.sort((a, b) {
-                final timeA =
-                    (a.data() as Map)['cas_prijeti'] as Timestamp?;
-                final timeB =
-                    (b.data() as Map)['cas_prijeti'] as Timestamp?;
-                if (timeA == null && timeB == null) return 0;
-                if (timeA == null) return 1;
-                if (timeB == null) return -1;
-                return timeB.compareTo(timeA);
-              });
-
-              if (docs.isEmpty) {
-                return const Center(
-                    child: Text('Ĺ˝ĂˇdnĂ© aktivnĂ­ zakĂˇzky k zobrazenĂ­.'));
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
-                itemCount: docs.length,
-                itemBuilder: (context, index) {
-                  final data = docs[index].data() as Map<String, dynamic>;
-                  final docId = docs[index].id;
-                  final stav = data['stav_zakazky'] ?? 'PĹ™ijato';
-
-                  final znacka = data['znacka']?.toString() ?? '';
-                  final model = data['model']?.toString() ?? '';
-                  final vin = data['vin']?.toString() ?? '';
-                  final zakaznikJmeno =
-                      data['zakaznik']?['jmeno']?.toString() ?? '';
-
-                  return Card(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15)),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(15),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${data['spz']}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 20)),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: getStatusColor(stav).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(stav,
-                                style: TextStyle(
-                                    color: getStatusColor(stav),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12)),
-                          ),
-                        ],
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('ZakĂˇzka: ${data['cislo_zakazky']}',
-                                style: const TextStyle(fontSize: 13)),
-                            if (zakaznikJmeno.isNotEmpty)
-                              Text(zakaznikJmeno,
-                                  style: TextStyle(
-                                      fontSize: 13, color: Colors.grey[500])),
-                            if (znacka.isNotEmpty)
-                              Text('$znacka $model'.trim(),
-                                  style: TextStyle(
-                                      fontSize: 13, color: Colors.grey[500])),
-                            if (vin.isNotEmpty)
-                              Text('VIN: $vin',
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey[500])),
-                            const SizedBox(height: 2),
-                            Text(
-                                'PĹ™Ă­jem: ${_formatDate(data['cas_prijeti'])}',
-                                style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey)),
-                          ],
-                        ),
-                      ),
-                      trailing:
-                          const Icon(Icons.arrow_forward_ios, size: 16),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ActiveJobScreen(
-                            documentId: docId,
-                            zakazkaId: data['cislo_zakazky'].toString(),
-                            spz: data['spz'].toString(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUkonceneTab(bool isDark) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(30, 15, 30, 10),
-          child: _buildSearchBar(
-            isDark: isDark,
-            hint: 'Hledat v historii (SPZ, VIN, ÄŤĂ­slo)...',
-            icon: Icons.history,
-            onChanged: (v) => setState(() => _searchClosed = v.toLowerCase()),
-          ),
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('zakazky')
-                .where('servis_id', isEqualTo: globalServisId)
-                .where('stav_zakazky', isEqualTo: 'DokonÄŤeno')
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError)
-                return Center(child: Text("Chyba: ${snapshot.error}"));
-              if (!snapshot.hasData)
-                return const Center(child: CircularProgressIndicator());
-
-              final docs = snapshot.data!.docs.where((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                final cislo =
-                    data['cislo_zakazky']?.toString().toLowerCase() ?? '';
-                final spz = data['spz']?.toString().toLowerCase() ?? '';
-                final vin = data['vin']?.toString().toLowerCase() ?? '';
-                final zakaznik =
-                    data['zakaznik']?['jmeno']?.toString().toLowerCase() ?? '';
-                return cislo.contains(_searchClosed) ||
-                    spz.contains(_searchClosed) ||
-                    vin.contains(_searchClosed) ||
-                    zakaznik.contains(_searchClosed);
-              }).toList();
-
-              docs.sort((a, b) {
-                final timeA =
-                    (a.data() as Map)['cas_ukonceni'] as Timestamp?;
-                final timeB =
-                    (b.data() as Map)['cas_ukonceni'] as Timestamp?;
-                if (timeA == null || timeB == null) return 0;
-                return timeB.compareTo(timeA);
-              });
-
-              if (docs.isEmpty) {
-                return const Center(
-                    child: Text('Historie je zatĂ­m prĂˇzdnĂˇ.'));
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 5, 20, 20),
-                itemCount: docs.length,
-                itemBuilder: (context, index) {
-                  final data = docs[index].data() as Map<String, dynamic>;
-                  final docId = docs[index].id;
-                  final bool isMechanik = globalUserRole == 'mechanik';
-                  final double celkovaCena =
-                      (data['celkova_castka'] as num?)?.toDouble() ?? 0.0;
-                  final znacka = data['znacka']?.toString() ?? '';
-                  final model = data['model']?.toString() ?? '';
-                  final vin = data['vin']?.toString() ?? '';
-                  final zakaznikJmeno =
-                      data['zakaznik']?['jmeno']?.toString() ?? 'Neuvedeno';
-
-                  return Card(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15)),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(15),
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.green.withOpacity(0.1),
-                        child: const Icon(Icons.check_circle,
-                            color: Colors.green),
-                      ),
-                      title: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text('${data['spz']}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
-                          if (!isMechanik && celkovaCena > 0)
-                            Text(
-                              '${celkovaCena.toStringAsFixed(0)} KÄŤ',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue),
-                            ),
-                        ],
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('ZakĂˇzka: ${data['cislo_zakazky']}',
-                                style: const TextStyle(fontSize: 13)),
-                            Text(zakaznikJmeno,
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.grey[500])),
-                            if (znacka.isNotEmpty)
-                              Text('$znacka $model'.trim(),
-                                  style: TextStyle(
-                                      fontSize: 13, color: Colors.grey[500])),
-                            if (vin.isNotEmpty)
-                              Text('VIN: $vin',
-                                  style: TextStyle(
-                                      fontSize: 11, color: Colors.grey[500])),
-                            const SizedBox(height: 2),
-                            Text(
-                                'UkonÄŤeno: ${_formatDateShort(data['cas_ukonceni'])}',
-                                style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey)),
-                          ],
-                        ),
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ActiveJobScreen(
-                            documentId: docId,
-                            zakazkaId: data['cislo_zakazky'].toString(),
-                            spz: data['spz'].toString(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
           ),
         ),
       ],
@@ -442,7 +141,7 @@ class ActiveJobScreen extends StatefulWidget {
 
 class _ActiveJobScreenState extends State<ActiveJobScreen> {
   int _vychoziSplatnost = 14;
-  String _zpusobUhrady = 'PĹ™evodem';
+  String _zpusobUhrady = 'Převodem';
   String _zakaznikJmeno = '';
   String _zakaznikEmail = '';
 
@@ -461,14 +160,14 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       if (doc.exists) {
         setState(() {
           _vychoziSplatnost = doc.data()?['splatnost_dny'] ?? 14;
-          _zpusobUhrady = doc.data()?['zpusob_uhrady'] ?? 'PĹ™evodem';
+          _zpusobUhrady = doc.data()?['zpusob_uhrady'] ?? 'Převodem';
         });
       }
     }
   }
 
   String _formatDate(dynamic timestamp) {
-    if (timestamp == null) return "ZpracovĂˇvĂˇ se...";
+    if (timestamp == null) return "Zpracovává se...";
     DateTime dt = (timestamp as Timestamp).toDate();
     return DateFormat('dd.MM.yyyy HH:mm').format(dt);
   }
@@ -493,19 +192,19 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
-  /// SmaĹľe jeden Ĺ™Ăˇdek z pole 'pozadavky_zakaznika' v dokumentu zakĂˇzky.
+  /// Smaže jeden řádek z pole 'pozadavky_zakaznika' v dokumentu zakázky.
   Future<void> _deletePozadavek(BuildContext context, String pozadavek) async {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Smazat poĹľadavek?'),
+        title: const Text('Smazat požadavek?'),
         content: const Text(
-          'Opravdu chcete tento poĹľadavek zĂˇkaznĂ­ka trvale odstranit?',
+          'Opravdu chcete tento požadavek zákazníka trvale odstranit?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ZRUĹ IT'),
+            child: const Text('ZRUŠIT'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -524,7 +223,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
-  /// VrĂˇtĂ­ vĹˇechny dĂ­ly ze seznamu provedenĂ˝ch pracĂ­ zpÄ›t na sklad.
+  /// Vrátí všechny díly ze seznamu provedených prací zpět na sklad.
   Future<void> _vratDilyNaSklad(
     List<dynamic> provedenePrace,
     String popis,
@@ -547,7 +246,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           'servis_id': globalServisId,
           'sklad_id': skladId,
           'nazev_dilu': item['nazev'],
-          'typ_pohybu': 'pĹ™Ă­jem',
+          'typ_pohybu': 'příjem',
           'mnozstvi': mnozstvi,
           'poznamka': popis,
           'zakazka_id': widget.zakazkaId,
@@ -558,7 +257,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
-  /// OdstranĂ­ zĂˇznam provedenĂ© prĂˇce ze zakĂˇzky a pĹ™egeneruje PDF cenovĂ© nabĂ­dky.
+  /// Odstraní záznam provedené práce ze zakázky a přegeneruje PDF cenové nabídky.
   Future<void> _deleteWork(
     BuildContext context,
     Map<String, dynamic> workItem,
@@ -566,14 +265,14 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Smazat Ăşkon?'),
+        title: const Text('Smazat úkon?'),
         content: const Text(
-          'Opravdu chcete tento zĂˇznam o prĂˇci odstranit? Tato akce je nevratnĂˇ.',
+          'Opravdu chcete tento záznam o práci odstranit? Tato akce je nevratná.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ZRUĹ IT'),
+            child: const Text('ZRUŠIT'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -585,7 +284,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     if (confirm == true) {
       await _vratDilyNaSklad(
         [workItem],
-        'OdebrĂˇnĂ­ poloĹľky ze zakĂˇzky ${widget.zakazkaId}',
+        'Odebrání položky ze zakázky ${widget.zakazkaId}',
       );
       await FirebaseFirestore.instance
           .collection('zakazky')
@@ -596,30 +295,31 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
-  /// Vygeneruje PDF cenovĂ© nabĂ­dky a odeĹˇle ji zĂˇkaznĂ­kovi na e-mail.
-  /// ZobrazĂ­ dialog pro potvrzenĂ­ / Ăşpravu e-mailovĂ© adresy pĹ™ed odeslĂˇnĂ­m.
+  /// Vygeneruje PDF cenové nabídky a odešle ji zákazníkovi na e-mail.
+  /// Zobrazí dialog pro potvrzení / úpravu e-mailové adresy před odesláním.
   Future<void> _odeslatKNaceneni(
       BuildContext context, Map<String, dynamic> data) async {
     final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
-    final emailCtrl = TextEditingController(text: zakaznik['email']?.toString() ?? '');
+    final emailCtrl =
+        TextEditingController(text: zakaznik['email']?.toString() ?? '');
 
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Generovat nacenÄ›nĂ­',
+        title: const Text('Generovat nacenění',
             style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-                'Aplikace vygeneruje PDF s cenovou nabĂ­dkou a odeĹˇle ji zĂˇkaznĂ­kovi.'),
+                'Aplikace vygeneruje PDF s cenovou nabídkou a odešle ji zákazníkovi.'),
             const SizedBox(height: 15),
             TextField(
               controller: emailCtrl,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
-                labelText: 'E-mail zĂˇkaznĂ­ka',
+                labelText: 'E-mail zákazníka',
                 prefixIcon: const Icon(Icons.email_outlined),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10)),
@@ -632,7 +332,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ZruĹˇit'),
+            child: const Text('Zrušit'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
@@ -651,7 +351,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        builder: (context) =>
+            const Center(child: CircularProgressIndicator()),
       );
 
       try {
@@ -691,7 +392,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             .collection('zakazky')
             .doc(widget.documentId)
             .update({
-          'stav_zakazky': 'K nacenÄ›nĂ­',
+          'stav_zakazky': 'K nacenění',
           'nabidka_url': downloadUrl,
         });
 
@@ -701,19 +402,19 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           if (zakaznikEmail.isNotEmpty && zakaznikEmail.contains('@')) {
             Map<String, dynamic> mailDoc = {
               'to': zakaznikEmail,
-              'from': '$sNazev (pĹ™es TORKIS) <jan.svihalek00@gmail.com>',
+              'from': '$sNazev (přes TORKIS) <jan.svihalek00@gmail.com>',
               'message': {
                 'subject':
-                    'CenovĂˇ nabĂ­dka - ZakĂˇzka ${widget.zakazkaId} ($sNazev)',
+                    'Cenová nabídka - Zakázka ${widget.zakazkaId} ($sNazev)',
                 'html': '''
                   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">DobrĂ˝ den,</h2>
-                    <p>zasĂ­lĂˇme VĂˇm cenovou nabĂ­dku k nahlĂ©dnutĂ­ pro VaĹˇi zakĂˇzku <b>${widget.zakazkaId}</b> v servisu $sNazev.</p>
-                    <p>CelĂ˝ dokument si mĹŻĹľete prohlĂ©dnout zde:</p>
+                    <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
+                    <p>zasíláme Vám cenovou nabídku k nahlédnutí pro Vaši zakázku <b>${widget.zakazkaId}</b> v servisu $sNazev.</p>
+                    <p>Celý dokument si můžete prohlédnout zde:</p>
                     <div style="text-align: center; margin: 30px 0;">
-                      <a href="$downloadUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit nacenÄ›nĂ­ (PDF)</a>
+                      <a href="$downloadUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit nacenění (PDF)</a>
                     </div>
-                    <p>ProsĂ­me o informaci, zda s rozpoÄŤtem souhlasĂ­te, abychom mohli zaÄŤĂ­t pracovat.</p>
+                    <p>Prosíme o informaci, zda s rozpočtem souhlasíte, abychom mohli začít pracovat.</p>
                     <br>
                     <p>S pozdravem,<br><b>$sNazev</b></p>
                   </div>
@@ -729,7 +430,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('NacenÄ›nĂ­ odeslĂˇno na: $zakaznikEmail'),
+                content: Text('Nacenění odesláno na: $zakaznikEmail'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -737,45 +438,47 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
-                    'ZĂˇkaznĂ­k nemĂˇ e-mail. NacenÄ›nĂ­ uloĹľeno, nynĂ­ ho mĹŻĹľete sdĂ­let.'),
+                    'Zákazník nemá e-mail. Nacenění uloženo, nyní ho můžete sdílet.'),
                 backgroundColor: Colors.orange,
               ),
             );
             await Printing.sharePdf(
-                bytes: pdfBytes, filename: 'Naceneni_${widget.zakazkaId}.pdf');
+                bytes: pdfBytes,
+                filename: 'Naceneni_${widget.zakazkaId}.pdf');
           }
         }
       } catch (e) {
         if (context.mounted) {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red),
+            SnackBar(
+                content: Text('Chyba: $e'), backgroundColor: Colors.red),
           );
         }
       }
     }
   }
 
-  /// NastavĂ­ stav zakĂˇzky na 'StornovĂˇno' â€” zakĂˇzka zmizĂ­ z aktivnĂ­ho seznamu,
-  /// ale zĹŻstane v historii (nenĂ­ fyzicky smazĂˇna).
+  /// Nastaví stav zakázky na 'Stornováno' – zakázka zmizí z aktivního seznamu,
+  /// ale zůstane v historii (není fyzicky smazána).
   Future<void> _stornovatZakazku(BuildContext context) async {
     bool? confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Stornovat a znovu otevĹ™Ă­t?'),
+        title: const Text('Stornovat a znovu otevřít?'),
         content: const Text(
-          'Tato akce oznaÄŤĂ­ pĹŻvodnĂ­ fakturu jako "StornovĂˇno" (dobropis) a vrĂˇtĂ­ zakĂˇzku do stavu "PĹ™ijato". ZakĂˇzku tak budete moci znovu upravovat a poslĂ©ze vygenerovat novou fakturu.\n\nOpravdu chcete zakĂˇzku odemknout?',
+          'Tato akce označí původní fakturu jako "Stornováno" (dobropis) a vrátí zakázku do stavu "Přijato". Zakázku tak budete moci znovu upravovat a posléze vygenerovat novou fakturu.\n\nOpravdu chcete zakázku odemknout?',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ZRUĹ IT'),
+            child: const Text('ZRUŠIT'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text('STORNOVAT',
-                style:
-                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -788,7 +491,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               .collection('zakazky')
               .doc(widget.documentId)
               .get();
-              
+
           final snapData = zakazkaSnap.data() ?? {};
           String fakturaCislo = snapData['faktura_cislo'] ?? '';
           String rezervaceId = snapData['rezervace_id'] ?? '';
@@ -797,7 +500,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               snapData['provedene_prace'] as List<dynamic>? ?? [];
           await _vratDilyNaSklad(
             provedenePrace,
-            'Storno zakĂˇzky ${widget.zakazkaId}',
+            'Storno zakázky ${widget.zakazkaId}',
           );
 
           if (fakturaCislo.isNotEmpty) {
@@ -807,7 +510,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             final fakturaDoc = await fakturaRef.get();
 
             if (fakturaDoc.exists) {
-              await fakturaRef.update({'stav_platby': 'StornovĂˇno'});
+              await fakturaRef.update({'stav_platby': 'Stornováno'});
             }
           }
 
@@ -815,24 +518,25 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               .collection('zakazky')
               .doc(widget.documentId)
               .update({
-            'stav_zakazky': 'PĹ™ijato',
+            'stav_zakazky': 'Přijato',
             'zpusob_ukonceni': FieldValue.delete(),
             'forma_uhrady': FieldValue.delete(),
             'splatnost_dny': FieldValue.delete(),
             'cas_ukonceni': FieldValue.delete(),
             'faktura_cislo': FieldValue.delete(),
           });
-          
+
           if (rezervaceId.isNotEmpty) {
-            await FirebaseFirestore.instance.collection('planovac').doc(rezervaceId).update({
-              'stav': 'PĹ™ijato na servis'
-            });
+            await FirebaseFirestore.instance
+                .collection('planovac')
+                .doc(rezervaceId)
+                .update({'stav': 'Přijato na servis'});
           }
 
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Faktura stornovĂˇna a zakĂˇzka znovu otevĹ™ena.'),
+                content: Text('Faktura stornována a zakázka znovu otevřena.'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -841,7 +545,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Chyba pĹ™i stornovĂˇnĂ­: $e'),
+                content: Text('Chyba při stornování: $e'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -851,8 +555,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     }
   }
 
-  /// PĹ™epne stav zakĂˇzky (napĹ™. â€žPĹ™ijato" â†’ â€žV opravÄ›" â†’ â€žÄŚekĂˇ na dĂ­ly").
-  /// Stav se zobrazuje jako barevnĂ˝ ĹˇtĂ­tek v kartÄ› zakĂˇzky.
+  /// Přepne stav zakázky (např. „Přijato" → „V opravě" → „Čeká na díly").
   Future<void> _zmenitStav(BuildContext context, String novyStav) async {
     await FirebaseFirestore.instance
         .collection('zakazky')
@@ -867,7 +570,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     Map<String, dynamic> zakaznik,
     Map<String, dynamic> imageUrls,
   ) {
-    final List<String> moznostiPlatby = ['PĹ™evodem', 'HotovÄ›', 'Kartou'];
+    final List<String> moznostiPlatby = ['Převodem', 'Hotově', 'Kartou'];
     String vybranaPlatba = moznostiPlatby.contains(_zpusobUhrady)
         ? _zpusobUhrady
         : moznostiPlatby[0];
@@ -885,7 +588,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: const Text(
-            'UkonÄŤenĂ­ a vyĂşÄŤtovĂˇnĂ­',
+            'Ukončení a vyúčtování',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: SingleChildScrollView(
@@ -902,7 +605,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                           CircularProgressIndicator(),
                           SizedBox(height: 15),
                           Text(
-                            'ZpracovĂˇvĂˇm...',
+                            'Zpracovávám...',
                             style: TextStyle(
                               color: Colors.blue,
                               fontWeight: FontWeight.bold,
@@ -914,7 +617,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   )
                 else ...[
                   const Text(
-                    'ZpĹŻsob Ăşhrady:',
+                    'Způsob úhrady:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 5),
@@ -922,23 +625,22 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.withOpacity(0.5)),
+                      border: Border.all(
+                          color: Colors.grey.withValues(alpha: 0.5)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: vybranaPlatba,
                         isExpanded: true,
                         items: moznostiPlatby
-                            .map(
-                              (p) => DropdownMenuItem<String>(
-                                  value: p, child: Text(p)),
-                            )
+                            .map((p) => DropdownMenuItem<String>(
+                                value: p, child: Text(p)))
                             .toList(),
                         onChanged: (val) {
                           if (val != null) {
                             setDialogState(() {
                               vybranaPlatba = val;
-                              if (val == 'HotovÄ›' || val == 'Kartou') {
+                              if (val == 'Hotově' || val == 'Kartou') {
                                 splatnostController.text = '0';
                               } else {
                                 splatnostController.text =
@@ -968,12 +670,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   ),
                   const SizedBox(height: 15),
                   CheckboxListTile(
-                    title: const Text('Odeslat fakturu zĂˇkaznĂ­kovi na e-mail',
+                    title: const Text('Odeslat fakturu zákazníkovi na e-mail',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
                     subtitle: emailZakaznika.isEmpty
-                        ? const Text('ZĂˇkaznĂ­k nemĂˇ vyplnÄ›nĂ˝ e-mail',
-                            style: TextStyle(color: Colors.red, fontSize: 12))
+                        ? const Text('Zákazník nemá vyplněný e-mail',
+                            style: TextStyle(
+                                color: Colors.red, fontSize: 12))
                         : Text(emailZakaznika,
                             style: const TextStyle(
                                 fontSize: 12, color: Colors.grey)),
@@ -991,7 +694,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'ZakĂˇzka se pĹ™esune do Historie. Vygeneruje se PDF vyĂşÄŤtovĂˇnĂ­.',
+                    'Zakázka se přesune do Historie. Vygeneruje se PDF vyúčtování.',
                     style: TextStyle(fontSize: 12),
                   ),
                   const SizedBox(height: 15),
@@ -1013,7 +716,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                       );
                     },
                     icon: const Icon(Icons.receipt_long),
-                    label: const Text('DokonÄŤit a pĹ™edat k platbÄ›'),
+                    label: const Text('Dokončit a předat k platbě'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
@@ -1039,11 +742,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                     },
                     icon: const Icon(Icons.cancel, color: Colors.red),
                     label: const Text(
-                      'Nerealizuje se (ZruĹˇit)',
+                      'Nerealizuje se (Zrušit)',
                       style: TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          color: Colors.red, fontWeight: FontWeight.bold),
                     ),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 15),
@@ -1057,7 +758,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             if (!isFinishing)
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('ZPÄšT'),
+                child: const Text('ZPĚT'),
               ),
           ],
         ),
@@ -1065,9 +766,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     );
   }
 
-  /// UkonÄŤĂ­ zakĂˇzku: vygeneruje finĂˇlnĂ­ fakturu (PDF), uloĹľĂ­ ji do Storage,
-  /// vytvoĹ™Ă­ dokument v kolekci 'faktury', aktualizuje zĂˇznam vozidla (tachometr, STK)
-  /// a pĹ™esune zakĂˇzku do stavu 'DokonÄŤeno'.
+  /// Ukončí zakázku: vygeneruje finální fakturu (PDF), uloží ji do Storage,
+  /// vytvoří dokument v kolekci 'faktury', aktualizuje záznam vozidla (tachometr, STK)
+  /// a přesune zakázku do stavu 'Dokončeno'.
   Future<void> _zpracovatUkonceni(
     BuildContext context,
     String zpusob,
@@ -1101,7 +802,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           final dily = prace['pouzite_dily'] as List<dynamic>? ?? [];
           for (var dil in dily) {
             double p = (double.tryParse(dil['pocet'].toString()) ?? 1.0);
-            double c = (double.tryParse(dil['cena_s_dph'].toString()) ?? 0.0);
+            double c =
+                (double.tryParse(dil['cena_s_dph'].toString()) ?? 0.0);
             celkovaSuma += (p * c);
           }
         }
@@ -1118,7 +820,8 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             .doc(globalServisId)
             .get();
         if (docNastaveni.exists) {
-          odesilatelJmeno = docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
+          odesilatelJmeno =
+              docNastaveni.data()?['nazev_servisu'] ?? 'Servis';
           odesilatelIco = docNastaveni.data()?['ico_servisu'] ?? '';
           odesilatelEmail = docNastaveni.data()?['email_servisu'] ?? '';
           prefix = docNastaveni.data()?['prefix_faktury'] ?? 'FAK';
@@ -1145,13 +848,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
 
       String cisloFaktury = '';
 
-     if (zpusob == 'faktura') {
+      if (zpusob == 'faktura') {
         final ted = DateTime.now();
-        
+
         String yearPart = DateFormat('yyyy').format(ted);
         String monthPart = DateFormat('MM').format(ted);
 
-        // ÄŚĂ­taÄŤ v databĂˇzi zĹŻstĂˇvĂˇ roÄŤnĂ­
+        // Čítač v databázi zůstává roční
         final counterRef = FirebaseFirestore.instance
             .collection('citace_faktur')
             .doc('${globalServisId}_rok_$yearPart');
@@ -1165,21 +868,18 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           }
           transaction.set(
               counterRef, {'pocet': currentCount}, SetOptions(merge: true));
-              
-          // FormĂˇtovĂˇnĂ­ bez pomlÄŤek: PREFIX + ROK + MÄšSĂŤC + INKREMENT (napĹ™. FAK20260400001)
+
+          // Formátování bez pomlček: PREFIX + ROK + MĚSÍC + INKREMENT (např. FAK20260400001)
           String sequencePart = currentCount.toString().padLeft(5, '0');
           return '$prefix$yearPart$monthPart$sequencePart';
         });
 
-        // ... Zbytek kĂłdu (DateTime splatnost = ted.add(...) atd.)
-
-        // ... (Zbytek kĂłdu pro uloĹľenĂ­ faktury zĹŻstĂˇvĂˇ stejnĂ˝)
-
         DateTime splatnost = ted.add(Duration(days: splatnostDny));
 
-        String stavPlatby = (celkovaSuma <= 0 || platba == 'HotovÄ›' || platba == 'Kartou')
-            ? 'Uhrazeno'
-            : 'ÄŚekĂˇ na platbu';
+        String stavPlatby =
+            (celkovaSuma <= 0 || platba == 'Hotově' || platba == 'Kartou')
+                ? 'Uhrazeno'
+                : 'Čeká na platbu';
 
         await FirebaseFirestore.instance
             .collection('faktury')
@@ -1190,7 +890,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           'cislo_zakazky': widget.zakazkaId,
           'spz': widget.spz,
           'zakaznik_id': zakaznik['id_zakaznika'] ?? '',
-          'zakaznik_jmeno': zakaznik['jmeno'] ?? 'NeznĂˇmĂ˝ zĂˇkaznĂ­k',
+          'zakaznik_jmeno': zakaznik['jmeno'] ?? 'Neznámý zákazník',
           'datum_vystaveni': Timestamp.fromDate(ted),
           'datum_splatnosti': Timestamp.fromDate(splatnost),
           'forma_uhrady': platba,
@@ -1207,20 +907,20 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             Map<String, dynamic> mailDoc = {
               'to': zakaznikEmail,
               'from':
-                  '$odesilatelJmeno (pĹ™es TORKIS) <jan.svihalek00@gmail.com>',
+                  '$odesilatelJmeno (přes TORKIS) <jan.svihalek00@gmail.com>',
               'message': {
                 'subject':
-                    'Faktura - ZakĂˇzka ${widget.zakazkaId} ($odesilatelJmeno)',
+                    'Faktura - Zakázka ${widget.zakazkaId} ($odesilatelJmeno)',
                 'html': '''
                   <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">DobrĂ˝ den,</h2>
-                    <p>v pĹ™Ă­loze VĂˇm zasĂ­lĂˇme fakturu za provedenĂ© servisnĂ­ prĂˇce na VaĹˇem vozidle <b>${data['spz']}</b> v naĹˇem servisu.</p>
+                    <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
+                    <p>v příloze Vám zasíláme fakturu za provedené servisní práce na Vašem vozidle <b>${data['spz']}</b> v našem servisu.</p>
                     <div style="text-align: center; margin: 30px 0;">
-                      <a href="$pdfUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit a stĂˇhnout fakturu</a>
+                      <a href="$pdfUrl" style="background-color: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px; display: inline-block;">Zobrazit a stáhnout fakturu</a>
                     </div>
-                    <p>DÄ›kujeme za vyuĹľitĂ­ naĹˇich sluĹľeb. V pĹ™Ă­padÄ› jakĂ˝chkoliv dotazĹŻ na tento e-mail jednoduĹˇe odpovÄ›zte, zprĂˇva nĂˇm bude doruÄŤena.</p>
+                    <p>Děkujeme za využití našich služeb. V případě jakýchkoliv dotazů na tento e-mail jednoduše odpovězte, zpráva nám bude doručena.</p>
                     <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-                    <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerovĂˇn automaticky systĂ©mem <b>TORKIS.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
+                    <p style="font-size: 12px; color: #777;">Tento e-mail byl vygenerován automaticky systémem <b>TORKIS.cz</b> pro servis <b>$odesilatelJmeno</b>.</p>
                   </div>
                 '''
               }
@@ -1230,7 +930,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               mailDoc['replyTo'] = odesilatelEmail;
             }
 
-            await FirebaseFirestore.instance.collection('maily').add(mailDoc);
+            await FirebaseFirestore.instance
+                .collection('maily')
+                .add(mailDoc);
           }
         }
       }
@@ -1239,7 +941,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           .collection('zakazky')
           .doc(widget.documentId)
           .update({
-        'stav_zakazky': 'DokonÄŤeno',
+        'stav_zakazky': 'Dokončeno',
         'zpusob_ukonceni': zpusob,
         'forma_uhrady': platba,
         'splatnost_dny': splatnostDny,
@@ -1248,19 +950,19 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         if (cisloFaktury.isNotEmpty) 'faktura_cislo': cisloFaktury,
         if (pdfUrl.isNotEmpty) 'vystupni_protokol_url': pdfUrl,
       });
-      
-      // --- TADY BYLA TA CHYBA (ZAPOMENUTĂť KĂ“D PRO PLĂNOVAÄŚ) ---
+
+      // Aktualizace stavu v plánovači
       String rezervaceId = data['rezervace_id']?.toString() ?? '';
       if (rezervaceId.isNotEmpty) {
         try {
-          await FirebaseFirestore.instance.collection('planovac').doc(rezervaceId).update({
-            'stav': 'DokonÄŤeno'
-          });
+          await FirebaseFirestore.instance
+              .collection('planovac')
+              .doc(rezervaceId)
+              .update({'stav': 'Dokončeno'});
         } catch (e) {
-          debugPrint("Chyba pĹ™i updatovĂˇnĂ­ plĂˇnovaÄŤe na DokonÄŤeno: $e");
+          debugPrint("Chyba při updatování plánovače na Dokončeno: $e");
         }
       }
-      // --------------------------------------------------------
 
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
@@ -1269,53 +971,25 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(odeslatEmail && !zruseno
-                ? 'ZakĂˇzka ukonÄŤena a faktura odeslĂˇna.'
-                : 'ZakĂˇzka ĂşspÄ›ĹˇnÄ› ukonÄŤena.'),
+                ? 'Zakázka ukončena a faktura odeslána.'
+                : 'Zakázka úspěšně ukončena.'),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
-      debugPrint("Chyba ukonÄŤenĂ­: $e");
+      debugPrint("Chyba ukončení: $e");
       if (context.mounted) {
         Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Chyba pĹ™i ukonÄŤovĂˇnĂ­: $e'),
+            content: Text('Chyba při ukončování: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 10),
           ),
         );
       }
     }
-  }
-
-  Widget _buildActionBtn({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 10, color: color, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
@@ -1339,27 +1013,33 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             .doc(widget.documentId)
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return Center(child: Text("Chyba: ${snapshot.error}"));
-          if (!snapshot.hasData)
+          }
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
           final data = snapshot.data!.data() as Map<String, dynamic>?;
-          if (data == null)
+          if (data == null) {
             return const Center(child: Text("Dokument nenalezen."));
+          }
 
           final provedenePrace =
               data['provedene_prace'] as List<dynamic>? ?? [];
-          final pozadavky = data['pozadavky_zakaznika'] as List<dynamic>? ?? [];
-          final aktualniStav = data['stav_zakazky'] ?? 'PĹ™ijato';
+          final pozadavky =
+              data['pozadavky_zakaznika'] as List<dynamic>? ?? [];
+          final aktualniStav = data['stav_zakazky'] ?? 'Přijato';
           final stav = data['stav_vozidla'] as Map<String, dynamic>? ?? {};
-          final zakaznik = data['zakaznik'] as Map<String, dynamic>? ?? {};
+          final zakaznik =
+              data['zakaznik'] as Map<String, dynamic>? ?? {};
           _zakaznikJmeno = zakaznik['jmeno']?.toString() ?? '';
           _zakaznikEmail = zakaznik['email']?.toString() ?? '';
-          
+
           final rawUrls = data['fotografie_urls'];
           final Map<String, dynamic> imageUrlsByCategoryRaw = {};
           if (rawUrls is Map) {
-            imageUrlsByCategoryRaw.addAll(Map<String, dynamic>.from(rawUrls));
+            imageUrlsByCategoryRaw
+                .addAll(Map<String, dynamic>.from(rawUrls));
           } else if (rawUrls is List) {
             imageUrlsByCategoryRaw['ostatni'] = rawUrls;
           }
@@ -1373,10 +1053,10 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
             }
           }
 
-          final bool isCompleted = aktualniStav == 'DokonÄŤeno';
+          final bool isCompleted = aktualniStav == 'Dokončeno';
 
           List<String> dostupneStavy =
-              stavyZakazky.where((s) => s != 'DokonÄŤeno').toList();
+              stavyZakazky.where((s) => s != 'Dokončeno').toList();
           if (!dostupneStavy.contains(aktualniStav) && !isCompleted) {
             dostupneStavy.add(aktualniStav);
           }
@@ -1384,21 +1064,18 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // -- Stav zakázky (dropdown / badge) --
               Container(
                 width: double.infinity,
                 color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 15,
-                ),
+                    horizontal: 20, vertical: 15),
                 child: Row(
                   children: [
                     const Text(
                       'Stav: ',
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                          fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                     const SizedBox(width: 5),
                     Expanded(
@@ -1406,12 +1083,13 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: getStatusColor(aktualniStav).withOpacity(0.1),
+                          color: getStatusColor(aktualniStav)
+                              .withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: isCompleted
                             ? Text(
-                                'DokonÄŤeno (UzamÄŤeno)',
+                                'Dokončeno (Uzamčeno)',
                                 style: TextStyle(
                                   color: getStatusColor(aktualniStav),
                                   fontWeight: FontWeight.bold,
@@ -1440,8 +1118,9 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                       )
                                       .toList(),
                                   onChanged: (novyStav) {
-                                    if (novyStav != null)
+                                    if (novyStav != null) {
                                       _zmenitStav(context, novyStav);
+                                    }
                                   },
                                 ),
                               ),
@@ -1451,681 +1130,58 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                 ),
               ),
               const Divider(height: 1),
+              // -- Scrollovatelný obsah --
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
-                    Card(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Informace o zakĂˇzce',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'PĹ™ijato: ${_formatDate(data['cas_prijeti'])}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isDark ? Colors.grey[400] : Colors.grey[700],
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  if (data['prijal_jmeno'] != null)
-                                    Text(
-                                      'PĹ™ijal: ${data['prijal_jmeno']}',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: isDark ? Colors.grey[400] : Colors.grey[700],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            const Divider(height: 10),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(10),
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                ZakaznikDetailScreen(
-                                              zakaznikData: zakaznik,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.person,
-                                                  size: 16,
-                                                  color: isDark
-                                                      ? Colors.grey[400]
-                                                      : Colors.grey[700],
-                                                ),
-                                                const SizedBox(width: 5),
-                                                Text(
-                                                  'ZĂˇkaznĂ­k',
-                                                  style: TextStyle(
-                                                    color: isDark
-                                                        ? Colors.grey[400]
-                                                        : Colors.grey[700],
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              zakaznik['jmeno']
-                                                          ?.toString()
-                                                          .isNotEmpty ==
-                                                      true
-                                                  ? zakaznik['jmeno']
-                                                  : 'Neuvedeno',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 15,
-                                              ),
-                                            ),
-                                            if (zakaznik['telefon']
-                                                    ?.toString()
-                                                    .isNotEmpty ==
-                                                true)
-                                              Text(zakaznik['telefon']),
-                                            if (zakaznik['email']
-                                                    ?.toString()
-                                                    .isNotEmpty ==
-                                                true)
-                                              Text(zakaznik['email']),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: 1,
-                                  height: 80,
-                                  color: Colors.grey.withOpacity(0.3),
-                                  margin: const EdgeInsets.only(top: 10),
-                                ),
-                                Expanded(
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(10),
-                                      onTap: () {
-                                        if (globalServisId != null &&
-                                            data['spz'] != null) {
-                                          final vozidloDocId =
-                                              '${globalServisId}_${data['spz']}';
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  VozidloDetailScreen(
-                                                vozidloDocId: vozidloDocId,
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.directions_car,
-                                                  size: 16,
-                                                  color: isDark
-                                                      ? Colors.grey[400]
-                                                      : Colors.grey[700],
-                                                ),
-                                                const SizedBox(width: 5),
-                                                Text(
-                                                  'Vozidlo',
-                                                  style: TextStyle(
-                                                    color: isDark
-                                                        ? Colors.grey[400]
-                                                        : Colors.grey[700],
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 2,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                  color: isDark
-                                                      ? Colors.grey[600]!
-                                                      : Colors.black87,
-                                                  width: 1.5,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                data['spz']
-                                                        ?.toString()
-                                                        .toUpperCase() ??
-                                                    '---',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  letterSpacing: 1,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(
-                                              '${data['znacka'] ?? ''} ${data['model'] ?? ''}'
-                                                      .trim()
-                                                      .isEmpty
-                                                  ? 'NeznĂˇmĂ© vozidlo'
-                                                  : '${data['znacka']} ${data['model']}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            if (data['rok_vyroby']
-                                                        ?.toString()
-                                                        .isNotEmpty ==
-                                                    true ||
-                                                data['motorizace']
-                                                        ?.toString()
-                                                        .isNotEmpty ==
-                                                    true)
-                                              Text(
-                                                '${data['rok_vyroby'] ?? ''} ${data['motorizace'] ?? ''}'
-                                                    .trim(),
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey,
-                                                ),
-                                              ),
-                                            Text(
-                                              'VIN: ${data['vin']?.toString().isNotEmpty == true ? data['vin'] : '-'}',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            if (prijemFotky.isNotEmpty) ...[
-                              const Divider(height: 20),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => FotodokumentaceScreen(
-                                          fotografieUrls: prijemFotky,
-                                          titulek: 'PĹ™Ă­jem vozidla',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.camera_alt_outlined),
-                                  label: Text('Fotodokumentace z pĹ™Ă­jmu (${prijemFotky.length})'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.blue,
-                                    side: const BorderSide(color: Colors.blue),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
+                    ZakaznikVozidloCard(
+                      isDark: isDark,
+                      data: data,
+                      zakaznik: zakaznik,
+                      formattedPrijeti: _formatDate(data['cas_prijeti']),
+                      prijemFotky: prijemFotky,
                     ),
-                    if (pozadavky.isNotEmpty) ...[
-                      const Text(
-                        'PoĹľadavky od zĂˇkaznĂ­ka (k Ĺ™eĹˇenĂ­)',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    PrehledPraci(
+                      isDark: isDark,
+                      isCompleted: isCompleted,
+                      isMechanik: isMechanik,
+                      provedenePrace: provedenePrace,
+                      pozadavky: pozadavky,
+                      onAddWork: ({initialTitle, existingWork, editIndex}) =>
+                          _openAddWorkDialog(
+                        context,
+                        initialTitle: initialTitle,
+                        existingWork: existingWork,
+                        editIndex: editIndex,
                       ),
-                      const SizedBox(height: 10),
-                      ...pozadavky.map(
-                        (p) => Card(
-                          color: Colors.orange.withOpacity(0.05),
-                          margin: const EdgeInsets.only(bottom: 10),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: ListTile(
-                            title: Text(
-                              p.toString(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            trailing: isCompleted
-                                ? null
-                                : Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (!isMechanik)
-                                        IconButton(
-                                          icon: const Icon(Icons.delete_outline,
-                                              color: Colors.red),
-                                          tooltip: 'Smazat poĹľadavek',
-                                          onPressed: () => _deletePozadavek(
-                                              context, p.toString()),
-                                        ),
-                                      const SizedBox(width: 8),
-                                      ElevatedButton.icon(
-                                        icon: const Icon(Icons.build, size: 18),
-                                        label: const Text('ZPRACOVAT'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.orange,
-                                          foregroundColor: Colors.white,
-                                        ),
-                                        onPressed: () => _openAddWorkDialog(
-                                          context,
-                                          initialTitle: p.toString(),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-                        ),
-                      ),
-                      const Divider(height: 40),
-                    ],
-                    const Text(
-                      'ZaznamenanĂ© Ăşkony',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      onDeletePozadavek: (p) =>
+                          _deletePozadavek(context, p),
+                      onDeleteWork: (w) => _deleteWork(context, w),
+                      formatDate: _formatDate,
                     ),
-                    const SizedBox(height: 10),
-                    if (provedenePrace.isEmpty)
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 30),
-                            Icon(
-                              Icons.build_circle_outlined,
-                              size: 80,
-                              color: Colors.grey.withOpacity(0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'ZatĂ­m nebyly pĹ™idĂˇny ĹľĂˇdnĂ© prĂˇce.',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ...List.generate(provedenePrace.length, (index) {
-                        final trueIndex = provedenePrace.length - 1 - index;
-                        final prace = provedenePrace[trueIndex];
-                        final fotky =
-                            prace['fotografie_urls'] as List<dynamic>? ?? [];
-
-                        List<dynamic> polozky =
-                            prace['polozky'] as List<dynamic>? ?? [];
-                        if (polozky.isEmpty) {
-                          if ((prace['cena_s_dph'] ?? 0) > 0) {
-                            polozky.add({
-                              'typ': 'PrĂˇce',
-                              'nazev': 'PrĂˇce',
-                              'cislo': '',
-                              'mnozstvi': prace['delka_prace'] ?? 1,
-                              'jednotka': 'h',
-                              'cena_s_dph': prace['cena_s_dph'],
-                              'sleva': 0.0,
-                            });
-                          }
-                          for (var d
-                              in (prace['pouzite_dily'] as List<dynamic>? ??
-                                  [])) {
-                            polozky.add({
-                              'typ': 'MateriĂˇl',
-                              'nazev': d['nazev'],
-                              'cislo': d['cislo'] ?? '',
-                              'mnozstvi': d['pocet'] ?? 1,
-                              'jednotka': 'ks',
-                              'cena_s_dph': d['cena_s_dph'],
-                              'sleva': 0.0,
-                            });
-                          }
-                        }
-
-                        double celkemUkon = 0.0;
-                        for (var p in polozky) {
-                          double pMnoz =
-                              double.tryParse(p['mnozstvi'].toString()) ?? 1.0;
-                          double pCena =
-                              double.tryParse(p['cena_s_dph'].toString()) ??
-                                  0.0;
-                          double pSleva =
-                              double.tryParse(p['sleva']?.toString() ?? '0') ??
-                                  0.0;
-                          celkemUkon += (pMnoz * pCena) * (1 - (pSleva / 100));
-                        }
-
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 15),
-                          color:
-                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        '${prace['nazev']} ${!isMechanik ? "(Celkem: ${celkemUkon.toStringAsFixed(2)} KÄŤ)" : ""}',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    if (!isCompleted)
-                                      IconButton(
-                                        onPressed: () => _openAddWorkDialog(
-                                          context,
-                                          existingWork: prace,
-                                          editIndex: trueIndex,
-                                        ),
-                                        icon: const Icon(
-                                          Icons.edit,
-                                          color: Colors.blue,
-                                          size: 20,
-                                        ),
-                                      ),
-                                    if (!isCompleted && !isMechanik)
-                                      IconButton(
-                                        onPressed: () =>
-                                            _deleteWork(context, prace),
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                          size: 20,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                Text(
-                                  _formatDate(prace['cas']),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                if (prace['popis'] != null &&
-                                    prace['popis'].toString().isNotEmpty) ...[
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    prace['popis'],
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ],
-                                if (polozky.isNotEmpty) ...[
-                                  const SizedBox(height: 10),
-                                  const Text(
-                                    'PoloĹľky:',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  ...polozky.map((p) {
-                                    double pMnoz = double.tryParse(
-                                            p['mnozstvi'].toString()) ??
-                                        1.0;
-                                    double pCena = double.tryParse(
-                                            p['cena_s_dph'].toString()) ??
-                                        0.0;
-                                    double pSleva = double.tryParse(
-                                            p['sleva']?.toString() ?? '0') ??
-                                        0.0;
-
-                                    String pJedn = p['jednotka'] ?? 'ks';
-                                    String cistyMnoz = pMnoz
-                                        .toString()
-                                        .replaceAll(
-                                            RegExp(r"([.]*0)(?!.*\d)"), "");
-                                    String slevaStr = pSleva > 0
-                                        ? ' (-${pSleva.toStringAsFixed(0)}%)'
-                                        : '';
-
-                                    String cNum = p['cislo']?.toString() ?? '';
-                                    String nDisp = cNum.trim().isNotEmpty
-                                        ? '${p['nazev']} ($cNum)'
-                                        : p['nazev'];
-
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                        top: 4,
-                                        left: 10,
-                                      ),
-                                      child: Text(
-                                        'â€˘ [${p['typ']}] $nDisp - $cistyMnoz $pJedn$slevaStr ${!isMechanik ? "- ${(pMnoz * pCena * (1 - pSleva / 100)).toStringAsFixed(2)} KÄŤ" : ""}',
-                                        style: const TextStyle(
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
-                                ],
-                                if (fotky.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 15),
-                                    child: OutlinedButton.icon(
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => FotodokumentaceScreen(
-                                              fotografieUrls: fotky.map((e) => e.toString()).toList(),
-                                              titulek: prace['nazev'] ?? 'Ăškon',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      icon: const Icon(Icons.photo_library),
-                                      label: Text('Zobrazit fotodokumentaci (${fotky.length})'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.blue,
-                                        side: const BorderSide(color: Colors.blue),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }),
                   ],
                 ),
               ),
-              // ĹĂDEK AKCĂŤ (dole)
-              Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, -4),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        if (!isCompleted)
-                          _buildActionBtn(
-                            icon: Icons.add_circle_outline,
-                            label: 'PĹ™idat\nĂşkon',
-                            color: Colors.blue,
-                            onTap: () => _openAddWorkDialog(context),
-                          ),
-                        if (!isCompleted && !isMechanik)
-                          _buildActionBtn(
-                            icon: Icons.flag_outlined,
-                            label: 'Fakturovat/\nUkonÄŤit',
-                            color: Colors.orange,
-                            onTap: () => _ukoncitZakazkuDialog(context, data,
-                                stav, zakaznik, imageUrlsByCategoryRaw),
-                          ),
-                        _buildActionBtn(
-                          icon: Icons.chat_outlined,
-                          label: 'Komunikace',
-                          color: Colors.teal,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ZakazkaKomunikacePage(
-                                documentId: widget.documentId,
-                                zakazkaId: widget.zakazkaId,
-                                spz: widget.spz,
-                                zakaznikJmeno: _zakaznikJmeno,
-                                zakaznikEmail: _zakaznikEmail,
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (!isCompleted && !isMechanik)
-                          _buildActionBtn(
-                            icon: Icons.request_quote_outlined,
-                            label: 'NacenÄ›nĂ­',
-                            color: Colors.purple,
-                            onTap: () => _odeslatKNaceneni(context, data),
-                          ),
-                        _buildActionBtn(
-                          icon: Icons.picture_as_pdf_outlined,
-                          label: 'Protokol',
-                          color: Colors.redAccent,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Scaffold(
-                                appBar: AppBar(
-                                    title: const Text('NĂˇhled protokolu')),
-                                body: PdfPreview(
-                                  build: (format) async {
-                                    String sNazev = 'Servis';
-                                    String sIco = '';
-                                    if (globalServisId != null) {
-                                      final docNast = await FirebaseFirestore
-                                          .instance
-                                          .collection('nastaveni_servisu')
-                                          .doc(globalServisId)
-                                          .get();
-                                      sNazev =
-                                          docNast.data()?['nazev_servisu'] ??
-                                              'Servis';
-                                      sIco =
-                                          docNast.data()?['ico_servisu'] ?? '';
-                                    }
-                                    return await GlobalPdfGenerator
-                                        .generateDocument(
-                                      data: data,
-                                      servisNazev: sNazev,
-                                      servisIco: sIco,
-                                      typ: PdfTyp.protokol,
-                                    );
-                                  },
-                                  allowSharing: true,
-                                  allowPrinting: true,
-                                  canChangeOrientation: false,
-                                  canChangePageFormat: false,
-                                  loadingWidget: const Center(
-                                      child: CircularProgressIndicator()),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        if (isCompleted && !isMechanik)
-                          _buildActionBtn(
-                            icon: Icons.settings_backup_restore,
-                            label: 'Stornovat\nfakturu',
-                            color: Colors.red,
-                            onTap: () => _stornovatZakazku(context),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+              // -- Spodní lišta akcí --
+              AkceLista(
+                isDark: isDark,
+                isCompleted: isCompleted,
+                isMechanik: isMechanik,
+                data: data,
+                stav: stav,
+                zakaznik: zakaznik,
+                imageUrls: imageUrlsByCategoryRaw,
+                documentId: widget.documentId,
+                zakazkaId: widget.zakazkaId,
+                spz: widget.spz,
+                zakaznikJmeno: _zakaznikJmeno,
+                zakaznikEmail: _zakaznikEmail,
+                onPridatUkon: () => _openAddWorkDialog(context),
+                onUkoncit: () => _ukoncitZakazkuDialog(
+                    context, data, stav, zakaznik, imageUrlsByCategoryRaw),
+                onNaceneni: () => _odeslatKNaceneni(context, data),
+                onStornovat: () => _stornovatZakazku(context),
               ),
             ],
           );
