@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
@@ -16,6 +16,15 @@ import 'package:intl/intl.dart';
 import '../core/constants.dart';
 import '../core/pdf_generator.dart';
 import 'auth_gate.dart';
+import 'prijem_vozidla_vyber_zakaznika.dart';
+import 'prijem_vozidla_kamera.dart';
+import 'prijem_vozidla_helpers.dart';
+import 'prijem_vozidla_step_vozidlo.dart';
+import 'prijem_vozidla_step_zakaznik.dart';
+import 'prijem_vozidla_step_stav.dart';
+import 'prijem_vozidla_step_photo.dart';
+import 'prijem_vozidla_step_prace.dart';
+import 'prijem_vozidla_step_podpis.dart';
 
 // Formulář příjmu vozidla — 6stránkový průvodce (PageView).
 // Stránky: 1) Vozidlo, 2) Zákazník, 3) Stav při příjmu, 4) Fotodokumentace,
@@ -82,8 +91,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     'Jiné'
   ];
 
-  String _vybranaPrevodovka = 'Manuální';
-  final List<String> _moznostiPrevodovky = ['Manuální', 'Automatická', 'Jiné'];
+  String _vybranaPrevodovka = 'Manuální­';
+  final List<String> _moznostiPrevodovky = ['Manuální­', 'Automatická', 'Jiné'];
 
   final Map<String, List<XFile>> _categoryImages = {};
   final ImagePicker _picker = ImagePicker();
@@ -140,7 +149,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     rezervaceKeZpracovani.addListener(_zpracujRezervaciZPlanovace);
   }
 
-  /// Načte katalog úkonů servisu — zobrazí se jako rychlé čipy na straně 5 (Požadované práce).
+  /// Načte katalog úkonů servisu — zobrazí se jako rychlé tipy na stránce 5 (Požadované práce).
   Future<void> _nactiUkonyZDatabaze() async {
     if (_sId == null) {
       if (mounted) setState(() => _isLoadingUkony = false);
@@ -239,7 +248,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   /// Načte databázi značek a modelů z Firestore (kolekce 'znacka').
-  /// Výsledek se použije pro autocomplete na straně 1 a pro loga v dropdownu.
+  /// Výsledek se použije pro autocomplete na stránce 1 a pro loga v dropdownu.
   Future<void> _nactiDatabaziZnacek() async {
     try {
       final snapshot =
@@ -322,7 +331,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       final data =
           nastaveniDoc.exists ? nastaveniDoc.data()! : <String, dynamic>{};
 
-      // Prefix: priorita prefix_zakazka (nastaveni.dart), fallback prefix_zakazky (starší onboarding)
+      // Prefix: priorita prefix_zakazka (nastaveni.dart), fallback prefix_zakazky (starý onboarding)
       String prefix = data['prefix_zakazka']?.toString().trim() ?? '';
       if (prefix.isEmpty)
         prefix = data['prefix_zakazky']?.toString().trim() ?? '';
@@ -346,7 +355,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         mesicPart = DateFormat('MM').format(ted);
       }
 
-      // Prefix bez počítadla (použije se pro hledání existujících čísel v rámci řady)
+      // Prefix bez poÄŤĂ­tadla (pouĹľije se pro hledĂˇnĂ­ existujĂ­cĂ­ch ÄŤĂ­sel v rĂˇmci Ĺ™ady)
       List<String> casti = [prefix];
       if (rokPart.isNotEmpty) casti.add(rokPart);
       if (mesicPart.isNotEmpty) casti.add(mesicPart);
@@ -578,7 +587,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     {'kod': '+380', 'vlajka': '🇺🇦', 'nazev': 'Ukrajina'},
     {'kod': '+44', 'vlajka': '🇬🇧', 'nazev': 'Velká Británie'},
     {'kod': '+1', 'vlajka': '🇺🇸', 'nazev': 'USA'},
-    {'kod': '+7', 'vlajka': '🇷🇺', 'nazev': 'Rusko'},
   ];
 
   // Rozloží uložené číslo ("+420731901003") na předvolbu a samotné číslo.
@@ -655,7 +663,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _VyberZakaznikaSheet(
+      builder: (context) => VyberZakaznikaSheet(
         onVybrano: (zakaznik) async {
           setState(() {
             _vybranyZakaznikId = zakaznik['id_zakaznika'];
@@ -713,7 +721,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
           }
         }
       } catch (e) {
-        debugPrint('Chyba při kontrole čísla: $e');
+        debugPrint('Chyba pĹ™i kontrole ÄŤĂ­sla: $e');
       } finally {
         if (mounted) setState(() => _isCheckingZakazka = false);
       }
@@ -1063,7 +1071,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   Future<void> _takePhotoSeries(String categoryKey) async {
     if (kIsWeb) {
-      // Web nemá přímý přístup ke kameře přes camera package — použijeme image_picker
+      // Web nemĂˇ pĹ™Ă­mĂ˝ pĹ™Ă­stup ke kameĹ™e pĹ™es camera package â€” pouĹľijeme image_picker
       final XFile? photo = await _picker.pickImage(
           source: ImageSource.camera,
           imageQuality: 60,
@@ -1079,7 +1087,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
     final result = await Navigator.push<List<XFile>>(
       context,
-      MaterialPageRoute(builder: (_) => const _MultiShotCameraPage()),
+      MaterialPageRoute(builder: (_) => const MultiShotCameraPage()),
     );
     if (result != null && result.isNotEmpty) {
       setState(() {
@@ -1182,1020 +1190,140 @@ class _MainWizardPageState extends State<MainWizardPage> {
     );
   }
 
-  // ── STRANA 1: Identifikace vozidla ──────────────────────────────────────
-  // Pole: SPZ (s vyhledáváním v databázi), značka + model (autocomplete + loga),
-  // VIN, rok výroby, palivo, převodovka, motorizace, poznámka.
-  Widget _buildVozidloStep(bool isDark) => SingleChildScrollView(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Expanded(
-                    flex: 3,
-                    child: Padding(
-                        padding: EdgeInsets.only(top: 8.0),
-                        child: Text('Příjem vozidla',
-                            style: TextStyle(
-                                fontSize: 32, fontWeight: FontWeight.bold)))),
-                const SizedBox(width: 15),
-                Expanded(
-                    flex: 2,
-                    child: _buildInput('Číslo zakázky *', Icons.onetwothree,
-                        _zakazkaController, isDark,
-                        caps: true,
-                        customSuffix: _isGeneratingCislo
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2)))
-                            : IconButton(
-                                icon: const Icon(Icons.refresh,
-                                    color: Colors.blue),
-                                onPressed: _generujCisloZakazky,
-                                tooltip: 'Vygenerovat nové číslo'))),
-              ],
-            ),
-            const SizedBox(height: 30),
-            if (_nalezenaVozidla.isNotEmpty) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.05),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                    borderRadius: BorderRadius.circular(15)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(children: [
-                      Icon(Icons.directions_car, color: Colors.blue),
-                      SizedBox(width: 10),
-                      Text('Zákazník má uložená tato vozidla:',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.blue))
-                    ]),
-                    const SizedBox(height: 15),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
-                      children: _nalezenaVozidla
-                          .map((v) => ActionChip(
-                              backgroundColor: isDark
-                                  ? const Color(0xFF2C2C2C)
-                                  : Colors.white,
-                              side: const BorderSide(color: Colors.blue),
-                              label: Text(
-                                  '${v['spz']} ${v['znacka'] != null && v['znacka'].toString().isNotEmpty ? '(${v['znacka']} ${v['model'] ?? ''})' : ''}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                              onPressed: () => _aplikovatVybraneVozidlo(v)))
-                          .toList(),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-            ],
-            _buildInput('SPZ vozidla (Klikněte na lupu pro dotažení) *',
-                Icons.abc, _spzController, isDark,
-                caps: true,
-                customSuffix: Row(mainAxisSize: MainAxisSize.min, children: [
-                  IconButton(
-                      icon: const Icon(Icons.document_scanner),
-                      onPressed: () => _scanText(_spzController, false),
-                      tooltip: 'Naskenovat SPZ fotoaparátem'),
-                  _isLoadingSpz
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2)))
-                      : IconButton(
-                          icon: const Icon(Icons.search, color: Colors.blue),
-                          onPressed: _hledatPodleSpz,
-                          tooltip: 'Vyhledat auto a majitele z historie')
-                ])),
-            const SizedBox(height: 20),
-            _buildInput('VIN kód', Icons.abc, _vinController, isDark,
-                caps: true),
-            const SizedBox(height: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Značka (např. Škoda)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Autocomplete<String>(
-                  key: ValueKey('znacka_$_autocompleteResetKey'),
-                  initialValue: TextEditingValue(text: _znackaController.text),
-                  displayStringForOption: (z) => z,
-                  optionsBuilder: (TextEditingValue value) {
-                    if (value.text.isEmpty) return _dostupneZnacky;
-                    return _dostupneZnacky.where((z) =>
-                        z.toLowerCase().contains(value.text.toLowerCase()));
-                  },
-                  onSelected: (String val) {
-                    _znackaController.text = val;
-                    _aktualizujModely(val);
-                  },
-                  fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          if (!isDark)
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4))
-                        ],
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: TextField(
-                        controller: ctrl,
-                        focusNode: focusNode,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.directions_car,
-                              color: Colors.blue),
-                          filled: true,
-                          fillColor:
-                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 15, horizontal: 15),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(
-                                  color: isDark
-                                      ? Colors.grey[800]!
-                                      : Colors.grey[300]!)),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(
-                                  color: Colors.blue, width: 2)),
-                        ),
-                        onChanged: (val) {
-                          _znackaController.text = val;
-                          if (_databazeZnacek.containsKey(val))
-                            _aktualizujModely(val);
-                        },
-                      ),
-                    );
-                  },
-                  optionsViewBuilder: (ctx, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(12),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 250),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: options.length,
-                              itemBuilder: (ctx, i) {
-                                final z = options.elementAt(i);
-                                final logo = _logovaZnacek[z];
-                                return ListTile(
-                                  leading: logo != null
-                                      ? Image.network(logo,
-                                          width: 28,
-                                          height: 28,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(Icons.directions_car,
-                                                  color: Colors.blue))
-                                      : const Icon(Icons.directions_car,
-                                          color: Colors.blue),
-                                  title: Text(z,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500)),
-                                  onTap: () => onSelected(z),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Model (např. Octavia)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Autocomplete<String>(
-                  key: ValueKey('model_$_autocompleteResetKey'),
-                  initialValue: TextEditingValue(text: _modelController.text),
-                  displayStringForOption: (m) => m,
-                  optionsBuilder: (TextEditingValue value) {
-                    if (_dostupneModely.isEmpty)
-                      return const Iterable<String>.empty();
-                    if (value.text.isEmpty) return _dostupneModely;
-                    return _dostupneModely.where((m) =>
-                        m.toLowerCase().contains(value.text.toLowerCase()));
-                  },
-                  onSelected: (String val) {
-                    _modelController.text = val;
-                  },
-                  fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) {
-                    return Container(
-                      decoration: BoxDecoration(
-                        boxShadow: [
-                          if (!isDark)
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4))
-                        ],
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: TextField(
-                        controller: ctrl,
-                        focusNode: focusNode,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.directions_car_filled,
-                              color: Colors.blue),
-                          filled: true,
-                          fillColor:
-                              isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 15, horizontal: 15),
-                          enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: BorderSide(
-                                  color: isDark
-                                      ? Colors.grey[800]!
-                                      : Colors.grey[300]!)),
-                          focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              borderSide: const BorderSide(
-                                  color: Colors.blue, width: 2)),
-                        ),
-                        onChanged: (val) => _modelController.text = val,
-                      ),
-                    );
-                  },
-                  optionsViewBuilder: (ctx, onSelected, options) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: Material(
-                        elevation: 4,
-                        borderRadius: BorderRadius.circular(12),
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 200),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: ListView.builder(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              itemCount: options.length,
-                              itemBuilder: (ctx, i) {
-                                final m = options.elementAt(i);
-                                return ListTile(
-                                  title: Text(m,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w500)),
-                                  onTap: () => onSelected(m),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildInput('Rok výroby', Icons.calendar_today,
-                _rokVyrobyController, isDark,
-                numbersOnly: true),
-            const SizedBox(height: 20),
-            _buildInput('Motorizace (např. 2.0 TDI)', Icons.settings,
-                _motorizaceController, isDark),
-            const SizedBox(height: 20),
-            _buildDropdown(
-                'Typ paliva',
-                Icons.local_gas_station,
-                _vybranePalivo,
-                _moznostiPaliva,
-                (v) => setState(() => _vybranePalivo = v!),
-                isDark),
-            const SizedBox(height: 20),
-            _buildDropdown(
-                'Převodovka',
-                Icons.settings_input_component,
-                _vybranaPrevodovka,
-                _moznostiPrevodovky,
-                (v) => setState(() => _vybranaPrevodovka = v!),
-                isDark),
-          ],
-        ),
+  // ── STRANA 1: Identifikace vozidla ────────────────────────────────
+  Widget _buildVozidloStep(bool isDark) => StepVozidlo(
+        isDark: isDark,
+        zakazkaController: _zakazkaController,
+        isGeneratingCislo: _isGeneratingCislo,
+        onRegenerateCislo: _generujCisloZakazky,
+        spzController: _spzController,
+        vinController: _vinController,
+        znackaController: _znackaController,
+        modelController: _modelController,
+        rokVyrobyController: _rokVyrobyController,
+        motorizaceController: _motorizaceController,
+        isLoadingSpz: _isLoadingSpz,
+        onHledatSpz: _hledatPodleSpz,
+        onScan: _scanText,
+        autocompleteResetKey: _autocompleteResetKey,
+        dostupneZnacky: _dostupneZnacky,
+        dostupneModely: _dostupneModely,
+        logovaZnacek: _logovaZnacek,
+        databazeZnacek: _databazeZnacek,
+        onZnackaSelected: _aktualizujModely,
+        vybranePalivo: _vybranePalivo,
+        moznostiPaliva: _moznostiPaliva,
+        onPalivoChanged: (v) => setState(() => _vybranePalivo = v!),
+        vybranaPrevodovka: _vybranaPrevodovka,
+        moznostiPrevodovky: _moznostiPrevodovky,
+        onPrevodovkaChanged: (v) => setState(() => _vybranaPrevodovka = v!),
+        nalezenaVozidla: _nalezenaVozidla,
+        onVozidloSelected: _aplikovatVybraneVozidlo,
       );
 
-  // ── STRANA 2: Zákazník ──────────────────────────────────────────────────
-  // Pole: jméno/firma, IČO (s ARES dotazem), ulice, město, PSČ, telefon, e-mail.
-  // Při zadání IČO se přednaplní jméno a adresa z ARES registru.
-  Widget _buildZakaznikStep(bool isDark) => SingleChildScrollView(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Údaje o zákazníkovi',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 40),
-            _buildInput('Jméno a příjmení / Název firmy', Icons.person,
-                _jmenoController, isDark,
-                customSuffix: IconButton(
-                    icon: const Icon(Icons.person_search, color: Colors.blue),
-                    onPressed: _otevritVyberZakaznika,
-                    tooltip: 'Hledat uloženého zákazníka')),
-            const SizedBox(height: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('IČO (ARES vyhledávání)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(boxShadow: [
-                    if (!isDark)
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4))
-                  ], borderRadius: BorderRadius.circular(15)),
-                  child: TextField(
-                    controller: _icoController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                        prefixIcon:
-                            const Icon(Icons.business, color: Colors.blue),
-                        suffixIcon: _isLoadingAres
-                            ? const Padding(
-                                padding: EdgeInsets.all(12.0),
-                                child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2)))
-                            : IconButton(
-                                icon: const Icon(Icons.search,
-                                    color: Colors.blue),
-                                onPressed: _fetchAresData,
-                                tooltip: 'Hledat v ARES'),
-                        filled: true,
-                        fillColor:
-                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!,
-                                width: 1)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide:
-                                const BorderSide(color: Colors.blue, width: 2)),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!,
-                                width: 1))),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildInput(
-                'Ulice a číslo', Icons.location_on, _uliceController, isDark),
-            const SizedBox(height: 20),
-            Row(children: [
-              Expanded(
-                  flex: 2,
-                  child: _buildInput(
-                      'Město', Icons.location_city, _mestoController, isDark)),
-              const SizedBox(width: 15),
-              Expanded(
-                  flex: 1,
-                  child: _buildInput(
-                      'PSČ', Icons.markunread_mailbox, _pscController, isDark,
-                      numbersOnly: true))
-            ]),
-            const SizedBox(height: 20),
-            _buildPhoneField(isDark),
-            const SizedBox(height: 20),
-            _buildInput('E-mail', Icons.email, _emailZController, isDark),
-          ],
-        ),
+  // ── STRANA 2: Zákazník ────────────────────────────────
+  Widget _buildZakaznikStep(bool isDark) => StepZakaznik(
+        isDark: isDark,
+        jmenoController: _jmenoController,
+        icoController: _icoController,
+        uliceController: _uliceController,
+        mestoController: _mestoController,
+        pscController: _pscController,
+        telefonController: _telefonController,
+        emailController: _emailZController,
+        isLoadingAres: _isLoadingAres,
+        onFetchAres: _fetchAresData,
+        onVyberZakaznika: _otevritVyberZakaznika,
+        telPredvolba: _telPredvolba,
+        predvolby: _predvolby,
+        onPredvolbaChanged: (kod) => setState(() => _telPredvolba = kod),
       );
 
-  // ── STRANA 3: Stav vozidla při příjmu ───────────────────────────────────
-  // Pole: tachometr (km), stav nádrže (slider 0–100 %), STK (měsíc/rok),
-  // hloubka pneu (LP/PP/LZ/PZ), zaznamenané poškození (checkboxy + textové pole).
-  Widget _buildCheckStep(bool isDark) => SingleChildScrollView(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Stav vozidla',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 30),
-            _buildInput('Stav tachometru (km)', Icons.speed,
-                _tachometrController, isDark,
-                numbersOnly: true),
-            const SizedBox(height: 25),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Stav paliva v nádrži (${_stavNadrze.toInt()} %)',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 5),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        if (!isDark)
-                          BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4))
-                      ],
-                      border: Border.all(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1)),
-                  child: Row(
-                    children: [
-                      Icon(Icons.local_gas_station,
-                          color: _stavNadrze < 20 ? Colors.red : Colors.blue),
-                      Expanded(
-                          child: Slider(
-                              value: _stavNadrze,
-                              min: 0,
-                              max: 100,
-                              divisions: 4,
-                              label: '${_stavNadrze.toInt()} %',
-                              activeColor: Colors.blue,
-                              onChanged: (val) =>
-                                  setState(() => _stavNadrze = val)))
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
-            const Divider(),
-            const SizedBox(height: 20),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Zjištěné poškození (lze vybrat více)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(15),
-                  decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        if (!isDark)
-                          BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4))
-                      ],
-                      border: Border.all(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1)),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                          padding: EdgeInsets.only(top: 4, right: 15),
-                          child: Icon(Icons.car_crash, color: Colors.blue)),
-                      Expanded(
-                        child: Wrap(
-                          spacing: 8.0,
-                          runSpacing: 8.0,
-                          children: _poskozeniMoznosti.map((String value) {
-                            final isSelected =
-                                _vybranePoskozeni.contains(value);
-                            return FilterChip(
-                              label: Text(value),
-                              selected: isSelected,
-                              onSelected: (bool selected) {
-                                setState(() {
-                                  if (value == 'Žádné') {
-                                    if (selected) {
-                                      _vybranePoskozeni.clear();
-                                      _vybranePoskozeni.add('Žádné');
-                                    } else {
-                                      _vybranePoskozeni.remove('Žádné');
-                                    }
-                                  } else {
-                                    if (selected) {
-                                      _vybranePoskozeni.remove('Žádné');
-                                      _vybranePoskozeni.add(value);
-                                    } else {
-                                      _vybranePoskozeni.remove(value);
-                                    }
-                                  }
-                                });
-                              },
-                              selectedColor: Colors.blue.withOpacity(0.2),
-                              checkmarkColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  side: BorderSide(
-                                      color: isSelected
-                                          ? Colors.blue
-                                          : (isDark
-                                              ? Colors.grey[800]!
-                                              : Colors.grey[300]!))),
-                              backgroundColor: isDark
-                                  ? const Color(0xFF2C2C2C)
-                                  : Colors.grey[50],
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 25),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Platnost STK',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Expanded(
-                      child: _buildHalfInput('Měsíc', Icons.calendar_month,
-                          _stkMesicController, isDark, TextInputType.number)),
-                  const SizedBox(width: 15),
-                  Expanded(
-                      child: _buildHalfInput('Rok', Icons.edit_calendar,
-                          _stkRokController, isDark, TextInputType.number))
-                ]),
-              ],
-            ),
-            const SizedBox(height: 25),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Hloubka dezénu pneu (v mm)',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Row(children: [
-                  Expanded(
-                      child: _buildHalfInput(
-                          'Levá př.',
-                          Icons.tire_repair,
-                          _pneuLPController,
-                          isDark,
-                          const TextInputType.numberWithOptions(
-                              decimal: true))),
-                  const SizedBox(width: 15),
-                  Expanded(
-                      child: _buildHalfInput(
-                          'Pravá př.',
-                          Icons.tire_repair,
-                          _pneuPPController,
-                          isDark,
-                          const TextInputType.numberWithOptions(decimal: true)))
-                ]),
-                const SizedBox(height: 15),
-                Row(children: [
-                  Expanded(
-                      child: _buildHalfInput(
-                          'Levá zad.',
-                          Icons.tire_repair,
-                          _pneuLZController,
-                          isDark,
-                          const TextInputType.numberWithOptions(
-                              decimal: true))),
-                  const SizedBox(width: 15),
-                  Expanded(
-                      child: _buildHalfInput(
-                          'Pravá zad.',
-                          Icons.tire_repair,
-                          _pneuPZController,
-                          isDark,
-                          const TextInputType.numberWithOptions(decimal: true)))
-                ]),
-              ],
-            ),
-            const SizedBox(height: 30),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Dodatečné poznámky k vozu',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(boxShadow: [
-                    if (!isDark)
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4))
-                  ], borderRadius: BorderRadius.circular(15)),
-                  child: TextField(
-                    controller: _poskozeniController,
-                    maxLines: 4,
-                    decoration: InputDecoration(
-                        hintText: 'Jakékoliv další detaily k příjmu...',
-                        prefixIcon: const Padding(
-                            padding: EdgeInsets.only(bottom: 60),
-                            child: Icon(Icons.notes, color: Colors.blue)),
-                        filled: true,
-                        fillColor:
-                            isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!,
-                                width: 1)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide:
-                                const BorderSide(color: Colors.blue, width: 2)),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!,
-                                width: 1))),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+  // ── STRANA 3: Stav vozidla při přímu ────────────────
+  Widget _buildCheckStep(bool isDark) => StepCheck(
+        isDark: isDark,
+        tachometrController: _tachometrController,
+        stavNadrze: _stavNadrze,
+        onStavNadrzeChanged: (val) => setState(() => _stavNadrze = val),
+        vybranePoskozeni: _vybranePoskozeni,
+        poskozeniMoznosti: _poskozeniMoznosti,
+        onPoskozeniChanged: (value, selected) {
+          setState(() {
+            if (value == 'Žadné') {
+              if (selected) {
+                _vybranePoskozeni.clear();
+                _vybranePoskozeni.add('Žadné');
+              } else {
+                _vybranePoskozeni.remove('Žadné');
+              }
+            } else {
+              if (selected) {
+                _vybranePoskozeni.remove('Žadné');
+                _vybranePoskozeni.add(value);
+              } else {
+                _vybranePoskozeni.remove(value);
+              }
+            }
+          });
+        },
+        stkMesicController: _stkMesicController,
+        stkRokController: _stkRokController,
+        pneuLPController: _pneuLPController,
+        pneuPPController: _pneuPPController,
+        pneuLZController: _pneuLZController,
+        pneuPZController: _pneuPZController,
+        poskozeniController: _poskozeniController,
       );
 
-  // ── STRANA 4: Fotodokumentace ────────────────────────────────────────────
-  // Fotky se řadí do kategorií (Karosérie, Motor, Interiér…).
-  // Nahrávají se do Firebase Storage; URL se ukládají do mapy _categoryImages.
-  Widget _buildPhotoStep(bool isDark) => Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Fotodokumentace',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 20),
-            const Text('Vyfoťte sérii fotek, nebo vyberte hromadně z galerie.',
-                style: TextStyle(fontSize: 16, color: Colors.grey)),
-            const SizedBox(height: 20),
-            Expanded(
-              child: ListView.separated(
-                itemCount: photoCategories.length,
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 15),
-                itemBuilder: (context, index) {
-                  final key = photoCategories.keys.elementAt(index);
-                  final category = photoCategories[key]!;
-                  final label = category['label'] as String;
-                  final icon = category['icon'] as IconData;
-                  final takenPhotos = _categoryImages[key] ?? [];
-
-                  return Card(
-                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                            color: takenPhotos.isNotEmpty
-                                ? Colors.green.withOpacity(0.5)
-                                : Colors.grey.withOpacity(0.2),
-                            width: takenPhotos.isNotEmpty ? 2 : 1)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(15),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(icon, color: Colors.blue, size: 30),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                  child: Text(label,
-                                      style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold))),
-                              IconButton(
-                                  onPressed: () => _pickFromGallery(key),
-                                  icon: const Icon(Icons.photo_library_rounded,
-                                      color: Colors.blueGrey),
-                                  tooltip: 'Přidat z galerie'),
-                              IconButton(
-                                  onPressed: () => _takePhotoSeries(key),
-                                  icon: const Icon(Icons.add_a_photo_rounded,
-                                      color: Colors.blue),
-                                  tooltip: 'Sériové focení'),
-                            ],
-                          ),
-                          if (takenPhotos.isNotEmpty) ...[
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              height: 80,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: takenPhotos.length,
-                                itemBuilder: (context, photoIndex) {
-                                  final photo = takenPhotos[photoIndex];
-                                  return Stack(
-                                    children: [
-                                      Container(
-                                        margin:
-                                            const EdgeInsets.only(right: 10),
-                                        child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            child: kIsWeb
-                                                ? Image.network(photo.path,
-                                                    width: 80,
-                                                    height: 80,
-                                                    fit: BoxFit.cover)
-                                                : Image.file(File(photo.path),
-                                                    width: 80,
-                                                    height: 80,
-                                                    fit: BoxFit.cover)),
-                                      ),
-                                      Positioned(
-                                          top: 4,
-                                          right: 14,
-                                          child: GestureDetector(
-                                              onTap: () => setState(() =>
-                                                  _categoryImages[key]!
-                                                      .removeAt(photoIndex)),
-                                              child: const CircleAvatar(
-                                                  radius: 10,
-                                                  backgroundColor: Colors.white,
-                                                  child: Icon(Icons.close,
-                                                      size: 14,
-                                                      color: Colors.red)))),
-                                    ],
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+  // ── STRANA 4: Fotodokumentace ─────────────────────
+  Widget _buildPhotoStep(bool isDark) => StepPhoto(
+        isDark: isDark,
+        categoryImages: _categoryImages,
+        onPickFromGallery: _pickFromGallery,
+        onTakePhotoSeries: _takePhotoSeries,
+        onRemovePhoto: (key, idx) =>
+            setState(() => _categoryImages[key]!.removeAt(idx)),
       );
 
-  // ── STRANA 5: Požadované práce ───────────────────────────────────────────
-  // Textová pole pro volný popis + rychlé čipy z katalogu úkonů servisu.
-  // Každý řádek = jeden požadavek zákazníka; lze přidávat/mazat dynamicky.
-  Widget _buildPraceStep(bool isDark) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Požadované práce',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          const Text('Na čem jsme se se zákazníkem domluvili?',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 30),
-          if (!_isLoadingUkony && _rychleUkony.isNotEmpty) ...[
-            const Text('Rychlý výběr nejčastějších úkonů:',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.blue)),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _rychleUkony
-                  .map((ukon) => ActionChip(
-                      label: Text(ukon, style: const TextStyle(fontSize: 13)),
-                      backgroundColor: isDark
-                          ? const Color(0xFF2C2C2C)
-                          : Colors.blue.withOpacity(0.05),
-                      side: BorderSide(color: Colors.blue.withOpacity(0.3)),
-                      onPressed: () {
-                        setState(() {
-                          if (_pozadavkyControllers.last.text.isEmpty) {
-                            _pozadavkyControllers.last.text = ukon;
-                          } else {
-                            _pozadavkyControllers
-                                .add(TextEditingController(text: ukon));
-                          }
-                        });
-                      }))
-                  .toList(),
-            ),
-            const SizedBox(height: 30),
-            const Divider(),
-            const SizedBox(height: 20),
-          ],
-          const Text('Seznam požadavků k zakázce:',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 20),
-          ...List.generate(_pozadavkyControllers.length, (index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 15),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                      child: _buildInput(
-                          'Úkon ${index + 1}',
-                          Icons.build_circle_outlined,
-                          _pozadavkyControllers[index],
-                          isDark)),
-                  if (_pozadavkyControllers.length > 1)
-                    Padding(
-                        padding: const EdgeInsets.only(left: 10, bottom: 5),
-                        child: IconButton(
-                            icon: const Icon(Icons.remove_circle_outline,
-                                color: Colors.red, size: 30),
-                            onPressed: () => setState(
-                                () => _pozadavkyControllers.removeAt(index)))),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 10),
-          TextButton.icon(
-              onPressed: () => setState(
-                  () => _pozadavkyControllers.add(TextEditingController())),
-              icon: const Icon(Icons.add),
-              label: const Text('Přidat jiný úkon',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
-        ],
-      ),
-    );
-  }
+  // ── STRANA 5: Poždované práce ────────────────────
+  Widget _buildPraceStep(bool isDark) => StepPrace(
+        isDark: isDark,
+        isLoadingUkony: _isLoadingUkony,
+        rychleUkony: _rychleUkony,
+        pozadavkyControllers: _pozadavkyControllers,
+        onPridatUkon: () =>
+            setState(() => _pozadavkyControllers.add(TextEditingController())),
+        onOdebratUkon: (index) =>
+            setState(() => _pozadavkyControllers.removeAt(index)),
+        onRychlyUkonTap: (ukon) {
+          setState(() {
+            if (_pozadavkyControllers.last.text.isEmpty) {
+              _pozadavkyControllers.last.text = ukon;
+            } else {
+              _pozadavkyControllers.add(TextEditingController(text: ukon));
+            }
+          });
+        },
+      );
 
-  // ── STRANA 6: Podpis a odeslání ─────────────────────────────────────────
-  // Zákazník podepíše prstem na SignatureController plátno.
-  // Po potvrzení se: podpis nahraje do Storage, zakázka zapíše do Firestore,
-  // vygeneruje PDF protokol a volitelně se odešle zákazníkovi e-mailem.
-  Widget _buildPodpisStep(bool isDark) {
-    final validniPozadavky =
-        _pozadavkyControllers.where((c) => c.text.trim().isNotEmpty).toList();
+  // ── STRANA 6: Podpis a odeslání ───────────────────
+  Widget _buildPodpisStep(bool isDark) => StepPodpis(
+        isDark: isDark,
+        jmeno: _jmenoController.text,
+        ulice: _uliceController.text,
+        psc: _pscController.text,
+        mesto: _mestoController.text,
+        spz: _spzController.text,
+        znacka: _znackaController.text,
+        email: _emailZController.text,
+        pozadavkyControllers: _pozadavkyControllers,
+        odeslatEmail: _odeslatEmail,
+        onOdeslatEmailChanged: (val) =>
+            setState(() => _odeslatEmail = val ?? true),
+        signatureController: _signatureController,
+      );
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Shrnutí a podpis',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 30),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.grey[50],
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.blue.withOpacity(0.3))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                    'Zákazník: ${_jmenoController.text.isEmpty ? 'Neuvedeno' : _jmenoController.text}',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 5),
-                Text(
-                    'Adresa: ${_uliceController.text.isNotEmpty ? "${_uliceController.text}, " : ""}${_pscController.text} ${_mestoController.text}',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                const SizedBox(height: 10),
-                Text(
-                    'Vozidlo: ${_spzController.text.toUpperCase()} ${_znackaController.text}',
-                    style: const TextStyle(fontSize: 16)),
-                if (validniPozadavky.isNotEmpty) ...[
-                  const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 15),
-                      child: Divider()),
-                  const Text('Sjednané úkony:',
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                          fontSize: 16)),
-                  const SizedBox(height: 10),
-                  ...validniPozadavky.map((c) => Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('• ',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue)),
-                            Expanded(
-                                child: Text(c.text,
-                                    style: const TextStyle(fontSize: 15)))
-                          ]))),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 30),
-          Container(
-            decoration: BoxDecoration(
-                color: isDark
-                    ? const Color(0xFF1E1E1E)
-                    : Colors.blue.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.blue.withOpacity(0.3))),
-            child: CheckboxListTile(
-              title: const Text('Odeslat kopii protokolu na e-mail',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(
-                  _emailZController.text.isEmpty
-                      ? 'U zákazníka (krok 2) není vyplněn žádný e-mail.'
-                      : 'Bude odesláno na: ${_emailZController.text}',
-                  style: TextStyle(
-                      color: _emailZController.text.isEmpty
-                          ? Colors.red
-                          : Colors.grey,
-                      fontSize: 13)),
-              value: _odeslatEmail,
-              activeColor: Colors.blue,
-              checkColor: Colors.white,
-              onChanged: (val) => setState(() => _odeslatEmail = val ?? true),
-              controlAffinity: ListTileControlAffinity.leading,
-            ),
-          ),
-          const SizedBox(height: 30),
-          const Text(
-              'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.',
-              style: TextStyle(color: Colors.grey, fontSize: 14)),
-          const SizedBox(height: 20),
-          Container(
-            decoration: BoxDecoration(
-                border: Border.all(color: Colors.blue, width: 2),
-                borderRadius: BorderRadius.circular(15),
-                color: Colors.white),
-            child: ClipRRect(
-                borderRadius: BorderRadius.circular(13),
-                child: Signature(
-                    controller: _signatureController,
-                    height: 250,
-                    backgroundColor: Colors.white)),
-          ),
-          const SizedBox(height: 10),
-          Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                  onPressed: () => _signatureController.clear(),
-                  icon: const Icon(Icons.clear, color: Colors.red),
-                  label: const Text('Smazat podpis',
-                      style: TextStyle(color: Colors.red)))),
-        ],
-      ),
-    );
-  }
-
-  // ── Spodní navigační panel (Zpět / Další / Dokončit) ────────────────────
+  // â”€â”€ SpodnĂ­ navigaÄŤnĂ­ panel (ZpÄ›t / DalĹˇĂ­ / DokonÄŤit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildBottomPanel(bool isDark) => Container(
         padding: const EdgeInsets.fromLTRB(30, 20, 30, 30),
         decoration: BoxDecoration(
@@ -2266,570 +1394,4 @@ class _MainWizardPageState extends State<MainWizardPage> {
           ),
         ),
       );
-
-  Widget _buildPhoneField(bool isDark) {
-    final selectedEntry = _predvolby.firstWhere(
-      (p) => p['kod'] == _telPredvolba,
-      orElse: () => _predvolby.first,
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Telefonní číslo',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-        const SizedBox(height: 8),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    if (!isDark)
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4))
-                  ],
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(15),
-                  onTap: () => showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(25)),
-                      ),
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                                color: Colors.grey[400],
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                          const Text('Vyberte předvolbu',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 12),
-                          ..._predvolby.map((p) => ListTile(
-                                leading: Text(p['vlajka']!,
-                                    style: const TextStyle(fontSize: 24)),
-                                title: Text(p['nazev']!),
-                                trailing: Text(p['kod']!,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue)),
-                                selected: p['kod'] == _telPredvolba,
-                                selectedColor: Colors.blue,
-                                onTap: () {
-                                  setState(() => _telPredvolba = p['kod']!);
-                                  Navigator.pop(context);
-                                },
-                              )),
-                        ],
-                      ),
-                    ),
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(
-                          color:
-                              isDark ? Colors.grey[800]! : Colors.grey[300]!),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(selectedEntry['vlajka']!,
-                            style: const TextStyle(fontSize: 20)),
-                        const SizedBox(width: 6),
-                        Text(selectedEntry['kod']!,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.arrow_drop_down, size: 18),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    boxShadow: [
-                      if (!isDark)
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4))
-                    ],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: TextField(
-                    controller: _telefonController,
-                    keyboardType: TextInputType.phone,
-                    decoration: InputDecoration(
-                      hintText: 'Telefonní číslo',
-                      prefixIcon: const Icon(Icons.phone, color: Colors.blue),
-                      filled: true,
-                      fillColor:
-                          isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(
-                              color: isDark
-                                  ? Colors.grey[800]!
-                                  : Colors.grey[300]!,
-                              width: 1)),
-                      focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide:
-                              const BorderSide(color: Colors.blue, width: 2)),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide(
-                              color: isDark
-                                  ? Colors.grey[800]!
-                                  : Colors.grey[300]!,
-                              width: 1)),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInput(String label, IconData icon,
-          TextEditingController controller, bool isDark,
-          {bool caps = false,
-          bool numbersOnly = false,
-          Widget? customSuffix}) =>
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 8),
-          Container(
-            decoration: BoxDecoration(boxShadow: [
-              if (!isDark)
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-            ], borderRadius: BorderRadius.circular(15)),
-            child: TextField(
-              controller: controller,
-              textCapitalization: caps
-                  ? TextCapitalization.characters
-                  : TextCapitalization.none,
-              keyboardType:
-                  numbersOnly ? TextInputType.number : TextInputType.text,
-              decoration: InputDecoration(
-                  prefixIcon: Icon(icon, color: Colors.blue),
-                  suffixIcon: customSuffix ??
-                      IconButton(
-                          icon: const Icon(Icons.document_scanner),
-                          onPressed: () => _scanText(controller, numbersOnly)),
-                  filled: true,
-                  fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                  enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          const BorderSide(color: Colors.blue, width: 2)),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                          width: 1))),
-            ),
-          ),
-        ],
-      );
-
-  Widget _buildDropdown(String label, IconData icon, String value,
-      List<String> items, ValueChanged<String?> onChanged, bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.grey)),
-        const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4))
-          ], borderRadius: BorderRadius.circular(15)),
-          child: DropdownButtonFormField<String>(
-            value: value,
-            items: items
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
-            onChanged: onChanged,
-            decoration: InputDecoration(
-                prefixIcon: Icon(icon, color: Colors.blue),
-                filled: true,
-                fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(
-                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                        width: 1)),
-                focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Colors.blue, width: 2)),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(
-                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                        width: 1))),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHalfInput(String hint, IconData icon,
-      TextEditingController controller, bool isDark, TextInputType type) {
-    return Container(
-      decoration: BoxDecoration(boxShadow: [
-        if (!isDark)
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-      ], borderRadius: BorderRadius.circular(15)),
-      child: TextField(
-        controller: controller,
-        keyboardType: type,
-        decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: Icon(icon, color: Colors.blue, size: 20),
-            filled: true,
-            fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-            enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                    width: 1)),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: const BorderSide(color: Colors.blue, width: 2)),
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                borderSide: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
-                    width: 1)),
-            contentPadding: const EdgeInsets.symmetric(vertical: 15)),
-      ),
-    );
-  }
-}
-
-class _VyberZakaznikaSheet extends StatefulWidget {
-  final Function(Map<String, dynamic>) onVybrano;
-  const _VyberZakaznikaSheet({required this.onVybrano});
-  @override
-  State<_VyberZakaznikaSheet> createState() => _VyberZakaznikaSheetState();
-}
-
-class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
-  String? get _sId => globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
-  String _hledanyText = '';
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    if (_sId == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(25))),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10))),
-          const SizedBox(height: 20),
-          const Text('Vybrat existujícího zákazníka',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 15),
-          TextField(
-              onChanged: (val) =>
-                  setState(() => _hledanyText = val.toLowerCase()),
-              decoration: InputDecoration(
-                  hintText: 'Hledat podle jména, IČO, telefonu...',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide.none))),
-          const SizedBox(height: 15),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('zakaznici')
-                  .where('servis_id', isEqualTo: _sId)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData)
-                  return const Center(child: CircularProgressIndicator());
-                final zakaznici = snapshot.data!.docs
-                    .map((d) => d.data() as Map<String, dynamic>)
-                    .where((z) {
-                  final jmeno = (z['jmeno'] ?? '').toString().toLowerCase();
-                  final ico = (z['ico'] ?? '').toString().toLowerCase();
-                  final tel = (z['telefon'] ?? '').toString().toLowerCase();
-                  return jmeno.contains(_hledanyText) ||
-                      ico.contains(_hledanyText) ||
-                      tel.contains(_hledanyText);
-                }).toList();
-                if (zakaznici.isEmpty)
-                  return const Center(child: Text('Žádný zákazník nenalezen.'));
-                return ListView.separated(
-                  itemCount: zakaznici.length,
-                  separatorBuilder: (c, i) => const Divider(),
-                  itemBuilder: (context, index) {
-                    final z = zakaznici[index];
-                    return ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.person)),
-                      title: Text(z['jmeno'] ?? 'Neznámé jméno',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(
-                          '${z['telefon'] ?? ''} ${z['ico'] != null && z['ico'].toString().isNotEmpty ? '• IČO: ${z['ico']}' : ''}'),
-                      onTap: () {
-                        widget.onVybrano(z);
-                        Navigator.pop(context);
-                      },
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// Vlastní kamera pro pořízení více snímků bez potvrzování každého foto.
-class _MultiShotCameraPage extends StatefulWidget {
-  const _MultiShotCameraPage();
-
-  @override
-  State<_MultiShotCameraPage> createState() => _MultiShotCameraPageState();
-}
-
-class _MultiShotCameraPageState extends State<_MultiShotCameraPage> {
-  CameraController? _controller;
-  final List<XFile> _photos = [];
-  bool _isCapturing = false;
-  bool _isInitialized = false;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _initCamera();
-  }
-
-  Future<void> _initCamera() async {
-    final status = await Permission.camera.request();
-    if (!status.isGranted) {
-      if (mounted) {
-        setState(() => _error =
-            'Přístup ke kameře nebyl povolen.\nPovolte ho v nastavení aplikace.');
-      }
-      return;
-    }
-    try {
-      final cameras = await availableCameras();
-      if (cameras.isEmpty) {
-        if (mounted) setState(() => _error = 'Kamera není dostupná.');
-        return;
-      }
-      final camera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
-        orElse: () => cameras.first,
-      );
-      _controller = CameraController(
-        camera,
-        ResolutionPreset.high,
-        imageFormatGroup: ImageFormatGroup.jpeg,
-        enableAudio: false,
-      );
-      await _controller!.initialize();
-      if (mounted) setState(() => _isInitialized = true);
-    } catch (e) {
-      debugPrint('Camera init error: $e');
-      if (mounted) setState(() => _error = 'Chyba inicializace kamery: $e');
-    }
-  }
-
-  Future<void> _capture() async {
-    if (!_isInitialized || _isCapturing || _controller == null) return;
-    setState(() => _isCapturing = true);
-    try {
-      final photo = await _controller!.takePicture();
-      if (mounted) setState(() => _photos.add(photo));
-    } catch (e) {
-      debugPrint('Chyba focení: $e');
-    } finally {
-      if (mounted) setState(() => _isCapturing = false);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context, _photos),
-                  ),
-                  Expanded(
-                    child: Text(
-                      _photos.isEmpty
-                          ? 'Foťte libovolný počet snímků'
-                          : '${_photos.length} foto pořízeno',
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, _photos),
-                    child: const Text('Hotovo',
-                        style: TextStyle(
-                            color: Colors.blue,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: _error != null
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.no_photography,
-                                color: Colors.white54, size: 64),
-                            const SizedBox(height: 16),
-                            Text(_error!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 15)),
-                            const SizedBox(height: 20),
-                            ElevatedButton.icon(
-                              onPressed: () => openAppSettings(),
-                              icon: const Icon(Icons.settings),
-                              label: const Text('Otevřít nastavení'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : _isInitialized
-                      ? CameraPreview(_controller!)
-                      : const Center(
-                          child:
-                              CircularProgressIndicator(color: Colors.white)),
-            ),
-            if (_photos.isNotEmpty)
-              SizedBox(
-                height: 76,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                  itemCount: _photos.length,
-                  itemBuilder: (context, i) => Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(File(_photos[i].path),
-                          width: 60, height: 60, fit: BoxFit.cover),
-                    ),
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: GestureDetector(
-                onTap: _capture,
-                child: Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
-                    color: _isCapturing
-                        ? Colors.grey.withOpacity(0.5)
-                        : Colors.white.withOpacity(0.2),
-                  ),
-                  child: _isCapturing
-                      ? const Padding(
-                          padding: EdgeInsets.all(22),
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.camera_alt,
-                          color: Colors.white, size: 32),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
