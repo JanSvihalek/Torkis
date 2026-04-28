@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'auth_gate.dart';
-import 'prubeh_tab_otevrenot.dart' show buildSearchBar;
+import 'prubeh_tab_otevreno.dart' show buildSearchBar;
 
 /// Záložka s historií ukončených zakázek.
 class UkonceneTab extends StatelessWidget {
@@ -12,7 +12,8 @@ class UkonceneTab extends StatelessWidget {
 
   /// Callback volaný po klepnutí na kartu zakázky.
   /// Parametry: documentId, cisloZakazky, spz
-  final void Function(String docId, String cisloZakazky, String spz) onTapZakazka;
+  final void Function(String docId, String cisloZakazky, String spz)
+      onTapZakazka;
 
   const UkonceneTab({
     super.key,
@@ -71,17 +72,14 @@ class UkonceneTab extends StatelessWidget {
               }).toList();
 
               docs.sort((a, b) {
-                final timeA =
-                    (a.data() as Map)['cas_ukonceni'] as Timestamp?;
-                final timeB =
-                    (b.data() as Map)['cas_ukonceni'] as Timestamp?;
+                final timeA = (a.data() as Map)['cas_ukonceni'] as Timestamp?;
+                final timeB = (b.data() as Map)['cas_ukonceni'] as Timestamp?;
                 if (timeA == null || timeB == null) return 0;
                 return timeB.compareTo(timeA);
               });
 
               if (docs.isEmpty) {
-                return const Center(
-                    child: Text('Historie je zatím prázdná.'));
+                return const Center(child: Text('Historie je zatím prázdná.'));
               }
 
               return ListView.builder(
@@ -108,8 +106,8 @@ class UkonceneTab extends StatelessWidget {
                       contentPadding: const EdgeInsets.all(15),
                       leading: CircleAvatar(
                         backgroundColor: Colors.green.withValues(alpha: 0.1),
-                        child: const Icon(Icons.check_circle,
-                            color: Colors.green),
+                        child:
+                            const Icon(Icons.check_circle, color: Colors.green),
                       ),
                       title: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
