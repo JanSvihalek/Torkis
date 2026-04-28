@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/pdf_generator.dart';
 import 'auth_gate.dart';
 import 'zakazka_komunikace.dart';
+import 'fakturace.dart';
 
 /// Spodní lišta akcí na detailu zakázky.
 class AkceLista extends StatelessWidget {
@@ -173,6 +174,24 @@ class AkceLista extends StatelessWidget {
                   ),
                 ),
               ),
+              if (isCompleted &&
+                  !isMechanik &&
+                  (data['faktura_cislo']?.toString().isNotEmpty == true))
+                _buildActionBtn(
+                  icon: Icons.receipt_long,
+                  label: 'Zobrazit\nfakturu',
+                  color: Colors.blue,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => FakturaDetailScreen(
+                        fakturaDocId:
+                            '${globalServisId}_${data['faktura_cislo']}',
+                        zakazkaId: zakazkaId,
+                      ),
+                    ),
+                  ),
+                ),
               if (isCompleted && !isMechanik)
                 _buildActionBtn(
                   icon: Icons.settings_backup_restore,

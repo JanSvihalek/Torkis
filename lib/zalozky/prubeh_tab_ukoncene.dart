@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'auth_gate.dart';
 import 'prubeh_tab_otevreno.dart' show buildSearchBar;
+import 'fakturace.dart';
 
 /// Záložka s historií ukončených zakázek.
 class UkonceneTab extends StatelessWidget {
@@ -147,6 +148,49 @@ class UkonceneTab extends StatelessWidget {
                                 'Ukončeno: ${_formatDateShort(data['cas_ukonceni'])}',
                                 style: const TextStyle(
                                     fontSize: 11, color: Colors.grey)),
+                            if (data['faktura_cislo'] != null &&
+                                data['faktura_cislo'].toString().isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => FakturaDetailScreen(
+                                        fakturaDocId:
+                                            '${globalServisId}_${data['faktura_cislo']}',
+                                        zakazkaId:
+                                            data['cislo_zakazky'].toString(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(top: 6),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: Colors.blue.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.receipt_long,
+                                          size: 12, color: Colors.blue),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Faktura ${data['faktura_cislo']}',
+                                        style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ),
