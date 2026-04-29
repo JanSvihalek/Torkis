@@ -193,7 +193,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
               decoration: const InputDecoration(
                 labelText: 'E-mail příjemce',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email),
+                prefixIcon: Icon(Icons.send),
               ),
               keyboardType: TextInputType.emailAddress,
             ),
@@ -856,10 +856,10 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                         color: jeStornovano
-                                            ? Colors.grey
+                                            ? Colors.redAccent
                                             : (jeUhrazeno
                                                 ? Colors.green
-                                                : Colors.red),
+                                                : Colors.orange),
                                       ),
                                     ),
                                     const SizedBox(height: 15),

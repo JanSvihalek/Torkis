@@ -169,13 +169,13 @@ class _FakturacePageState extends State<FakturacePage> {
                     final data = docs[index].data() as Map<String, dynamic>;
                     final docId = docs[index].id;
 
-                    final stavPlatby = data['stav_platby'] ?? 'Neznámý';
+                    final stavPlatby = data['stav_platby'] ?? 'Neuhrazeno';
                     final jeUhrazeno = stavPlatby == 'Uhrazeno';
                     final jeStornovano = stavPlatby == 'Stornováno';
 
-                    Color barvaStavu = Colors.redAccent;
+                    Color barvaStavu = Colors.orange;
                     if (jeUhrazeno) barvaStavu = Colors.green;
-                    if (jeStornovano) barvaStavu = Colors.grey;
+                    if (jeStornovano) barvaStavu = Colors.redAccent;
 
                     return Card(
                       color: isDark ? const Color(0xFF1E1E1E) : Colors.white,

@@ -104,7 +104,7 @@ class AkceLista extends StatelessWidget {
                 ),
               if (!isCompleted && !isMechanik)
                 _buildActionBtn(
-                  icon: Icons.flag_outlined,
+                  icon: Icons.receipt_long_outlined,
                   label: 'Fakturovat/\nUkončit',
                   color: Colors.orange,
                   onTap: onUkoncit,
@@ -135,7 +135,7 @@ class AkceLista extends StatelessWidget {
                 ),
               _buildActionBtn(
                 icon: Icons.picture_as_pdf_outlined,
-                label: 'Protokol',
+                label: 'Protokol\npříjmu',
                 color: Colors.redAccent,
                 onTap: () => Navigator.push(
                   context,
@@ -195,7 +195,7 @@ class AkceLista extends StatelessWidget {
               if (isCompleted && !isMechanik)
                 _buildActionBtn(
                   icon: Icons.settings_backup_restore,
-                  label: 'Stornovat\nfakturu',
+                  label: 'Stornovat fakturu/\notevřít zakázku',
                   color: Colors.red,
                   onTap: onStornovat,
                 ),
