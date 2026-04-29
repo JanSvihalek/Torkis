@@ -11,7 +11,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart'; // Pro skenování čárových kódů
 import 'auth_gate.dart';
 import 'zakazka/prubeh.dart'; // Pro proklik do zakázky
-import 'fakturace.dart'; // Pro proklik do faktury
+import 'fakturace/faktura_detail.dart';
 import '../core/pdf_generator.dart'; // Pro generování PDF při pultovém prodeji
 
 /// Hlavní obrazovka skladu s TabControllerem pro 4 záložky.

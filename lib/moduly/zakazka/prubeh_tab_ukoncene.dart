@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../auth_gate.dart';
 import 'prubeh_tab_otevreno.dart' show buildSearchBar;
-import '../fakturace.dart';
+import '../fakturace/faktura_detail.dart';
 
 /// Záložka s historií ukončených zakázek.
 class UkonceneTab extends StatelessWidget {

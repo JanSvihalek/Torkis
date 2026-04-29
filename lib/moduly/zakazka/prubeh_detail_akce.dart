@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/pdf_generator.dart';
 import '../auth_gate.dart';
 import '../zakazka_komunikace.dart';
-import '../fakturace.dart';
+import '../fakturace/faktura_detail.dart';
 
 /// Spodní lišta akcí na detailu zakázky.
 class AkceLista extends StatelessWidget {

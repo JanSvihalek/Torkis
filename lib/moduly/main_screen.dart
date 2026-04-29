@@ -15,7 +15,7 @@ import 'historie_prijmu/historie_prijmu_page.dart';
 import 'zakaznici/zakaznici_page.dart';
 import 'vozidla/vozidla_page.dart';
 import 'ukony.dart';
-import 'fakturace.dart';
+import 'fakturace/fakturace_page.dart';
 import 'statistiky.dart';
 import 'nastaveni.dart';
 import 'ucetnictvi.dart';

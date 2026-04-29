@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../fakturace.dart';
+import '../fakturace/faktura_detail.dart';
 import '../../core/shared_widgets.dart';
 
 class VozidloFakturyTab extends StatelessWidget {
