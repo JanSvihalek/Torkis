@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import '../core/constants.dart';
-import 'auth_gate.dart';
+import '../../core/constants.dart';
+import '../auth_gate.dart';
 
 /// Záložka se seznamem otevřených (aktivních) zakázek.
 class OtevrenTab extends StatelessWidget {

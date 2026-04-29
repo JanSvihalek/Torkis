@@ -9,9 +9,9 @@ import 'package:http/http.dart' as http;
 import '../core/pdf_generator.dart';
 import 'auth_gate.dart';
 
-import 'zakaznici.dart';
-import 'vozidla.dart';
-import 'prubeh.dart';
+import 'zakaznici/zakaznik_detail.dart';
+import 'vozidla/vozidlo_detail.dart';
+import 'zakazka/prubeh.dart';
 
 Future<void> syncAndRegenerateFaktura(
   String fakturaDocId,

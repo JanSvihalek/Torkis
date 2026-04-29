@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../core/constants.dart';
+import '../../core/constants.dart';
 
 /// Krok 4 – Fotodokumentace.
 /// Zobrazuje seznam kategorií z [photoCategories]; ke každé lze přidat fotky

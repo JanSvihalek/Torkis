@@ -4,10 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'auth_gate.dart';
-import 'prubeh.dart';
+import 'zakazka/prubeh.dart';
 import 'nova_rezervace_screen.dart';
 
-import 'prijem_vozidla.dart' show rezervaceKeZpracovani;
+import 'prijem/prijem_vozidla.dart' show rezervaceKeZpracovani;
 import 'main_screen.dart' show globalSwitchTabNotifier;
 
 class PlanovacPage extends StatefulWidget {

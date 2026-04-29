@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/constants.dart';
 import 'auth_gate.dart';
 import 'auth_screen.dart';
 
 // Sjednocené relativní importy!
 import 'planovac.dart';
-import 'prubeh.dart';
-import 'prijem_vozidla.dart';
-import 'historie_prijmu.dart';
-import 'zakaznici.dart';
-import 'vozidla.dart';
+import 'zakazka/prubeh.dart';
+import 'prijem/prijem_vozidla.dart';
+import 'historie_prijmu/historie_prijmu_page.dart';
+import 'zakaznici/zakaznici_page.dart';
+import 'vozidla/vozidla_page.dart';
 import 'ukony.dart';
 import 'fakturace.dart';
 import 'statistiky.dart';
@@ -399,6 +400,74 @@ class MenuPage extends StatelessWidget {
           const SizedBox(height: 30),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Card(
+              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                    color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+              ),
+              elevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.car_repair,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 28),
+                        const SizedBox(width: 10),
+                        const Text('TORKIS',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w900, fontSize: 18)),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text('v$kAppVerze',
+                              style: const TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13)),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 24),
+                    _buildKontaktRadek(
+                      Icons.email_outlined,
+                      kKontaktEmail,
+                      () => launchUrl(Uri.parse('mailto:$kKontaktEmail')),
+                      isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildKontaktRadek(
+                      Icons.phone_outlined,
+                      kKontaktTelefon,
+                      () => launchUrl(Uri.parse(
+                          'tel:${kKontaktTelefon.replaceAll(' ', '')}')),
+                      isDark,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildKontaktRadek(
+                      Icons.language_outlined,
+                      kKontaktWeb,
+                      () => launchUrl(Uri.parse('https://$kKontaktWeb')),
+                      isDark,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: OutlinedButton.icon(
               onPressed: () async {
                 final potvrdit = await showDialog<bool>(
@@ -441,6 +510,22 @@ class MenuPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKontaktRadek(
+      IconData icon, String label, VoidCallback onTap, bool isDark) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.blue),
+          const SizedBox(width: 10),
+          Text(label,
+              style: const TextStyle(color: Colors.blue, fontSize: 14)),
         ],
       ),
     );

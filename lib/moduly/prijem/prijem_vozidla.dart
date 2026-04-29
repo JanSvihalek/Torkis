@@ -11,8 +11,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
-import '../core/pdf_generator.dart';
-import 'auth_gate.dart';
+import '../../core/pdf_generator.dart';
+import '../auth_gate.dart';
 import 'prijem_vozidla_vyber_zakaznika.dart';
 import 'prijem_vozidla_kamera.dart';
 import 'prijem_vozidla_step_vozidlo.dart';
@@ -87,8 +87,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     'Jiné'
   ];
 
-  String _vybranaPrevodovka = 'Manuální­';
-  final List<String> _moznostiPrevodovky = ['Manuální­', 'Automatická', 'Jiné'];
+  String _vybranaPrevodovka = 'Manuální';
+  final List<String> _moznostiPrevodovky = ['Manuální', 'Automatická', 'Jiné'];
 
   final Map<String, List<XFile>> _categoryImages = {};
   final ImagePicker _picker = ImagePicker();

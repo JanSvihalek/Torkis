@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+const String kAppVerze = '3.7.9';
+const String kKontaktEmail = 'podpora@torkis.cz';
+const String kKontaktTelefon = '+420 731 901 003';
+const String kKontaktWeb = 'app.torkis.cz';
+
 // Globální ThemeNotifier pro přepínání světlého a tmavého režimu
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
@@ -76,20 +81,20 @@ const Map<String, List<String>> kPlanModuly = {
 
 /// Mapování nav ID → klíč v globalModuly (null = vždy přístupné bez ohledu na plán).
 const Map<String, String?> navIdToModulKlic = {
-  'prijem':          'prijem',
-  'zakazky':         'zakazky',
-  'planovac':        'planovac',
-  'sklad':           'sklad',
-  'fakturace':       'fakturace',
-  'ucetnictvi':      'ucetnictvi',
-  'statistiky':      'statistiky',
-  'zamestnanci':     'zamestnanci',
+  'prijem': 'prijem',
+  'zakazky': 'zakazky',
+  'planovac': 'planovac',
+  'sklad': 'sklad',
+  'fakturace': 'fakturace',
+  'ucetnictvi': 'ucetnictvi',
+  'statistiky': 'statistiky',
+  'zamestnanci': 'zamestnanci',
   'historie_prijmu': 'prijem',
-  'nastaveni':       null,
-  'ukony':           null,
-  'vozidla':         null,
-  'zakaznici':       null,
-  'menu':            null,
+  'nastaveni': null,
+  'ukony': null,
+  'vozidla': null,
+  'zakaznici': null,
+  'menu': null,
 };
 
 // Globální stav předplatného (nastaven v auth_gate.dart při přihlášení)

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'auth_gate.dart';
-import 'zakaznici.dart';
-import 'vozidla.dart';
+import '../auth_gate.dart';
+import '../zakaznici/zakaznik_detail.dart';
+import '../vozidla/vozidlo_detail.dart';
 import 'prubeh_fotodokumentace.dart';
 
 /// Karta se základními informacemi o zakázce: datum příjmu, zákazník, vozidlo

@@ -3,267 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
-import '../core/constants.dart';
-import '../core/pdf_generator.dart';
-import 'auth_gate.dart';
-import 'prubeh.dart';
-import 'zakazka_komunikace.dart';
+import '../../core/pdf_generator.dart';
+import '../zakazka/prubeh.dart';
+import '../zakazka_komunikace.dart';
 
-class HistoriePrijmuPage extends StatefulWidget {
-  const HistoriePrijmuPage({super.key});
-
-  @override
-  State<HistoriePrijmuPage> createState() => _HistoriePrijmuPageState();
-}
-
-class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
-  String _searchQuery = '';
-
-  String _formatDate(dynamic timestamp) {
-    if (timestamp == null) return 'Zpracovává se...';
-    final dt = (timestamp as Timestamp).toDate();
-    return DateFormat('dd.MM.yyyy HH:mm').format(dt);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    if (globalServisId == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(30, 30, 30, 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Historie příjmů',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Přehled všech přijatých vozidel a jejich protokolů.',
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 15),
-              Container(
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    if (!isDark)
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                  ],
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: TextField(
-                  onChanged: (v) =>
-                      setState(() => _searchQuery = v.toLowerCase()),
-                  decoration: InputDecoration(
-                    hintText: 'Hledat SPZ nebo zákazníka...',
-                    prefixIcon: const Icon(Icons.search, color: Colors.blue),
-                    filled: true,
-                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: isDark
-                              ? Colors.grey[800]!
-                              : Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide:
-                          const BorderSide(color: Colors.blue, width: 2),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      borderSide: BorderSide(
-                          color: isDark
-                              ? Colors.grey[800]!
-                              : Colors.grey[300]!),
-                    ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 15),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('zakazky')
-                .where('servis_id', isEqualTo: globalServisId)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(child: Text('Chyba: ${snapshot.error}'));
-              }
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              var docs = snapshot.data!.docs.where((doc) {
-                if (_searchQuery.isEmpty) return true;
-                final d = doc.data() as Map<String, dynamic>;
-                final spz =
-                    d['spz']?.toString().toLowerCase() ?? '';
-                final jmeno =
-                    ((d['zakaznik'] as Map?)?['jmeno'] ?? '')
-                        .toString()
-                        .toLowerCase();
-                return spz.contains(_searchQuery) ||
-                    jmeno.contains(_searchQuery);
-              }).toList();
-
-              docs.sort((a, b) {
-                final tA =
-                    (a.data() as Map)['cas_prijeti'] as Timestamp?;
-                final tB =
-                    (b.data() as Map)['cas_prijeti'] as Timestamp?;
-                if (tA == null && tB == null) return 0;
-                if (tA == null) return 1;
-                if (tB == null) return -1;
-                return tB.compareTo(tA);
-              });
-
-              if (docs.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'Zatím žádné záznamy o příjmu.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                itemCount: docs.length,
-                itemBuilder: (context, index) {
-                  final data =
-                      docs[index].data() as Map<String, dynamic>;
-                  final docId = docs[index].id;
-                  final stav =
-                      data['stav_zakazky']?.toString() ?? 'Přijato';
-                  final znacka = data['znacka']?.toString() ?? '';
-                  final model = data['model']?.toString() ?? '';
-                  final jmeno =
-                      (data['zakaznik'] as Map?)?['jmeno']?.toString() ??
-                          '';
-
-                  return Card(
-                    elevation: 0,
-                    color:
-                        isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      side: BorderSide(
-                          color: isDark
-                              ? Colors.grey[800]!
-                              : Colors.grey[200]!),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(15),
-                      leading: CircleAvatar(
-                        backgroundColor:
-                            Colors.blue.withOpacity(0.1),
-                        child: const Icon(Icons.car_repair,
-                            color: Colors.blue, size: 20),
-                      ),
-                      title: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            data['spz']?.toString() ?? '',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: getStatusColor(stav)
-                                  .withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              stav,
-                              style: TextStyle(
-                                  color: getStatusColor(stav),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12),
-                            ),
-                          ),
-                        ],
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (znacka.isNotEmpty)
-                              Text(
-                                '$znacka $model'.trim(),
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                            if (jmeno.isNotEmpty)
-                              Text(
-                                jmeno,
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[500]),
-                              ),
-                            Text(
-                              'Příjem: ${_formatDate(data['cas_prijeti'])}',
-                              style: const TextStyle(
-                                  fontSize: 11, color: Colors.grey),
-                            ),
-                            if (data['prijal_jmeno'] != null)
-                              Text(
-                                'Přijal: ${data['prijal_jmeno']}',
-                                style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey),
-                              ),
-                          ],
-                        ),
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => PrijemDetailScreen(
-                            docId: docId,
-                            data: data,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ============================================================
-// DETAIL PŘÍJMU
-// ============================================================
 class PrijemDetailScreen extends StatefulWidget {
   final String docId;
   final Map<String, dynamic> data;
@@ -417,16 +160,15 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Datum příjmu v horní části
             Container(
               width: double.infinity,
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.08),
+                color: Colors.blue.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: Colors.blue.withOpacity(0.2)),
+                    color: Colors.blue.withValues(alpha: 0.2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,7 +200,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                         Text(
                           'Přijal: ${d['prijal_jmeno']}',
                           style: TextStyle(
-                              color: Colors.blue.withOpacity(0.8), fontSize: 13),
+                              color: Colors.blue.withValues(alpha: 0.8), fontSize: 13),
                         ),
                       ],
                     ),
@@ -468,7 +210,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             ),
             const SizedBox(height: 15),
 
-            // VOZIDLO
             _sectionCard(
               isDark,
               icon: Icons.directions_car,
@@ -487,7 +228,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             ),
             const SizedBox(height: 15),
 
-            // ZÁKAZNÍK
             _sectionCard(
               isDark,
               icon: Icons.person,
@@ -503,7 +243,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             ),
             const SizedBox(height: 15),
 
-            // STAV PŘI PŘÍJMU
             _sectionCard(
               isDark,
               icon: Icons.fact_check_outlined,
@@ -597,7 +336,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
 
             const SizedBox(height: 20),
 
-            // AKCE
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -859,8 +597,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             height: 130,
             width: double.infinity,
             decoration: BoxDecoration(
-              color:
-                  isDark ? Colors.grey[850] : Colors.grey[100],
+              color: isDark ? Colors.grey[850] : Colors.grey[100],
               borderRadius: BorderRadius.circular(10),
             ),
             child: ClipRRect(
@@ -880,9 +617,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   }
 }
 
-// ============================================================
-// FULLSCREEN GALERIE FOTOGRAFIÍ
-// ============================================================
 class _FotoGalerie extends StatefulWidget {
   final List<String> urls;
   final int startIndex;

@@ -8,8 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui'; // Potřebné pro PlatformDispatcher
 import 'firebase_options.dart';
 import 'core/constants.dart';
-import 'zalozky/auth_gate.dart';
-import 'zalozky/main_screen.dart'; // kvůli navOrderNotifier
+import 'moduly/auth_gate.dart';
+import 'moduly/main_screen.dart'; // kvůli navOrderNotifier
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

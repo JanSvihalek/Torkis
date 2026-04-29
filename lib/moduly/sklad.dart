@@ -10,7 +10,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart'; // Pro skenování čárových kódů
 import 'auth_gate.dart';
-import 'prubeh.dart'; // Pro proklik do zakázky
+import 'zakazka/prubeh.dart'; // Pro proklik do zakázky
 import 'fakturace.dart'; // Pro proklik do faktury
 import '../core/pdf_generator.dart'; // Pro generování PDF při pultovém prodeji
 

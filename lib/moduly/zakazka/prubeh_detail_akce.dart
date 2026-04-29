@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../core/pdf_generator.dart';
-import 'auth_gate.dart';
-import 'zakazka_komunikace.dart';
-import 'fakturace.dart';
+import '../../core/pdf_generator.dart';
+import '../auth_gate.dart';
+import '../zakazka_komunikace.dart';
+import '../fakturace.dart';
 
 /// Spodní lišta akcí na detailu zakázky.
 class AkceLista extends StatelessWidget {
