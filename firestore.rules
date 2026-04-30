@@ -27,6 +27,10 @@ service cloud.firestore {
 
       match /zakaznik_zpravy/{msgId} {
         allow read: if isAnonymous();
+        // Zákazník smí přidávat pouze vlastní zprávy (from_zakaznik musí být true)
+        allow create: if isAnonymous()
+                      && request.resource.data.from_zakaznik == true
+                      && request.resource.data.keys().hasAll(['text', 'cas', 'autor', 'from_zakaznik']);
       }
     }
 

@@ -38,6 +38,27 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
   void initState() {
     super.initState();
     _nactiNeboVytvorToken();
+    _oznacitJakoPrectene();
+  }
+
+  Future<void> _oznacitJakoPrectene() async {
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('zakazky')
+          .doc(widget.documentId)
+          .collection('zakaznik_zpravy')
+          .where('from_zakaznik', isEqualTo: true)
+          .get();
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in snap.docs) {
+        if (doc.data()['precteno'] != true) {
+          batch.update(doc.reference, {'precteno': true});
+        }
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Chyba při označování zpráv jako přečtených: $e');
+    }
   }
 
   Future<void> _nactiNeboVytvorToken() async {
@@ -103,7 +124,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         elevation: 0,
-        title: const Text('Komunikace se zákazníkem',
+        title: const Text('Komunikace',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       body: Column(
@@ -142,7 +163,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
                                     : Colors.grey[600],
                                 fontSize: 16)),
                         const SizedBox(height: 8),
-                        Text('Přidejte první zprávu pro zákazníka',
+                        Text('Napište zákazníkovi první zprávu',
                             style: TextStyle(
                                 color: isDark
                                     ? Colors.grey[600]
@@ -257,7 +278,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
   }
 }
 
-// ── Karta jedné zprávy ────────────────────────────────────────────────────────
+// ── Karta jedné zprávy (chat bublina) ────────────────────────────────────────
 
 class _ZpravaKarta extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -271,70 +292,112 @@ class _ZpravaKarta extends StatelessWidget {
     return DateFormat('dd.MM.yyyy HH:mm').format(dt);
   }
 
+  bool get _isFromZakaznik =>
+      data['from_zakaznik'] == true || data['autor'] == 'Zákazník';
+
   @override
   Widget build(BuildContext context) {
     final text = data['text']?.toString() ?? '';
     final fotoUrls = (data['foto_urls'] as List<dynamic>? ?? []).cast<String>();
     final odeslanEmail = data['odeslan_email'] as bool? ?? false;
     final autor = data['autor']?.toString() ?? '';
+    final isZakaznik = _isFromZakaznik;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.person_outline, size: 14, color: Colors.grey),
-              const SizedBox(width: 4),
-              Text(autor,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold)),
-              const Spacer(),
-              if (odeslanEmail)
-                const Icon(Icons.email, size: 14, color: Colors.green),
-              const SizedBox(width: 4),
-              Text(_formatCas(data['cas']),
-                  style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(text, style: const TextStyle(fontSize: 14)),
-          if (fotoUrls.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 80,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: fotoUrls.length,
-                itemBuilder: (context, i) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => _zobrazitFoto(context, fotoUrls, i),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(fotoUrls[i],
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                              Icons.broken_image,
-                              color: Colors.grey)),
-                    ),
-                  ),
+    final bubbleColor = isZakaznik
+        ? Colors.blue
+        : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF0F4FF));
+    final textColor = isZakaznik
+        ? Colors.white
+        : (isDark ? Colors.white : Colors.black87);
+    final metaColor = isZakaznik
+        ? Colors.blue.withValues(alpha: 0.6)
+        : Colors.grey;
+
+    return Align(
+      alignment: isZakaznik ? Alignment.centerRight : Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.78,
+        ),
+        child: Column(
+          crossAxisAlignment: isZakaznik
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3, left: 4, right: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isZakaznik && odeslanEmail) ...[
+                    const Icon(Icons.email, size: 11, color: Colors.green),
+                    const SizedBox(width: 3),
+                  ],
+                  Text(autor,
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: metaColor,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 6),
+                  Text(_formatCas(data['cas']),
+                      style: TextStyle(fontSize: 11, color: metaColor)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(14),
+                  topRight: const Radius.circular(14),
+                  bottomLeft: Radius.circular(isZakaznik ? 14 : 4),
+                  bottomRight: Radius.circular(isZakaznik ? 4 : 14),
                 ),
+                border: isZakaznik
+                    ? null
+                    : Border.all(
+                        color:
+                            isDark ? Colors.grey[700]! : const Color(0xFFDCE4F8)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (text.isNotEmpty)
+                    Text(text,
+                        style: TextStyle(fontSize: 14, color: textColor)),
+                  if (fotoUrls.isNotEmpty) ...[
+                    if (text.isNotEmpty) const SizedBox(height: 8),
+                    SizedBox(
+                      height: 80,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        shrinkWrap: true,
+                        itemCount: fotoUrls.length,
+                        itemBuilder: (context, i) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: GestureDetector(
+                            onTap: () => _zobrazitFoto(context, fotoUrls, i),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(fotoUrls[i],
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.broken_image,
+                                      color: Colors.grey)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

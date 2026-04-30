@@ -9,6 +9,7 @@ class StepVozidlo extends StatelessWidget {
 
   // Stav zakázky
   final TextEditingController zakazkaController;
+  final bool autoGenerateCislo;
   final bool isGeneratingCislo;
   final VoidCallback onRegenerateCislo;
 
@@ -49,6 +50,7 @@ class StepVozidlo extends StatelessWidget {
     super.key,
     required this.isDark,
     required this.zakazkaController,
+    required this.autoGenerateCislo,
     required this.isGeneratingCislo,
     required this.onRegenerateCislo,
     required this.spzController,
@@ -83,26 +85,17 @@ class StepVozidlo extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                  flex: 3,
-                  child: Padding(
-                      padding: EdgeInsets.only(top: 8.0),
-                      child: Text('Příjem vozidla',
-                          style: TextStyle(
-                              fontSize: 32, fontWeight: FontWeight.bold)))),
-              const SizedBox(width: 15),
-              Expanded(
-                  flex: 2,
-                  child: buildInput(
-                    'Číslo zakázky *',
-                    Icons.onetwothree,
-                    zakazkaController,
-                    isDark,
-                    caps: true,
-                    customSuffix: isGeneratingCislo
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final Widget cisloInput = buildInput(
+                'Číslo zakázky *',
+                Icons.onetwothree,
+                zakazkaController,
+                isDark,
+                caps: true,
+                customSuffix: !autoGenerateCislo
+                    ? null
+                    : isGeneratingCislo
                         ? const Padding(
                             padding: EdgeInsets.all(12),
                             child: SizedBox(
@@ -115,8 +108,37 @@ class StepVozidlo extends StatelessWidget {
                                 color: Colors.blue),
                             onPressed: onRegenerateCislo,
                             tooltip: 'Vygenerovat nové číslo'),
-                  )),
-            ],
+              );
+
+              if (constraints.maxWidth < 400) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Příjem vozidla',
+                        style: TextStyle(
+                            fontSize: 28, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    cisloInput,
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                      flex: 3,
+                      child: Padding(
+                          padding: EdgeInsets.only(top: 8.0),
+                          child: Text('Příjem vozidla',
+                              style: TextStyle(
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold)))),
+                  const SizedBox(width: 15),
+                  Expanded(flex: 2, child: cisloInput),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 30),
           if (nalezenaVozidla.isNotEmpty) ...[

@@ -109,22 +109,67 @@ class AkceLista extends StatelessWidget {
                   color: Colors.orange,
                   onTap: onUkoncit,
                 ),
-              _buildActionBtn(
-                icon: Icons.chat_outlined,
-                label: 'Komunikace',
-                color: Colors.teal,
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ZakazkaKomunikacePage(
-                      documentId: documentId,
-                      zakazkaId: zakazkaId,
-                      spz: spz,
-                      zakaznikJmeno: zakaznikJmeno,
-                      zakaznikEmail: zakaznikEmail,
-                    ),
-                  ),
-                ),
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('zakazky')
+                    .doc(documentId)
+                    .collection('zakaznik_zpravy')
+                    .where('from_zakaznik', isEqualTo: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  final neprectenych = snapshot.data?.docs
+                          .where((d) =>
+                              (d.data() as Map<String, dynamic>)['precteno'] !=
+                              true)
+                          .length ??
+                      0;
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      _buildActionBtn(
+                        icon: Icons.chat_outlined,
+                        label: 'Komunikace',
+                        color:
+                            neprectenych > 0 ? Colors.orange : Colors.teal,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ZakazkaKomunikacePage(
+                              documentId: documentId,
+                              zakazkaId: zakazkaId,
+                              spz: spz,
+                              zakaznikJmeno: zakaznikJmeno,
+                              zakaznikEmail: zakaznikEmail,
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (neprectenych > 0)
+                        Positioned(
+                          top: 0,
+                          right: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            constraints: const BoxConstraints(
+                                minWidth: 18, minHeight: 18),
+                            child: Text(
+                              neprectenych > 9 ? '9+' : '$neprectenych',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
               if (!isCompleted && !isMechanik)
                 _buildActionBtn(

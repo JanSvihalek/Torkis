@@ -80,38 +80,89 @@
       margin-bottom: 14px;
     }
 
-    .message-card {
-      border: 1px solid #eee;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 10px;
-    }
-    .message-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    .message-author {
-      background: rgba(33,150,243,0.1);
-      color: #2196F3;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 5px;
-    }
-    .message-time { font-size: 11px; color: #aaa; }
-    .message-text { font-size: 14px; line-height: 1.6; color: #333; }
+    /* Chat bubbles */
+    .chat-container { display: flex; flex-direction: column; gap: 10px; }
 
-    .photos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .chat-row {
+      display: flex;
+      flex-direction: column;
+    }
+    .chat-row.servis  { align-items: flex-start; }
+    .chat-row.zakaznik { align-items: flex-end; }
+
+    .chat-meta {
+      font-size: 11px;
+      color: #aaa;
+      margin-bottom: 3px;
+      padding: 0 4px;
+    }
+
+    .chat-bubble {
+      max-width: 82%;
+      border-radius: 14px;
+      padding: 10px 14px;
+      word-break: break-word;
+    }
+    .chat-bubble.servis {
+      background: #f0f4ff;
+      border: 1px solid #dce4f8;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-bubble.zakaznik {
+      background: #2196F3;
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-bubble .message-text {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .chat-bubble.zakaznik .message-text { color: white; }
+    .chat-bubble.servis   .message-text { color: #333; }
+
+    .photos { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
     .photos img {
-      width: 82px; height: 82px;
+      width: 72px; height: 72px;
       object-fit: cover;
       border-radius: 8px;
       cursor: pointer;
       transition: opacity 0.15s;
     }
     .photos img:hover { opacity: 0.85; }
+
+    /* Reply area */
+    .reply-area {
+      border-top: 1px solid #f0f0f0;
+      padding-top: 14px;
+      margin-top: 6px;
+      display: none;
+    }
+    .reply-input {
+      width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      color: #333;
+    }
+    .reply-input:focus { border-color: #2196F3; }
+    .reply-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      width: 100%;
+    }
+    .reply-btn:hover:not(:disabled) { background: #1976D2; }
+    .reply-btn:disabled { opacity: 0.55; cursor: default; }
 
     .empty-msgs { text-align: center; padding: 28px 16px; color: #bbb; font-size: 14px; }
 
@@ -180,8 +231,12 @@
     <div class="card" id="vehicle-card"></div>
     <div class="card" id="status-card"></div>
     <div class="card" id="messages-card">
-      <div class="section-title">Zprávy od servisu</div>
+      <div class="section-title">Komunikace</div>
       <div id="messages-list"></div>
+      <div class="reply-area" id="reply-area">
+        <textarea class="reply-input" id="reply-input" rows="3" placeholder="Napište zprávu servisu..."></textarea>
+        <button class="reply-btn" id="reply-btn">Odeslat zprávu</button>
+      </div>
     </div>
     <div class="footer">Powered by TORKIS – servisní software</div>
   </div>
@@ -196,7 +251,7 @@
 <script type="module">
   import { initializeApp }
     from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-  import { getFirestore, collection, query, where, getDocs, onSnapshot, orderBy, limit }
+  import { getFirestore, collection, query, where, getDocs, onSnapshot, orderBy, limit, addDoc, serverTimestamp }
     from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
   import { getAuth, signInAnonymously }
     from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -270,7 +325,6 @@
     const email      = escHtml(z.email || '');
     const adresa     = escHtml(z.adresa || '');
 
-    // Zákazník nahoře
     const zakaznikRows = [
       jmeno   ? `<div class="info-row" style="font-size:15px;font-weight:600;color:#222;">👤 ${jmeno}</div>` : '',
       adresa  ? `<div class="info-row">📍 <span>${adresa}</span></div>` : '',
@@ -278,7 +332,6 @@
       email   ? `<div class="info-row">✉️ <span>${email}</span></div>` : '',
     ].filter(Boolean).join('');
 
-    // Technické údaje vozidla
     const detailRows = [
       vin        ? `<span class="vg-label">VIN</span><span class="vg-value">${vin}</span>` : '',
       rok        ? `<span class="vg-label">Rok výroby</span><span class="vg-value">${rok}</span>` : '',
@@ -312,29 +365,30 @@
   function renderMessages(docs) {
     const list = document.getElementById('messages-list');
     if (!docs.length) {
-      list.innerHTML = '<div class="empty-msgs">💬<br><br>Servis zatím neodeslal žádné zprávy.</div>';
+      list.innerHTML = '<div class="empty-msgs">💬<br><br>Zatím zde nejsou žádné zprávy.</div>';
       return;
     }
-    list.innerHTML = docs.map(d => {
-      const autor  = escHtml(d.autor || 'Servis');
-      const text   = escHtml(d.text || '').replace(/\n/g, '<br>');
-      const urls   = d.foto_urls || [];
+    list.innerHTML = '<div class="chat-container">' + docs.map(d => {
+      const isZakaznik = d.from_zakaznik === true || d.autor === 'Zákazník';
+      const side  = isZakaznik ? 'zakaznik' : 'servis';
+      const autor = escHtml(d.autor || 'Servis');
+      const text  = escHtml(d.text || '').replace(/\n/g, '<br>');
+      const time  = formatDate(d.cas);
+      const urls  = d.foto_urls || [];
       const photos = urls.map(u =>
         `<img src="${escHtml(u)}" alt="foto" data-url="${escHtml(u)}">`
       ).join('');
       return `
-        <div class="message-card">
-          <div class="message-header">
-            <span class="message-author">${autor}</span>
-            <span class="message-time">${formatDate(d.cas)}</span>
+        <div class="chat-row ${side}">
+          <div class="chat-meta">${autor} · ${time}</div>
+          <div class="chat-bubble ${side}">
+            <div class="message-text">${text}</div>
+            ${urls.length ? `<div class="photos">${photos}</div>` : ''}
           </div>
-          <div class="message-text">${text}</div>
-          ${urls.length ? `<div class="photos">${photos}</div>` : ''}
         </div>
       `;
-    }).join('');
+    }).join('') + '</div>';
 
-    // attach lightbox listeners
     list.querySelectorAll('.photos img').forEach(img => {
       img.addEventListener('click', () => openLightbox(img.dataset.url));
     });
@@ -349,7 +403,6 @@
     }
 
     try {
-      // Anonymní přihlášení pro Firestore pravidla
       await signInAnonymously(auth);
 
       const q = query(
@@ -373,6 +426,7 @@
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('content').style.display = 'block';
+      document.getElementById('reply-area').style.display = 'block';
 
       // Real-time aktualizace stavu
       onSnapshot(docRef, docSnap => {
@@ -388,6 +442,42 @@
       );
       onSnapshot(msgsQ, msgsSnap => {
         renderMessages(msgsSnap.docs.map(d => d.data()));
+      });
+
+      // Odeslání odpovědi zákazníkem
+      const zakaznikJmeno = data.zakaznik?.jmeno || 'Zákazník';
+      const replyInput = document.getElementById('reply-input');
+      const replyBtn   = document.getElementById('reply-btn');
+
+      replyBtn.addEventListener('click', async () => {
+        const text = replyInput.value.trim();
+        if (!text) return;
+        replyBtn.disabled = true;
+        replyBtn.textContent = 'Odesílám...';
+        try {
+          await addDoc(collection(db, 'zakazky', docId, 'zakaznik_zpravy'), {
+            text,
+            foto_urls: [],
+            cas: serverTimestamp(),
+            autor: zakaznikJmeno,
+            from_zakaznik: true,
+            odeslan_email: false,
+          });
+          replyInput.value = '';
+        } catch (e) {
+          alert('Chyba při odesílání: ' + e.message);
+        } finally {
+          replyBtn.disabled = false;
+          replyBtn.textContent = 'Odeslat zprávu';
+        }
+      });
+
+      // Odeslání přes Enter (Shift+Enter = nový řádek)
+      replyInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          replyBtn.click();
+        }
       });
 
     } catch (e) {

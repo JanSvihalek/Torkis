@@ -34,6 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _platceDph = false;
   bool _defaultEmail = true;
+  bool _autoCisloZakazky = true;
   String _zpusobUhrady = 'Převodem';
 
   // Uživatelské nastavení (pro všechny)
@@ -107,6 +108,7 @@ class _SettingsPageState extends State<SettingsPage> {
             _platceDph = data['platce_dph'] ?? false;
             _zpusobUhrady = data['zpusob_uhrady'] ?? 'Převodem';
             _defaultEmail = data['default_odesilat_emaily'] ?? true;
+            _autoCisloZakazky = data['auto_cislo_zakazky'] ?? true;
           });
         }
       }
@@ -147,6 +149,7 @@ class _SettingsPageState extends State<SettingsPage> {
             'splatnost_dny': int.tryParse(_splatnostCtrl.text) ?? 14,
             'platce_dph': _platceDph,
             'default_odesilat_emaily': _defaultEmail,
+            'auto_cislo_zakazky': _autoCisloZakazky,
             'zmeneno': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
@@ -645,6 +648,25 @@ class _SettingsPageState extends State<SettingsPage> {
                         value: _defaultEmail,
                         activeColor: Colors.blue,
                         onChanged: (v) => setState(() => _defaultEmail = v),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF1E1E1E)
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10)),
+                      child: SwitchListTile(
+                        title: const Text('Automaticky generovat číslo zakázky',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: const Text(
+                            'Při příjmu vozidla se číslo zakázky předvyplní automaticky. Vypnutím umožníte ruční zadání.',
+                            style: TextStyle(fontSize: 12)),
+                        value: _autoCisloZakazky,
+                        activeColor: Colors.blue,
+                        onChanged: (v) =>
+                            setState(() => _autoCisloZakazky = v),
                       ),
                     ),
                   ],

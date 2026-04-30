@@ -49,6 +49,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _isCheckingZakazka = false;
   bool _isGeneratingCislo = false;
   bool _isLoadingSpz = false;
+  bool _autoCisloZakazky = true;
 
   final _jmenoController = TextEditingController();
   final _icoController = TextEditingController();
@@ -137,7 +138,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
   @override
   void initState() {
     super.initState();
-    _generujCisloZakazky();
     _nactiNastaveni();
     _nactiUkonyZDatabaze();
     _nactiDatabaziZnacek();
@@ -286,9 +286,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
     });
   }
 
-  /// Načte výchozí nastavení servisu — konkrétně příznak „automaticky odesílat e-maily",
-  /// který přednaplní checkbox na poslední stránce průvodce.
+  /// Načte výchozí nastavení servisu a podmíněně spustí generování čísla zakázky.
   Future<void> _nactiNastaveni() async {
+    bool generovat = true;
     if (_sId != null) {
       try {
         final doc = await FirebaseFirestore.instance
@@ -297,8 +297,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
             .get();
         if (doc.exists) {
           final data = doc.data()!;
+          generovat = data['auto_cislo_zakazky'] as bool? ?? true;
           if (mounted) {
             setState(() {
+              _autoCisloZakazky = generovat;
               if (data.containsKey('default_odesilat_emaily')) {
                 _defaultOdeslatEmail = data['default_odesilat_emaily'] as bool;
                 _odeslatEmail = _defaultOdeslatEmail;
@@ -310,6 +312,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         debugPrint("Chyba při načítání nastavení servisu: $e");
       }
     }
+    if (generovat) await _generujCisloZakazky();
   }
 
   /// Vygeneruje unikátní číslo zakázky podle formátu nastaveného v nastavení servisu.
@@ -1190,6 +1193,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   Widget _buildVozidloStep(bool isDark) => StepVozidlo(
         isDark: isDark,
         zakazkaController: _zakazkaController,
+        autoGenerateCislo: _autoCisloZakazky,
         isGeneratingCislo: _isGeneratingCislo,
         onRegenerateCislo: _generujCisloZakazky,
         spzController: _spzController,
