@@ -124,8 +124,42 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
       appBar: AppBar(
         backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
         elevation: 0,
-        title: const Text('Komunikace',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Komunikace',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            Row(
+              children: [
+                if (widget.zakaznikJmeno.isNotEmpty) ...[
+                  Text(widget.zakaznikJmeno,
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.grey[500])),
+                  Text(' · ',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                ],
+                if (widget.zakaznikEmail.isNotEmpty)
+                  Flexible(
+                    child: Text(widget.zakaznikEmail,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.grey[500])),
+                  )
+                else
+                  Text('bez emailu',
+                      style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.normal,
+                          color: Colors.orange[400])),
+              ],
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
@@ -175,6 +209,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.all(16),
+                  reverse: true,
                   itemCount: docs.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, i) {
