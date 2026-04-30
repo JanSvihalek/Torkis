@@ -36,6 +36,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _defaultEmail = true;
   bool _autoCisloZakazky = true;
   String _zpusobUhrady = 'Převodem';
+  List<String> _sablonyZprav = [];
 
   // Uživatelské nastavení (pro všechny)
   bool _tmavyRezim = false;
@@ -109,6 +110,7 @@ class _SettingsPageState extends State<SettingsPage> {
             _zpusobUhrady = data['zpusob_uhrady'] ?? 'Převodem';
             _defaultEmail = data['default_odesilat_emaily'] ?? true;
             _autoCisloZakazky = data['auto_cislo_zakazky'] ?? true;
+            _sablonyZprav = List<String>.from(data['sablony_zprav'] ?? []);
           });
         }
       }
@@ -176,6 +178,61 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isSaving = false);
   }
 
+
+  Future<void> _ulozitSablony() async {
+    if (globalServisId == null) return;
+    await FirebaseFirestore.instance
+        .collection('nastaveni_servisu')
+        .doc(globalServisId)
+        .set({'sablony_zprav': _sablonyZprav}, SetOptions(merge: true));
+  }
+
+  void _otevritDialogSablony({String? initialText, int? editIndex}) {
+    final ctrl = TextEditingController(text: initialText ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        title: Text(editIndex != null ? 'Upravit šablonu' : 'Nová šablona'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: 'Text zprávy...',
+            filled: true,
+            fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Zrušit'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                if (editIndex != null) {
+                  _sablonyZprav[editIndex] = text;
+                } else {
+                  _sablonyZprav.add(text);
+                }
+              });
+              await _ulozitSablony();
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Uložit'),
+          ),
+        ],
+      ),
+    );
+  }
 
   /// Uloží pořadí záložek do Firestore (uzivatele/{uid}) i do SharedPreferences.
   /// Firestore = zdrojová pravda (sync mezi zařízeními),
@@ -672,6 +729,88 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
               ],
+
+              // ---------------------------------------------
+              // ŠABLONY ZPRÁV
+              // ---------------------------------------------
+              _buildCard(
+                title: 'Šablony zpráv',
+                icon: Icons.chat_bubble_outline,
+                color: Colors.teal,
+                isDark: isDark,
+                children: [
+                  const Text(
+                    'Přednastavené texty zobrazené jako chipy při psaní zprávy zákazníkovi.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_sablonyZprav.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Zatím žádné šablony. Přidejte první.',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      ),
+                    ),
+                  for (int i = 0; i < _sablonyZprav.length; i++)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF2C2C2C)
+                            : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.grey[700]!
+                                : Colors.grey[200]!),
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 14),
+                        title: Text(_sablonyZprav[i],
+                            style: const TextStyle(fontSize: 13)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined,
+                                  size: 18, color: Colors.blue),
+                              onPressed: () => _otevritDialogSablony(
+                                  initialText: _sablonyZprav[i],
+                                  editIndex: i),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline,
+                                  size: 18, color: Colors.redAccent),
+                              onPressed: () async {
+                                setState(
+                                    () => _sablonyZprav.removeAt(i));
+                                await _ulozitSablony();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _otevritDialogSablony(),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Přidat šablonu'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.teal,
+                        side: const BorderSide(color: Colors.teal),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
 
               // ---------------------------------------------
               // SEKCE PRO VŠECHNY UŽIVATELE (VZHLED A ODHLÁŠENÍ)

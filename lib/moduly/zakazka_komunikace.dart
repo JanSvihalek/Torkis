@@ -489,6 +489,29 @@ class _PridatZpravuSheetState extends State<_PridatZpravuSheet> {
   final List<XFile> _foto = [];
   bool _odeslatEmail = true;
   bool _isSaving = false;
+  List<String> _sablony = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _nactiSablony();
+  }
+
+  Future<void> _nactiSablony() async {
+    if (globalServisId == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('nastaveni_servisu')
+          .doc(globalServisId)
+          .get();
+      if (doc.exists && mounted) {
+        setState(() {
+          _sablony =
+              List<String>.from(doc.data()?['sablony_zprav'] ?? []);
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -683,6 +706,37 @@ class _PridatZpravuSheetState extends State<_PridatZpravuSheet> {
                 '${widget.zakaznikJmeno.isNotEmpty ? widget.zakaznikJmeno : 'Zákazník'} – ${widget.spz}',
                 style: const TextStyle(color: Colors.grey, fontSize: 13)),
             const SizedBox(height: 16),
+            if (_sablony.isNotEmpty) ...[
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _sablony
+                      .map((s) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: ActionChip(
+                              label: Text(s,
+                                  style: const TextStyle(fontSize: 12)),
+                              backgroundColor: isDark
+                                  ? const Color(0xFF2C2C2C)
+                                  : Colors.teal.withValues(alpha: 0.08),
+                              side: BorderSide(
+                                  color: Colors.teal.withValues(alpha: 0.4)),
+                              onPressed: () {
+                                final current = _textCtrl.text;
+                                _textCtrl.text = current.isEmpty
+                                    ? s
+                                    : '$current\n$s';
+                                _textCtrl.selection =
+                                    TextSelection.collapsed(
+                                        offset: _textCtrl.text.length);
+                              },
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             TextField(
               controller: _textCtrl,
               maxLines: 4,
