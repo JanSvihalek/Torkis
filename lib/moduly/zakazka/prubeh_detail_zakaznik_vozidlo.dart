@@ -126,6 +126,16 @@ class ZakaznikVozidloCard extends StatelessWidget {
                                 fontSize: 15,
                               ),
                             ),
+                            if (zakaznik['ico']?.toString().isNotEmpty == true)
+                              Text(
+                                'IČO: ${zakaznik['ico']}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isDark
+                                      ? Colors.grey[400]
+                                      : Colors.grey[600],
+                                ),
+                              ),
                             if (zakaznik['telefon']?.toString().isNotEmpty ==
                                 true)
                               Text(zakaznik['telefon']),

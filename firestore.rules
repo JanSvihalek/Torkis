@@ -31,6 +31,11 @@ service cloud.firestore {
         allow create: if isAnonymous()
                       && request.resource.data.from_zakaznik == true
                       && request.resource.data.keys().hasAll(['text', 'cas', 'autor', 'from_zakaznik']);
+        // Zákazník smí pouze schválit nebo zamítnout nacenění
+        allow update: if isAnonymous()
+                      && resource.data.typ == 'naceneni'
+                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stav_schvaleni'])
+                      && request.resource.data.stav_schvaleni in ['schvaleno', 'zamitnuto'];
       }
     }
 

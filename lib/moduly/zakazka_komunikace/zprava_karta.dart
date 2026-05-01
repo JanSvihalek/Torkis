@@ -20,6 +20,7 @@ class ZpravaKarta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (data['typ'] == 'naceneni') return _buildNaceneniCard(context);
     final text = data['text']?.toString() ?? '';
     final fotoUrls = (data['foto_urls'] as List<dynamic>? ?? []).cast<String>();
     final odeslanEmail = data['odeslan_email'] as bool? ?? false;
@@ -116,6 +117,123 @@ class ZpravaKarta extends StatelessWidget {
                       ),
                     ),
                   ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNaceneniCard(BuildContext context) {
+    final stav = data['stav_schvaleni']?.toString() ?? 'cekajici';
+    final castka = (data['castka'] as num?)?.toDouble() ?? 0.0;
+    final text = data['text']?.toString() ?? '';
+    final autor = data['autor']?.toString() ?? '';
+
+    Color stavColor;
+    String stavLabel;
+    switch (stav) {
+      case 'schvaleno':
+        stavColor = Colors.green;
+        stavLabel = '✓ Schváleno zákazníkem';
+        break;
+      case 'zamitnuto':
+        stavColor = Colors.red;
+        stavLabel = '✗ Zamítnuto zákazníkem';
+        break;
+      default:
+        stavColor = Colors.orange;
+        stavLabel = '⏳ Čeká na schválení zákazníka';
+    }
+
+    final bg = isDark ? const Color(0xFF1A2A1A) : const Color(0xFFF1FBF5);
+    final borderCol = isDark ? Colors.green.shade800 : Colors.green.shade200;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.9,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3, left: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(autor,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                          fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 6),
+                  Text(_formatCas(data['cas']),
+                      style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  topRight: Radius.circular(14),
+                  bottomLeft: Radius.circular(4),
+                  bottomRight: Radius.circular(14),
+                ),
+                border: Border.all(color: borderCol),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.request_quote_outlined,
+                          color: Colors.green.shade700, size: 18),
+                      const SizedBox(width: 6),
+                      Text('Nacenění opravy',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.green.shade700)),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    NumberFormat.currency(
+                            locale: 'cs_CZ', symbol: 'Kč', decimalDigits: 2)
+                        .format(castka),
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87),
+                  ),
+                  if (text.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(text,
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: isDark ? Colors.grey[300] : Colors.grey[700])),
+                  ],
+                  const SizedBox(height: 10),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: stavColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(stavLabel,
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: stavColor)),
+                  ),
                 ],
               ),
             ),

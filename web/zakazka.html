@@ -130,6 +130,76 @@
     }
     .photos img:hover { opacity: 0.85; }
 
+    /* Nacenění card */
+    .naceneni-card {
+      background: #f1fbf5;
+      border: 1.5px solid #a5d6a7;
+      border-radius: 14px;
+      border-bottom-left-radius: 4px;
+      padding: 14px;
+      max-width: 90%;
+    }
+    .naceneni-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #2e7d32;
+      margin-bottom: 10px;
+    }
+    .naceneni-castka {
+      font-size: 26px;
+      font-weight: 800;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+    }
+    .naceneni-popis {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    .naceneni-stav {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .naceneni-stav.cekajici { background: #fff3e0; color: #e65100; }
+    .naceneni-stav.schvaleno { background: #e8f5e9; color: #2e7d32; }
+    .naceneni-stav.zamitnuto { background: #ffebee; color: #c62828; }
+    .naceneni-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .btn-schvalit {
+      flex: 1;
+      background: #4caf50;
+      color: white;
+      border: none;
+      padding: 11px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-schvalit:hover { background: #388e3c; }
+    .btn-zamitnout {
+      flex: 1;
+      background: white;
+      color: #c62828;
+      border: 1.5px solid #ef9a9a;
+      padding: 11px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .btn-zamitnout:hover { background: #ffebee; }
+
     /* Reply area */
     .reply-area {
       border-top: 1px solid #f0f0f0;
@@ -251,7 +321,7 @@
 <script type="module">
   import { initializeApp }
     from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-  import { getFirestore, collection, query, where, getDocs, onSnapshot, orderBy, limit, addDoc, serverTimestamp }
+  import { getFirestore, collection, query, where, getDocs, onSnapshot, orderBy, limit, addDoc, updateDoc, doc, serverTimestamp }
     from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
   import { getAuth, signInAnonymously }
     from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
@@ -362,6 +432,40 @@
     `;
   }
 
+  let _rozhodniNaceneni = null;
+
+  function renderNaceneniMsg(d) {
+    const stav    = d.stav_schvaleni || 'cekajici';
+    const castka  = d.castka || 0;
+    const text    = escHtml(d.text || '').replace(/\n/g, '<br>');
+    const autor   = escHtml(d.autor || 'Servis');
+    const time    = formatDate(d.cas);
+    const castkaFmt = new Intl.NumberFormat('cs-CZ', {
+      style: 'currency', currency: 'CZK', minimumFractionDigits: 2
+    }).format(castka);
+    const stavMap = {
+      cekajici: '<span class="naceneni-stav cekajici">⏳ Čeká na schválení</span>',
+      schvaleno: '<span class="naceneni-stav schvaleno">✓ Schváleno</span>',
+      zamitnuto: '<span class="naceneni-stav zamitnuto">✗ Zamítnuto</span>',
+    };
+    const actionsHtml = stav === 'cekajici' ? `
+      <div class="naceneni-actions">
+        <button class="btn-schvalit" data-msg-id="${escHtml(d._id)}">✓ Schválit</button>
+        <button class="btn-zamitnout" data-msg-id="${escHtml(d._id)}">✗ Zamítnout</button>
+      </div>` : '';
+    return `
+      <div class="chat-row servis">
+        <div class="chat-meta">${autor} · ${time}</div>
+        <div class="naceneni-card">
+          <div class="naceneni-header">💰 Nacenění opravy</div>
+          <div class="naceneni-castka">${castkaFmt}</div>
+          ${text ? `<div class="naceneni-popis">${text}</div>` : ''}
+          ${stavMap[stav] || ''}
+          ${actionsHtml}
+        </div>
+      </div>`;
+  }
+
   function renderMessages(docs) {
     const list = document.getElementById('messages-list');
     if (!docs.length) {
@@ -369,6 +473,7 @@
       return;
     }
     list.innerHTML = '<div class="chat-container">' + docs.map(d => {
+      if (d.typ === 'naceneni') return renderNaceneniMsg(d);
       const isZakaznik = d.from_zakaznik === true || d.autor === 'Zákazník';
       const side  = isZakaznik ? 'zakaznik' : 'servis';
       const autor = escHtml(d.autor || 'Servis');
@@ -385,12 +490,17 @@
             <div class="message-text">${text}</div>
             ${urls.length ? `<div class="photos">${photos}</div>` : ''}
           </div>
-        </div>
-      `;
+        </div>`;
     }).join('') + '</div>';
 
     list.querySelectorAll('.photos img').forEach(img => {
       img.addEventListener('click', () => openLightbox(img.dataset.url));
+    });
+    list.querySelectorAll('.btn-schvalit').forEach(btn => {
+      btn.addEventListener('click', () => _rozhodniNaceneni?.(btn.dataset.msgId, 'schvaleno'));
+    });
+    list.querySelectorAll('.btn-zamitnout').forEach(btn => {
+      btn.addEventListener('click', () => _rozhodniNaceneni?.(btn.dataset.msgId, 'zamitnuto'));
     });
   }
 
@@ -435,13 +545,32 @@
         }
       });
 
+      // Schválení / zamítnutí nacenění zákazníkem
+      _rozhodniNaceneni = async (msgId, rozhodnuti) => {
+        try {
+          const msgRef = doc(db, 'zakazky', docId, 'zakaznik_zpravy', msgId);
+          await updateDoc(msgRef, { stav_schvaleni: rozhodnuti });
+          const stavText = rozhodnuti === 'schvaleno' ? 'schválil' : 'zamítl';
+          await addDoc(collection(db, 'zakazky', docId, 'zakaznik_zpravy'), {
+            text: `Zákazník ${stavText} nacenění.`,
+            foto_urls: [],
+            cas: serverTimestamp(),
+            autor: zakaznikJmeno,
+            from_zakaznik: true,
+            odeslan_email: false,
+          });
+        } catch (e) {
+          alert('Chyba: ' + e.message);
+        }
+      };
+
       // Real-time zprávy
       const msgsQ = query(
         collection(db, 'zakazky', docId, 'zakaznik_zpravy'),
         orderBy('cas', 'asc')
       );
       onSnapshot(msgsQ, msgsSnap => {
-        renderMessages(msgsSnap.docs.map(d => d.data()));
+        renderMessages(msgsSnap.docs.map(d => ({ ...d.data(), _id: d.id })));
       });
 
       // Odeslání odpovědi zákazníkem

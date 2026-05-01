@@ -350,7 +350,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                                 height: 16,
                                 child: CircularProgressIndicator(strokeWidth: 2))
                             : const Icon(Icons.visibility_outlined),
-                        label: const Text('Zobrazit'),
+                        label: const Text('Zobrazit protokol'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(

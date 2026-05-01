@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,6 +36,8 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
   bool _odeslatEmail = true;
   bool _isSaving = false;
   List<String> _sablony = [];
+  bool _priloztNaceneni = false;
+  final _castkaCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -60,6 +63,7 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
   @override
   void dispose() {
     _textCtrl.dispose();
+    _castkaCtrl.dispose();
     super.dispose();
   }
 
@@ -119,11 +123,21 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
   }
 
   Future<void> _odeslat() async {
-    if (_textCtrl.text.trim().isEmpty) {
+    if (_textCtrl.text.trim().isEmpty && !_priloztNaceneni) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Zadejte text zprávy.'),
           backgroundColor: Colors.orange));
       return;
+    }
+    if (_priloztNaceneni) {
+      final castka =
+          double.tryParse(_castkaCtrl.text.replaceAll(',', '.')) ?? 0.0;
+      if (castka <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Zadejte platnou cenu nacenění.'),
+            backgroundColor: Colors.orange));
+        return;
+      }
     }
     setState(() => _isSaving = true);
     try {
@@ -154,25 +168,33 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
         fotoUrls.add(await ref.getDownloadURL());
       }
 
-      await FirebaseFirestore.instance
-          .collection('zakazky')
-          .doc(widget.documentId)
-          .collection('zakaznik_zpravy')
-          .add({
+      final Map<String, dynamic> msgData = {
         'text': _textCtrl.text.trim(),
         'foto_urls': fotoUrls,
         'cas': FieldValue.serverTimestamp(),
         'autor': autor,
         'odeslan_email': _odeslatEmail && widget.zakaznikEmail.isNotEmpty,
-      });
+      };
+      if (_priloztNaceneni) {
+        msgData['typ'] = 'naceneni';
+        msgData['castka'] =
+            double.tryParse(_castkaCtrl.text.replaceAll(',', '.')) ?? 0.0;
+        msgData['stav_schvaleni'] = 'cekajici';
+      }
+      await FirebaseFirestore.instance
+          .collection('zakazky')
+          .doc(widget.documentId)
+          .collection('zakaznik_zpravy')
+          .add(msgData);
 
       if (_odeslatEmail && widget.zakaznikEmail.isNotEmpty) {
         final Map<String, dynamic> mailDoc = {
           'to': widget.zakaznikEmail,
           'from': '$sNazev (přes TORKIS) <jan.svihalek00@gmail.com>',
           'message': {
-            'subject':
-                'Aktualizace zakázky ${widget.zakazkaId} – ${widget.spz}',
+            'subject': _priloztNaceneni
+                ? 'Nacenění zakázky ${widget.zakazkaId} – ${widget.spz}'
+                : 'Aktualizace zakázky ${widget.zakazkaId} – ${widget.spz}',
             'html': _buildEmailHtml(autor, sNazev),
           },
         };
@@ -195,13 +217,20 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
 
   String _buildEmailHtml(String autor, String sNazev) {
     final text = _textCtrl.text.trim().replaceAll('\n', '<br>');
+    final naceneniBlock = _priloztNaceneni
+        ? '''
+  <div style="background:#f1fbf5;border:2px solid #a5d6a7;border-radius:10px;padding:18px;margin:20px 0;">
+    <p style="font-weight:700;color:#2e7d32;margin:0 0 8px;">💰 Nacenění opravy</p>
+    <p style="font-size:26px;font-weight:800;color:#1a1a1a;margin:0 0 10px;">${_castkaCtrl.text.replaceAll('.', ',')} Kč</p>
+    <p style="color:#555;font-size:13px;margin:0;">Pro schválení nebo zamítnutí nacenění klikněte na tlačítko níže.</p>
+  </div>'''
+        : '';
     return '''
 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
   <h2 style="color: #2196F3; border-bottom: 2px solid #2196F3; padding-bottom: 10px;">Dobrý den,</h2>
-  <p>máme pro Vás aktualizaci k zakázce <b>${widget.zakazkaId}</b> na vozidle <b>${widget.spz}</b> v servisu $sNazev.</p>
-  <div style="background: #f5f9ff; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0; border-radius: 0 6px 6px 0;">
-    <p style="margin: 0; line-height: 1.6;">$text</p>
-  </div>
+  <p>máme pro Vás ${_priloztNaceneni ? 'nacenění' : 'aktualizaci'} k zakázce <b>${widget.zakazkaId}</b> na vozidle <b>${widget.spz}</b> v servisu $sNazev.</p>
+  $naceneniBlock
+  ${text.isNotEmpty ? '''<div style="background: #f5f9ff; border-left: 4px solid #2196F3; padding: 15px; margin: 20px 0; border-radius: 0 6px 6px 0;"><p style="margin: 0; line-height: 1.6;">$text</p></div>''' : ''}
   <p>Průběh vaší zakázky můžete sledovat online:</p>
   <div style="text-align: center; margin: 30px 0;">
     <a href="${widget.portalUrl}"
@@ -289,6 +318,52 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
                     borderSide: BorderSide.none),
               ),
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Switch(
+                  value: _priloztNaceneni,
+                  activeThumbColor: Colors.green,
+                  onChanged: (v) => setState(() => _priloztNaceneni = v),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.request_quote_outlined,
+                    color: Colors.green, size: 20),
+                const SizedBox(width: 6),
+                const Text('Přiložit nacenění',
+                    style: TextStyle(fontWeight: FontWeight.w500)),
+              ],
+            ),
+            if (_priloztNaceneni) ...[
+              const SizedBox(height: 8),
+              TextField(
+                controller: _castkaCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                style: const TextStyle(
+                    fontSize: 22, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  labelText: 'Cena celkem',
+                  suffixText: 'Kč',
+                  filled: true,
+                  fillColor: isDark
+                      ? const Color(0xFF1A2A1A)
+                      : const Color(0xFFF1FBF5),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                        color: Colors.green.withValues(alpha: 0.5)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide:
+                        const BorderSide(color: Colors.green, width: 2),
+                  ),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             if (_foto.isNotEmpty) ...[
               SizedBox(
@@ -302,8 +377,11 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
                         padding: const EdgeInsets.only(right: 8),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.file(File(_foto[i].path),
-                              width: 60, height: 60, fit: BoxFit.cover),
+                          child: kIsWeb
+                              ? Image.network(_foto[i].path,
+                                  width: 60, height: 60, fit: BoxFit.cover)
+                              : Image.file(File(_foto[i].path),
+                                  width: 60, height: 60, fit: BoxFit.cover),
                         ),
                       ),
                       Positioned(
