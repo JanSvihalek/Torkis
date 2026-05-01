@@ -3,7 +3,7 @@ import 'package:printing/printing.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/pdf_generator.dart';
 import '../auth_gate.dart';
-import '../zakazka_komunikace.dart';
+import '../zakazka_komunikace/zakazka_komunikace_page.dart';
 import '../fakturace/faktura_detail.dart';
 
 /// Spodní lišta akcí na detailu zakázky.

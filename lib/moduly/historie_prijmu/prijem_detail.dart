@@ -5,7 +5,7 @@ import 'package:printing/printing.dart';
 import 'dart:typed_data';
 import '../../core/pdf_generator.dart';
 import '../zakazka/prubeh.dart';
-import '../zakazka_komunikace.dart';
+import '../zakazka_komunikace/zakazka_komunikace_page.dart';
 
 class PrijemDetailScreen extends StatefulWidget {
   final String docId;
