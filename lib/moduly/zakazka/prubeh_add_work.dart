@@ -775,7 +775,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                           onChanged: (v) => _prepocitatCelkem(),
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
+                                      const SizedBox(width: 6),
                                       Expanded(
                                         flex: 2,
                                         child: DropdownButtonFormField<String>(
@@ -786,14 +786,8 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                                   ? Colors.white
                                                   : Colors.black),
                                           items: [
-                                            'ks',
-                                            'h',
-                                            'min',
-                                            'l',
-                                            'm',
-                                            'bal',
-                                            'sada',
-                                            'úkon'
+                                            'ks', 'h', 'min', 'l',
+                                            'm', 'bal', 'sada', 'úkon'
                                           ]
                                               .map((j) => DropdownMenuItem(
                                                   value: j,
@@ -802,9 +796,9 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                                           fontSize: 12))))
                                               .toList(),
                                           onChanged: (val) {
-                                            if (val != null)
-                                              setState(
-                                                  () => polozka.jednotka = val);
+                                            if (val != null) {
+                                              setState(() => polozka.jednotka = val);
+                                            }
                                           },
                                           decoration: InputDecoration(
                                             labelText: 'Jedn.',
@@ -824,7 +818,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
+                                      const SizedBox(width: 6),
                                       Expanded(
                                         flex: 2,
                                         child: _buildTextField(
@@ -836,37 +830,37 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                           onChanged: (v) => _prepocitatCelkem(),
                                         ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      if (!isMechanik)
-                                        Expanded(
-                                          flex: 3,
-                                          child: _buildTextField(
-                                            polozka.cenaBezDph,
-                                            _jePlatceDph ? 'Bez DPH' : 'Cena',
-                                            isDark,
-                                            isNumber: true,
-                                            compact: true,
-                                            onChanged: (v) =>
-                                                _prepocitatDphPolozky(
-                                                    polozka, v),
-                                          ),
-                                        ),
-                                      const SizedBox(width: 4),
-                                      if (!isMechanik)
-                                        Expanded(
-                                          flex: 3,
-                                          child: _buildTextField(
-                                            polozka.cenaSDph,
-                                            _jePlatceDph ? 'S DPH' : 'Konečná',
-                                            isDark,
-                                            isNumber: true,
-                                            compact: true,
-                                            onChanged: (v) =>
-                                                _prepocitatCelkem(),
-                                          ),
-                                        ),
                                     ],
                                   ),
+                                  if (!isMechanik) ...[
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: _buildTextField(
+                                            polozka.cenaBezDph,
+                                            _jePlatceDph ? 'Cena bez DPH' : 'Cena',
+                                            isDark,
+                                            isNumber: true,
+                                            compact: true,
+                                            onChanged: (v) =>
+                                                _prepocitatDphPolozky(polozka, v),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: _buildTextField(
+                                            polozka.cenaSDph,
+                                            _jePlatceDph ? 'Cena s DPH' : 'Konečná cena',
+                                            isDark,
+                                            isNumber: true,
+                                            compact: true,
+                                            onChanged: (v) => _prepocitatCelkem(),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                   const SizedBox(height: 10),
                                   if (!isMechanik)
                                     Container(
