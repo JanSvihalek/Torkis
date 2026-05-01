@@ -132,6 +132,15 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
             Row(
               children: [
+                Text('Zakázka ${widget.zakazkaId} · ${widget.spz}',
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.normal,
+                        color: Colors.grey[500])),
+              ],
+            ),
+            Row(
+              children: [
                 if (widget.zakaznikJmeno.isNotEmpty) ...[
                   Text(widget.zakaznikJmeno,
                       style: TextStyle(
@@ -208,7 +217,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
                   reverse: true,
                   itemCount: docs.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
