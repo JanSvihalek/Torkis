@@ -54,21 +54,25 @@ class ZakaznikInfoTab extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            if (dataZakaznika['ico'] != null &&
-                                dataZakaznika['ico']
-                                    .toString()
-                                    .isNotEmpty)
-                              Text(
-                                'IČO: ${dataZakaznika['ico']}',
-                                style:
-                                    const TextStyle(color: Colors.grey),
-                              ),
                           ],
                         ),
                       ),
                     ],
                   ),
                   const Divider(height: 30),
+                  if (dataZakaznika['ico'] != null &&
+                      dataZakaznika['ico'].toString().isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    _buildInfoRow(Icons.account_balance_wallet, 'IČO',
+                        dataZakaznika['ico']),
+                  ],
+                  const SizedBox(height: 10),
+                  if (dataZakaznika['dic'] != null &&
+                      dataZakaznika['dic'].toString().isNotEmpty) ...[
+                    _buildInfoRow(Icons.account_balance_wallet, 'DIČ',
+                        dataZakaznika['dic']),
+                  ],
+                  const SizedBox(height: 10),
                   _buildInfoRow(Icons.phone, 'Telefon',
                       dataZakaznika['telefon']),
                   const SizedBox(height: 10),
@@ -77,12 +81,6 @@ class ZakaznikInfoTab extends StatelessWidget {
                   const SizedBox(height: 10),
                   _buildInfoRow(Icons.location_on, 'Adresa',
                       dataZakaznika['adresa']),
-                  if (dataZakaznika['dic'] != null &&
-                      dataZakaznika['dic'].toString().isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    _buildInfoRow(Icons.account_balance_wallet, 'DIČ',
-                        dataZakaznika['dic']),
-                  ],
                 ],
               ),
             ),
