@@ -12,7 +12,6 @@ import 'main_screen.dart';
 String? globalServisId;
 String? globalUserRole;
 String? globalUserJmeno;
-Map<String, bool> globalPrava = {};
 
 // Sdružená data pro přihlášení (uživatel + předplatné)
 class _AuthData {
@@ -116,8 +115,6 @@ class AuthGate extends StatelessWidget {
               globalServisId = userData['servis_id'];
               globalUserRole = userData['role'];
               globalUserJmeno = userData['jmeno']?.toString();
-              globalPrava =
-                  Map<String, bool>.from(userData['prava'] ?? {});
 
               final tmavyRezim =
                   userData['tmavy_rezim'] as bool? ?? false;

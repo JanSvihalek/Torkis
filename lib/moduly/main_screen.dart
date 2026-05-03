@@ -29,38 +29,13 @@ import 'predplatne_page.dart';
 final ValueNotifier<List<String>> navOrderNotifier =
     ValueNotifier(['prijem', 'zakazky', 'menu']);
 
-// Mapování nav ID na klíč v prava mapě (null = vždy viditelné)
-const Map<String, String?> _navIdPravKlic = {
-  'prijem': 'zakazky',
-  'zakazky': 'zakazky',
-  'planovac': 'zakazky',
-  'sklad': 'sklad',
-  'fakturace': 'fakturace',
-  'ucetnictvi': 'fakturace',
-  'statistiky': 'fakturace',
-  'zamestnanci': 'zamestnanci',
-  'nastaveni': 'nastaveni',
-  'ukony': 'nastaveni',
-  'vozidla': 'nastaveni',
-  'zakaznici': 'nastaveni',
-  'historie_prijmu': 'zakazky',
-  'menu': null,
-};
-
 bool maPristup(String navId) {
   // 1. Platnost předplatného — blokuje všechny role
   if (!globalPredplatneAktivni && navId != 'menu') return false;
 
-  // 2. Moduly předplatného — blokuje všechny role včetně admina servisu
+  // 2. Moduly předplatného — určuje přístup pro všechny role
   final modulKlic = navIdToModulKlic[navId];
   if (modulKlic != null && !(globalModuly[modulKlic] ?? false)) return false;
-
-  // 3. Admin servisu má přístup ke všemu co předplatné povoluje
-  if (globalUserRole == 'admin') return true;
-
-  // 4. Zaměstnanci — kontrola individuálních práv
-  final pravKlic = _navIdPravKlic[navId];
-  if (pravKlic != null && !(globalPrava[pravKlic] ?? false)) return false;
 
   return true;
 }
