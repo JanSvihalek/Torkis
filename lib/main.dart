@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -83,9 +84,11 @@ class VistoApp extends StatelessWidget {
               surface: const Color(0xFFFBFDFF),
             ),
             useMaterial3: true,
-            fontFamily: 'Roboto',
+            textTheme: GoogleFonts.ibmPlexSansTextTheme(
+              ThemeData(brightness: Brightness.light).textTheme,
+            ),
           ),
-          
+
           // Tvoje původní, nedotčené nastavení tmavého motivu
           darkTheme: ThemeData(
             brightness: Brightness.dark,
@@ -96,7 +99,9 @@ class VistoApp extends StatelessWidget {
               surface: const Color(0xFF121212),
             ),
             useMaterial3: true,
-            fontFamily: 'Roboto',
+            textTheme: GoogleFonts.ibmPlexSansTextTheme(
+              ThemeData(brightness: Brightness.dark).textTheme,
+            ),
           ),
           themeMode: currentMode,
 

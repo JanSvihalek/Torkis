@@ -135,9 +135,9 @@ class _AuthScreenState extends State<AuthScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Image.asset(
-                            'assets/images/torkis-app-icon-256.png',
-                            width: 160,
-                            height: 160,
+                            'assets/images/torkis-app-icon-192.png',
+                            width: 192,
+                            height: 192,
                           ),
                           const SizedBox(height: 15),
                           const Text(
