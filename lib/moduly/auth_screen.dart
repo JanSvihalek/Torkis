@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:ui'; // Nutné pro ImageFilter (efekt skla)
 import 'package:firebase_auth/firebase_auth.dart';
 
 import 'auth_gate.dart'; // <--- ODKAZ NA NAŠEHO STRÁŽCE
@@ -131,25 +130,14 @@ class _AuthScreenState extends State<AuthScreen> {
             child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(30.0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
-                      ),
-                      padding: const EdgeInsets.all(30),
-                      child: Column(
+                child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Image.asset(
-                            'assets/images/torkis-app-icon-180.png',
-                            width: 90,
-                            height: 90,
+                            'assets/images/torkis-app-icon-256.png',
+                            width: 160,
+                            height: 160,
                           ),
                           const SizedBox(height: 15),
                           const Text(
@@ -270,9 +258,6 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                ),
               ),
             ),
           ),
