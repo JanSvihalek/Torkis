@@ -10,6 +10,8 @@ class VozidloInfoTab extends StatelessWidget {
   final String spz;
   final String zakaznikId;
   final String znackaNazev;
+  final String palivo;
+  final String prevodovka;
   final String tacho;
   final String stkM;
   final String stkR;
@@ -22,6 +24,8 @@ class VozidloInfoTab extends StatelessWidget {
     required this.spz,
     required this.zakaznikId,
     required this.znackaNazev,
+    required this.palivo,
+    required this.prevodovka,
     required this.tacho,
     required this.stkM,
     required this.stkR,
@@ -156,6 +160,16 @@ class VozidloInfoTab extends StatelessWidget {
                       Expanded(
                           child: _buildInfoColumn(
                               'Rok výroby', autoData['rok_vyroby'])),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                          child: _buildInfoColumn(
+                              'Převodovka', autoData['prevodovka'])),
+                      Expanded(
+                          child: _buildInfoColumn('Palivo', autoData['palivo'])),
                     ],
                   ),
                   const SizedBox(height: 20),

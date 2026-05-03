@@ -239,6 +239,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                 _infoRow('E-mail', zakaznik['email']),
                 _infoRow('Adresa', zakaznik['adresa']),
                 _infoRow('IČO', zakaznik['ico']),
+                _infoRow('DIČ', zakaznik['dic']),
               ],
             ),
             const SizedBox(height: 15),

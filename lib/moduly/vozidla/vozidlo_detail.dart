@@ -376,8 +376,9 @@ class VozidloDetailScreen extends StatelessWidget {
 
         final spz = autoData['spz']?.toString() ?? 'Neznámá SPZ';
         final zakaznikId = autoData['zakaznik_id']?.toString() ?? '';
-        final znackaNazev =
-            (autoData['znacka']?.toString() ?? '').trim();
+        final znackaNazev = (autoData['znacka']?.toString() ?? '').trim();
+        final palivo = autoData['palivo']?.toString() ?? '';
+        final prevodovka = autoData['prevodovka']?.toString() ?? '';
         final tacho = autoData['tachometr']?.toString() ?? '';
         final stkM = autoData['stk_mesic']?.toString() ?? '';
         final stkR = autoData['stk_rok']?.toString() ?? '';
@@ -428,6 +429,8 @@ class VozidloDetailScreen extends StatelessWidget {
                   zakaznikId: zakaznikId,
                   znackaNazev: znackaNazev,
                   tacho: tacho,
+                  palivo: palivo,
+                  prevodovka: prevodovka,
                   stkM: stkM,
                   stkR: stkR,
                 ),

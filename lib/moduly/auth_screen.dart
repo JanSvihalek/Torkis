@@ -11,7 +11,7 @@ class AuthScreen extends StatefulWidget {
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -20,38 +20,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  // --- NOVÉ: Proměnné pro animaci pozadí ---
-  late AnimationController _animController;
-  late Animation<Alignment> _topAlignmentAnimation;
-  late Animation<Alignment> _bottomAlignmentAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    // Nastavení plynulé animace
-    _animController = AnimationController(vsync: this, duration: const Duration(seconds: 7));
-    
-    _topAlignmentAnimation = TweenSequence<Alignment>([
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topLeft, end: Alignment.topRight), weight: 1),
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topRight, end: Alignment.bottomRight), weight: 1),
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomRight, end: Alignment.bottomLeft), weight: 1),
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomLeft, end: Alignment.topLeft), weight: 1),
-    ]).animate(_animController);
-
-    _bottomAlignmentAnimation = TweenSequence<Alignment>([
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomRight, end: Alignment.bottomLeft), weight: 1),
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.bottomLeft, end: Alignment.topLeft), weight: 1),
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topLeft, end: Alignment.topRight), weight: 1),
-      TweenSequenceItem(tween: AlignmentTween(begin: Alignment.topRight, end: Alignment.bottomRight), weight: 1),
-    ]).animate(_animController);
-
-    _animController.repeat();
-  }
-
   @override
   void dispose() {
-    _animController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -153,25 +123,8 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // 1. ANIMOVANÉ POZADÍ
-          AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: _topAlignmentAnimation.value,
-                    end: _bottomAlignmentAnimation.value,
-                    colors: const [
-                      Color(0xFF0F2027), // Velmi tmavě modrá/černá
-                      Color(0xFF203A43), // Temně modrá
-                      Color(0xFF2C5364), // Lehce světlejší ocelově modrá
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+          // 1. POZADÍ
+          Container(color: const Color(0xFF0B1A2E)),
 
           // 2. FORMULÁŘ (Glassmorphism)
           SafeArea(
@@ -193,10 +146,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Icon(
-                            Icons.car_repair,
-                            size: 80,
-                            color: Colors.blueAccent,
+                          Image.asset(
+                            'assets/images/torkis-app-icon-180.png',
+                            width: 90,
+                            height: 90,
                           ),
                           const SizedBox(height: 15),
                           const Text(
