@@ -587,7 +587,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor:
-            isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            isDark ? const Color(0xFF1E3A5F) : Colors.white,
         title: const Text('Detail faktury',
             style: TextStyle(fontWeight: FontWeight.bold)),
       ),
@@ -654,7 +654,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                   Container(
                     width: double.infinity,
                     color: isDark
-                        ? const Color(0xFF1A1A1A)
+                        ? const Color(0xFF1E3A5F)
                         : Colors.white,
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -819,7 +819,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                                 padding: const EdgeInsets.all(15),
                                 decoration: BoxDecoration(
                                   color: isDark
-                                      ? const Color(0xFF2C2C2C)
+                                      ? const Color(0xFF1E3A5F)
                                       : const Color(0xFFF8FAFC),
                                   borderRadius:
                                       BorderRadius.circular(10),
@@ -959,7 +959,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                               margin:
                                   const EdgeInsets.only(bottom: 15),
                               color: isDark
-                                  ? const Color(0xFF1E1E1E)
+                                  ? const Color(0xFF1E3A5F)
                                   : Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(15),
@@ -1077,7 +1077,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF1A1A1A)
+                            ? const Color(0xFF1E3A5F)
                             : Colors.white,
                         boxShadow: const [
                           BoxShadow(
@@ -1147,7 +1147,7 @@ class _FakturaDetailScreenState extends State<FakturaDetailScreen> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF1A1A1A)
+                            ? const Color(0xFF1E3A5F)
                             : Colors.white,
                         boxShadow: const [
                           BoxShadow(

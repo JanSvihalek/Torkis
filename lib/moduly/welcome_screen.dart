@@ -11,14 +11,14 @@ class LandingPage extends StatelessWidget {
     final isMobile = screenWidth < 800;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : const Color(0xFFF8FAFC),
+      backgroundColor: isDark ? const Color(0xFF0D2040) : const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
         child: Column(
           children: [
             // --- 1. NAVIGAČNÍ LIŠTA ---
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -190,7 +190,7 @@ class LandingPage extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 40, vertical: 80),
-              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               child: Column(
                 children: [
                   const Text(
@@ -295,7 +295,7 @@ class LandingPage extends StatelessWidget {
       width: isMobile ? double.infinity : 350,
       padding: const EdgeInsets.all(30),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           if (!isDark)
@@ -347,7 +347,7 @@ class LandingPage extends StatelessWidget {
       width: 380,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(30),
         border: Border.all(
           color: isPro ? Colors.blue : (isDark ? Colors.grey.shade800 : Colors.grey.shade200),

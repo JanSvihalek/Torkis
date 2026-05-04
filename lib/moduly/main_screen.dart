@@ -202,8 +202,10 @@ class _MainScreenState extends State<MainScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.car_repair,
-                        color: Theme.of(context).colorScheme.primary, size: 28),
+                    Image.asset(
+                      'assets/images/torkis-app-icon-192.png',
+                      height: 28,
+                    ),
                     const SizedBox(width: 8),
                     Text('TORKIS',
                         style: TextStyle(
@@ -258,7 +260,7 @@ class _MainScreenState extends State<MainScreen> {
                   _currentTabId = filteredNavOrder[index];
                 });
               },
-              backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              backgroundColor: isDark ? const Color(0xFF0D2040) : Colors.white,
               indicatorColor:
                   Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -376,7 +378,7 @@ class MenuPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Card(
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              color: isDark ? const Color(0xFF112240) : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
                 side: BorderSide(
@@ -390,9 +392,10 @@ class MenuPage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.car_repair,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 28),
+                        Image.asset(
+                          'assets/images/torkis-app-icon-192.png',
+                          height: 28,
+                        ),
                         const SizedBox(width: 10),
                         const Text('TORKIS',
                             style: TextStyle(
@@ -521,7 +524,7 @@ class MenuPage extends StatelessWidget {
                       : Scaffold(
                           appBar: AppBar(
                               backgroundColor: isDark
-                                  ? const Color(0xFF1A1A1A)
+                                  ? const Color(0xFF1E3A5F)
                                   : Colors.white,
                               elevation: 1,
                               title: Text(title,
@@ -531,7 +534,7 @@ class MenuPage extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          color: isDark ? const Color(0xFF112240) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: isLocked

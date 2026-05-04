@@ -1,6 +1,6 @@
 ---
 name: Stav projektu TORKIS
-description: Přehled architektury, hotových funkcí a klíčových souborů — aktualizováno 2026-04-30
+description: Přehled architektury, hotových funkcí a klíčových souborů — aktualizováno 2026-05-04
 type: project
 originSessionId: 5d411500-fae5-45ee-abb4-fd9e8aca059d
 ---
@@ -91,6 +91,14 @@ Emaily: kolekce `maily` (Firebase Trigger Email extension)
 - `zakazka_komunikace/zprava_karta.dart` — chat bublina
 - `zakazka_komunikace/foto_nahled.dart` — fullscreen foto
 - `zakazka_komunikace/pridat_zpravu_sheet.dart` — bottom sheet pro novou zprávu
+
+## Branding / loga (přidáno 2026-05-04)
+
+`assets/images/` obsahuje nová loga: `torkis-app-icon-32/180/192/256/512/1024.png`
+`auth_screen.dart` používá nové logo (`torkis-app-icon-192.png`) + novou barevnou paletu:
+- Pozadí: `#0B1A2E` (tmavě modrá)
+- Akcenty: `Colors.blueAccent`
+- Styl polí: Glassmorphism (průhledné pozadí, žádný border, fokus s modrým outline)
 
 ## Závislosti (pubspec)
 Žádné nové závislosti — vše využívá: `cloud_firestore`, `firebase_auth`, `firebase_storage`, `image_picker`, `printing`, `intl`, `http`.

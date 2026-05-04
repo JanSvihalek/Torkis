@@ -220,7 +220,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
         builder: (context) => Container(
             height: MediaQuery.of(context).size.height * 0.7,
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(25)),
             ),
@@ -321,7 +321,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
         ),
         padding: const EdgeInsets.all(20),
@@ -551,7 +551,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(widget.existingWork != null ? 'Úprava úkonu' : 'Nový úkon'),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
       ),
       body: Column(
         children: [
@@ -562,7 +562,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Card(
-                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15)),
                     child: Padding(
@@ -597,7 +597,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                   ),
                   const SizedBox(height: 15),
                   Card(
-                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15)),
                     child: Padding(
@@ -637,7 +637,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
                                 color: isDark
-                                    ? const Color(0xFF2C2C2C)
+                                    ? const Color(0xFF1E3A5F)
                                     : Colors.grey[50],
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -694,7 +694,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                                 const TextStyle(fontSize: 12),
                                             filled: true,
                                             fillColor: isDark
-                                                ? const Color(0xFF1E1E1E)
+                                                ? Colors.white.withValues(alpha: 0.1)
                                                 : Colors.white,
                                             contentPadding:
                                                 const EdgeInsets.symmetric(
@@ -806,7 +806,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                                                 const TextStyle(fontSize: 12),
                                             filled: true,
                                             fillColor: isDark
-                                                ? const Color(0xFF1E1E1E)
+                                                ? Colors.white.withValues(alpha: 0.1)
                                                 : Colors.white,
                                             contentPadding:
                                                 const EdgeInsets.symmetric(
@@ -929,7 +929,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
                   ),
                   const SizedBox(height: 15),
                   Card(
-                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15)),
                     child: Padding(
@@ -1047,7 +1047,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF121212) : Colors.white,
+              color: isDark ? const Color(0xFF0D2040) : Colors.white,
               boxShadow: [
                 BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -1126,9 +1126,7 @@ class _AddWorkScreenState extends State<AddWorkScreen> {
         labelText: hint,
         labelStyle: TextStyle(fontSize: compact ? 12 : 14),
         filled: true,
-        fillColor: isDark
-            ? (compact ? const Color(0xFF1E1E1E) : const Color(0xFF2C2C2C))
-            : Colors.white,
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
         contentPadding: EdgeInsets.symmetric(
             horizontal: compact ? 10 : 15, vertical: compact ? 10 : 15),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),

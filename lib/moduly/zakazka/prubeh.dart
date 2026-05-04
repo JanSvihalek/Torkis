@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1000,7 +1000,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         elevation: 1,
         title: Text(
           'Oprava: ${widget.zakazkaId} (${widget.spz})',
@@ -1067,7 +1067,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
               // -- Stav zakázky (dropdown / badge) --
               Container(
                 width: double.infinity,
-                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 20, vertical: 15),
                 child: Row(
@@ -1101,7 +1101,7 @@ class _ActiveJobScreenState extends State<ActiveJobScreen> {
                                   value: aktualniStav,
                                   isExpanded: true,
                                   dropdownColor: isDark
-                                      ? const Color(0xFF2C2C2C)
+                                      ? const Color(0xFF1E3A5F)
                                       : Colors.white,
                                   items: dostupneStavy
                                       .map(

@@ -76,7 +76,7 @@ class VozidloZakazkyTab extends StatelessWidget {
               }
 
               return Card(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 margin: const EdgeInsets.only(bottom: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),

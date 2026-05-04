@@ -391,7 +391,7 @@ class VozidloDetailScreen extends StatelessWidget {
               title: const Text('Karta vozidla',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               backgroundColor:
-                  isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                  isDark ? const Color(0xFF1E3A5F) : Colors.white,
               elevation: 0,
               actions: [
                 IconButton(

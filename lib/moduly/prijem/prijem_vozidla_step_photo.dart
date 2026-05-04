@@ -53,7 +53,7 @@ class StepPhoto extends StatelessWidget {
 
                 return Card(
                   color: isDark
-                      ? const Color(0xFF1A1A1A)
+                      ? const Color(0xFF1E3A5F)
                       : Colors.white,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(20),

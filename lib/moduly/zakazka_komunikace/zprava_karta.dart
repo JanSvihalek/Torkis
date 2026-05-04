@@ -29,7 +29,7 @@ class ZpravaKarta extends StatelessWidget {
 
     final bubbleColor = isZakaznik
         ? Colors.blue
-        : (isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF0F4FF));
+        : (isDark ? const Color(0xFF1E3A5F) : const Color(0xFFF0F4FF));
     final textColor = isZakaznik
         ? Colors.white
         : (isDark ? Colors.white : Colors.black87);

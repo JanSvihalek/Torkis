@@ -119,7 +119,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
           d['spz']?.toString() ?? 'Detail příjmu',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         elevation: 0,
         actions: [
           IconButton(
@@ -415,7 +415,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
@@ -474,7 +474,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
@@ -573,7 +573,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   Widget _buildPodpisSection(bool isDark, String podpisUrl) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),

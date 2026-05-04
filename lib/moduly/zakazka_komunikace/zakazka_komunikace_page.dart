@@ -119,7 +119,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         elevation: 0,
         title: const Text('Komunikace',
             style: TextStyle(fontWeight: FontWeight.bold)),
@@ -202,7 +202,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
             color: Colors.teal.withValues(alpha: 0.3), width: 1.5),
@@ -269,7 +269,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.blue.withValues(alpha: 0.3), width: 1.5),
         boxShadow: isDark
@@ -313,7 +313,7 @@ class _ZakazkaKomunikacePageState extends State<ZakazkaKomunikacePage> {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color:
-                          isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
+                          isDark ? const Color(0xFF1E3A5F) : Colors.grey[100],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

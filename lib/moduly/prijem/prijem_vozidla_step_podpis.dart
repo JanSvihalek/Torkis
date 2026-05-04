@@ -59,7 +59,7 @@ class StepPodpis extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF1E1E1E)
+                    ? const Color(0xFF1E3A5F)
                     : Colors.grey[50],
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
@@ -114,7 +114,7 @@ class StepPodpis extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
                 color: isDark
-                    ? const Color(0xFF1E1E1E)
+                    ? const Color(0xFF1E3A5F)
                     : Colors.blue.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(

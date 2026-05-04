@@ -36,7 +36,7 @@ class _SkladPageState extends State<SkladPage> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
           title: const Text('Skladové hospodářství', style: TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           elevation: 0,
           bottom: const TabBar(
             labelColor: Colors.orange,
@@ -98,7 +98,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
               hintText: 'Hledat díl, kód nebo výrobce...',
               prefixIcon: const Icon(Icons.search, color: Colors.orange),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
                 borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
@@ -146,7 +146,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 10),
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                       side: BorderSide(
@@ -215,7 +215,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
             return Container(
               height: MediaQuery.of(context).size.height * 0.85,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
               ),
               padding: EdgeInsets.only(
@@ -264,7 +264,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
                             decoration: InputDecoration(
                               labelText: 'Jednotka',
                               filled: true,
-                              fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
+                              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
                             ),
@@ -356,7 +356,7 @@ class _StavSkladuTabState extends State<_StavSkladuTab> {
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.grey),
         filled: true,
-        fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
@@ -494,7 +494,7 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               borderRadius: BorderRadius.circular(15),
               border: Border.all(color: Colors.grey.withOpacity(0.2)),
             ),
@@ -931,7 +931,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
             return Container(
               height: MediaQuery.of(context).size.height * 0.8,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
               ),
               padding: const EdgeInsets.all(20),
@@ -1161,7 +1161,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                 const SizedBox(height: 20),
 
                 Card(
-                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   child: Padding(
@@ -1239,7 +1239,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
                 const SizedBox(height: 20),
 
                 Card(
-                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                   child: Padding(
@@ -1395,7 +1395,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
             height: 80,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF121212) : Colors.white,
+              color: isDark ? const Color(0xFF0D2040) : Colors.white,
               boxShadow: [const BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -5))],
             ),
             child: Row(
@@ -1489,7 +1489,7 @@ class _HistorieSkladuTab extends StatelessWidget {
         return Container(
           height: MediaQuery.of(context).size.height * 0.7,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           ),
           padding: const EdgeInsets.all(25),
@@ -1528,7 +1528,7 @@ class _HistorieSkladuTab extends StatelessWidget {
               const SizedBox(height: 30),
               
               Card(
-                color: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.grey[50],
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15), side: BorderSide(color: Colors.grey.withOpacity(0.2))),
                 child: Padding(

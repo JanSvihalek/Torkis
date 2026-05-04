@@ -23,7 +23,7 @@ class _VyberZakaznikaSheetState extends State<VyberZakaznikaSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25))),
       padding: const EdgeInsets.all(20),
       child: Column(
