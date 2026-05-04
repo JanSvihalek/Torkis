@@ -91,6 +91,12 @@ class AuthGate extends StatelessWidget {
 
         final user = authSnapshot.data!;
 
+        // Anonymní session z zákaznického portálu — odhlásit a zobrazit login
+        if (user.isAnonymous) {
+          FirebaseAuth.instance.signOut();
+          return const AuthScreen();
+        }
+
         return FutureBuilder<_AuthData>(
           future: _loadAuthData(user.uid),
           builder: (context, snap) {
