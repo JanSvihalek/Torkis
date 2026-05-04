@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'vozidlo_detail.dart';
 
 class VozidlaPage extends StatefulWidget {
@@ -13,11 +16,49 @@ class VozidlaPage extends StatefulWidget {
 class _VozidlaPageState extends State<VozidlaPage> {
   String _searchQuery = '';
   Map<String, String> _logaZnacek = {};
+  final TextEditingController _searchController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     _nactiLogaZnacek();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _scanSpz() async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Skenování funguje pouze v nainstalované aplikaci (APK/iOS).'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 4)));
+      return;
+    }
+    try {
+      final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+      if (photo == null) return;
+      final inputImage = InputImage.fromFilePath(photo.path);
+      final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+      final recognizedText = await textRecognizer.processImage(inputImage);
+      final spz = recognizedText.text
+          .replaceAll(RegExp(r'[^A-Z0-9]'), '')
+          .toUpperCase();
+      textRecognizer.close();
+      if (!mounted) return;
+      setState(() {
+        _searchController.text = spz;
+        _searchQuery = spz.toLowerCase();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Chyba skenování: $e'), backgroundColor: Colors.red));
+    }
   }
 
   Future<void> _nactiLogaZnacek() async {
@@ -82,11 +123,17 @@ class _VozidlaPageState extends State<VozidlaPage> {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: TextField(
+                  controller: _searchController,
                   onChanged: (value) =>
                       setState(() => _searchQuery = value.toLowerCase()),
                   decoration: InputDecoration(
                     hintText: 'Hledat SPZ, Značku nebo VIN...',
                     prefixIcon: const Icon(Icons.search, color: Colors.teal),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.document_scanner, color: Colors.teal),
+                      onPressed: _scanSpz,
+                      tooltip: 'Naskenovat SPZ fotoaparátem',
+                    ),
                     filled: true,
                     fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
                     enabledBorder: OutlineInputBorder(
