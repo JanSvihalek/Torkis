@@ -127,7 +127,7 @@ class VozidloInfoTab extends StatelessWidget {
           ),
           const SizedBox(height: 30),
           Card(
-            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
               side: BorderSide(
@@ -227,7 +227,7 @@ class VozidloInfoTab extends StatelessWidget {
                     as Map<String, dynamic>;
                 return Card(
                   color: isDark
-                      ? const Color(0xFF1E1E1E)
+                      ? const Color(0xFF1E3A5F)
                       : Colors.blueGrey[50],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),

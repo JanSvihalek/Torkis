@@ -79,7 +79,7 @@ class ZakaznikFakturyTab extends StatelessWidget {
             if (jeStornovano) barvaStavu = Colors.grey;
 
             return Card(
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
@@ -197,7 +197,7 @@ class ZakaznikFakturyTab extends StatelessWidget {
                                 horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
                               color: isDark
-                                  ? const Color(0xFF2C2C2C)
+                                  ? const Color(0xFF1E3A5F)
                                   : const Color(0xFFF5F5F5),
                               borderRadius: BorderRadius.circular(8),
                             ),

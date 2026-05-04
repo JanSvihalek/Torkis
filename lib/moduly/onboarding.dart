@@ -396,7 +396,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             Container(
               padding: const EdgeInsets.all(30),
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 boxShadow: [
                   BoxShadow(
                       color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
@@ -494,7 +494,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         prefix, rokFormat, mesicFormat, oddelovac, delkaPocitadla.toInt());
 
     final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
-    final fillColor = isDark ? const Color(0xFF2C2C2C) : Colors.grey[50]!;
+    final fillColor = isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50]!;
     final inputBorder =
         OutlineInputBorder(borderRadius: BorderRadius.circular(10));
     final enabledBorder = OutlineInputBorder(
@@ -504,7 +504,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border:
             Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
@@ -693,7 +693,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       onPressed: _fetchAresData,
                       tooltip: 'Načíst z ARES'),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
@@ -716,7 +716,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               hintText: 'Zadejte název...',
               prefixIcon: const Icon(Icons.storefront, color: Colors.blue),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
@@ -738,7 +738,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               hintText: 'Např. zapsán v ŽR u MÚ...',
               prefixIcon: const Icon(Icons.gavel, color: Colors.blueGrey),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
@@ -767,7 +767,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               hintText: 'Např. info@autoservis.cz',
               prefixIcon: const Icon(Icons.email, color: Colors.blue),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
@@ -782,7 +782,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
                     color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
@@ -815,7 +815,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               hintText: 'Např. Jan Novák',
               prefixIcon: const Icon(Icons.person, color: Colors.blue),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
@@ -830,7 +830,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
                     color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
@@ -887,7 +887,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               hintText: 'Např. 800',
               prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
@@ -902,7 +902,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(
                     color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
@@ -928,7 +928,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 prefixIcon:
                     const Icon(Icons.assignment_ind, color: Colors.blue),
                 filled: true,
-                fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
                     borderSide: BorderSide(
@@ -957,7 +957,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     prefixIcon: const Icon(Icons.account_balance,
                         color: Colors.blueGrey),
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide(
@@ -989,7 +989,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   decoration: InputDecoration(
                     hintText: 'Kód banky',
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide(
@@ -1017,7 +1017,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.payment, color: Colors.blueGrey),
               filled: true,
-              fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                   borderSide: BorderSide(
@@ -1107,7 +1107,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         const SizedBox(height: 30),
         ...List.generate(_ukony.length, (index) {
           final ukon = _ukony[index];
-          final fillColor = isDark ? const Color(0xFF1E1E1E) : Colors.grey[50]!;
+          final fillColor = isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50]!;
           final border = OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(
@@ -1117,7 +1117,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
                   color: isDark ? Colors.grey[800]! : Colors.grey[300]!),

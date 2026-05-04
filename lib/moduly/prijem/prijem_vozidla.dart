@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
@@ -507,7 +507,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(25))),
         padding: const EdgeInsets.all(20),
@@ -1327,7 +1327,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   Widget _buildBottomPanel(bool isDark) => Container(
         padding: const EdgeInsets.fromLTRB(30, 20, 30, 30),
         decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF121212) : Colors.white,
+            color: isDark ? const Color(0xFF0D2040) : Colors.white,
             boxShadow: [
               BoxShadow(
                   color: Colors.black.withOpacity(0.05),

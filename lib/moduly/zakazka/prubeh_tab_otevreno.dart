@@ -98,7 +98,7 @@ class OtevrenTab extends StatelessWidget {
                       data['zakaznik']?['jmeno']?.toString() ?? '';
 
                   return Card(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15)),
                     child: ListTile(
@@ -191,7 +191,7 @@ Widget buildSearchBar({
         hintText: hint,
         prefixIcon: Icon(icon, color: Colors.blue),
         filled: true,
-        fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none),

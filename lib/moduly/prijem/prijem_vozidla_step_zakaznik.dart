@@ -104,7 +104,7 @@ class StepZakaznik extends StatelessWidget {
                               tooltip: 'Hledat v ARES'),
                       filled: true,
                       fillColor: isDark
-                          ? const Color(0xFF1E1E1E)
+                          ? Colors.white.withValues(alpha: 0.1)
                           : Colors.white,
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),

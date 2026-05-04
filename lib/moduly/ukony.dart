@@ -145,7 +145,7 @@ class _UkonyPageState extends State<UkonyPage> {
       builder: (_) => StatefulBuilder(
         builder: (context, setSheet) => Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(25)),
           ),
@@ -183,7 +183,7 @@ class _UkonyPageState extends State<UkonyPage> {
                         const Icon(Icons.build_circle, color: Colors.blue),
                     filled: true,
                     fillColor:
-                        isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide.none),
@@ -212,7 +212,7 @@ class _UkonyPageState extends State<UkonyPage> {
                               color: Colors.green),
                           filled: true,
                           fillColor: isDark
-                              ? const Color(0xFF2C2C2C)
+                              ? Colors.white.withValues(alpha: 0.1)
                               : Colors.grey[50],
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
@@ -241,7 +241,7 @@ class _UkonyPageState extends State<UkonyPage> {
                               color: Colors.orange),
                           filled: true,
                           fillColor: isDark
-                              ? const Color(0xFF2C2C2C)
+                              ? Colors.white.withValues(alpha: 0.1)
                               : Colors.grey[50],
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
@@ -282,7 +282,7 @@ class _UkonyPageState extends State<UkonyPage> {
                     labelText: 'Celková cena bez DPH (Kč)',
                     prefixIcon: const Icon(Icons.price_check, color: Colors.green),
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide.none),
@@ -297,7 +297,7 @@ class _UkonyPageState extends State<UkonyPage> {
                         const Icon(Icons.category, color: Colors.purple),
                     filled: true,
                     fillColor:
-                        isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                        isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(15),
                         borderSide: BorderSide.none),
@@ -412,7 +412,7 @@ class _UkonyPageState extends State<UkonyPage> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       if (!isDark)
@@ -435,7 +435,7 @@ class _UkonyPageState extends State<UkonyPage> {
                             const Icon(Icons.build_circle, color: Colors.blue),
                         filled: true,
                         fillColor:
-                            isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                            isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15),
                             borderSide: BorderSide.none),
@@ -456,7 +456,7 @@ class _UkonyPageState extends State<UkonyPage> {
                                   color: Colors.green),
                               filled: true,
                               fillColor: isDark
-                                  ? const Color(0xFF2C2C2C)
+                                  ? Colors.white.withValues(alpha: 0.1)
                                   : Colors.grey[50],
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(15),
@@ -477,7 +477,7 @@ class _UkonyPageState extends State<UkonyPage> {
                                   color: Colors.orange),
                               filled: true,
                               fillColor: isDark
-                                  ? const Color(0xFF2C2C2C)
+                                  ? Colors.white.withValues(alpha: 0.1)
                                   : Colors.grey[50],
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(15),
@@ -507,7 +507,7 @@ class _UkonyPageState extends State<UkonyPage> {
                             color: Colors.green),
                         filled: true,
                         fillColor:
-                            isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                            isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15),
                             borderSide: BorderSide.none),
@@ -526,7 +526,7 @@ class _UkonyPageState extends State<UkonyPage> {
                                   color: Colors.purple),
                               filled: true,
                               fillColor: isDark
-                                  ? const Color(0xFF2C2C2C)
+                                  ? Colors.white.withValues(alpha: 0.1)
                                   : Colors.grey[50],
                               border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(15),
@@ -624,7 +624,7 @@ class _UkonyPageState extends State<UkonyPage> {
 
                   return Card(
                     elevation: 0,
-                    color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                         side: BorderSide(

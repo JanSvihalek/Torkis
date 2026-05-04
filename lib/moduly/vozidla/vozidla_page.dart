@@ -88,7 +88,7 @@ class _VozidlaPageState extends State<VozidlaPage> {
                     hintText: 'Hledat SPZ, Značku nebo VIN...',
                     prefixIcon: const Icon(Icons.search, color: Colors.teal),
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(
@@ -175,7 +175,7 @@ class _VozidlaPageState extends State<VozidlaPage> {
                   final maStk = stkM.isNotEmpty && stkR.isNotEmpty;
 
                   return Card(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                       side: BorderSide(

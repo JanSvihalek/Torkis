@@ -48,7 +48,7 @@ class _UcetnictviPageState extends State<UcetnictviPage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(color: barva.withOpacity(0.3), width: 1.5),
           boxShadow: [
@@ -240,7 +240,7 @@ class _UcetnictviPageState extends State<UcetnictviPage> {
                     height: 250,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                       borderRadius: BorderRadius.circular(15),
                       border: Border.all(
                         color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
@@ -374,7 +374,7 @@ class _UcetnictviPageState extends State<UcetnictviPage> {
                       final jePoSplatnosti = dnuPoSplatnosti > 0;
 
                       return Card(
-                        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                         margin: const EdgeInsets.only(bottom: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),

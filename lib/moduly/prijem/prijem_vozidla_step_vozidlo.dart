@@ -168,7 +168,7 @@ class StepVozidlo extends StatelessWidget {
                     children: nalezenaVozidla
                         .map((v) => ActionChip(
                             backgroundColor: isDark
-                                ? const Color(0xFF2C2C2C)
+                                ? const Color(0xFF1E3A5F)
                                 : Colors.white,
                             side: const BorderSide(color: Colors.blue),
                             label: Text(
@@ -261,7 +261,7 @@ class StepVozidlo extends StatelessWidget {
                             color: Colors.blue),
                         filled: true,
                         fillColor: isDark
-                            ? const Color(0xFF1E1E1E)
+                            ? Colors.white.withValues(alpha: 0.1)
                             : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                             vertical: 15, horizontal: 15),
@@ -379,7 +379,7 @@ class StepVozidlo extends StatelessWidget {
                             color: Colors.blue),
                         filled: true,
                         fillColor: isDark
-                            ? const Color(0xFF1E1E1E)
+                            ? Colors.white.withValues(alpha: 0.1)
                             : Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
                             vertical: 15, horizontal: 15),

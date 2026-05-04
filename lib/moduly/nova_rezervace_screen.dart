@@ -251,7 +251,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
         ),
         padding: const EdgeInsets.all(20),
@@ -403,7 +403,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                     borderRadius: BorderRadius.circular(15),
                     side: BorderSide(
                         color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(15),
                   child: Column(
@@ -561,7 +561,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                         children: _nalezenaVozidla
                             .map((v) => ActionChip(
                                   backgroundColor: isDark
-                                      ? const Color(0xFF2C2C2C)
+                                      ? const Color(0xFF1E3A5F)
                                       : Colors.white,
                                   side: const BorderSide(color: Colors.blue),
                                   label: Text(
@@ -583,7 +583,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                     borderRadius: BorderRadius.circular(15),
                     side: BorderSide(
                         color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(15),
                   child: Column(
@@ -620,7 +620,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                           ),
                           filled: true,
                           fillColor: isDark
-                              ? const Color(0xFF2C2C2C)
+                              ? Colors.white.withValues(alpha: 0.1)
                               : Colors.grey[100],
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -666,7 +666,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                     borderRadius: BorderRadius.circular(15),
                     side: BorderSide(
                         color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                 child: Padding(
                   padding: const EdgeInsets.all(15),
                   child: Column(
@@ -685,7 +685,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
                               tooltip: 'Hledat uloženého zákazníka'),
                           filled: true,
                           fillColor: isDark
-                              ? const Color(0xFF2C2C2C)
+                              ? Colors.white.withValues(alpha: 0.1)
                               : Colors.grey[100],
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -776,7 +776,7 @@ class _NovaRezervaceScreenState extends State<NovaRezervaceScreen> {
       labelStyle: const TextStyle(fontSize: 14),
       prefixIcon: Icon(icon, color: Colors.blueGrey, size: 20),
       filled: true,
-      fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
+      fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
@@ -804,7 +804,7 @@ class _VyberZakaznikaSheetState extends State<_VyberZakaznikaSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       ),
       padding: const EdgeInsets.all(20),

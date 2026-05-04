@@ -102,7 +102,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius:
               const BorderRadius.vertical(top: Radius.circular(25)),
         ),
@@ -570,7 +570,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF2C2C2C)
+                        ? const Color(0xFF1E3A5F)
                         : Colors.grey[50],
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
@@ -623,7 +623,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                                     const TextStyle(fontSize: 12),
                                 filled: true,
                                 fillColor: isDark
-                                    ? const Color(0xFF1E1E1E)
+                                    ? Colors.white.withValues(alpha: 0.1)
                                     : Colors.white,
                                 contentPadding:
                                     const EdgeInsets.symmetric(
@@ -709,7 +709,7 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
                                     const TextStyle(fontSize: 12),
                                 filled: true,
                                 fillColor: isDark
-                                    ? const Color(0xFF1E1E1E)
+                                    ? Colors.white.withValues(alpha: 0.1)
                                     : Colors.white,
                                 contentPadding:
                                     const EdgeInsets.symmetric(
@@ -918,8 +918,8 @@ class _ManualInvoiceScreenState extends State<ManualInvoiceScreen> {
         filled: true,
         fillColor: isDark
             ? (compact
-                ? const Color(0xFF1E1E1E)
-                : const Color(0xFF2C2C2C))
+                ? const Color(0xFF1E3A5F)
+                : const Color(0xFF1E3A5F))
             : Colors.white,
         contentPadding: EdgeInsets.symmetric(
           horizontal: compact ? 10 : 15,

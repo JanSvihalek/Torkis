@@ -33,7 +33,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Správa týmu', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         elevation: 0,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -109,7 +109,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                         : 'Přístup: ${aktivniModuly.join(', ')}';
 
                     return Card(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
@@ -189,7 +189,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
           return Container(
             height: MediaQuery.of(context).size.height * 0.90, // Mírně zvětšeno kvůli heslu
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
             ),
             padding: const EdgeInsets.all(25),
@@ -211,7 +211,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                   decoration: InputDecoration(
                     labelText: 'Jméno a příjmení *',
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -222,7 +222,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                   decoration: InputDecoration(
                     labelText: 'Přihlašovací e-mail *',
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
@@ -233,7 +233,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                   decoration: InputDecoration(
                     labelText: 'Přihlašovací heslo (min. 6 znaků) *',
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[50],
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     suffixIcon: IconButton(
                       icon: Icon(hesloSkryte ? Icons.visibility_off : Icons.visibility),
@@ -381,7 +381,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
           
           return Container(
             decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
             ),
             padding: const EdgeInsets.all(25),

@@ -145,7 +145,7 @@ class _PredplatneAdminPageState extends State<PredplatneAdminPage> {
       appBar: AppBar(
         title: const Text('Správa předplatného',
             style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         elevation: 0,
         actions: [
           if (!_loading)
@@ -456,7 +456,7 @@ class _PredplatneAdminPageState extends State<PredplatneAdminPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),

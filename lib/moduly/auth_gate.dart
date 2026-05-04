@@ -132,13 +132,11 @@ class AuthGate extends StatelessWidget {
               SharedPreferences.getInstance().then(
                 (p) => p.setBool('tmavy_rezim', tmavyRezim),
               );
-
               // Načtení a aplikace předplatného
               _applySubscription(snap.data!.predDoc);
 
               return const MainScreen();
             }
-
             return const SetupWizardScreen();
           },
         );

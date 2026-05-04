@@ -31,7 +31,7 @@ class _PlanovacPageState extends State<PlanovacPage> {
       builder: (context) => Container(
         padding: const EdgeInsets.all(25),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
         ),
         child: Column(
@@ -123,7 +123,7 @@ class _PlanovacPageState extends State<PlanovacPage> {
       body: Column(
         children: [
           Container(
-            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
             child: TableCalendar(
               locale: 'cs_CZ',
               firstDay: DateTime.now().subtract(const Duration(days: 365)),

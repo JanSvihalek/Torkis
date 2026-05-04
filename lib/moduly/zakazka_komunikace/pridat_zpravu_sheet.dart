@@ -251,7 +251,7 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         padding: const EdgeInsets.all(20),
@@ -286,7 +286,7 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
                               label: Text(s,
                                   style: const TextStyle(fontSize: 12)),
                               backgroundColor: isDark
-                                  ? const Color(0xFF2C2C2C)
+                                  ? const Color(0xFF1E3A5F)
                                   : Colors.teal.withValues(alpha: 0.08),
                               side: BorderSide(
                                   color: Colors.teal.withValues(alpha: 0.4)),
@@ -312,7 +312,7 @@ class _PridatZpravuSheetState extends State<PridatZpravuSheet> {
               decoration: InputDecoration(
                 hintText: 'Např. Nalezena závada na brzdách, čekáme na díly...',
                 filled: true,
-                fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.grey[100],
+                fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none),

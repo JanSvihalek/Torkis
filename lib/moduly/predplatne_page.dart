@@ -48,7 +48,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Předplatné', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -207,7 +207,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
@@ -262,7 +262,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: jeSoucasny

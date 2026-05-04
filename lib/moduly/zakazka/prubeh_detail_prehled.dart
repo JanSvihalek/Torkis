@@ -166,7 +166,7 @@ class PrehledPraci extends StatelessWidget {
 
             return Card(
               margin: const EdgeInsets.only(bottom: 15),
-              color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15)),
               child: Padding(

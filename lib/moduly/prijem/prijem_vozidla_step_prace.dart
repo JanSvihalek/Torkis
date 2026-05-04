@@ -53,7 +53,7 @@ class StepPrace extends StatelessWidget {
                       label: Text(ukon,
                           style: const TextStyle(fontSize: 13)),
                       backgroundColor: isDark
-                          ? const Color(0xFF2C2C2C)
+                          ? const Color(0xFF1E3A5F)
                           : Colors.blue.withValues(alpha: 0.05),
                       side: BorderSide(
                           color:

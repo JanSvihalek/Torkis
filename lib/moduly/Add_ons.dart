@@ -102,10 +102,10 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
     }
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121212) : Colors.grey[50],
+      backgroundColor: isDark ? const Color(0xFF0D2040) : Colors.grey[50],
       appBar: AppBar(
         title: const Text('Prémiové doplňky', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         foregroundColor: isDark ? Colors.white : Colors.black,
         elevation: 1,
       ),
@@ -185,7 +185,7 @@ class _DoplnkyNastaveniPageState extends State<DoplnkyNastaveniPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isAktivni ? Colors.green : (isDark ? Colors.grey.shade800 : Colors.grey.shade300),

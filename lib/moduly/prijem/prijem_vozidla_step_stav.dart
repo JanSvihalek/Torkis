@@ -72,7 +72,7 @@ class StepCheck extends StatelessWidget {
                     horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF1E1E1E)
+                        ? const Color(0xFF1E3A5F)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
@@ -125,7 +125,7 @@ class StepCheck extends StatelessWidget {
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
                     color: isDark
-                        ? const Color(0xFF1E1E1E)
+                        ? const Color(0xFF1E3A5F)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
@@ -173,7 +173,7 @@ class StepCheck extends StatelessWidget {
                                             ? Colors.grey[800]!
                                             : Colors.grey[300]!))),
                             backgroundColor: isDark
-                                ? const Color(0xFF2C2C2C)
+                                ? const Color(0xFF1E3A5F)
                                 : Colors.grey[50],
                           );
                         }).toList(),
@@ -290,7 +290,7 @@ class StepCheck extends StatelessWidget {
                               color: Colors.blue)),
                       filled: true,
                       fillColor: isDark
-                          ? const Color(0xFF1E1E1E)
+                          ? Colors.white.withValues(alpha: 0.1)
                           : Colors.white,
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),

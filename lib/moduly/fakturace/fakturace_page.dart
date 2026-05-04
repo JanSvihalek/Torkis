@@ -86,7 +86,7 @@ class _FakturacePageState extends State<FakturacePage> {
                 const SizedBox(height: 15),
                 Container(
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     borderRadius: BorderRadius.circular(15),
                   ),
                   child: TextField(
@@ -95,8 +95,11 @@ class _FakturacePageState extends State<FakturacePage> {
                     decoration: InputDecoration(
                       hintText: 'Hledat číslo faktury, SPZ nebo jméno...',
                       prefixIcon: const Icon(Icons.search, color: Colors.blue),
+                      filled: true,
+                      fillColor: Colors.transparent,
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15)),
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none),
                       contentPadding: const EdgeInsets.symmetric(vertical: 15),
                     ),
                   ),
@@ -178,7 +181,7 @@ class _FakturacePageState extends State<FakturacePage> {
                     if (jeStornovano) barvaStavu = Colors.redAccent;
 
                     return Card(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15)),
                       margin: const EdgeInsets.only(bottom: 15),
@@ -292,7 +295,7 @@ class _FakturacePageState extends State<FakturacePage> {
                                         horizontal: 10, vertical: 5),
                                     decoration: BoxDecoration(
                                       color: isDark
-                                          ? const Color(0xFF2C2C2C)
+                                          ? const Color(0xFF1E3A5F)
                                           : const Color(0xFFF5F5F5),
                                       borderRadius: BorderRadius.circular(8),
                                     ),

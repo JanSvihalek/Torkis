@@ -66,7 +66,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                     hintText: 'Hledat SPZ, zákazníka nebo vozidlo...',
                     prefixIcon: const Icon(Icons.search, color: Colors.blue),
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(
@@ -188,7 +188,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                   return Card(
                     elevation: 0,
                     color:
-                        isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                        isDark ? const Color(0xFF1E3A5F) : Colors.white,
                     margin: const EdgeInsets.only(bottom: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),

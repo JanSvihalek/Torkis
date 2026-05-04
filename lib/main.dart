@@ -96,7 +96,7 @@ class VistoApp extends StatelessWidget {
               brightness: Brightness.dark,
               seedColor: const Color(0xFF4D94FF),
               primary: const Color(0xFF4D94FF),
-              surface: const Color(0xFF121212),
+              surface: const Color(0xFF0B1A2E),
             ),
             useMaterial3: true,
             textTheme: GoogleFonts.ibmPlexSansTextTheme(
