@@ -14,6 +14,8 @@ class StepCheck extends StatelessWidget {
   final List<String> vybranePoskozeni;
   final List<String> poskozeniMoznosti;
   final void Function(String value, bool selected) onPoskozeniChanged;
+  final TextEditingController vlastniPoskozeniController;
+  final VoidCallback onPridatVlastniPoskozeni;
 
   final TextEditingController stkMesicController;
   final TextEditingController stkRokController;
@@ -34,6 +36,8 @@ class StepCheck extends StatelessWidget {
     required this.vybranePoskozeni,
     required this.poskozeniMoznosti,
     required this.onPoskozeniChanged,
+    required this.vlastniPoskozeniController,
+    required this.onPridatVlastniPoskozeni,
     required this.stkMesicController,
     required this.stkRokController,
     required this.pneuLPController,
@@ -141,43 +145,84 @@ class StepCheck extends StatelessWidget {
                             ? Colors.grey[800]!
                             : Colors.grey[300]!,
                         width: 1)),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Padding(
-                        padding: EdgeInsets.only(top: 4, right: 15),
-                        child:
-                            Icon(Icons.car_crash, color: Colors.blue)),
-                    Expanded(
-                      child: Wrap(
-                        spacing: 8.0,
-                        runSpacing: 8.0,
-                        children: poskozeniMoznosti.map((value) {
-                          final isSelected =
-                              vybranePoskozeni.contains(value);
-                          return FilterChip(
-                            label: Text(value),
-                            selected: isSelected,
-                            onSelected: (bool selected) =>
-                                onPoskozeniChanged(value, selected),
-                            selectedColor:
-                                Colors.blue.withValues(alpha: 0.2),
-                            checkmarkColor: Colors.blue,
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(10),
-                                side: BorderSide(
-                                    color: isSelected
-                                        ? Colors.blue
-                                        : (isDark
-                                            ? Colors.grey[800]!
-                                            : Colors.grey[300]!))),
-                            backgroundColor: isDark
-                                ? const Color(0xFF1E3A5F)
-                                : Colors.grey[50],
-                          );
-                        }).toList(),
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                            padding: EdgeInsets.only(top: 4, right: 15),
+                            child: Icon(Icons.car_crash, color: Colors.blue)),
+                        Expanded(
+                          child: Wrap(
+                            spacing: 8.0,
+                            runSpacing: 8.0,
+                            children: poskozeniMoznosti.map((value) {
+                              final isSelected =
+                                  vybranePoskozeni.contains(value);
+                              return FilterChip(
+                                label: Text(value),
+                                selected: isSelected,
+                                onSelected: (bool selected) =>
+                                    onPoskozeniChanged(value, selected),
+                                selectedColor:
+                                    Colors.blue.withValues(alpha: 0.2),
+                                checkmarkColor: Colors.blue,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    side: BorderSide(
+                                        color: isSelected
+                                            ? Colors.blue
+                                            : (isDark
+                                                ? Colors.grey[800]!
+                                                : Colors.grey[300]!))),
+                                backgroundColor: isDark
+                                    ? const Color(0xFF1E3A5F)
+                                    : Colors.grey[50],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: vlastniPoskozeniController,
+                            textCapitalization: TextCapitalization.sentences,
+                            decoration: InputDecoration(
+                              hintText: 'Vlastní popis poškození...',
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              filled: true,
+                              fillColor: isDark
+                                  ? const Color(0xFF1E1E1E)
+                                  : Colors.grey[100],
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: BorderSide(
+                                      color: isDark
+                                          ? Colors.grey[700]!
+                                          : Colors.grey[300]!)),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: Colors.blue, width: 2)),
+                            ),
+                            onSubmitted: (_) => onPridatVlastniPoskozeni(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: onPridatVlastniPoskozeni,
+                          icon: const Icon(Icons.add_circle, color: Colors.blue),
+                          tooltip: 'Přidat vlastní poškození',
+                        ),
+                      ],
                     ),
                   ],
                 ),

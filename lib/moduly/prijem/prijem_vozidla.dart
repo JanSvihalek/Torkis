@@ -23,7 +23,7 @@ import 'prijem_vozidla_step_prace.dart';
 import 'prijem_vozidla_step_podpis.dart';
 
 // Formulář příjmu vozidla — 6stránkový průvodce (PageView).
-// Stránky: 1) Vozidlo, 2) Zákazník, 3) Stav při příjmu, 4) Fotodokumentace,
+// Stránky: 1) Vozidlo, 2) Zákazník, 3) Fotodokumentace, 4) Stav při příjmu,
 //          5) Požadované práce, 6) Podpis a odeslání protokolu.
 // Po dokončení se zakázka zapíše do Firestore (kolekce 'zakazky') a
 // volitelně se zákazníkovi pošle protokol o příjmu na e-mail jako PDF.
@@ -105,6 +105,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   final _tachometrController = TextEditingController();
   final _poskozeniController = TextEditingController();
+  final _vlastniPoskozeniController = TextEditingController();
   double _stavNadrze = 50.0;
 
   final _stkMesicController = TextEditingController();
@@ -565,6 +566,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _emailZController.dispose();
     _tachometrController.dispose();
     _poskozeniController.dispose();
+    _vlastniPoskozeniController.dispose();
     _signatureController.dispose();
     _uliceController.dispose();
     _mestoController.dispose();
@@ -1051,6 +1053,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _tachometrController.clear();
     _stavNadrze = 50.0;
     _poskozeniController.clear();
+    _vlastniPoskozeniController.clear();
     _signatureController.clear();
     setState(() => _autocompleteResetKey++);
 
@@ -1154,8 +1157,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 children: [
                   _buildVozidloStep(isDark),
                   _buildZakaznikStep(isDark),
-                  _buildCheckStep(isDark),
                   _buildPhotoStep(isDark),
+                  _buildCheckStep(isDark),
                   _buildPraceStep(isDark),
                   _buildPodpisStep(isDark),
                 ],
@@ -1239,7 +1242,22 @@ class _MainWizardPageState extends State<MainWizardPage> {
         onPredvolbaChanged: (kod) => setState(() => _telPredvolba = kod),
       );
 
-  // ── STRANA 3: Stav vozidla při přímu ────────────────
+  void _pridatVlastniPoskozeni() {
+    final text = _vlastniPoskozeniController.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      _vybranePoskozeni.remove('Žádné');
+      if (!_poskozeniMoznosti.contains(text)) {
+        _poskozeniMoznosti.add(text);
+      }
+      if (!_vybranePoskozeni.contains(text)) {
+        _vybranePoskozeni.add(text);
+      }
+      _vlastniPoskozeniController.clear();
+    });
+  }
+
+  // ── STRANA 4: Stav vozidla při přímu ────────────────
   Widget _buildCheckStep(bool isDark) => StepCheck(
         isDark: isDark,
         tachometrController: _tachometrController,
@@ -1273,9 +1291,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
         pneuLZController: _pneuLZController,
         pneuPZController: _pneuPZController,
         poskozeniController: _poskozeniController,
+        vlastniPoskozeniController: _vlastniPoskozeniController,
+        onPridatVlastniPoskozeni: _pridatVlastniPoskozeni,
       );
 
-  // ── STRANA 4: Fotodokumentace ─────────────────────
+  // ── STRANA 3: Fotodokumentace ─────────────────────
   Widget _buildPhotoStep(bool isDark) => StepPhoto(
         isDark: isDark,
         categoryImages: _categoryImages,
