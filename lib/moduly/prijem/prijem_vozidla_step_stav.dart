@@ -1,5 +1,7 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'prijem_vozidla_helpers.dart';
+import 'car_blueprint_widget.dart';
 
 /// Krok 3 – Stav vozidla při příjmu.
 /// Pole: tachometr, stav nádrže (slider), zjištěná poškození (FilterChip),
@@ -27,6 +29,10 @@ class StepCheck extends StatelessWidget {
 
   final TextEditingController poskozeniController;
 
+  final String typKaroserie;
+  final Uint8List? drawing;
+  final ValueChanged<Uint8List?> onDrawingChanged;
+
   const StepCheck({
     super.key,
     required this.isDark,
@@ -45,6 +51,9 @@ class StepCheck extends StatelessWidget {
     required this.pneuLZController,
     required this.pneuPZController,
     required this.poskozeniController,
+    required this.typKaroserie,
+    required this.drawing,
+    required this.onDrawingChanged,
   });
 
   @override
@@ -228,6 +237,13 @@ class StepCheck extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 25),
+          CarBlueprintWidget(
+            typKaroserie: typKaroserie,
+            drawing: drawing,
+            onDrawingChanged: onDrawingChanged,
+            isDark: isDark,
           ),
           const SizedBox(height: 25),
           // Platnost STK

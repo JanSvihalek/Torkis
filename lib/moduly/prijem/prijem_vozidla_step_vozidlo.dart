@@ -46,6 +46,11 @@ class StepVozidlo extends StatelessWidget {
   final List<Map<String, dynamic>> nalezenaVozidla;
   final void Function(Map<String, dynamic>) onVozidloSelected;
 
+  // Typ karosérie
+  final String typKaroserie;
+  final List<String> moznostiKaroserie;
+  final ValueChanged<String?> onKaroserieChanged;
+
   const StepVozidlo({
     super.key,
     required this.isDark,
@@ -76,6 +81,9 @@ class StepVozidlo extends StatelessWidget {
     required this.onPrevodovkaChanged,
     required this.nalezenaVozidla,
     required this.onVozidloSelected,
+    required this.typKaroserie,
+    required this.moznostiKaroserie,
+    required this.onKaroserieChanged,
   });
 
   @override
@@ -449,6 +457,14 @@ class StepVozidlo extends StatelessWidget {
               vybranaPrevodovka,
               moznostiPrevodovky,
               onPrevodovkaChanged,
+              isDark),
+          const SizedBox(height: 20),
+          buildDropdown(
+              'Typ karosérie',
+              Icons.directions_car_outlined,
+              typKaroserie,
+              moznostiKaroserie,
+              onKaroserieChanged,
               isDark),
         ],
       ),

@@ -18,6 +18,7 @@ import 'prijem_vozidla_kamera.dart';
 import 'prijem_vozidla_step_vozidlo.dart';
 import 'prijem_vozidla_step_zakaznik.dart';
 import 'prijem_vozidla_step_stav.dart';
+import 'car_blueprint_widget.dart';
 import 'prijem_vozidla_step_photo.dart';
 import 'prijem_vozidla_step_prace.dart';
 import 'prijem_vozidla_step_podpis.dart';
@@ -87,6 +88,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
     'LPG/CNG',
     'Jiné'
   ];
+
+  String _typKaroserie = 'Nespecifikováno';
+  Uint8List? _schemaKresba;
 
   String _vybranaPrevodovka = 'Manuální';
   final List<String> _moznostiPrevodovky = ['Manuální', 'Automatická', 'Jiné'];
@@ -801,6 +805,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
     }
 
+    String? schemaUrl;
+    if (_schemaKresba != null) {
+      final Reference ref = FirebaseStorage.instance.ref().child(
+          'servisy/$_sId/zakazky/$zakazkaId/schema_poskozeni.png');
+      await ref.putData(_schemaKresba!);
+      schemaUrl = await ref.getDownloadURL();
+    }
+
     String? podpisUrl;
     if (_signatureController.isNotEmpty) {
       final Uint8List? signatureBytes = await _signatureController.toPngBytes();
@@ -935,6 +947,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'pneu_pp': _pneuPPController.text.trim(),
         'pneu_lz': _pneuLZController.text.trim(),
         'pneu_pz': _pneuPZController.text.trim(),
+        'typ_karoserie': _typKaroserie,
+        'schema_url': schemaUrl,
       },
       'pozadavky_zakaznika': pozadovaneUkony,
       'poznamky': _poskozeniController.text.trim(),
@@ -1052,6 +1066,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _pneuPZController.clear();
     _tachometrController.clear();
     _stavNadrze = 50.0;
+    _typKaroserie = 'Nespecifikováno';
+    _schemaKresba = null;
     _poskozeniController.clear();
     _vlastniPoskozeniController.clear();
     _signatureController.clear();
@@ -1222,6 +1238,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
         onPrevodovkaChanged: (v) => setState(() => _vybranaPrevodovka = v!),
         nalezenaVozidla: _nalezenaVozidla,
         onVozidloSelected: _aplikovatVybraneVozidlo,
+        typKaroserie: _typKaroserie,
+        moznostiKaroserie: kTypyKaroserie,
+        onKaroserieChanged: (v) => setState(() => _typKaroserie = v!),
       );
 
   // ── STRANA 2: Zákazník ────────────────────────────────
@@ -1293,6 +1312,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
         poskozeniController: _poskozeniController,
         vlastniPoskozeniController: _vlastniPoskozeniController,
         onPridatVlastniPoskozeni: _pridatVlastniPoskozeni,
+        typKaroserie: _typKaroserie,
+        drawing: _schemaKresba,
+        onDrawingChanged: (bytes) =>
+            setState(() => _schemaKresba = bytes),
       );
 
   // ── STRANA 3: Fotodokumentace ─────────────────────
