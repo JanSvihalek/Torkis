@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
+import '../../core/constants.dart';
 import '../../core/pdf_generator.dart';
 import '../zakazka/prubeh.dart';
 import '../zakazka_komunikace/zakazka_komunikace_page.dart';
@@ -24,11 +25,13 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
     with SingleTickerProviderStateMixin {
   bool _isTisku = false;
   late final TabController _tabController;
+  late final bool _maZakazky;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _maZakazky = maPristupModul('zakazky');
+    _tabController = TabController(length: _maZakazky ? 3 : 2, vsync: this);
   }
 
   @override
@@ -44,36 +47,31 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
     final zakaznik = d['zakaznik'] as Map<String, dynamic>? ?? {};
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      switch (index) {
-        case 1:
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => VozidloDetailScreen(
-                vozidloDocId: '${d['servis_id']}_${d['spz']}',
-              ),
+      // Zakázka je tab 1 (jen pokud je modul povolen), Komunikace je vždy poslední
+      if (_maZakazky && index == 1) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ActiveJobScreen(
+              documentId: widget.docId,
+              zakazkaId: d['cislo_zakazky']?.toString() ?? '',
+              spz: d['spz']?.toString() ?? '',
             ),
-          );
-        case 2:
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ZakaznikDetailScreen(zakaznikData: zakaznik),
+          ),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ZakazkaKomunikacePage(
+              documentId: widget.docId,
+              zakazkaId: d['cislo_zakazky']?.toString() ?? '',
+              spz: d['spz']?.toString() ?? '',
+              zakaznikJmeno: zakaznik['jmeno']?.toString() ?? '',
+              zakaznikEmail: zakaznik['email']?.toString() ?? '',
             ),
-          );
-        case 3:
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ZakazkaKomunikacePage(
-                documentId: widget.docId,
-                zakazkaId: d['cislo_zakazky']?.toString() ?? '',
-                spz: d['spz']?.toString() ?? '',
-                zakaznikJmeno: zakaznik['jmeno']?.toString() ?? '',
-                zakaznikEmail: zakaznik['email']?.toString() ?? '',
-              ),
-            ),
-          );
+          ),
+        );
       }
     });
   }
@@ -193,11 +191,11 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
         bottom: TabBar(
           controller: _tabController,
           onTap: _onTabTap,
-          tabs: const [
-            Tab(icon: Icon(Icons.description_outlined), text: 'Protokol'),
-            Tab(icon: Icon(Icons.directions_car), text: 'Vozidlo'),
-            Tab(icon: Icon(Icons.person), text: 'Zákazník'),
-            Tab(icon: Icon(Icons.chat_outlined), text: 'Komunikace'),
+          tabs: [
+            const Tab(icon: Icon(Icons.description_outlined), text: 'Protokol'),
+            if (_maZakazky)
+              const Tab(icon: Icon(Icons.build_circle_outlined), text: 'Zakázka'),
+            const Tab(icon: Icon(Icons.chat_outlined), text: 'Komunikace'),
           ],
         ),
       ),
@@ -206,8 +204,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
         physics: const NeverScrollableScrollPhysics(),
         children: [
           _buildProtokolTab(isDark, d, zakaznik),
-          const SizedBox(),
-          const SizedBox(),
+          if (_maZakazky) const SizedBox(),
           const SizedBox(),
         ],
       ),
@@ -282,6 +279,18 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
               icon: Icons.directions_car,
               color: Colors.blue,
               title: 'Vozidlo',
+              onTap: () {
+                final servisId = d['servis_id']?.toString() ?? '';
+                final spz = d['spz']?.toString() ?? '';
+                if (servisId.isEmpty || spz.isEmpty) return;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VozidloDetailScreen(
+                        vozidloDocId: '${servisId}_$spz'),
+                  ),
+                );
+              },
               children: [
                 _infoRow('SPZ', d['spz']),
                 _infoRow('Značka & Model',
@@ -297,6 +306,15 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
               icon: Icons.person,
               color: Colors.teal,
               title: 'Zákazník',
+              onTap: zakaznik.isNotEmpty
+                  ? () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ZakaznikDetailScreen(zakaznikData: zakaznik),
+                        ),
+                      )
+                  : null,
               children: [
                 _infoRow('Jméno', zakaznik['jmeno']),
                 _infoRow('Telefon', zakaznik['telefon']),
@@ -455,10 +473,11 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
     required Color color,
     required String title,
     required List<Widget> children,
+    VoidCallback? onTap,
   }) {
     final hasContent = children.any((w) => w is! SizedBox);
     if (!hasContent) return const SizedBox();
-    return Container(
+    final container = Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
@@ -474,17 +493,27 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 8),
-              Text(title,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: color)),
+              Expanded(
+                child: Text(title,
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        color: color)),
+              ),
+              if (onTap != null)
+                Icon(Icons.arrow_forward_ios, size: 14, color: color),
             ],
           ),
           const Divider(height: 20),
           ...children,
         ],
       ),
+    );
+    if (onTap == null) return container;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      child: container,
     );
   }
 
