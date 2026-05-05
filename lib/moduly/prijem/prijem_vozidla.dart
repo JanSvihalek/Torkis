@@ -261,32 +261,40 @@ class _MainWizardPageState extends State<MainWizardPage> {
       final Map<String, Map<String, String>> karoserieData = {};
 
       for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final nazev = data['nazev']?.toString() ?? doc.id;
-        final modelyRaw = data['model'] as List<dynamic>? ?? [];
-        final modelNazvy = <String>[];
-        final karoserieMap = <String, String>{};
+        try {
+          final data = doc.data();
+          final nazev = data['nazev']?.toString() ?? doc.id;
+          // Bezpečný cast — Firestore může vrátit List<Object>, ne List<dynamic>
+          final List modelyRaw =
+              data['model'] is List ? data['model'] as List : [];
+          final modelNazvy = <String>[];
+          final karoserieMap = <String, String>{};
 
-        for (final m in modelyRaw) {
-          if (m is Map<String, dynamic>) {
-            final modelNazev = m['Model']?.toString() ?? '';
-            if (modelNazev.isEmpty) continue;
-            modelNazvy.add(modelNazev);
-            final kar = m['Karoserie'];
-            if (kar is String && kar.isNotEmpty) {
-              karoserieMap[modelNazev] = kar;
-            } else if (kar is List && kar.isNotEmpty) {
-              karoserieMap[modelNazev] = kar.first.toString();
+          for (final m in modelyRaw) {
+            if (m is Map) {
+              // Nový formát: { model: "Golf", karoserie: ["Hatchback"] }
+              final modelNazev = m['model']?.toString() ?? '';
+              if (modelNazev.isEmpty) continue;
+              modelNazvy.add(modelNazev);
+              final kar = m['karoserie'];
+              if (kar is String && kar.isNotEmpty) {
+                karoserieMap[modelNazev] = kar;
+              } else if (kar is List && kar.isNotEmpty) {
+                karoserieMap[modelNazev] = kar.first.toString();
+              }
+            } else if (m is String && m.isNotEmpty) {
+              // Starý formát: prostý string
+              modelNazvy.add(m);
             }
-          } else if (m is String && m.isNotEmpty) {
-            modelNazvy.add(m);
           }
-        }
 
-        nacteno[nazev] = modelNazvy;
-        karoserieData[nazev] = karoserieMap;
-        if (data['logo'] != null && data['logo'].toString().isNotEmpty) {
-          loga[nazev] = data['logo'].toString();
+          nacteno[nazev] = modelNazvy;
+          karoserieData[nazev] = karoserieMap;
+          if (data['logo'] != null && data['logo'].toString().isNotEmpty) {
+            loga[nazev] = data['logo'].toString();
+          }
+        } catch (e) {
+          debugPrint('Chyba při zpracování dokumentu ${doc.id}: $e');
         }
       }
 
@@ -510,6 +518,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
       if (vozidloData['prevodovka'] != null &&
           _moznostiPrevodovky.contains(vozidloData['prevodovka'])) {
         _vybranaPrevodovka = vozidloData['prevodovka'];
+      }
+      if (vozidloData['typ_karoserie'] != null &&
+          kTypyKaroserie.contains(vozidloData['typ_karoserie'])) {
+        _typKaroserie = vozidloData['typ_karoserie'];
       }
     });
 
@@ -936,6 +948,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'motorizace': _motorizaceController.text.trim(),
         'palivo': _vybranePalivo,
         'prevodovka': _vybranaPrevodovka,
+        'typ_karoserie': _typKaroserie,
         'tachometr': _tachometrController.text.trim(),
         'stk_mesic': _stkMesicController.text.trim(),
         'stk_rok': _stkRokController.text.trim(),
