@@ -6,6 +6,8 @@ import 'dart:typed_data';
 import '../../core/pdf_generator.dart';
 import '../zakazka/prubeh.dart';
 import '../zakazka_komunikace/zakazka_komunikace_page.dart';
+import '../vozidla/vozidlo_detail.dart';
+import '../zakaznici/zakaznik_detail.dart';
 
 class PrijemDetailScreen extends StatefulWidget {
   final String docId;
@@ -18,8 +20,63 @@ class PrijemDetailScreen extends StatefulWidget {
   State<PrijemDetailScreen> createState() => _PrijemDetailScreenState();
 }
 
-class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
+class _PrijemDetailScreenState extends State<PrijemDetailScreen>
+    with SingleTickerProviderStateMixin {
   bool _isTisku = false;
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabTap(int index) {
+    if (index == 0) return;
+    _tabController.animateTo(0);
+    final d = widget.data;
+    final zakaznik = d['zakaznik'] as Map<String, dynamic>? ?? {};
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      switch (index) {
+        case 1:
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => VozidloDetailScreen(
+                vozidloDocId: '${d['servis_id']}_${d['spz']}',
+              ),
+            ),
+          );
+        case 2:
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ZakaznikDetailScreen(zakaznikData: zakaznik),
+            ),
+          );
+        case 3:
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ZakazkaKomunikacePage(
+                documentId: widget.docId,
+                zakazkaId: d['cislo_zakazky']?.toString() ?? '',
+                spz: d['spz']?.toString() ?? '',
+                zakaznikJmeno: zakaznik['jmeno']?.toString() ?? '',
+                zakaznikEmail: zakaznik['email']?.toString() ?? '',
+              ),
+            ),
+          );
+      }
+    });
+  }
 
   String _formatDate(dynamic timestamp) {
     if (timestamp == null) return '-';
@@ -105,12 +162,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final d = widget.data;
-    final stavVozidla = d['stav_vozidla'] as Map<String, dynamic>? ?? {};
     final zakaznik = d['zakaznik'] as Map<String, dynamic>? ?? {};
-    final fotoUrls = d['fotografie_urls'] as Map<String, dynamic>? ?? {};
-    final podpisUrl = d['podpis_url']?.toString() ?? '';
-    final pozadavky =
-        (d['pozadavky_zakaznika'] as List<dynamic>? ?? []).cast<String>();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -122,22 +174,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
         backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_outlined),
-            tooltip: 'Komunikace se zákazníkem',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ZakazkaKomunikacePage(
-                  documentId: widget.docId,
-                  zakazkaId: d['cislo_zakazky']?.toString() ?? '',
-                  spz: d['spz']?.toString() ?? '',
-                  zakaznikJmeno: zakaznik['jmeno']?.toString() ?? '',
-                  zakaznikEmail: zakaznik['email']?.toString() ?? '',
-                ),
-              ),
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.visibility_outlined),
             tooltip: 'Zobrazit protokol',
@@ -154,64 +190,95 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             onPressed: _isTisku ? null : _tiskniProtokol,
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          onTap: _onTabTap,
+          tabs: const [
+            Tab(icon: Icon(Icons.description_outlined), text: 'Protokol'),
+            Tab(icon: Icon(Icons.directions_car), text: 'Vozidlo'),
+            Tab(icon: Icon(Icons.person), text: 'Zákazník'),
+            Tab(icon: Icon(Icons.chat_outlined), text: 'Komunikace'),
+          ],
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: Colors.blue.withValues(alpha: 0.2)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      body: TabBarView(
+        controller: _tabController,
+        physics: const NeverScrollableScrollPhysics(),
+        children: [
+          _buildProtokolTab(isDark, d, zakaznik),
+          const SizedBox(),
+          const SizedBox(),
+          const SizedBox(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProtokolTab(
+    bool isDark,
+    Map<String, dynamic> d,
+    Map<String, dynamic> zakaznik,
+  ) {
+    final stavVozidla = d['stav_vozidla'] as Map<String, dynamic>? ?? {};
+    final fotoUrls = d['fotografie_urls'] as Map<String, dynamic>? ?? {};
+    final podpisUrl = d['podpis_url']?.toString() ?? '';
+    final pozadavky =
+        (d['pozadavky_zakaznika'] as List<dynamic>? ?? []).cast<String>();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.schedule, color: Colors.blue, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Přijato: ${_formatDate(d['cas_prijeti'])}',
+                        style: const TextStyle(
+                            color: Colors.blue, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    Text(
+                      'Zakázka: ${d['cislo_zakazky'] ?? ''}',
+                      style: const TextStyle(color: Colors.blue, fontSize: 12),
+                    ),
+                  ],
+                ),
+                if (d['prijal_jmeno'] != null) ...[
+                  const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.schedule, color: Colors.blue, size: 18),
+                      const Icon(Icons.person_outline,
+                          color: Colors.blue, size: 16),
                       const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Přijato: ${_formatDate(d['cas_prijeti'])}',
-                          style: const TextStyle(
-                              color: Colors.blue, fontWeight: FontWeight.w600),
-                        ),
-                      ),
                       Text(
-                        'Zakázka: ${d['cislo_zakazky'] ?? ''}',
-                        style: const TextStyle(
-                            color: Colors.blue, fontSize: 12),
+                        'Přijal: ${d['prijal_jmeno']}',
+                        style: TextStyle(
+                            color: Colors.blue.withValues(alpha: 0.8),
+                            fontSize: 13),
                       ),
                     ],
                   ),
-                  if (d['prijal_jmeno'] != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.person_outline, color: Colors.blue, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Přijal: ${d['prijal_jmeno']}',
-                          style: TextStyle(
-                              color: Colors.blue.withValues(alpha: 0.8), fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-            const SizedBox(height: 15),
-
-            _sectionCard(
-              isDark,
+          ),
+          const SizedBox(height: 15),
+          _sectionCard(isDark,
               icon: Icons.directions_car,
               color: Colors.blue,
               title: 'Vozidlo',
@@ -224,12 +291,9 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                 _infoRow('Palivo', d['palivo_typ']),
                 _infoRow('Převodovka', d['prevodovka']),
                 _infoRow('Motorizace', d['motorizace']),
-              ],
-            ),
-            const SizedBox(height: 15),
-
-            _sectionCard(
-              isDark,
+              ]),
+          const SizedBox(height: 15),
+          _sectionCard(isDark,
               icon: Icons.person,
               color: Colors.teal,
               title: 'Zákazník',
@@ -240,12 +304,9 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                 _infoRow('Adresa', zakaznik['adresa']),
                 _infoRow('IČO', zakaznik['ico']),
                 _infoRow('DIČ', zakaznik['dic']),
-              ],
-            ),
-            const SizedBox(height: 15),
-
-            _sectionCard(
-              isDark,
+              ]),
+          const SizedBox(height: 15),
+          _sectionCard(isDark,
               icon: Icons.fact_check_outlined,
               color: Colors.orange,
               title: 'Stav při příjmu',
@@ -272,8 +333,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                 ),
                 _infoRow(
                   'Poškození',
-                  (stavVozidla['poskozeni'] as List<dynamic>? ?? [])
-                      .join(', '),
+                  (stavVozidla['poskozeni'] as List<dynamic>? ?? []).join(', '),
                 ),
                 _infoRow(
                   'Pneumatiky LP / PP',
@@ -289,13 +349,10 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                       ? '${stavVozidla['pneu_lz'] ?? '-'} / ${stavVozidla['pneu_pz'] ?? '-'}'
                       : null,
                 ),
-              ],
-            ),
-
-            if (pozadavky.isNotEmpty) ...[
-              const SizedBox(height: 15),
-              _sectionCard(
-                isDark,
+              ]),
+          if (pozadavky.isNotEmpty) ...[
+            const SizedBox(height: 15),
+            _sectionCard(isDark,
                 icon: Icons.build_circle_outlined,
                 color: Colors.deepOrange,
                 title: 'Požadavky zákazníka',
@@ -312,93 +369,82 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                             ],
                           ),
                         ))
-                    .toList(),
-              ),
-            ],
-
-            if ((d['poznamky']?.toString() ?? '').isNotEmpty) ...[
-              const SizedBox(height: 15),
-              _sectionCard(
-                isDark,
+                    .toList()),
+          ],
+          if ((d['poznamky']?.toString() ?? '').isNotEmpty) ...[
+            const SizedBox(height: 15),
+            _sectionCard(isDark,
                 icon: Icons.notes,
                 color: Colors.blueGrey,
                 title: 'Poznámky',
-                children: [Text(d['poznamky'].toString())],
-              ),
-            ],
-
+                children: [Text(d['poznamky'].toString())]),
+          ],
+          const SizedBox(height: 15),
+          _buildFotoSection(isDark, fotoUrls),
+          if (podpisUrl.isNotEmpty) ...[
             const SizedBox(height: 15),
-            _buildFotoSection(isDark, fotoUrls),
-
-            if (podpisUrl.isNotEmpty) ...[
-              const SizedBox(height: 15),
-              _buildPodpisSection(isDark, podpisUrl),
-            ],
-
-            const SizedBox(height: 20),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _isTisku ? null : _zobrazitProtokol,
-                        icon: _isTisku
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2))
-                            : const Icon(Icons.visibility_outlined),
-                        label: const Text('Zobrazit protokol'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _isTisku ? null : _tiskniProtokol,
-                        icon: const Icon(Icons.print_outlined),
-                        label: const Text('Tisk'),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ActiveJobScreen(
-                        documentId: widget.docId,
-                        zakazkaId: d['cislo_zakazky']?.toString() ?? '',
-                        spz: d['spz']?.toString() ?? '',
-                      ),
-                    ),
-                  ),
-                  icon: const Icon(Icons.build_circle_outlined),
-                  label: const Text('Otevřít zakázku'),
-                  style: ElevatedButton.styleFrom(
+            _buildPodpisSection(isDark, podpisUrl),
+          ],
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isTisku ? null : _zobrazitProtokol,
+                  icon: _isTisku
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.visibility_outlined),
+                  label: const Text('Zobrazit protokol'),
+                  style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
-              ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isTisku ? null : _tiskniProtokol,
+                  icon: const Icon(Icons.print_outlined),
+                  label: const Text('Tisk'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ActiveJobScreen(
+                    documentId: widget.docId,
+                    zakazkaId: d['cislo_zakazky']?.toString() ?? '',
+                    spz: d['spz']?.toString() ?? '',
+                  ),
+                ),
+              ),
+              icon: const Icon(Icons.build_circle_outlined),
+              label: const Text('Otevřít zakázku'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
             ),
-            const SizedBox(height: 30),
-          ],
-        ),
+          ),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }
