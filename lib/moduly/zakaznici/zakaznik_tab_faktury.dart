@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../fakturace/faktura_detail.dart';
+import '../../core/constants.dart';
 import '../../core/shared_widgets.dart';
 
 class ZakaznikFakturyTab extends StatelessWidget {
@@ -17,6 +18,9 @@ class ZakaznikFakturyTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!maPristupModul('fakturace')) {
+      return buildZamcenyModul(context, nazevModulu: 'Fakturace');
+    }
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('faktury')

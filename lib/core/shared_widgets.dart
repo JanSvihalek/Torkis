@@ -31,6 +31,26 @@ String formatDateTimeCz(dynamic timestamp, {String fallback = '-'}) {
       .format((timestamp as Timestamp).toDate());
 }
 
+Widget buildZamcenyModul(BuildContext context, {required String nazevModulu}) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock_outline, size: 56, color: Colors.grey.shade400),
+          const SizedBox(height: 16),
+          Text(
+            'Modul $nazevModulu není součástí vašeho předplatného.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 15),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 /// Jen datum: "dd.MM.yyyy"
 String formatDateCz(dynamic timestamp, {String fallback = '-'}) {
   if (timestamp == null) return fallback;

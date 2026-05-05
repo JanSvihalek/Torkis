@@ -367,8 +367,8 @@ class MenuPage extends StatelessWidget {
                 _buildMenuCard(context, 'Předplatné', Icons.workspace_premium,
                     Colors.amber, const PredplatnePage(), isDark),
               if (globalUserRole == 'admin')
-                _buildMenuCard(context, 'Vítací stránka', Icons.public,
-                    Colors.cyan, const LandingPage(), isDark),
+                _buildMenuCard(context, 'WEB', Icons.public, Colors.cyan,
+                    const LandingPage(), isDark),
               if (globalUserRole == 'admin')
                 _buildMenuCard(context, 'Doplňky', Icons.extension,
                     Colors.deepPurple, const DoplnkyNastaveniPage(), isDark),
@@ -478,7 +478,8 @@ class MenuPage extends StatelessWidget {
               },
               icon: const Icon(Icons.logout, color: Colors.red),
               label: const Text('Odhlásit se',
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.bold)),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
                 side: const BorderSide(color: Colors.red),
@@ -502,8 +503,7 @@ class MenuPage extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: Colors.blue),
           const SizedBox(width: 10),
-          Text(label,
-              style: const TextStyle(color: Colors.blue, fontSize: 14)),
+          Text(label, style: const TextStyle(color: Colors.blue, fontSize: 14)),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../fakturace/faktura_detail.dart';
+import '../../core/constants.dart';
 import '../../core/shared_widgets.dart';
 
 class VozidloFakturyTab extends StatelessWidget {
@@ -18,6 +19,9 @@ class VozidloFakturyTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!maPristupModul('fakturace')) {
+      return buildZamcenyModul(context, nazevModulu: 'Fakturace');
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: StreamBuilder<QuerySnapshot>(

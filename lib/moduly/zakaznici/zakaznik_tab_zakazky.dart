@@ -18,6 +18,9 @@ class ZakaznikZakazkyTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!maPristupModul('zakazky')) {
+      return buildZamcenyModul(context, nazevModulu: 'Zakázky');
+    }
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('zakazky')

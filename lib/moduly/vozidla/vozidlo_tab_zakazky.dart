@@ -19,6 +19,9 @@ class VozidloZakazkyTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!maPristupModul('zakazky')) {
+      return buildZamcenyModul(context, nazevModulu: 'Zakázky');
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: StreamBuilder<QuerySnapshot>(
