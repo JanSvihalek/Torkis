@@ -32,6 +32,7 @@ class StepVozidlo extends StatelessWidget {
   final Map<String, String> logovaZnacek;
   final Map<String, List<String>> databazeZnacek;
   final void Function(String) onZnackaSelected;
+  final void Function(String) onModelSelected;
 
   // Palivo / převodovka
   final String vybranePalivo;
@@ -73,6 +74,7 @@ class StepVozidlo extends StatelessWidget {
     required this.logovaZnacek,
     required this.databazeZnacek,
     required this.onZnackaSelected,
+    required this.onModelSelected,
     required this.vybranePalivo,
     required this.moznostiPaliva,
     required this.onPalivoChanged,
@@ -364,6 +366,7 @@ class StepVozidlo extends StatelessWidget {
                 },
                 onSelected: (String val) {
                   modelController.text = val;
+                  onModelSelected(val);
                 },
                 fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) {
                   return Container(

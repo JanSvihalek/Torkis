@@ -121,7 +121,8 @@ class _CarBlueprintWidgetState extends State<CarBlueprintWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.directions_car_outlined, color: Colors.grey[400], size: 28),
+          Icon(Icons.directions_car_outlined,
+              color: Colors.grey[400], size: 28),
           const SizedBox(width: 10),
           Text(
             'Vyberte typ karosérie pro zobrazení schématu.',
@@ -159,7 +160,8 @@ class _CarBlueprintWidgetState extends State<CarBlueprintWidget> {
                       ),
                       CustomPaint(
                         size: Size(width, height),
-                        painter: _StrokePainter(strokes: _strokes, currentStroke: null),
+                        painter: _StrokePainter(
+                            strokes: _strokes, currentStroke: null),
                       ),
                       Positioned(
                         right: 6,
@@ -170,7 +172,8 @@ class _CarBlueprintWidgetState extends State<CarBlueprintWidget> {
                             color: Colors.black.withValues(alpha: 0.30),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Icon(Icons.fullscreen, color: Colors.white, size: 20),
+                          child: const Icon(Icons.fullscreen,
+                              color: Colors.white, size: 20),
                         ),
                       ),
                     ],
@@ -205,7 +208,8 @@ class _FullScreenBlueprintDialog extends StatefulWidget {
       _FullScreenBlueprintDialogState();
 }
 
-class _FullScreenBlueprintDialogState extends State<_FullScreenBlueprintDialog> {
+class _FullScreenBlueprintDialogState
+    extends State<_FullScreenBlueprintDialog> {
   late List<_Stroke> _strokes;
   _Stroke? _currentStroke;
   Color _penColor = Colors.red;
@@ -285,7 +289,10 @@ class _FullScreenBlueprintDialogState extends State<_FullScreenBlueprintDialog> 
                     width: 2.5,
                   ),
                   boxShadow: _penColor == c
-                      ? [BoxShadow(color: c.withValues(alpha: 0.5), blurRadius: 6)]
+                      ? [
+                          BoxShadow(
+                              color: c.withValues(alpha: 0.5), blurRadius: 6)
+                        ]
                       : [],
                 ),
               ),
@@ -372,7 +379,10 @@ class _StrokePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final stroke in [...strokes, if (currentStroke != null) currentStroke!]) {
+    for (final stroke in [
+      ...strokes,
+      if (currentStroke != null) currentStroke!
+    ]) {
       if (stroke.points.length < 2) continue;
       final paint = Paint()
         ..color = stroke.color
@@ -382,7 +392,8 @@ class _StrokePainter extends CustomPainter {
         ..style = PaintingStyle.stroke;
 
       final first = stroke.points.first;
-      final path = Path()..moveTo(first.dx * size.width, first.dy * size.height);
+      final path = Path()
+        ..moveTo(first.dx * size.width, first.dy * size.height);
       for (int i = 1; i < stroke.points.length; i++) {
         final p = stroke.points[i];
         path.lineTo(p.dx * size.width, p.dy * size.height);

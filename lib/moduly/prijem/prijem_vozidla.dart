@@ -129,6 +129,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   Map<String, List<String>> _databazeZnacek = {};
   Map<String, String> _logovaZnacek = {};
+  // brand → { modelName → karoserie } — naplněno z Firestore
+  Map<String, Map<String, String>> _modelKaroserieData = {};
   List<String> _dostupneZnacky = [];
   List<String> _dostupneModely = [];
   String _vybranaZnackaString = '';
@@ -254,13 +256,35 @@ class _MainWizardPageState extends State<MainWizardPage> {
     try {
       final snapshot =
           await FirebaseFirestore.instance.collection('znacka').get();
-      Map<String, List<String>> nacteno = {};
-      Map<String, String> loga = {};
+      final Map<String, List<String>> nacteno = {};
+      final Map<String, String> loga = {};
+      final Map<String, Map<String, String>> karoserieData = {};
+
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final nazev = data['nazev']?.toString() ?? doc.id;
-        final modely = List<String>.from(data['model'] ?? []);
-        nacteno[nazev] = modely;
+        final modelyRaw = data['model'] as List<dynamic>? ?? [];
+        final modelNazvy = <String>[];
+        final karoserieMap = <String, String>{};
+
+        for (final m in modelyRaw) {
+          if (m is Map<String, dynamic>) {
+            final modelNazev = m['Model']?.toString() ?? '';
+            if (modelNazev.isEmpty) continue;
+            modelNazvy.add(modelNazev);
+            final kar = m['Karoserie'];
+            if (kar is String && kar.isNotEmpty) {
+              karoserieMap[modelNazev] = kar;
+            } else if (kar is List && kar.isNotEmpty) {
+              karoserieMap[modelNazev] = kar.first.toString();
+            }
+          } else if (m is String && m.isNotEmpty) {
+            modelNazvy.add(m);
+          }
+        }
+
+        nacteno[nazev] = modelNazvy;
+        karoserieData[nazev] = karoserieMap;
         if (data['logo'] != null && data['logo'].toString().isNotEmpty) {
           loga[nazev] = data['logo'].toString();
         }
@@ -270,6 +294,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         setState(() {
           _databazeZnacek = nacteno;
           _logovaZnacek = loga;
+          _modelKaroserieData = karoserieData;
           _dostupneZnacky = _databazeZnacek.keys.toList()..sort();
         });
       }
@@ -289,6 +314,18 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
       _modelController.clear();
     });
+  }
+
+  void _onModelSelected(String model) {
+    _modelController.text = model;
+    final karoserieRaw =
+        _modelKaroserieData[_vybranaZnackaString]?[model] ?? '';
+    if (karoserieRaw.isEmpty) return;
+    final matched = kTypyKaroserie.firstWhere(
+      (k) => k.toLowerCase() == karoserieRaw.toLowerCase(),
+      orElse: () => '',
+    );
+    if (matched.isNotEmpty) setState(() => _typKaroserie = matched);
   }
 
   /// Načte výchozí nastavení servisu a podmíněně spustí generování čísla zakázky.
@@ -1230,6 +1267,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         logovaZnacek: _logovaZnacek,
         databazeZnacek: _databazeZnacek,
         onZnackaSelected: _aktualizujModely,
+        onModelSelected: _onModelSelected,
         vybranePalivo: _vybranePalivo,
         moznostiPaliva: _moznostiPaliva,
         onPalivoChanged: (v) => setState(() => _vybranePalivo = v!),
