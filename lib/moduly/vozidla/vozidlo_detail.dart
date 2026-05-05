@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/constants.dart';
 import 'vozidlo_tab_info.dart';
 import 'vozidlo_tab_zakazky.dart';
 import 'vozidlo_tab_faktury.dart';
@@ -383,8 +384,37 @@ class VozidloDetailScreen extends StatelessWidget {
         final stkM = autoData['stk_mesic']?.toString() ?? '';
         final stkR = autoData['stk_rok']?.toString() ?? '';
 
+        final maZakazky = maPristupModul('zakazky');
+        final maFakturace = maPristupModul('fakturace');
+
+        final tabs = <Tab>[
+          const Tab(icon: Icon(Icons.info_outline), text: 'Info'),
+          if (maZakazky) const Tab(icon: Icon(Icons.build), text: 'Zakázky'),
+          if (maFakturace) const Tab(icon: Icon(Icons.receipt_long), text: 'Faktury'),
+          const Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
+        ];
+
+        final views = <Widget>[
+          VozidloInfoTab(
+            isDark: isDark,
+            user: user,
+            autoData: autoData,
+            spz: spz,
+            zakaznikId: zakaznikId,
+            znackaNazev: znackaNazev,
+            tacho: tacho,
+            palivo: palivo,
+            prevodovka: prevodovka,
+            stkM: stkM,
+            stkR: stkR,
+          ),
+          if (maZakazky) VozidloZakazkyTab(isDark: isDark, user: user, spz: spz),
+          if (maFakturace) VozidloFakturyTab(isDark: isDark, user: user, spz: spz),
+          VozidloPrijemTab(isDark: isDark, user: user, spz: spz),
+        ];
+
         return DefaultTabController(
-          length: 4,
+          length: tabs.length,
           child: Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
             appBar: AppBar(
@@ -401,47 +431,15 @@ class VozidloDetailScreen extends StatelessWidget {
                       _otevritEditaci(context, vozidloDocId, autoData),
                 ),
               ],
-              bottom: const TabBar(
+              bottom: TabBar(
                 labelColor: Colors.teal,
                 unselectedLabelColor: Colors.grey,
                 indicatorColor: Colors.teal,
                 indicatorWeight: 3,
-                tabs: [
-                  Tab(icon: Icon(Icons.info_outline), text: 'Info'),
-                  Tab(icon: Icon(Icons.build), text: 'Zakázky'),
-                  Tab(
-                      icon: Icon(Icons.receipt_long),
-                      text: 'Faktury'),
-                  Tab(
-                      icon: Icon(
-                          Icons.assignment_turned_in_outlined),
-                      text: 'Příjem'),
-                ],
+                tabs: tabs,
               ),
             ),
-            body: TabBarView(
-              children: [
-                VozidloInfoTab(
-                  isDark: isDark,
-                  user: user,
-                  autoData: autoData,
-                  spz: spz,
-                  zakaznikId: zakaznikId,
-                  znackaNazev: znackaNazev,
-                  tacho: tacho,
-                  palivo: palivo,
-                  prevodovka: prevodovka,
-                  stkM: stkM,
-                  stkR: stkR,
-                ),
-                VozidloZakazkyTab(
-                    isDark: isDark, user: user, spz: spz),
-                VozidloFakturyTab(
-                    isDark: isDark, user: user, spz: spz),
-                VozidloPrijemTab(
-                    isDark: isDark, user: user, spz: spz),
-              ],
-            ),
+            body: TabBarView(children: views),
           ),
         );
       },

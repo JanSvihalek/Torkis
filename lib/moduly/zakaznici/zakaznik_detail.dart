@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth_gate.dart';
+import '../../core/constants.dart';
 import 'zakaznici_constants.dart';
 import 'zakaznik_tab_info.dart';
 import 'zakaznik_tab_zakazky.dart';
@@ -316,8 +317,30 @@ class ZakaznikDetailScreen extends StatelessWidget {
   ) {
     final zakaznikId = aktualniData['id_zakaznika'] ?? '';
 
+    final maZakazky = maPristupModul('zakazky');
+    final maFakturace = maPristupModul('fakturace');
+
+    final tabs = <Tab>[
+      const Tab(icon: Icon(Icons.person), text: 'Info & Vozidla'),
+      if (maZakazky) const Tab(icon: Icon(Icons.build), text: 'Zakázky'),
+      if (maFakturace) const Tab(icon: Icon(Icons.receipt_long), text: 'Faktury'),
+      const Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
+    ];
+
+    final views = <Widget>[
+      ZakaznikInfoTab(
+        isDark: isDark,
+        dataZakaznika: aktualniData,
+        zakaznikId: zakaznikId,
+        servisId: servisId,
+      ),
+      if (maZakazky) ZakaznikZakazkyTab(isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
+      if (maFakturace) ZakaznikFakturyTab(isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
+      ZakaznikPrijemTab(isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
+    ];
+
     return DefaultTabController(
-      length: 4,
+      length: tabs.length,
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
@@ -337,51 +360,15 @@ class ZakaznikDetailScreen extends StatelessWidget {
                     _otevritEditaci(context, docId, aktualniData),
               ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             labelColor: Colors.blue,
             unselectedLabelColor: Colors.grey,
             indicatorColor: Colors.blue,
             indicatorWeight: 3,
-            tabs: [
-              Tab(
-                  icon: Icon(Icons.person),
-                  text: 'Info & Vozidla'),
-              Tab(icon: Icon(Icons.build), text: 'Zakázky'),
-              Tab(
-                  icon: Icon(Icons.receipt_long),
-                  text: 'Faktury'),
-              Tab(
-                  icon: Icon(
-                      Icons.assignment_turned_in_outlined),
-                  text: 'Příjem'),
-            ],
+            tabs: tabs,
           ),
         ),
-        body: TabBarView(
-          children: [
-            ZakaznikInfoTab(
-              isDark: isDark,
-              dataZakaznika: aktualniData,
-              zakaznikId: zakaznikId,
-              servisId: servisId,
-            ),
-            ZakaznikZakazkyTab(
-              isDark: isDark,
-              zakaznikId: zakaznikId,
-              servisId: servisId,
-            ),
-            ZakaznikFakturyTab(
-              isDark: isDark,
-              zakaznikId: zakaznikId,
-              servisId: servisId,
-            ),
-            ZakaznikPrijemTab(
-              isDark: isDark,
-              zakaznikId: zakaznikId,
-              servisId: servisId,
-            ),
-          ],
-        ),
+        body: TabBarView(children: views),
       ),
     );
   }
