@@ -9,6 +9,10 @@ const Map<String, String> _kBlueprintAssets = {
   'Sedan': 'assets/images/car_blueprints/sedan.svg',
   'Hatchback': 'assets/images/car_blueprints/hatchback.svg',
   'Kombi': 'assets/images/car_blueprints/kombi.svg',
+  'SUV': 'assets/images/car_blueprints/SUV.svg',
+  'Crossover': 'assets/images/car_blueprints/crossover.svg',
+  'Minivan': 'assets/images/car_blueprints/minivan.svg',
+  'Van': 'assets/images/car_blueprints/van.svg',
 };
 
 const List<String> kTypyKaroserie = [
@@ -16,6 +20,10 @@ const List<String> kTypyKaroserie = [
   'Sedan',
   'Hatchback',
   'Kombi',
+  'SUV',
+  'Crossover',
+  'Minivan',
+  'Van',
 ];
 
 // SVG viewBox is 1149×1369 — portrait layout.
