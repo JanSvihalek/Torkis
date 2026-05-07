@@ -26,9 +26,9 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>UIApplicationSceneManifest</key>
 	<key>NSCameraUsageDescription</key>
 	<string>Aplikace potřebuje přístup ke kameře pro skenování čárových kódů dílů.</string>
+	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
