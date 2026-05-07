@@ -8,7 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart'; // Pro skenování čárových kódů
+import '../core/barcode_scanner_screen.dart';
 import 'auth_gate.dart';
 import 'zakazka/prubeh.dart'; // Pro proklik do zakázky
 import 'fakturace/faktura_detail.dart';
@@ -429,9 +429,7 @@ class _PrijemSkladuTabState extends State<_PrijemSkladuTab> {
   /// v databázi neexistuje, předvyplní pouze pole kódu pro nové vytvoření.
   Future<void> _skenovatKod(List<QueryDocumentSnapshot> dily) async {
     try {
-      String naskenovanyKod = await FlutterBarcodeScanner.scanBarcode(
-        '#ff6666', 'Zrušit', true, ScanMode.BARCODE,
-      );
+      String naskenovanyKod = await BarcodeScannerScreen.scan(context);
 
       if (naskenovanyKod != '-1') {
         try {
@@ -799,9 +797,7 @@ class _PultovyProdejTabState extends State<_PultovyProdejTab> {
 
   Future<void> _skenovatKodDoProdeje(List<QueryDocumentSnapshot> dily) async {
     try {
-      String naskenovanyKod = await FlutterBarcodeScanner.scanBarcode(
-        '#ff6666', 'Zrušit', true, ScanMode.BARCODE,
-      );
+      String naskenovanyKod = await BarcodeScannerScreen.scan(context);
 
       if (naskenovanyKod != '-1') {
         try {
