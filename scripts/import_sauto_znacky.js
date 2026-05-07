@@ -23,13 +23,13 @@ import { resolve } from 'path';
 const POVOLENE_ZNACKY = new Set([
   // Masové
   'Škoda', 'Volkswagen', 'Ford', 'Renault', 'Opel',
-  'Peugeot', 'Citroën', 'Dacia', 'Fiat', 'Seat',
+  'Peugeot', 'Citroën', 'Dacia', 'Fiat', 'Seat','Chevrolet',
   // Prémiové
   'BMW', 'Mercedes-Benz', 'Audi', 'Volvo', 'Land Rover',
   'Mini', 'Alfa Romeo', 'Jaguar',
   // Asijské
-  'Toyota', 'Hyundai', 'Kia', 'Nissan', 'Mazda',
-  'Honda', 'Mitsubishi', 'Suzuki', 'Subaru', 'Lexus','Jaecoo', 'MG',
+  'Toyota', 'Hyundai', 'Kia', 'Nissan', 'Mazda', 'Isuzu',
+  'Honda', 'Mitsubishi', 'Suzuki', 'Subaru', 'Lexus','Jaecoo', 'MG', 'Leapmotor',
   // Ostatní časté
   'Jeep', 'Porsche', 'Cupra', 'Tesla',
 ].map(s => s.toLowerCase()));

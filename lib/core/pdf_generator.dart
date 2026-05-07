@@ -238,6 +238,7 @@ class GlobalPdfGenerator {
 
     // Pro protokol stáhneme obrázek podpisu zákazníka z Firebase Storage.
     pw.MemoryImage? podpisImage;
+    pw.MemoryImage? schemaImage;
     if (typ == PdfTyp.protokol) {
       final podpisUrl = data['podpis_url']?.toString();
       if (podpisUrl != null && podpisUrl.isNotEmpty) {
@@ -245,6 +246,13 @@ class GlobalPdfGenerator {
           final resp = await http.get(Uri.parse(podpisUrl));
           if (resp.statusCode == 200) podpisImage = pw.MemoryImage(resp.bodyBytes);
         } catch (e) { debugPrint("Sign error: $e"); }
+      }
+      final schemaUrl = stavVozidla['schema_url']?.toString();
+      if (schemaUrl != null && schemaUrl.isNotEmpty) {
+        try {
+          final resp = await http.get(Uri.parse(schemaUrl));
+          if (resp.statusCode == 200) schemaImage = pw.MemoryImage(resp.bodyBytes);
+        } catch (e) { debugPrint("Schema error: $e"); }
       }
     }
 
@@ -446,6 +454,26 @@ class GlobalPdfGenerator {
                         font: fontRegular,
                         fontSize: 9,
                         color: PdfColors.grey800,
+                      ),
+                    ),
+                  ],
+                  if (schemaImage != null) ...[
+                    pw.SizedBox(height: 12),
+                    pw.Text(
+                      'Schéma poškození:',
+                      style: pw.TextStyle(
+                        font: fontMedium,
+                        fontSize: 9,
+                        color: PdfColors.grey700,
+                      ),
+                    ),
+                    pw.SizedBox(height: 6),
+                    pw.Center(
+                      child: pw.Image(
+                        schemaImage,
+                        width: 180,
+                        height: 215,
+                        fit: pw.BoxFit.contain,
                       ),
                     ),
                   ],
