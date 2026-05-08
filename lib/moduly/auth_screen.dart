@@ -31,7 +31,7 @@ class _AuthScreenState extends State<AuthScreen> {
   @override
   void initState() {
     super.initState();
-    _initBiometric();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initBiometric());
   }
 
   @override
@@ -52,13 +52,18 @@ class _AuthScreenState extends State<AuthScreen> {
     final email = await _storage.read(key: 'torkis_email');
     final password = await _storage.read(key: 'torkis_password');
 
+    // Biometrie se aktivuje jen pokud jsou uložené přihlašovací údaje.
+    // Bez nich uživatel vidí normální formulář — po úspěšném přihlášení
+    // heslem se údaje uloží a příště Face ID funguje automaticky.
+    if (email == null || password == null) return;
+
     if (!mounted) return;
     setState(() {
       _biometricAvailable = true;
-      _showBiometricUI = email != null && password != null;
+      _showBiometricUI = true;
     });
 
-    if (_showBiometricUI) _loginWithBiometric();
+    _loginWithBiometric();
   }
 
   Future<void> _loginWithBiometric() async {
@@ -80,10 +85,7 @@ class _AuthScreenState extends State<AuthScreen> {
       final password = await _storage.read(key: 'torkis_password');
 
       if (email == null || password == null) {
-        if (mounted) {
-          setState(() { _isLoading = false; _showBiometricUI = false; });
-          _showError('Přihlaste se nejprve heslem, aby bylo Face ID dostupné.');
-        }
+        if (mounted) setState(() { _isLoading = false; _showBiometricUI = false; });
         return;
       }
 
@@ -247,7 +249,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                       const SizedBox(height: 14),
                       const Text(
-                        'Přihlásit přes Face ID',
+                        'Přihlásit se biometricky',
                         style:
                             TextStyle(color: Colors.blueAccent, fontSize: 15),
                       ),
