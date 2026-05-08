@@ -25,7 +25,6 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  bool _showBiometricUI = false;
   bool _biometricAvailable = false;
 
   @override
@@ -58,10 +57,7 @@ class _AuthScreenState extends State<AuthScreen> {
     if (email == null || password == null) return;
 
     if (!mounted) return;
-    setState(() {
-      _biometricAvailable = true;
-      _showBiometricUI = true;
-    });
+    setState(() => _biometricAvailable = true);
 
     _loginWithBiometric();
   }
@@ -85,7 +81,7 @@ class _AuthScreenState extends State<AuthScreen> {
       final password = await _storage.read(key: 'torkis_password');
 
       if (email == null || password == null) {
-        if (mounted) setState(() { _isLoading = false; _showBiometricUI = false; });
+        if (mounted) setState(() => _isLoading = false);
         return;
       }
 
@@ -101,7 +97,7 @@ class _AuthScreenState extends State<AuthScreen> {
       }
     } on FirebaseAuthException {
       if (mounted) {
-        setState(() { _isLoading = false; _showBiometricUI = false; });
+        setState(() => _isLoading = false);
         _showError('Uložené přihlašovací údaje jsou neplatné. Přihlaste se heslem.');
       }
     } catch (_) {
@@ -199,77 +195,7 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_showBiometricUI) return _buildBiometricScreen();
-    return _buildFormScreen();
-  }
-
-  Widget _buildBiometricScreen() {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0B1A2E),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/torkis-app-icon-192.png',
-                width: 120,
-                height: 120,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'TORKIS',
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 60),
-              if (_isLoading)
-                const CircularProgressIndicator(color: Colors.blueAccent)
-              else
-                GestureDetector(
-                  onTap: _loginWithBiometric,
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.blueAccent.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.blueAccent, width: 2),
-                        ),
-                        child: const Icon(Icons.fingerprint,
-                            size: 44, color: Colors.blueAccent),
-                      ),
-                      const SizedBox(height: 14),
-                      const Text(
-                        'Přihlásit se biometricky',
-                        style:
-                            TextStyle(color: Colors.blueAccent, fontSize: 15),
-                      ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: 40),
-              TextButton(
-                onPressed: () => setState(() => _showBiometricUI = false),
-                child: const Text(
-                  'Přihlásit se heslem',
-                  style: TextStyle(color: Colors.white54, fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _buildFormScreen();
 
   Widget _buildFormScreen() {
     return Scaffold(
