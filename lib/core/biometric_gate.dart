@@ -8,6 +8,9 @@ import '../moduly/main_screen.dart';
 class BiometricGate extends StatefulWidget {
   const BiometricGate({super.key});
 
+  /// Nastaví AuthScreen před přechodem → BiometricGate přeskočí ověření.
+  static bool justLoggedIn = false;
+
   @override
   State<BiometricGate> createState() => _BiometricGateState();
 }
@@ -24,6 +27,12 @@ class _BiometricGateState extends State<BiometricGate> {
   }
 
   Future<void> _init() async {
+    if (BiometricGate.justLoggedIn) {
+      BiometricGate.justLoggedIn = false;
+      if (mounted) setState(() { _authenticated = true; _checking = false; });
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool('biometric_enabled') ?? false;
 
