@@ -13,16 +13,18 @@ workflows:
     scripts:
       - name: Set up signing
         script: |
+          set -e
           keychain initialize
-          # Vygenerujeme RSA private key pro Distribution certifikát
+          # Vygenerujeme RSA private key v PEM formátu pro Distribution certifikát.
+          # Codemagic CLI vyžaduje @ prefix pro čtení obsahu klíče ze souboru.
           ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/cert_key.pem -q -N ""
           app-store-connect certificates create \
             --type IOS_DISTRIBUTION \
-            --certificate-key /tmp/cert_key.pem \
+            --certificate-key @file:/tmp/cert_key.pem \
             --save
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_ADHOC \
-            --certificate-key /tmp/cert_key.pem \
+            --certificate-key @file:/tmp/cert_key.pem \
             --create
           keychain add-certificates
           xcode-project use-profiles
