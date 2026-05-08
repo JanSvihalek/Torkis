@@ -1,15 +1,18 @@
 workflows:
   ios-adhoc:
     name: iOS Ad Hoc
-    max_build_duration: 60
-    integrations:
-      app_store_connect: CodeMagic
     environment:
       flutter: stable
+      ios_signing:
+        provisioning_profiles:
+          - TORKIS_AD_HOC
+        certificates:
+          - IOS_DISTRIBUTION_2  # stejný napříč všemi appkami
       vars:
-        BUNDLE_ID: "com.jansvihalek.torkis"
         XCODE_WORKSPACE: "ios/Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
+    # zbytek stejný...
+
     scripts:
       - name: Set up signing
         script: |
