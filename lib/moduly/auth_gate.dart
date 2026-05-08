@@ -3,10 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/biometric_gate.dart';
 import '../core/constants.dart';
 import 'auth_screen.dart';
-import 'onboarding.dart';
 import 'main_screen.dart';
+import 'onboarding.dart';
 
 // --- GLOBÁLNÍ PROMĚNNÉ PRO CELOU APLIKACI ---
 String? globalServisId;
@@ -141,7 +142,7 @@ class AuthGate extends StatelessWidget {
               // Načtení a aplikace předplatného
               _applySubscription(snap.data!.predDoc);
 
-              return const MainScreen();
+              return const BiometricGate();
             }
             return const SetupWizardScreen();
           },

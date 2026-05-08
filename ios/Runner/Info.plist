@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Aplikace potřebuje přístup ke kameře pro skenování čárových kódů dílů.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Aplikace používá Face ID pro rychlé a bezpečné přihlášení.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

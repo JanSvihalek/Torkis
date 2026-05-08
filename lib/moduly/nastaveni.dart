@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart'; // Přidáno pro živý náhled data v konfigurátoru
+import 'package:intl/intl.dart';
 
 import '../core/constants.dart';
 import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
@@ -40,6 +41,8 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // Uživatelské nastavení (pro všechny)
   bool _tmavyRezim = false;
+  bool _biometricEnabled = false;
+  bool _biometricAvailable = false;
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -82,6 +85,14 @@ class _SettingsPageState extends State<SettingsPage> {
           _tmavyRezim = userDoc.data()!['tmavy_rezim'] ?? false;
         });
       }
+
+      final auth = LocalAuthentication();
+      final canBio = await auth.canCheckBiometrics;
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _biometricAvailable = canBio;
+        _biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
+      });
 
       if (_isAdmin && globalServisId != null) {
         final doc = await FirebaseFirestore.instance
@@ -178,6 +189,20 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _isSaving = false);
   }
 
+
+  Future<void> _toggleBiometric(bool value) async {
+    if (value) {
+      final auth = LocalAuthentication();
+      final ok = await auth.authenticate(
+        localizedReason: 'Potvrďte svou totožnost pro zapnutí biometrického přihlášení',
+        options: const AuthenticationOptions(stickyAuth: true),
+      );
+      if (!ok) return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('biometric_enabled', value);
+    setState(() => _biometricEnabled = value);
+  }
 
   Future<void> _ulozitSablony() async {
     if (globalServisId == null) return;
@@ -863,6 +888,27 @@ class _SettingsPageState extends State<SettingsPage> {
                       onChanged: (v) => setState(() => _tmavyRezim = v),
                     ),
                   ),
+                  if (_biometricAvailable) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                      ),
+                      child: SwitchListTile(
+                        secondary: const Icon(Icons.fingerprint, color: Colors.blue),
+                        title: const Text('Biometrické přihlášení',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: const Text(
+                            'Face ID / otisk prstu při každém spuštění.',
+                            style: TextStyle(fontSize: 11)),
+                        value: _biometricEnabled,
+                        activeColor: Colors.blue,
+                        onChanged: _toggleBiometric,
+                      ),
+                    ),
+                  ],
                 ],
               ),
 

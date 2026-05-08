@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'auth_gate.dart'; // <--- ODKAZ NA NAŠEHO STRÁŽCE
+import 'auth_gate.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -56,7 +58,7 @@ class _AuthScreenState extends State<AuthScreen> {
             .createUserWithEmailAndPassword(email: email, password: password);
       }
 
-      // PO OBOU AKCÍCH NÁSLEDUJE STEJNÝ KROK: PŘESUNUTÍ NA STRÁŽCE (AuthGate)
+      await _offerBiometric();
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -81,6 +83,40 @@ class _AuthScreenState extends State<AuthScreen> {
       _showError('Neočekávaná chyba: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _offerBiometric() async {
+    final auth = LocalAuthentication();
+    final canBiometric = await auth.canCheckBiometrics;
+    if (!canBiometric || !mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('biometric_enabled') == true) return;
+
+    final biometrics = await auth.getAvailableBiometrics();
+    final label = biometrics.contains(BiometricType.face) ? 'Face ID' : 'biometrii';
+
+    if (!mounted) return;
+    final agreed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Přihlašování přes $label'),
+        content: Text('Chcete příště použít $label místo hesla?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Nyní ne'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Zapnout'),
+          ),
+        ],
+      ),
+    );
+    if (agreed == true) {
+      await prefs.setBool('biometric_enabled', true);
     }
   }
 
