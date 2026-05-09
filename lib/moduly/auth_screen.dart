@@ -25,8 +25,6 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  bool _biometricAvailable = false;
-
   @override
   void initState() {
     super.initState();
@@ -42,13 +40,6 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _initBiometric() async {
-    final auth = LocalAuthentication();
-    final supported = await auth.canCheckBiometrics;
-    if (!supported || !mounted) return;
-
-    // Tlačítko Face ID je viditelné vždy, když HW biometrii podporuje.
-    setState(() => _biometricAvailable = true);
-
     // Auto-trigger jen pokud uživatel biometrii zapnul + credentials existují.
     final prefs = await SharedPreferences.getInstance();
     if (!(prefs.getBool('biometric_enabled') ?? false)) return;
@@ -57,6 +48,7 @@ class _AuthScreenState extends State<AuthScreen> {
     final password = await _storage.read(key: 'torkis_password');
     if (email == null || password == null) return;
 
+    if (!mounted) return;
     _loginWithBiometric();
   }
 
@@ -274,8 +266,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ),
                     const SizedBox(height: 20),
-                    // Face ID tlačítko (jen v login módu, pokud je dostupné)
-                    if (_isLogin && _biometricAvailable) ...[
+                    // Face ID tlačítko (vždy v login módu).
+                    if (_isLogin) ...[
                       OutlinedButton.icon(
                         onPressed: _isLoading ? null : _loginWithBiometric,
                         icon: const Icon(Icons.fingerprint, size: 20),
