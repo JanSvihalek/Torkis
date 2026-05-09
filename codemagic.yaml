@@ -1,21 +1,34 @@
 workflows:
   ios-adhoc:
     name: iOS Ad Hoc
-    max_build_duration: 60
     environment:
       flutter: stable
       ios_signing:
         provisioning_profiles:
           - TORKIS_AD_HOC
         certificates:
-          - IOS_DISTRIBUTION_2
+          - IOS_DISTRIBUTION_2  # stejný napříč všemi appkami
       vars:
         XCODE_WORKSPACE: "ios/Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
+    # zbytek stejný...
+
     scripts:
       - name: Set up signing
         script: |
+          set -e
           keychain initialize
+          # Vygenerujeme RSA private key v PEM formátu pro Distribution certifikát.
+          # Codemagic CLI vyžaduje @ prefix pro čtení obsahu klíče ze souboru.
+          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/cert_key.pem -q -N ""
+          app-store-connect certificates create \
+            --type IOS_DISTRIBUTION \
+            --certificate-key @file:/tmp/cert_key.pem \
+            --save
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_ADHOC \
+            --certificate-key @file:/tmp/cert_key.pem \
+            --create
           keychain add-certificates
           xcode-project use-profiles
       - name: Flutter pub get
