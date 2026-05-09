@@ -42,22 +42,20 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _initBiometric() async {
+    final auth = LocalAuthentication();
+    final supported = await auth.canCheckBiometrics;
+    if (!supported || !mounted) return;
+
+    // Tlačítko Face ID je viditelné vždy, když HW biometrii podporuje.
+    setState(() => _biometricAvailable = true);
+
+    // Auto-trigger jen pokud uživatel biometrii zapnul + credentials existují.
     final prefs = await SharedPreferences.getInstance();
     if (!(prefs.getBool('biometric_enabled') ?? false)) return;
 
-    final auth = LocalAuthentication();
-    if (!await auth.canCheckBiometrics) return;
-
     final email = await _storage.read(key: 'torkis_email');
     final password = await _storage.read(key: 'torkis_password');
-
-    // Biometrie se aktivuje jen pokud jsou uložené přihlašovací údaje.
-    // Bez nich uživatel vidí normální formulář — po úspěšném přihlášení
-    // heslem se údaje uloží a příště Face ID funguje automaticky.
     if (email == null || password == null) return;
-
-    if (!mounted) return;
-    setState(() => _biometricAvailable = true);
 
     _loginWithBiometric();
   }
@@ -81,7 +79,11 @@ class _AuthScreenState extends State<AuthScreen> {
       final password = await _storage.read(key: 'torkis_password');
 
       if (email == null || password == null) {
-        if (mounted) setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+          _showError(
+              'Nejprve se přihlaste heslem — Face ID se aktivuje pro příští spuštění.');
+        }
         return;
       }
 
