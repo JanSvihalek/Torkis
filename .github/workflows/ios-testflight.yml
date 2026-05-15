@@ -120,9 +120,14 @@ jobs:
           mkdir -p ~/.appstoreconnect/private_keys
           cp $KEY ~/.appstoreconnect/private_keys/
           IPA=$(find build/ios/ipa -name '*.ipa' | head -1)
+          set -o pipefail
           xcrun altool --upload-app -t ios -f "$IPA" \
             --apiKey "$ASC_KEY_ID" \
-            --apiIssuer "$ASC_ISSUER_ID"
+            --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee /tmp/altool.log
+          if grep -qE "UPLOAD FAILED|ERROR:|Validation failed" /tmp/altool.log; then
+            echo "::error::Apple altool reported failure"
+            exit 1
+          fi
 
       - name: Save IPA as artifact
         if: always()
