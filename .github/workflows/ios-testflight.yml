@@ -102,7 +102,12 @@ jobs:
       # ── Build ───────────────────────────────────────────────────────────────
 
       - name: Build IPA
-        run: flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+        run: |
+          BUILD_NUMBER=$((100 + ${{ github.run_number }}))
+          echo "Build number: $BUILD_NUMBER"
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --build-number=$BUILD_NUMBER
 
       - name: Upload to TestFlight
         env:
