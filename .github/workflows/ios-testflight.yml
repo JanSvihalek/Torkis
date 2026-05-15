@@ -45,7 +45,13 @@ jobs:
           PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
         run: |
           PP=$RUNNER_TEMP/profile.mobileprovision
-          echo -n "$PROFILE_BASE64" | base64 --decode -o $PP
+          echo "Secret length: ${#PROFILE_BASE64} chars (expected ~16k)"
+          printf '%s' "$PROFILE_BASE64" | tr -d ' \n\r\t' | base64 --decode > $PP
+          echo "Decoded profile size: $(wc -c < $PP) bytes (expected ~12k)"
+          if [ ! -s "$PP" ]; then
+            echo "ERROR: dekodovany profil je prazdny - secret IOS_PROFILE_BASE64 neni aktualizovany?"
+            exit 1
+          fi
           PP_UUID=$(security cms -D -i $PP | plutil -extract UUID raw -)
           echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
           echo "Profile UUID: $PP_UUID"
