@@ -46,25 +46,26 @@ jobs:
         run: |
           PP=$RUNNER_TEMP/profile.mobileprovision
           echo -n "$PROFILE_BASE64" | base64 --decode -o $PP
+          PP_UUID=$(security cms -D -i $PP | plutil -extract UUID raw -)
+          echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
+          echo "Profile UUID: $PP_UUID"
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP ~/Library/MobileDevice/Provisioning\ Profiles/
+          cp $PP ~/Library/MobileDevice/Provisioning\ Profiles/$PP_UUID.mobileprovision
 
       - name: Inject signing into xcconfig
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          PP_NAME: ${{ secrets.IOS_PROFILE_NAME }}
         run: |
           {
             echo "CODE_SIGN_STYLE=Manual"
             echo "DEVELOPMENT_TEAM=$TEAM_ID"
             echo "CODE_SIGN_IDENTITY=Apple Distribution"
-            echo "PROVISIONING_PROFILE_SPECIFIER=$PP_NAME"
+            echo "PROVISIONING_PROFILE_SPECIFIER=$PP_UUID"
           } >> ios/Flutter/Release.xcconfig
 
       - name: Create ExportOptions.plist
         env:
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          PP_NAME: ${{ secrets.IOS_PROFILE_NAME }}
         run: |
           cat > ios/ExportOptions.plist << PLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -82,7 +83,7 @@ jobs:
               <key>provisioningProfiles</key>
               <dict>
                   <key>com.jansvihalek.torkis</key>
-                  <string>${PP_NAME}</string>
+                  <string>${PP_UUID}</string>
               </dict>
               <key>uploadBitcode</key>
               <false/>
