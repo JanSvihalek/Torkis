@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,6 +14,7 @@ import '../../core/pdf_generator.dart';
 import '../auth_gate.dart';
 import 'prijem_vozidla_vyber_zakaznika.dart';
 import 'prijem_vozidla_kamera.dart';
+import 'ocr_camera_page.dart';
 import 'prijem_vozidla_step_vozidlo.dart';
 import 'prijem_vozidla_step_zakaznik.dart';
 import 'prijem_vozidla_step_stav.dart';
@@ -1187,24 +1187,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
           duration: Duration(seconds: 4)));
       return;
     }
-    try {
-      final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
-      if (photo == null) return;
-      final inputImage = InputImage.fromFilePath(photo.path);
-      final textRecognizer =
-          TextRecognizer(script: TextRecognitionScript.latin);
-      final recognizedText = await textRecognizer.processImage(inputImage);
-      String result = recognizedText.text;
-      if (numbersOnly) {
-        result = result.replaceAll(RegExp(r'[^0-9]'), '');
-      } else {
-        result = result.replaceAll(RegExp(r'[^A-Z0-9]'), '').toUpperCase();
-      }
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OcrCameraPage(
+          label: numbersOnly ? 'číslo' : 'SPZ / VIN',
+          numbersOnly: numbersOnly,
+        ),
+      ),
+    );
+    if (result != null && result.isNotEmpty && mounted) {
       setState(() => controller.text = result);
-      textRecognizer.close();
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Chyba skenování: $e'), backgroundColor: Colors.red));
     }
   }
 
