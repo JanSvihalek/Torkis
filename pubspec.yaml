@@ -2,7 +2,7 @@ name: torkis
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 4.2.0
+version: 4.2.1
 
 environment:
   sdk: '>=3.5.3 <4.0.0'

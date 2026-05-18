@@ -1198,6 +1198,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
     );
     if (result != null && result.isNotEmpty && mounted) {
       setState(() => controller.text = result);
+      if (controller == _spzController) {
+        await _hledatPodleSpz();
+      }
     }
   }
 
