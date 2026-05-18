@@ -1177,30 +1177,50 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-  Future<void> _scanText(
-      TextEditingController controller, bool numbersOnly) async {
+  Future<String?> _openOcrCamera(String label, {bool numbersOnly = false}) async {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
               'Skenování pomocí AI funguje pouze v nainstalované aplikaci (APK/iOS).'),
           backgroundColor: Colors.orange,
           duration: Duration(seconds: 4)));
-      return;
+      return null;
     }
-    final result = await Navigator.push<String>(
+    return Navigator.push<String>(
       context,
       MaterialPageRoute(
-        builder: (_) => OcrCameraPage(
-          label: numbersOnly ? 'číslo' : 'SPZ / VIN',
-          numbersOnly: numbersOnly,
-        ),
+        builder: (_) => OcrCameraPage(label: label, numbersOnly: numbersOnly),
       ),
+    );
+  }
+
+  Future<void> _scanText(
+      TextEditingController controller, bool numbersOnly) async {
+    final result = await _openOcrCamera(
+      numbersOnly ? 'číslo' : 'SPZ / VIN',
+      numbersOnly: numbersOnly,
     );
     if (result != null && result.isNotEmpty && mounted) {
       setState(() => controller.text = result);
       if (controller == _spzController) {
         await _hledatPodleSpz();
       }
+    }
+  }
+
+  Future<void> _scanZnacka() async {
+    final result = await _openOcrCamera('značku');
+    if (result != null && result.isNotEmpty && mounted) {
+      _znackaController.text = result;
+      _aktualizujModely(result);
+    }
+  }
+
+  Future<void> _scanModel() async {
+    final result = await _openOcrCamera('model');
+    if (result != null && result.isNotEmpty && mounted) {
+      _onModelSelected(result);
+      setState(() => _autocompleteResetKey++);
     }
   }
 
@@ -1270,6 +1290,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
         isLoadingSpz: _isLoadingSpz,
         onHledatSpz: _hledatPodleSpz,
         onScan: _scanText,
+        onScanZnacka: _scanZnacka,
+        onScanModel: _scanModel,
         autocompleteResetKey: _autocompleteResetKey,
         dostupneZnacky: _dostupneZnacky,
         dostupneModely: _dostupneModely,

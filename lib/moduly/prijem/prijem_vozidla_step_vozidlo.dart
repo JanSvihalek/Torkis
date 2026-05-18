@@ -24,6 +24,8 @@ class StepVozidlo extends StatelessWidget {
   final bool isLoadingSpz;
   final VoidCallback onHledatSpz;
   final void Function(TextEditingController, bool) onScan;
+  final VoidCallback? onScanZnacka;
+  final VoidCallback? onScanModel;
 
   // Autocomplete
   final int autocompleteResetKey;
@@ -68,6 +70,8 @@ class StepVozidlo extends StatelessWidget {
     required this.isLoadingSpz,
     required this.onHledatSpz,
     required this.onScan,
+    this.onScanZnacka,
+    this.onScanModel,
     required this.autocompleteResetKey,
     required this.dostupneZnacky,
     required this.dostupneModely,
@@ -269,6 +273,12 @@ class StepVozidlo extends StatelessWidget {
                       decoration: InputDecoration(
                         prefixIcon: const Icon(Icons.directions_car,
                             color: Colors.blue),
+                        suffixIcon: onScanZnacka != null
+                            ? IconButton(
+                                icon: const Icon(Icons.document_scanner),
+                                onPressed: onScanZnacka,
+                                tooltip: 'Naskenovat značku fotoaparátem')
+                            : null,
                         filled: true,
                         fillColor: isDark
                             ? Colors.white.withValues(alpha: 0.1)
@@ -388,6 +398,12 @@ class StepVozidlo extends StatelessWidget {
                         prefixIcon: const Icon(
                             Icons.directions_car_filled,
                             color: Colors.blue),
+                        suffixIcon: onScanModel != null
+                            ? IconButton(
+                                icon: const Icon(Icons.document_scanner),
+                                onPressed: onScanModel,
+                                tooltip: 'Naskenovat model fotoaparátem')
+                            : null,
                         filled: true,
                         fillColor: isDark
                             ? Colors.white.withValues(alpha: 0.1)
