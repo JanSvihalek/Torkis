@@ -107,21 +107,29 @@ class StepVozidlo extends StatelessWidget {
                 zakazkaController,
                 isDark,
                 caps: true,
-                customSuffix: !autoGenerateCislo
-                    ? null
-                    : isGeneratingCislo
-                        ? const Padding(
-                            padding: EdgeInsets.all(12),
-                            child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2)))
-                        : IconButton(
-                            icon: const Icon(Icons.refresh,
-                                color: Colors.blue),
-                            onPressed: onRegenerateCislo,
-                            tooltip: 'Vygenerovat nové číslo'),
+                customSuffix: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                          icon: const Icon(Icons.document_scanner),
+                          onPressed: () => onScan(zakazkaController, false),
+                          tooltip: 'Naskenovat číslo zakázky'),
+                      if (autoGenerateCislo)
+                        isGeneratingCislo
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2)))
+                            : IconButton(
+                                icon: const Icon(Icons.refresh,
+                                    color: Colors.blue),
+                                onPressed: onRegenerateCislo,
+                                tooltip: 'Vygenerovat nové číslo'),
+                    ],
+                  ),
               );
 
               if (constraints.maxWidth < 400) {
