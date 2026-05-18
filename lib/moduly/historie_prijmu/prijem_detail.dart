@@ -3,10 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
-import '../../core/constants.dart';
 import '../../core/pdf_generator.dart';
-import '../zakazka/prubeh.dart';
-import '../zakazka_komunikace/zakazka_komunikace_page.dart';
 import '../vozidla/vozidlo_detail.dart';
 import '../zakaznici/zakaznik_detail.dart';
 
@@ -21,60 +18,8 @@ class PrijemDetailScreen extends StatefulWidget {
   State<PrijemDetailScreen> createState() => _PrijemDetailScreenState();
 }
 
-class _PrijemDetailScreenState extends State<PrijemDetailScreen>
-    with SingleTickerProviderStateMixin {
+class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   bool _isTisku = false;
-  late final TabController _tabController;
-  late final bool _maZakazky;
-
-  @override
-  void initState() {
-    super.initState();
-    _maZakazky = maPristupModul('zakazky');
-    _tabController = TabController(length: _maZakazky ? 3 : 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  void _onTabTap(int index) {
-    if (index == 0) return;
-    _tabController.animateTo(0);
-    final d = widget.data;
-    final zakaznik = d['zakaznik'] as Map<String, dynamic>? ?? {};
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      // Zakázka je tab 1 (jen pokud je modul povolen), Komunikace je vždy poslední
-      if (_maZakazky && index == 1) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ActiveJobScreen(
-              documentId: widget.docId,
-              zakazkaId: d['cislo_zakazky']?.toString() ?? '',
-              spz: d['spz']?.toString() ?? '',
-            ),
-          ),
-        );
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ZakazkaKomunikacePage(
-              documentId: widget.docId,
-              zakazkaId: d['cislo_zakazky']?.toString() ?? '',
-              spz: d['spz']?.toString() ?? '',
-              zakaznikJmeno: zakaznik['jmeno']?.toString() ?? '',
-              zakaznikEmail: zakaznik['email']?.toString() ?? '',
-            ),
-          ),
-        );
-      }
-    });
-  }
 
   String _formatDate(dynamic timestamp) {
     if (timestamp == null) return '-';
@@ -188,26 +133,8 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
             onPressed: _isTisku ? null : _tiskniProtokol,
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          onTap: _onTabTap,
-          tabs: [
-            const Tab(icon: Icon(Icons.description_outlined), text: 'Protokol'),
-            if (_maZakazky)
-              const Tab(icon: Icon(Icons.build_circle_outlined), text: 'Zakázka'),
-            const Tab(icon: Icon(Icons.chat_outlined), text: 'Komunikace'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: [
-          _buildProtokolTab(isDark, d, zakaznik),
-          if (_maZakazky) const SizedBox(),
-          const SizedBox(),
-        ],
-      ),
+      body: _buildProtokolTab(isDark, d, zakaznik),
     );
   }
 
@@ -437,29 +364,6 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen>
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ActiveJobScreen(
-                    documentId: widget.docId,
-                    zakazkaId: d['cislo_zakazky']?.toString() ?? '',
-                    spz: d['spz']?.toString() ?? '',
-                  ),
-                ),
-              ),
-              icon: const Icon(Icons.build_circle_outlined),
-              label: const Text('Otevřít zakázku'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
           ),
           const SizedBox(height: 30),
         ],

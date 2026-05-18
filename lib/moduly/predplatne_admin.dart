@@ -7,22 +7,14 @@ import 'auth_gate.dart';
 // Lidsky čitelné názvy modulů
 const Map<String, String> _modulNazvy = {
   'prijem':          'Příjem vozidla & Historie příjmů',
-  'zakazky':         'Zakázky',
   'planovac':        'Plánovač',
-  'sklad':           'Sklad dílů',
-  'fakturace':       'Fakturace',
-  'ucetnictvi':      'Účetnictví',
   'statistiky':      'Statistiky',
   'zamestnanci':     'Zaměstnanci / Tým',
 };
 
 const Map<String, Color> _modulBarvy = {
   'prijem':      Colors.blue,
-  'zakazky':     Color.fromARGB(255, 68, 134, 70),
   'planovac':    Colors.green,
-  'sklad':       Colors.orange,
-  'fakturace':   Colors.teal,
-  'ucetnictvi':  Colors.indigo,
   'statistiky':  Colors.purple,
   'zamestnanci': Colors.redAccent,
 };
@@ -213,7 +205,7 @@ class _PredplatneAdminPageState extends State<PredplatneAdminPage> {
                               Colors.grey, isDark),
                           const SizedBox(height: 10),
                           _planCard('pro', 'Pro',
-                              'Vše z Basic + fakturace, sklad, plánování, statistiky, tým',
+                              'Vše z Basic + plánování, statistiky, tým',
                               Colors.blue, isDark),
                           const SizedBox(height: 10),
                           _planCard('custom', 'Custom (smlouva)',

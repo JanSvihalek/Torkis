@@ -3,8 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:intl/intl.dart';
-
 import 'auth_gate.dart';
 import '../core/constants.dart';
 
@@ -38,8 +36,7 @@ class _UkonData {
 // Po dokončení se vše uloží batch zápisem do Firestore a uživatel je přesměrován do aplikace.
 // Kroky:
 //   1) Informace o servisu + profil majitele (admin účet)
-//   2) Fakturace: DPH, banka, formát číslování zakázek a faktur
-//   3) Přednastavený katalog úkonů (název, cena, čas, kategorie)
+//   2) Přednastavený katalog úkonů (název, cena, čas, kategorie)
 class SetupWizardScreen extends StatefulWidget {
   const SetupWizardScreen({super.key});
 
@@ -60,32 +57,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   final _emailServisuController = TextEditingController();
   final _jmenoMajiteleController = TextEditingController();
 
-  // KROK 2: Fakturace a Ceny
-  final _sazbaController = TextEditingController();
-  final _ucetCisloController = TextEditingController();
-  final _ucetKodController = TextEditingController();
-  final _dicController = TextEditingController();
-  final _prefixZakazkaController = TextEditingController(text: 'ZAK');
-  final _prefixFakturaController = TextEditingController(text: 'FAK');
-
-  bool _jePlatceDph = false;
-  String _zpusobUhrady = 'Převodem';
   bool _defaultOdeslatEmaily = true;
   bool _tmavyRezim = false;
 
-  // Číslování - Zakázky
-  String _zakazkaRokFormat = '{YYYY}';
-  String _zakazkaMessicFormat = '{MM}';
-  String _zakazkaOddelovac = '-';
-  double _zakazkaDelkaPocitadla = 5.0;
-
-  // Číslování - Faktury
-  String _fakturaRokFormat = '{YYYY}';
-  String _fakturaMessicFormat = '{MM}';
-  String _fakturaOddelovac = '-';
-  double _fakturaDelkaPocitadla = 5.0;
-
-  // KROK 3: Předpřipravené úkony
+  // KROK 2: Předpřipravené úkony
   final List<_UkonData> _ukony = [];
 
   static const List<String> _kategorieUkonu = [
@@ -122,12 +97,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     _registraceController.dispose();
     _emailServisuController.dispose();
     _jmenoMajiteleController.dispose();
-    _sazbaController.dispose();
-    _ucetCisloController.dispose();
-    _ucetKodController.dispose();
-    _dicController.dispose();
-    _prefixZakazkaController.dispose();
-    _prefixFakturaController.dispose();
     for (final u in _ukony) {
       u.dispose();
     }
@@ -207,51 +176,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               'email_servisu': _emailServisuController.text.trim(),
               'default_odesilat_emaily': _defaultOdeslatEmaily,
               'tmavy_rezim': _tmavyRezim,
-              'hodinova_sazba':
-                  double.tryParse(_sazbaController.text.replaceAll(',', '.')) ??
-                      0.0,
-              'platce_dph': _jePlatceDph,
-              'dic_servisu': _dicController.text.trim(),
-              'banka_servisu':
-                  '${_ucetCisloController.text.trim()}/${_ucetKodController.text.trim()}',
-              'zpusob_uhrady': _zpusobUhrady,
-              'prefix_zakazky': _prefixZakazkaController.text.trim().isEmpty
-                  ? 'ZAK'
-                  : _prefixZakazkaController.text.trim().toUpperCase(),
-              'prefix_zakazka': _prefixZakazkaController.text.trim().isEmpty
-                  ? 'ZAK'
-                  : _prefixZakazkaController.text.trim().toUpperCase(),
-              'prefix_faktury': _prefixFakturaController.text.trim().isEmpty
-                  ? 'FAK'
-                  : _prefixFakturaController.text.trim().toUpperCase(),
-              'prefix_faktura': _prefixFakturaController.text.trim().isEmpty
-                  ? 'FAK'
-                  : _prefixFakturaController.text.trim().toUpperCase(),
-              'maska_zakazka': _vygenerujMasku(
-                  _prefixZakazkaController.text.trim().isEmpty
-                      ? 'ZAK'
-                      : _prefixZakazkaController.text.trim().toUpperCase(),
-                  _zakazkaRokFormat,
-                  _zakazkaMessicFormat,
-                  _zakazkaOddelovac,
-                  _zakazkaDelkaPocitadla.toInt()),
-              'cfg_rok_zakazka': _zakazkaRokFormat,
-              'cfg_mesic_zakazka': _zakazkaMessicFormat,
-              'cfg_oddelovac_zakazka': _zakazkaOddelovac,
-              'cfg_delka_zakazka': _zakazkaDelkaPocitadla.toInt(),
-              'maska_faktura': _vygenerujMasku(
-                  _prefixFakturaController.text.trim().isEmpty
-                      ? 'FAK'
-                      : _prefixFakturaController.text.trim().toUpperCase(),
-                  _fakturaRokFormat,
-                  _fakturaMessicFormat,
-                  _fakturaOddelovac,
-                  _fakturaDelkaPocitadla.toInt()),
-              'cfg_rok_faktura': _fakturaRokFormat,
-              'cfg_mesic_faktura': _fakturaMessicFormat,
-              'cfg_oddelovac_faktura': _fakturaOddelovac,
-              'cfg_delka_faktura': _fakturaDelkaPocitadla.toInt(),
-              // Pole 'rychle_ukony' bylo smazáno, ukládáme to teď do samostatné kolekce (viz krok 3)
               'prvni_spusteni_dokonceno': true,
               'vytvoreno': FieldValue.serverTimestamp(),
             },
@@ -269,9 +193,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               ? _jmenoMajiteleController.text.trim()
               : (user.email ?? ''),
           'prava': {
-            'zakazky': true,
-            'sklad': true,
-            'fakturace': true,
             'zamestnanci': true,
             'nastaveni': true,
           },
@@ -286,7 +207,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             'nazev': ukon.nazev.text.trim(),
             'cena_bez_dph':
                 double.tryParse(ukon.cena.text.replaceAll(',', '.')) ?? 0.0,
-            'sazba_dph': _jePlatceDph ? 21 : 0,
+            'sazba_dph': 0,
             'odhadovany_cas':
                 double.tryParse(ukon.cas.text.replaceAll(',', '.')) ?? 1.0,
             'jednotka_casu': ukon.jednotkaCasu,
@@ -322,7 +243,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       return;
     }
 
-    if (_currentPage == 2) {
+    if (_currentPage == 1) {
       _dokoncitNastaveni();
     } else {
       FocusScope.of(context).unfocus();
@@ -361,18 +282,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       child: Container(
                           height: 6,
                           decoration: BoxDecoration(
-                              color: _currentPage >= 1
-                                  ? Colors.blue
-                                  : (isDark
-                                      ? Colors.grey[800]
-                                      : Colors.grey[300]),
-                              borderRadius: BorderRadius.circular(3)))),
-                  const SizedBox(width: 10),
-                  Expanded(
-                      child: Container(
-                          height: 6,
-                          decoration: BoxDecoration(
-                              color: _currentPage == 2
+                              color: _currentPage == 1
                                   ? Colors.blue
                                   : (isDark
                                       ? Colors.grey[800]
@@ -388,7 +298,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 onPageChanged: (index) => setState(() => _currentPage = index),
                 children: [
                   _buildStep1(isDark),
-                  _buildStep2(isDark),
                   _buildStep3(isDark),
                 ],
               ),
@@ -433,7 +342,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2))
                           : Text(
-                              _currentPage == 2
+                              _currentPage == 1
                                   ? 'DOKONČIT NASTAVENÍ'
                                   : 'POKRAČOVAT',
                               style: const TextStyle(
@@ -445,205 +354,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             )
           ],
         ),
-      ),
-    );
-  }
-
-  String _vygenerujMasku(String prefix, String rokFormat, String mesicFormat,
-      String oddelovac, int delka) {
-    List<String> casti = [];
-    if (prefix.isNotEmpty) casti.add('{PREFIX}');
-    if (rokFormat.isNotEmpty) casti.add(rokFormat);
-    if (mesicFormat.isNotEmpty) casti.add(mesicFormat);
-    casti.add('{NUM$delka}');
-    return casti.join(oddelovac);
-  }
-
-  String _vygenerujNahled(String prefix, String rokFormat, String mesicFormat,
-      String oddelovac, int delka) {
-    final ted = DateTime.now();
-    String nahled =
-        _vygenerujMasku(prefix, rokFormat, mesicFormat, oddelovac, delka);
-    nahled = nahled.replaceAll('{PREFIX}', prefix.toUpperCase());
-    nahled = nahled.replaceAll('{YYYY}', DateFormat('yyyy').format(ted));
-    nahled = nahled.replaceAll('{YY}', DateFormat('yy').format(ted));
-    nahled = nahled.replaceAll('{MM}', DateFormat('MM').format(ted));
-    nahled = nahled.replaceAll('{NUM$delka}', '1'.padLeft(delka, '0'));
-    return nahled;
-  }
-
-  Widget _buildCislovaniSekce({
-    required String nazev,
-    required Color barva,
-    required IconData ikona,
-    required TextEditingController prefixCtrl,
-    required String rokFormat,
-    required String mesicFormat,
-    required String oddelovac,
-    required double delkaPocitadla,
-    required void Function(String) onRokChanged,
-    required void Function(String) onMesicChanged,
-    required void Function(String) onOddelovacChanged,
-    required void Function(double) onDelkaChanged,
-    required bool isDark,
-  }) {
-    final prefix = prefixCtrl.text.trim().isEmpty
-        ? (nazev == 'Faktury' ? 'FAK' : 'ZAK')
-        : prefixCtrl.text.trim().toUpperCase();
-    final nahled = _vygenerujNahled(
-        prefix, rokFormat, mesicFormat, oddelovac, delkaPocitadla.toInt());
-
-    final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
-    final fillColor = isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50]!;
-    final inputBorder =
-        OutlineInputBorder(borderRadius: BorderRadius.circular(10));
-    final enabledBorder = OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: borderColor));
-
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border:
-            Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(ikona, color: barva, size: 20),
-              const SizedBox(width: 8),
-              Text(nazev,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16, color: barva)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
-            decoration: BoxDecoration(
-              color: barva.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: barva.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                Text('Náhled:',
-                    style: TextStyle(
-                        color: barva,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(nahled,
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                        color: barva)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: prefixCtrl,
-                  textCapitalization: TextCapitalization.characters,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    labelText: 'Prefix',
-                    filled: true,
-                    fillColor: fillColor,
-                    border: inputBorder,
-                    enabledBorder: enabledBorder,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: oddelovac,
-                  decoration: InputDecoration(
-                    labelText: 'Oddělovač',
-                    filled: true,
-                    fillColor: fillColor,
-                    border: inputBorder,
-                    enabledBorder: enabledBorder,
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: '-', child: Text('Pomlčka (-)')),
-                    DropdownMenuItem(value: '/', child: Text('Lomítko (/)')),
-                    DropdownMenuItem(value: '_', child: Text('Podtržítko (_)')),
-                    DropdownMenuItem(value: '', child: Text('Bez oddělovače')),
-                  ],
-                  onChanged: (val) => onOddelovacChanged(val!),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: rokFormat,
-                  decoration: InputDecoration(
-                    labelText: 'Formát roku',
-                    filled: true,
-                    fillColor: fillColor,
-                    border: inputBorder,
-                    enabledBorder: enabledBorder,
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                        value: '{YYYY}', child: Text('4 cifry (2026)')),
-                    DropdownMenuItem(
-                        value: '{YY}', child: Text('2 cifry (26)')),
-                    DropdownMenuItem(value: '', child: Text('Bez roku')),
-                  ],
-                  onChanged: (val) => onRokChanged(val!),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: mesicFormat,
-                  decoration: InputDecoration(
-                    labelText: 'Formát měsíce',
-                    filled: true,
-                    fillColor: fillColor,
-                    border: inputBorder,
-                    enabledBorder: enabledBorder,
-                  ),
-                  items: const [
-                    DropdownMenuItem(
-                        value: '{MM}', child: Text('2 cifry (04)')),
-                    DropdownMenuItem(value: '', child: Text('Bez měsíce')),
-                  ],
-                  onChanged: (val) => onMesicChanged(val!),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text('Délka pořadového čísla: ${delkaPocitadla.toInt()}',
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-          Slider(
-            value: delkaPocitadla,
-            min: 3,
-            max: 6,
-            divisions: 3,
-            activeColor: barva,
-            label: delkaPocitadla.toInt().toString(),
-            onChanged: onDelkaChanged,
-          ),
-        ],
       ),
     );
   }
@@ -847,235 +557,6 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
               },
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── KROK 2: Fakturace a číslování ───────────────────────────────────────
-  // Hodinová sazba, plátce DPH + DIČ, číslo bankovního účtu,
-  // konfigurátor formátu čísel zakázek a faktur (prefix, rok, měsíc, délka počítadla).
-  Widget _buildStep2(bool isDark) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.payments, color: Colors.green, size: 40),
-          ),
-          const SizedBox(height: 20),
-          const Text('Fakturace a Ceny',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          const Text('Nastavte si výchozí sazby a účetní údaje.',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
-          const SizedBox(height: 30),
-          const Text('Základní hodinová sazba bez DPH (Kč)',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _sazbaController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            decoration: InputDecoration(
-              hintText: 'Např. 800',
-              prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
-              filled: true,
-              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
-            child: SwitchListTile(
-              title: const Text('Jsem plátce DPH',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              value: _jePlatceDph,
-              activeColor: Colors.blue,
-              onChanged: (val) => setState(() => _jePlatceDph = val),
-            ),
-          ),
-          if (_jePlatceDph) ...[
-            const SizedBox(height: 20),
-            const Text('DIČ',
-                style:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _dicController,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                hintText: 'Např. CZ12345678',
-                prefixIcon:
-                    const Icon(Icons.assignment_ind, color: Colors.blue),
-                filled: true,
-                fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(
-                        color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
-                enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide(
-                        color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          const Text('Bankovní účet (pro QR platbu)',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextField(
-                  controller: _ucetCisloController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Číslo účtu',
-                    prefixIcon: const Icon(Icons.account_balance,
-                        color: Colors.blueGrey),
-                    filled: true,
-                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                            color: isDark
-                                ? Colors.grey[800]!
-                                : Colors.grey[400]!)),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                            color: isDark
-                                ? Colors.grey[800]!
-                                : Colors.grey[300]!)),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text('/',
-                    style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[500])),
-              ),
-              Expanded(
-                flex: 2,
-                child: TextField(
-                  controller: _ucetKodController,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    hintText: 'Kód banky',
-                    filled: true,
-                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                            color: isDark
-                                ? Colors.grey[800]!
-                                : Colors.grey[400]!)),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        borderSide: BorderSide(
-                            color: isDark
-                                ? Colors.grey[800]!
-                                : Colors.grey[300]!)),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text('Výchozí způsob úhrady',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: _zpusobUhrady,
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.payment, color: Colors.blueGrey),
-              filled: true,
-              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
-            ),
-            items: ['Převodem', 'Hotově', 'Kartou']
-                .map((v) => DropdownMenuItem(value: v, child: Text(v)))
-                .toList(),
-            onChanged: (val) =>
-                setState(() => _zpusobUhrady = val ?? 'Převodem'),
-          ),
-          const SizedBox(height: 30),
-          const Divider(),
-          const SizedBox(height: 20),
-          const Text('Číslování dokladů',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
-          const Text('Nastavte formát čísel pro zakázky a faktury.',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
-          const SizedBox(height: 15),
-          _buildCislovaniSekce(
-            nazev: 'Zakázky',
-            barva: Colors.blue,
-            ikona: Icons.build_circle_outlined,
-            prefixCtrl: _prefixZakazkaController,
-            rokFormat: _zakazkaRokFormat,
-            mesicFormat: _zakazkaMessicFormat,
-            oddelovac: _zakazkaOddelovac,
-            delkaPocitadla: _zakazkaDelkaPocitadla,
-            onRokChanged: (val) => setState(() => _zakazkaRokFormat = val),
-            onMesicChanged: (val) => setState(() => _zakazkaMessicFormat = val),
-            onOddelovacChanged: (val) =>
-                setState(() => _zakazkaOddelovac = val),
-            onDelkaChanged: (val) =>
-                setState(() => _zakazkaDelkaPocitadla = val),
-            isDark: isDark,
-          ),
-          const SizedBox(height: 15),
-          _buildCislovaniSekce(
-            nazev: 'Faktury',
-            barva: Colors.green,
-            ikona: Icons.receipt_outlined,
-            prefixCtrl: _prefixFakturaController,
-            rokFormat: _fakturaRokFormat,
-            mesicFormat: _fakturaMessicFormat,
-            oddelovac: _fakturaOddelovac,
-            delkaPocitadla: _fakturaDelkaPocitadla,
-            onRokChanged: (val) => setState(() => _fakturaRokFormat = val),
-            onMesicChanged: (val) => setState(() => _fakturaMessicFormat = val),
-            onOddelovacChanged: (val) =>
-                setState(() => _fakturaOddelovac = val),
-            onDelkaChanged: (val) =>
-                setState(() => _fakturaDelkaPocitadla = val),
-            isDark: isDark,
           ),
         ],
       ),

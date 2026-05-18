@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth_gate.dart';
-import '../../core/constants.dart';
 import 'zakaznici_constants.dart';
 import 'zakaznik_tab_info.dart';
-import 'zakaznik_tab_zakazky.dart';
-import 'zakaznik_tab_faktury.dart';
 import 'zakaznik_tab_prijem.dart';
 
 class ZakaznikDetailScreen extends StatelessWidget {
@@ -317,14 +314,9 @@ class ZakaznikDetailScreen extends StatelessWidget {
   ) {
     final zakaznikId = aktualniData['id_zakaznika'] ?? '';
 
-    final maZakazky = maPristupModul('zakazky');
-    final maFakturace = maPristupModul('fakturace');
-
-    final tabs = <Tab>[
-      const Tab(icon: Icon(Icons.person), text: 'Info & Vozidla'),
-      if (maZakazky) const Tab(icon: Icon(Icons.build), text: 'Zakázky'),
-      if (maFakturace) const Tab(icon: Icon(Icons.receipt_long), text: 'Faktury'),
-      const Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
+    const tabs = <Tab>[
+      Tab(icon: Icon(Icons.person), text: 'Info & Vozidla'),
+      Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
     ];
 
     final views = <Widget>[
@@ -334,8 +326,6 @@ class ZakaznikDetailScreen extends StatelessWidget {
         zakaznikId: zakaznikId,
         servisId: servisId,
       ),
-      if (maZakazky) ZakaznikZakazkyTab(isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
-      if (maFakturace) ZakaznikFakturyTab(isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
       ZakaznikPrijemTab(isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
     ];
 

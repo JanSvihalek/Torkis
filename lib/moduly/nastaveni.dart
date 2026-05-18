@@ -292,17 +292,13 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final Map<String, Map<String, dynamic>> vizual = {
       'prijem': {'nazev': 'Příjem vozidla', 'ikona': Icons.add_circle_outline_rounded},
-      'zakazky': {'nazev': 'Aktivní zakázky', 'ikona': Icons.build_circle_outlined},
       'historie': {'nazev': 'Historie', 'ikona': Icons.history_rounded},
       'menu': {'nazev': 'Menu (Ostatní moduly)', 'ikona': Icons.grid_view},
-      'sklad': {'nazev': 'Sklad dílů', 'ikona': Icons.inventory_2_outlined},
-      'fakturace': {'nazev': 'Faktury', 'ikona': Icons.receipt_long_outlined},
       'vozidla': {'nazev': 'Vozidla', 'ikona': Icons.directions_car_outlined},
       'ukony': {'nazev': 'Úkony', 'ikona': Icons.playlist_add_check_circle_outlined},
       'zakaznici': {'nazev': 'Zákazníci', 'ikona': Icons.people_alt_outlined},
       'planovac': {'nazev': 'Plánovač', 'ikona': Icons.calendar_today_outlined},
       'zamestnanci': {'nazev': 'Tým a práva', 'ikona': Icons.badge_outlined},
-      'ucetnictvi': {'nazev': 'Účetnictví', 'ikona': Icons.pie_chart_outline},
       'statistiky': {'nazev': 'Statistiky', 'ikona': Icons.bar_chart_outlined},
       'nastaveni': {'nazev': 'Nastavení', 'ikona': Icons.settings_outlined},
     };

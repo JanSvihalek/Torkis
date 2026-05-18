@@ -16,9 +16,6 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
   // Pomocná funkce pro překlad klíčů z databáze do hezké češtiny
   String _prelozModul(String modul) {
     switch (modul) {
-      case 'zakazky': return 'Zakázky';
-      case 'sklad': return 'Sklad';
-      case 'fakturace': return 'Fakturace';
       case 'zamestnanci': return 'Zaměstnanci';
       case 'nastaveni': return 'Nastavení';
       default: return modul;
@@ -92,9 +89,6 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
 
                     // Bezpečné načtení práv
                     final Map<String, dynamic> prava = data['prava'] ?? {
-                      'zakazky': true,
-                      'sklad': false,
-                      'fakturace': false,
                       'zamestnanci': false,
                       'nastaveni': false,
                     };
@@ -168,9 +162,6 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
     final hesloCtrl = TextEditingController();
 
     Map<String, bool> novaPrava = {
-      'zakazky': true, // Výchozí přístup
-      'sklad': false,
-      'fakturace': false,
       'zamestnanci': false,
       'nastaveni': false,
     };
@@ -254,9 +245,6 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                   child: SingleChildScrollView(
                     child: Column(
                       children: [
-                        _buildPravoSwitch(setModalState, 'Zakázky a průběh oprav', 'zakazky', novaPrava, Icons.build),
-                        _buildPravoSwitch(setModalState, 'Skladové hospodářství', 'sklad', novaPrava, Icons.inventory_2),
-                        _buildPravoSwitch(setModalState, 'Fakturace a pokladna', 'fakturace', novaPrava, Icons.receipt_long),
                         _buildPravoSwitch(setModalState, 'Správa zaměstnanců', 'zamestnanci', novaPrava, Icons.people),
                         _buildPravoSwitch(setModalState, 'Nastavení servisu (IČO, atd.)', 'nastaveni', novaPrava, Icons.settings),
                       ],
@@ -364,9 +352,6 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
   // --- DIALOG PRO ÚPRAVU PRÁV ---
   void _showEditPravaDialog(BuildContext context, String docId, String jmeno, Map<String, dynamic> aktualniPrava) {
     Map<String, bool> lokalniPrava = {
-      'zakazky': aktualniPrava['zakazky'] ?? true,
-      'sklad': aktualniPrava['sklad'] ?? false,
-      'fakturace': aktualniPrava['fakturace'] ?? false,
       'zamestnanci': aktualniPrava['zamestnanci'] ?? false,
       'nastaveni': aktualniPrava['nastaveni'] ?? false,
     };
@@ -400,9 +385,6 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                 Text(jmeno, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
 
-                _buildPravoSwitch(setModalState, 'Zakázky a průběh oprav', 'zakazky', lokalniPrava, Icons.build),
-                _buildPravoSwitch(setModalState, 'Skladové hospodářství', 'sklad', lokalniPrava, Icons.inventory_2),
-                _buildPravoSwitch(setModalState, 'Fakturace a pokladna', 'fakturace', lokalniPrava, Icons.receipt_long),
                 _buildPravoSwitch(setModalState, 'Správa zaměstnanců', 'zamestnanci', lokalniPrava, Icons.people),
                 _buildPravoSwitch(setModalState, 'Nastavení servisu (IČO, atd.)', 'nastaveni', lokalniPrava, Icons.settings),
 

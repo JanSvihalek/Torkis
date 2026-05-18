@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import 'auth_gate.dart';
-import 'zakazka/prubeh.dart';
 import 'nova_rezervace_screen.dart';
 
 import 'prijem/prijem_vozidla.dart' show rezervaceKeZpracovani;
@@ -307,20 +306,7 @@ class _PlanovacPageState extends State<PlanovacPage> {
             style: const TextStyle(fontSize: 13)),
         trailing: Icon(ikonaStavu,
             size: stav != 'Naplánováno' ? 24 : 18, color: barvaStavu),
-        onTap: () {
-          if (rez['zakazka_doc_id'] != null) {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => ActiveJobScreen(
-                          documentId: rez['zakazka_doc_id'],
-                          zakazkaId: '---',
-                          spz: rez['spz'],
-                        )));
-          } else {
-            _ukazDetailRezervace(context, docId, rez, isDark);
-          }
-        },
+        onTap: () => _ukazDetailRezervace(context, docId, rez, isDark),
       ),
     );
   }

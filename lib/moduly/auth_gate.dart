@@ -27,7 +27,15 @@ Future<_AuthData> _loadAuthData(String uid) async {
       .doc(uid)
       .get();
 
-  if (!userDoc.exists) return _AuthData(userDoc: userDoc);
+  if (!userDoc.exists) {
+    // Načteme plán i pro nové uživatele, aby onboarding věděl které kroky zobrazit
+    final predDoc = await FirebaseFirestore.instance
+        .collection('predplatne')
+        .doc(uid)
+        .get();
+    applySubscription(predDoc);
+    return _AuthData(userDoc: userDoc, predDoc: predDoc);
+  }
 
   final servisId =
       (userDoc.data() as Map<String, dynamic>)['servis_id']?.toString();
@@ -41,7 +49,7 @@ Future<_AuthData> _loadAuthData(String uid) async {
   return _AuthData(userDoc: userDoc, predDoc: predDoc);
 }
 
-void _applySubscription(DocumentSnapshot? predDoc) {
+void applySubscription(DocumentSnapshot? predDoc) {
   if (predDoc == null || !predDoc.exists) {
     // Žádný dokument → Basic plan bez vypršení
     globalPlanTyp = 'basic';
@@ -140,7 +148,7 @@ class AuthGate extends StatelessWidget {
                 (p) => p.setBool('tmavy_rezim', tmavyRezim),
               );
               // Načtení a aplikace předplatného
-              _applySubscription(snap.data!.predDoc);
+              applySubscription(snap.data!.predDoc);
 
               return const BiometricGate();
             }

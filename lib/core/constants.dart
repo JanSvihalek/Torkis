@@ -66,14 +66,10 @@ const Map<String, List<String>> kPlanModuly = {
   ],
   'pro': [
     'prijem',
-    'zakazky',
     'zakaznici',
     'vozidla',
     'historie_prijmu',
     'planovac',
-    'sklad',
-    'fakturace',
-    'ucetnictvi',
     'statistiky',
     'zamestnanci',
   ],
@@ -82,11 +78,7 @@ const Map<String, List<String>> kPlanModuly = {
 /// Mapování nav ID → klíč v globalModuly (null = vždy přístupné bez ohledu na plán).
 const Map<String, String?> navIdToModulKlic = {
   'prijem': 'prijem',
-  'zakazky': 'zakazky',
   'planovac': 'planovac',
-  'sklad': 'sklad',
-  'fakturace': 'fakturace',
-  'ucetnictvi': 'ucetnictvi',
   'statistiky': 'statistiky',
   'zamestnanci': 'zamestnanci',
   'historie_prijmu': 'prijem',

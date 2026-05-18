@@ -9,25 +9,21 @@ import 'auth_screen.dart';
 
 // Sjednocené relativní importy!
 import 'planovac.dart';
-import 'zakazka/prubeh.dart';
 import 'prijem/prijem_vozidla.dart';
 import 'historie_prijmu/historie_prijmu_page.dart';
 import 'zakaznici/zakaznici_page.dart';
 import 'vozidla/vozidla_page.dart';
 import 'ukony.dart';
-import 'fakturace/fakturace_page.dart';
 import 'statistiky.dart';
 import 'nastaveni.dart';
-import 'ucetnictvi.dart';
 import 'zamestnanci.dart';
-import 'sklad.dart';
 import 'welcome_screen.dart';
 import 'Add_ons.dart';
 import 'predplatne_page.dart';
 
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
 final ValueNotifier<List<String>> navOrderNotifier =
-    ValueNotifier(['prijem', 'zakazky', 'menu']);
+    ValueNotifier(['prijem', 'menu']);
 
 bool maPristup(String navId) {
   // 1. Platnost předplatného — blokuje všechny role
@@ -59,31 +55,16 @@ class _MainScreenState extends State<MainScreen> {
         icon: Icons.add_circle_outline_rounded,
         activeIcon: Icons.add_circle_rounded,
         label: 'Příjem'),
-    'zakazky': _NavData(
-        page: const ServiceProgressPage(),
-        icon: Icons.build_circle_outlined,
-        activeIcon: Icons.build_circle,
-        label: 'Zakázky'),
     'menu': _NavData(
         page: const MenuPage(),
         icon: Icons.grid_view,
         activeIcon: Icons.grid_view_rounded,
         label: 'Menu'),
-    'sklad': _NavData(
-        page: const SkladPage(),
-        icon: Icons.inventory_2_outlined,
-        activeIcon: Icons.inventory_2,
-        label: 'Sklad'),
     'planovac': _NavData(
         page: const PlanovacPage(),
         icon: Icons.calendar_today,
         activeIcon: Icons.calendar_today,
         label: 'Plánování'),
-    'fakturace': _NavData(
-        page: const FakturacePage(),
-        icon: Icons.receipt_long_outlined,
-        activeIcon: Icons.receipt_long,
-        label: 'Faktury'),
     'vozidla': _NavData(
         page: const VozidlaPage(),
         icon: Icons.directions_car_outlined,
@@ -104,11 +85,6 @@ class _MainScreenState extends State<MainScreen> {
         icon: Icons.badge_outlined,
         activeIcon: Icons.badge,
         label: 'Tým'),
-    'ucetnictvi': _NavData(
-        page: const UcetnictviPage(),
-        icon: Icons.pie_chart_outline,
-        activeIcon: Icons.pie_chart,
-        label: 'Účetnictví'),
     'statistiky': _NavData(
         page: const StatisticsPage(),
         icon: Icons.bar_chart_outlined,
@@ -322,24 +298,9 @@ class MenuPage extends StatelessWidget {
               if (maPristup('zakaznici'))
                 _buildMenuCard(context, 'Zákazníci', Icons.people_alt,
                     Colors.blue, const ZakazniciPage(), isDark),
-              if (maPristup('zakazky'))
-                _buildMenuCard(
-                    context,
-                    'Zakázky',
-                    Icons.build_circle,
-                    const Color.fromARGB(255, 68, 134, 70),
-                    const ServiceProgressPage(),
-                    isDark),
               if (maPristup('historie_prijmu'))
                 _buildMenuCard(context, 'Historie příjmů', Icons.assignment_add,
                     Colors.blue, const HistoriePrijmuPage(), isDark),
-              if (maPristup('sklad'))
-                _buildMenuCard(context, 'Sklad dílů', Icons.inventory_2,
-                    Colors.orange, const SkladPage(), isDark,
-                    hasOwnScaffold: true),
-              if (maPristup('fakturace'))
-                _buildMenuCard(context, 'Faktury', Icons.receipt_long,
-                    Colors.green, const FakturacePage(), isDark),
               if (maPristup('planovac'))
                 _buildMenuCard(context, 'Plánování', Icons.calendar_today,
                     Colors.green, const PlanovacPage(), isDark),
@@ -354,9 +315,6 @@ class MenuPage extends StatelessWidget {
               if (maPristup('zamestnanci'))
                 _buildMenuCard(context, 'Zaměstnanci', Icons.badge,
                     Colors.redAccent, const ZamestnanciPage(), isDark),
-              if (maPristup('ucetnictvi'))
-                _buildMenuCard(context, 'Účetnictví', Icons.pie_chart,
-                    Colors.indigo, const UcetnictviPage(), isDark),
               if (maPristup('statistiky'))
                 _buildMenuCard(context, 'Statistiky', Icons.bar_chart,
                     Colors.purple, const StatisticsPage(), isDark),

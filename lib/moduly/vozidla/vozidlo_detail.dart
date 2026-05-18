@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../core/constants.dart';
 import 'vozidlo_tab_info.dart';
-import 'vozidlo_tab_zakazky.dart';
-import 'vozidlo_tab_faktury.dart';
 import 'vozidlo_tab_prijem.dart';
 
 class VozidloDetailScreen extends StatelessWidget {
@@ -264,34 +261,10 @@ class VozidloDetailScreen extends StatelessWidget {
                                     .doc(newDocId)
                                     .set({...data, ...updatedData});
 
-                                final batch =
-                                    FirebaseFirestore.instance.batch();
-                                for (var d in (await FirebaseFirestore
-                                        .instance
-                                        .collection('zakazky')
-                                        .where('servis_id',
-                                            isEqualTo: user.uid)
-                                        .where('spz', isEqualTo: oldSpz)
-                                        .get())
-                                    .docs) {
-                                  batch.update(
-                                      d.reference, {'spz': newSpz});
-                                }
-                                for (var d in (await FirebaseFirestore
-                                        .instance
-                                        .collection('faktury')
-                                        .where('servis_id',
-                                            isEqualTo: user.uid)
-                                        .where('spz', isEqualTo: oldSpz)
-                                        .get())
-                                    .docs) {
-                                  batch.update(
-                                      d.reference, {'spz': newSpz});
-                                }
-                                batch.delete(FirebaseFirestore.instance
+                                await FirebaseFirestore.instance
                                     .collection('vozidla')
-                                    .doc(docId));
-                                await batch.commit();
+                                    .doc(docId)
+                                    .delete();
 
                                 if (context.mounted) {
                                   Navigator.pop(context);
@@ -384,14 +357,9 @@ class VozidloDetailScreen extends StatelessWidget {
         final stkM = autoData['stk_mesic']?.toString() ?? '';
         final stkR = autoData['stk_rok']?.toString() ?? '';
 
-        final maZakazky = maPristupModul('zakazky');
-        final maFakturace = maPristupModul('fakturace');
-
-        final tabs = <Tab>[
-          const Tab(icon: Icon(Icons.info_outline), text: 'Info'),
-          if (maZakazky) const Tab(icon: Icon(Icons.build), text: 'Zakázky'),
-          if (maFakturace) const Tab(icon: Icon(Icons.receipt_long), text: 'Faktury'),
-          const Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
+        const tabs = <Tab>[
+          Tab(icon: Icon(Icons.info_outline), text: 'Info'),
+          Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
         ];
 
         final views = <Widget>[
@@ -408,8 +376,6 @@ class VozidloDetailScreen extends StatelessWidget {
             stkM: stkM,
             stkR: stkR,
           ),
-          if (maZakazky) VozidloZakazkyTab(isDark: isDark, user: user, spz: spz),
-          if (maFakturace) VozidloFakturyTab(isDark: isDark, user: user, spz: spz),
           VozidloPrijemTab(isDark: isDark, user: user, spz: spz),
         ];
 
