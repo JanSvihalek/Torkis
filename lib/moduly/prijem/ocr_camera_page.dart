@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:permission_handler/permission_handler.dart' show openAppSettings;
+import 'package:image/image.dart' as img;
 import 'dart:io';
 
 class OcrCameraPage extends StatefulWidget {
@@ -25,6 +26,18 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
   String? _error;
   String? _result;
   XFile? _capturedPhoto;
+
+  // Frame bounds jako zlomky rozměrů preview widgetu (0..1)
+  double _frameL = 0.09;
+  double _frameT = 0.365;
+  double _frameR = 0.91;
+  double _frameB = 0.545;
+  Size _previewSize = Size.zero;
+
+  static const _minFrameW = 0.15;
+  static const _minFrameH = 0.06;
+  static const _handleTouchSize = 48.0;
+  static const _handleVisualSize = 14.0;
 
   @override
   void initState() {
@@ -61,16 +74,50 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
 
   Future<void> _scan() async {
     if (!_isInitialized || _isProcessing || _controller == null) return;
+    if (_previewSize == Size.zero) return;
+
     setState(() {
       _isProcessing = true;
       _result = null;
     });
+
+    File? tempFile;
     try {
       final photo = await _controller!.takePicture();
       if (!mounted) return;
       setState(() => _capturedPhoto = photo);
 
-      final inputImage = InputImage.fromFilePath(photo.path);
+      // Dekóduj snímek s respektováním EXIF orientace
+      final bytes = await File(photo.path).readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) throw Exception('Nepodařilo se dekódovat snímek.');
+      final oriented = img.bakeOrientation(decoded);
+
+      // Převod frame zlomků na pixelové souřadnice snímku
+      final scaleX = oriented.width / _previewSize.width;
+      final scaleY = oriented.height / _previewSize.height;
+
+      final cropX = (_frameL * _previewSize.width * scaleX)
+          .round()
+          .clamp(0, oriented.width - 1);
+      final cropY = (_frameT * _previewSize.height * scaleY)
+          .round()
+          .clamp(0, oriented.height - 1);
+      final cropW = ((_frameR - _frameL) * _previewSize.width * scaleX)
+          .round()
+          .clamp(1, oriented.width - cropX);
+      final cropH = ((_frameB - _frameT) * _previewSize.height * scaleY)
+          .round()
+          .clamp(1, oriented.height - cropY);
+
+      final cropped = img.copyCrop(oriented,
+          x: cropX, y: cropY, width: cropW, height: cropH);
+
+      tempFile = File(
+          '${Directory.systemTemp.path}/ocr_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await tempFile.writeAsBytes(img.encodeJpg(cropped));
+
+      final inputImage = InputImage.fromFilePath(tempFile.path);
       final textRecognizer =
           TextRecognizer(script: TextRecognitionScript.latin);
       final recognizedText = await textRecognizer.processImage(inputImage);
@@ -96,6 +143,10 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
           _error = 'Chyba skenování: $e';
         });
       }
+    } finally {
+      try {
+        tempFile?.deleteSync();
+      } catch (_) {}
     }
   }
 
@@ -104,6 +155,27 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
       _result = null;
       _capturedPhoto = null;
       _error = null;
+    });
+  }
+
+  void _onCornerDrag(Offset delta, _DragCorner corner, double w, double h) {
+    setState(() {
+      final dx = delta.dx / w;
+      final dy = delta.dy / h;
+      switch (corner) {
+        case _DragCorner.topLeft:
+          _frameL = (_frameL + dx).clamp(0.0, _frameR - _minFrameW);
+          _frameT = (_frameT + dy).clamp(0.0, _frameB - _minFrameH);
+        case _DragCorner.topRight:
+          _frameR = (_frameR + dx).clamp(_frameL + _minFrameW, 1.0);
+          _frameT = (_frameT + dy).clamp(0.0, _frameB - _minFrameH);
+        case _DragCorner.bottomLeft:
+          _frameL = (_frameL + dx).clamp(0.0, _frameR - _minFrameW);
+          _frameB = (_frameB + dy).clamp(_frameT + _minFrameH, 1.0);
+        case _DragCorner.bottomRight:
+          _frameR = (_frameR + dx).clamp(_frameL + _minFrameW, 1.0);
+          _frameB = (_frameB + dy).clamp(_frameT + _minFrameH, 1.0);
+      }
     });
   }
 
@@ -188,39 +260,102 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
           child: CircularProgressIndicator(color: Colors.white));
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        CameraPreview(_controller!),
-        CustomPaint(painter: _FrameOverlayPainter()),
-        Align(
-          alignment: const Alignment(0, 0.35),
-          child: Text(
-            'Namiřte kameru na ${widget.label}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              shadows: [Shadow(blurRadius: 6, color: Colors.black)],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _previewSize = constraints.biggest;
+        final w = _previewSize.width;
+        final h = _previewSize.height;
+        final l = _frameL * w;
+        final t = _frameT * h;
+        final r = _frameR * w;
+        final b = _frameB * h;
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            CameraPreview(_controller!),
+            CustomPaint(
+              painter: _FramePainter(_frameL, _frameT, _frameR, _frameB),
             ),
-          ),
-        ),
-        if (_isProcessing)
-          Container(
-            color: Colors.black54,
-            child: const Center(
+            // Popisek pod rámečkem
+            Positioned(
+              left: 0,
+              right: 0,
+              top: b + 8,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: Colors.white),
-                  SizedBox(height: 16),
-                  Text('Rozpoznávám text...',
-                      style: TextStyle(color: Colors.white, fontSize: 15)),
+                  Text(
+                    'Namiřte kameru na ${widget.label}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      shadows: [Shadow(blurRadius: 6, color: Colors.black)],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Přetáhněte rohy pro změnu velikosti',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
+                      shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                    ),
+                  ),
                 ],
               ),
             ),
+            // Rohové úchyty pro změnu velikosti
+            _cornerHandle(l, t, _DragCorner.topLeft, w, h),
+            _cornerHandle(r, t, _DragCorner.topRight, w, h),
+            _cornerHandle(l, b, _DragCorner.bottomLeft, w, h),
+            _cornerHandle(r, b, _DragCorner.bottomRight, w, h),
+            if (_isProcessing)
+              Container(
+                color: Colors.black54,
+                child: const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(color: Colors.white),
+                      SizedBox(height: 16),
+                      Text('Rozpoznávám text...',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 15)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _cornerHandle(
+      double cx, double cy, _DragCorner corner, double w, double h) {
+    return Positioned(
+      left: cx - _handleTouchSize / 2,
+      top: cy - _handleTouchSize / 2,
+      width: _handleTouchSize,
+      height: _handleTouchSize,
+      child: GestureDetector(
+        onPanUpdate: (d) => _onCornerDrag(d.delta, corner, w, h),
+        child: Center(
+          child: Container(
+            width: _handleVisualSize,
+            height: _handleVisualSize,
+            decoration: BoxDecoration(
+              color: Colors.blue.shade400,
+              shape: BoxShape.circle,
+              boxShadow: const [
+                BoxShadow(color: Colors.black54, blurRadius: 4)
+              ],
+            ),
           ),
-      ],
+        ),
+      ),
     );
   }
 
@@ -250,7 +385,8 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
                 const SizedBox(height: 12),
                 Text(
                   'Rozpoznaný ${widget.label}:',
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
+                  style:
+                      const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -326,29 +462,30 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
   }
 }
 
-class _FrameOverlayPainter extends CustomPainter {
+enum _DragCorner { topLeft, topRight, bottomLeft, bottomRight }
+
+class _FramePainter extends CustomPainter {
+  final double frameL, frameT, frameR, frameB;
+
+  const _FramePainter(this.frameL, this.frameT, this.frameR, this.frameB);
+
   @override
   void paint(Canvas canvas, Size size) {
-    final overlayPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.55);
-
-    const frameWidthRatio = 0.82;
-    const frameHeightRatio = 0.18;
-    final left = size.width * (1 - frameWidthRatio) / 2;
-    final top = size.height * (0.5 - frameHeightRatio / 2) - size.height * 0.05;
-    final frameW = size.width * frameWidthRatio;
-    final frameH = size.height * frameHeightRatio;
-    final frameRect = Rect.fromLTWH(left, top, frameW, frameH);
+    final l = frameL * size.width;
+    final t = frameT * size.height;
+    final r = frameR * size.width;
+    final b = frameB * size.height;
+    final frameRect = Rect.fromLTRB(l, t, r, b);
     const radius = Radius.circular(8);
 
-    // Dark overlay with transparent cutout
+    // Tmavý překryv s průhledným okénkem
     final path = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addRRect(RRect.fromRectAndRadius(frameRect, radius))
       ..fillType = PathFillType.evenOdd;
-    canvas.drawPath(path, overlayPaint);
+    canvas.drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.55));
 
-    // White frame border
+    // Bílý rámeček
     canvas.drawRRect(
       RRect.fromRectAndRadius(frameRect, radius),
       Paint()
@@ -357,29 +494,28 @@ class _FrameOverlayPainter extends CustomPainter {
         ..strokeWidth = 1.5,
     );
 
-    // Blue corner accents
-    final cornerPaint = Paint()
+    // Modré rohové akcenty
+    final cp = Paint()
       ..color = Colors.blue.shade300
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
+      ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
-    const cl = 22.0;
-    final r = left + frameW;
-    final b = top + frameH;
+    const cl = 18.0;
 
-    canvas.drawLine(Offset(left, top + cl), Offset(left, top), cornerPaint);
-    canvas.drawLine(Offset(left, top), Offset(left + cl, top), cornerPaint);
-
-    canvas.drawLine(Offset(r - cl, top), Offset(r, top), cornerPaint);
-    canvas.drawLine(Offset(r, top), Offset(r, top + cl), cornerPaint);
-
-    canvas.drawLine(Offset(left, b - cl), Offset(left, b), cornerPaint);
-    canvas.drawLine(Offset(left, b), Offset(left + cl, b), cornerPaint);
-
-    canvas.drawLine(Offset(r, b - cl), Offset(r, b), cornerPaint);
-    canvas.drawLine(Offset(r, b), Offset(r - cl, b), cornerPaint);
+    canvas.drawLine(Offset(l, t + cl), Offset(l, t), cp);
+    canvas.drawLine(Offset(l, t), Offset(l + cl, t), cp);
+    canvas.drawLine(Offset(r - cl, t), Offset(r, t), cp);
+    canvas.drawLine(Offset(r, t), Offset(r, t + cl), cp);
+    canvas.drawLine(Offset(l, b - cl), Offset(l, b), cp);
+    canvas.drawLine(Offset(l, b), Offset(l + cl, b), cp);
+    canvas.drawLine(Offset(r, b - cl), Offset(r, b), cp);
+    canvas.drawLine(Offset(r, b), Offset(r - cl, b), cp);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_FramePainter old) =>
+      old.frameL != frameL ||
+      old.frameT != frameT ||
+      old.frameR != frameR ||
+      old.frameB != frameB;
 }
