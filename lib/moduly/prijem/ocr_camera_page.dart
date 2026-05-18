@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import 'dart:io';
 
 class OcrCameraPage extends StatefulWidget {
@@ -33,14 +33,6 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
   }
 
   Future<void> _initCamera() async {
-    final status = await Permission.camera.request();
-    if (!status.isGranted) {
-      if (mounted) {
-        setState(() => _error =
-            'Přístup ke kameře nebyl povolen.\nPovolte ho v nastavení aplikace.');
-      }
-      return;
-    }
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
@@ -60,7 +52,10 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
       await _controller!.initialize();
       if (mounted) setState(() => _isInitialized = true);
     } catch (e) {
-      if (mounted) setState(() => _error = 'Chyba inicializace kamery: $e');
+      if (mounted) {
+        setState(() => _error =
+            'Přístup ke kameře nebyl povolen.\nPovolte ho v nastavení aplikace.');
+      }
     }
   }
 
