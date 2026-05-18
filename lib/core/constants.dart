@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '4.1.5';
+const String kAppVerze = '4.1.8';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -28,7 +28,7 @@ Color getStatusColor(String stav) {
     case 'Dokončeno':
       return Colors.green;
     default:
-      return Colors.grey;  
+      return Colors.grey;
   }
 }
 
