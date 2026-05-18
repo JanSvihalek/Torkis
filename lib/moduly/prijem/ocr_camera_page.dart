@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:permission_handler/permission_handler.dart' show openAppSettings;
+import 'package:permission_handler/permission_handler.dart'
+    show openAppSettings;
 import 'package:image/image.dart' as img;
 import 'dart:io';
 
@@ -321,8 +322,7 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
                       CircularProgressIndicator(color: Colors.white),
                       SizedBox(height: 16),
                       Text('Rozpoznávám text...',
-                          style:
-                              TextStyle(color: Colors.white, fontSize: 15)),
+                          style: TextStyle(color: Colors.white, fontSize: 15)),
                     ],
                   ),
                 ),
@@ -385,8 +385,7 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
                 const SizedBox(height: 12),
                 Text(
                   'Rozpoznaný ${widget.label}:',
-                  style:
-                      const TextStyle(fontSize: 14, color: Colors.black54),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -406,7 +405,7 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
                       child: OutlinedButton.icon(
                         onPressed: _retry,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Zkusit znovu'),
+                        label: const Text('Znovu'),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -483,7 +482,8 @@ class _FramePainter extends CustomPainter {
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addRRect(RRect.fromRectAndRadius(frameRect, radius))
       ..fillType = PathFillType.evenOdd;
-    canvas.drawPath(path, Paint()..color = Colors.black.withValues(alpha: 0.55));
+    canvas.drawPath(
+        path, Paint()..color = Colors.black.withValues(alpha: 0.55));
 
     // Bílý rámeček
     canvas.drawRRect(
