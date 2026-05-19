@@ -298,7 +298,8 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
-    final bg = featured ? tok.inkSurface : tok.surface;
+    // Featured = vždy deep ink (kontrast v light i dark modu).
+    final bg = featured ? TokColors.ink : tok.surface;
     final fg = featured ? Colors.white : tok.textPrimary;
     final subFg = featured ? TokColors.steelSoft : tok.textSecondary;
     final accentLabel = featured ? TokColors.accent : tok.textSecondary;

@@ -166,7 +166,9 @@ class TorkisPrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = dark ? TokColors.accent : context.tok.inkSurface;
+    // dark=true → accent CTA (pro dark surfaces jako login).
+    // dark=false → deep ink button (vždy tmavý — funguje v light i dark modu).
+    final bg = dark ? TokColors.accent : TokColors.ink;
     const fg = Colors.white;
     return SizedBox(
       height: height,
@@ -579,7 +581,8 @@ class TorkisModuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
-    final bg = accent ? tok.inkSurface : tok.surface;
+    // Accent karta = vždy tmavá (deep ink) pro kontrast s bg v light i dark modu.
+    final bg = accent ? TokColors.ink : tok.surface;
     final fg = accent ? Colors.white : tok.textPrimary;
     final iconBg = accent
         ? TokColors.accent.withValues(alpha: 0.18)
@@ -674,7 +677,11 @@ class TorkisActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
-    final bg = dark ? tok.inkSurface : tok.surface;
+    // V light modu: tmavý ink panel na světlém bg.
+    // V dark modu: deep ink (#0B1A2E) jako kontrast proti světlejšímu dark bg.
+    final bg = dark
+        ? (tok.isDark ? TokColors.ink : tok.inkSurface)
+        : tok.surface;
     final fg = dark ? Colors.white : tok.textPrimary;
     final subFg = dark
         ? Colors.white.withValues(alpha: 0.7)
@@ -697,7 +704,7 @@ class TorkisActionTile extends StatelessWidget {
                   color: TokColors.accent.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(TokRadius.sm),
                 ),
-                child: const Icon(Icons.qr_code_scanner_rounded,
+                child: Icon(icon,
                     color: TokColors.accent, size: 22),
               ),
               const SizedBox(width: 14),
