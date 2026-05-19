@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../core/constants.dart';
+import '../core/design_tokens.dart';
+import '../core/subscription_service.dart';
+import '../core/torkis_ui.dart';
 import 'auth_gate.dart';
+import 'paywall_screen.dart';
 
 class PredplatnePage extends StatefulWidget {
   const PredplatnePage({super.key});
@@ -11,406 +16,252 @@ class PredplatnePage extends StatefulWidget {
   State<PredplatnePage> createState() => _PredplatnePageState();
 }
 
-class _PredplatnePageState extends State<PredplatnePage> {
-  int _pocetUzivatelu = 1;
+enum _Period { monthly, yearly }
 
-  Future<void> _odeslatiPoptavku(String plan) async {
-    final subject = Uri.encodeComponent('Poptávka předplatného Torkis – plán ${plan.toUpperCase()}');
-    final body = Uri.encodeComponent(
-      'Dobrý den,\n\n'
-      'Mám zájem o plán ${plan.toUpperCase()} pro svůj autoservis.\n\n'
-      'Informace o servisu:\n'
-      '  Servis ID: ${globalServisId ?? "neznámé"}\n'
-      '  Aktuální plán: ${globalPlanTyp.toUpperCase()}\n'
-      '  Počet uživatelů: $_pocetUzivatelu\n\n'
-      'Prosím o zaslání cenové nabídky.\n\n'
-      's pozdravem',
-    );
-    final uri = Uri.parse('mailto:jan.svihalek00@gmail.com?subject=$subject&body=$body');
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Nepodařilo se otevřít emailového klienta.')),
+class _PredplatnePageState extends State<PredplatnePage> {
+  Map<String, Package> _packages = {};
+  bool _loading = true;
+  bool _purchasing = false;
+  String? _errorMessage;
+  _Period _period = _Period.monthly;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPackages();
+  }
+
+  Future<void> _loadPackages() async {
+    final list = await SubscriptionService.getPackages();
+    final map = <String, Package>{};
+    for (final pkg in list) {
+      map[pkg.identifier] = pkg;
+    }
+    if (mounted) {
+      setState(() {
+        _packages = map;
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _purchase(Package? package) async {
+    if (package == null) return;
+    setState(() {
+      _purchasing = true;
+      _errorMessage = null;
+    });
+    try {
+      final ok = await SubscriptionService.purchasePackage(package);
+      if (ok && mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const AuthGate()),
+          (_) => false,
         );
       }
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'Nákup se nepodařil: $e');
+    } finally {
+      if (mounted) setState(() => _purchasing = false);
     }
+  }
+
+  Future<void> _kontaktovatCustom() async {
+    final subject =
+        Uri.encodeComponent('Poptávka individuálního plánu Torkis');
+    final body = Uri.encodeComponent(
+      'Dobrý den,\n\n'
+      'Mám zájem o individuální nabídku plánu Custom pro svůj autoservis.\n\n'
+      'Informace o servisu:\n'
+      '  Servis ID: ${globalServisId ?? "neznámé"}\n'
+      '  Aktuální plán: ${globalPlanTyp.toUpperCase()}\n\n'
+      'Prosím o zaslání nabídky.\n\n'
+      's pozdravem',
+    );
+    final uri =
+        Uri.parse('mailto:$kKontaktEmail?subject=$subject&body=$body');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Nepodařilo se otevřít e-mailového klienta.')),
+      );
+    }
+  }
+
+  Package? _packageFor(String tier) {
+    final suffix = _period == _Period.monthly ? 'monthly' : 'yearly';
+    return _packages['${tier}_$suffix'];
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final jePlatne = globalPredplatneAktivni;
-    final platnostDo = globalPredplatnePlatnost;
+    final tok = context.tok;
+    final aktualniPlan = globalPlanTyp;
+    final jeTrial = aktualniPlan == 'trial';
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: const Text('Předplatné', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Aktuální stav
-            _buildAktualniStav(isDark, jePlatne, platnostDo),
-            const SizedBox(height: 28),
-
-            const Text('Dostupné plány',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text(
-              'Cena se odvíjí od počtu uživatelů. Kontaktujte nás pro individuální nabídku.',
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 20),
-
-            // Počet uživatelů
-            _buildPocetUzivatelu(isDark),
-            const SizedBox(height: 20),
-
-            // Plán Basic
-            _buildPlanKarta(
-              isDark: isDark,
-              plan: 'basic',
-              nazev: 'Basic',
-              barva: Colors.blueGrey,
-              popis: 'Základní správa autoservisu',
-              moduly: const [
-                'Příjem vozidla',
-                'Historie příjmů',
-                'Zákazníci',
-                'Vozidla',
-                'Historie příjmů',
-                'Zaměstnanci',
-              ],
-              jeSoucasny: globalPlanTyp == 'basic',
-              jeLepe: false,
-            ),
-            const SizedBox(height: 16),
-
-            // Plán Pro
-            _buildPlanKarta(
-              isDark: isDark,
-              plan: 'pro',
-              nazev: 'Pro',
-              barva: Colors.blue,
-              popis: 'Kompletní řízení autoservisu',
-              moduly: const [
-                'Vše z Basic plánu',
-                'Zakázky & plánování',
-                'Sklad dílů',
-                'Fakturace',
-                'Účetnictví',
-                'Statistiky & přehledy',
-              ],
-              jeSoucasny: globalPlanTyp == 'pro',
-              jeLepe: true,
-            ),
-            const SizedBox(height: 30),
-
-            // Kontakt info
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Colors.grey, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Po odeslání poptávky vás budeme kontaktovat s individuální nabídkou. '
-                      'Aktivace probíhá do 24 hodin od úhrady.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAktualniStav(bool isDark, bool jePlatne, DateTime? platnostDo) {
-    final barva = jePlatne ? Colors.green : Colors.red;
-    final planLabel = globalPlanTyp.toUpperCase();
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: barva.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: barva.withValues(alpha: 0.3), width: 1.5),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: barva.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.workspace_premium, color: barva, size: 24),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Váš aktuální plán: $planLabel',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: barva)),
-                const SizedBox(height: 3),
-                Text(
-                  platnostDo == null
-                      ? 'Platnost: bez omezení'
-                      : jePlatne
-                          ? 'Aktivní do: ${DateFormat('dd.MM.yyyy').format(platnostDo)}'
-                          : 'Předplatné expirováno: ${DateFormat('dd.MM.yyyy').format(platnostDo)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: barva.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              jePlatne ? 'Aktivní' : 'Expirováno',
-              style: TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.bold, color: barva),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPocetUzivatelu(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-            color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Počet uživatelů',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 4),
-          Text('Kolik zaměstnanců bude aplikaci používat?',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-          const SizedBox(height: 12),
-          Row(
+      backgroundColor: tok.bg,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: TokSpace.xxl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              IconButton(
-                onPressed: _pocetUzivatelu > 1
-                    ? () => setState(() => _pocetUzivatelu--)
-                    : null,
-                icon: const Icon(Icons.remove_circle_outline),
-                color: Colors.blue,
+              const TorkisBrandHeader(
+                padding: EdgeInsets.fromLTRB(
+                    TokSpace.xl, TokSpace.lg, TokSpace.xl, 4),
               ),
-              Expanded(
-                child: Text(
-                  '$_pocetUzivatelu ${_pocetUzivatelu == 1 ? 'uživatel' : _pocetUzivatelu < 5 ? 'uživatelé' : 'uživatelů'}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+              const TorkisPageTitle(
+                title: 'Vaše předplatné',
+                subtitle:
+                    'Spravujte plán svého servisu a podle potřeby ho upgradujte.',
+              ),
+              const SizedBox(height: TokSpace.sm),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: TokSpace.xl),
+                child: TorkisInfoBanner(
+                  icon: jeTrial
+                      ? Icons.access_time_rounded
+                      : Icons.workspace_premium_outlined,
+                  accentColor:
+                      jeTrial ? TokColors.warning : TokColors.success,
+                  title: jeTrial
+                      ? 'Aktivní zkušební doba'
+                      : 'Aktivní plán: ${aktualniPlan.toUpperCase()}',
+                  subtitle: jeTrial
+                      ? 'Po skončení trialu si vyberete plán, který vám sedne.'
+                      : 'Děkujeme, že používáte TORKIS.',
                 ),
               ),
-              IconButton(
-                onPressed: () => setState(() => _pocetUzivatelu++),
-                icon: const Icon(Icons.add_circle_outline),
-                color: Colors.blue,
+              const SizedBox(height: TokSpace.lg),
+              Center(
+                child: TorkisSegmented<_Period>(
+                  selected: _period,
+                  onChanged: (p) => setState(() => _period = p),
+                  options: const [
+                    (value: _Period.monthly, label: 'Měsíčně', badge: null),
+                    (value: _Period.yearly, label: 'Ročně', badge: '−19 %'),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlanKarta({
-    required bool isDark,
-    required String plan,
-    required String nazev,
-    required Color barva,
-    required String popis,
-    required List<String> moduly,
-    required bool jeSoucasny,
-    required bool jeLepe,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: jeSoucasny
-              ? Colors.green.withValues(alpha: 0.5)
-              : jeLepe
-                  ? barva.withValues(alpha: 0.4)
-                  : Colors.grey.withValues(alpha: 0.2),
-          width: jeSoucasny || jeLepe ? 2 : 1,
-        ),
-        boxShadow: [
-          if (!isDark && jeLepe)
-            BoxShadow(
-                color: barva.withValues(alpha: 0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Hlavička
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: jeSoucasny
-                  ? Colors.green.withValues(alpha: 0.08)
-                  : barva.withValues(alpha: 0.06),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(14)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.workspace_premium,
-                    color: jeSoucasny ? Colors.green : barva, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
+              const SizedBox(height: TokSpace.lg),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 60),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: TokSpace.lg),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(nazev,
-                          style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: jeSoucasny ? Colors.green : barva)),
-                      Text(popis,
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey[600])),
+                      PaywallPlanCard(
+                        name: 'Basic',
+                        description: 'Pro malé autoservisy a OSVČ.',
+                        features: const [
+                          '50 záznamů/měsíc',
+                          '3 uživatelé max.',
+                          'Fotodokumentace',
+                          'Evidence zákazníků a vozidel',
+                          'Historie záznamů',
+                          'Správa týmu',
+                        ],
+                        package: _packageFor('basic'),
+                        periodMonthly: _period == _Period.monthly,
+                        purchasing: _purchasing,
+                        onPurchase: _purchase,
+                        isCurrentPlan: aktualniPlan == 'basic',
+                      ),
+                      PaywallPlanCard(
+                        name: 'Standard',
+                        description:
+                            'Pro střední servisy do 150 zakázek měsíčně.',
+                        featured: aktualniPlan != 'standard',
+                        features: const [
+                          '150 záznamů/měsíc',
+                          '10 uživatelů max.',
+                          'Vše z Basic',
+                          'Reporty a statistiky',
+                          'Chat se zákazníkem',
+                          'Webový portál pro správu vozidel a zákazníků',
+                        ],
+                        package: _packageFor('standard'),
+                        periodMonthly: _period == _Period.monthly,
+                        purchasing: _purchasing,
+                        onPurchase: _purchase,
+                        isCurrentPlan: aktualniPlan == 'standard',
+                      ),
+                      PaywallPlanCard(
+                        name: 'Pro',
+                        description:
+                            'Pro velké servisy a sítě bez limitu záznamů.',
+                        features: const [
+                          'Neomezené záznamy',
+                          'Neomezený počet uživatelů',
+                          'Vše ze Standard',
+                          'Prioritní podpora',
+                          'Pokročilé statistiky',
+                          'Vícenásobná pracoviště',
+                        ],
+                        package: _packageFor('pro'),
+                        periodMonthly: _period == _Period.monthly,
+                        purchasing: _purchasing,
+                        onPurchase: _purchase,
+                        isCurrentPlan: aktualniPlan == 'pro',
+                      ),
+                      PaywallPlanCard(
+                        name: 'Custom',
+                        description:
+                            'Individuální úprava pro speciální požadavky a integrace.',
+                        features: const [
+                          'Napojení na vaše ERP/DMS',
+                          'API dekodér VIN pro automatické rozpoznání vozidel',
+                          'Prioritní podpora s SLA',
+                        ],
+                        package: null,
+                        periodMonthly: _period == _Period.monthly,
+                        purchasing: false,
+                        isCustom: true,
+                        onContact: _kontaktovatCustom,
+                        isCurrentPlan: aktualniPlan == 'custom',
+                      ),
                     ],
                   ),
                 ),
-                if (jeSoucasny)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: TokSpace.lg),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: TokSpace.lg),
+                child: PaywallTrustStrip(),
+              ),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      TokSpace.xl, TokSpace.md, TokSpace.xl, 0),
+                  child: Text(
+                    _errorMessage!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: TokColors.danger,
+                      fontSize: 13,
                     ),
-                    child: const Text('Váš plán',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green)),
                   ),
-                if (jeLepe && !jeSoucasny)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: barva.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text('Doporučeno',
-                        style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: barva)),
+                ),
+              const SizedBox(height: TokSpace.sm),
+              Center(
+                child: Text(
+                  'Bez závazku · Zrušení kdykoli · Ceny bez DPH',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: tok.textMuted,
                   ),
-              ],
-            ),
-          ),
-
-          // Moduly
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...moduly.map((m) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.check_circle,
-                              size: 16,
-                              color: jeSoucasny ? Colors.green : barva),
-                          const SizedBox(width: 8),
-                          Text(m, style: const TextStyle(fontSize: 13)),
-                        ],
-                      ),
-                    )),
-                const SizedBox(height: 8),
-                const Divider(),
-                const SizedBox(height: 8),
-                // Cena
-                Row(
-                  children: [
-                    const Icon(Icons.payments_outlined,
-                        size: 16, color: Colors.grey),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Cena dle počtu uživatelů – individuální nabídka',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
-                  ],
                 ),
-                const SizedBox(height: 14),
-                // Tlačítko
-                SizedBox(
-                  width: double.infinity,
-                  child: jeSoucasny
-                      ? OutlinedButton.icon(
-                          onPressed: null,
-                          icon: const Icon(Icons.check),
-                          label: const Text('Aktuálně aktivní'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                        )
-                      : ElevatedButton.icon(
-                          onPressed: () => _odeslatiPoptavku(plan),
-                          icon: const Icon(Icons.mail_outline),
-                          label: const Text('Mám zájem',
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: barva,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 13),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../core/constants.dart';
 import '../core/design_tokens.dart';
 import '../core/subscription_service.dart';
 import '../core/torkis_ui.dart';
@@ -91,6 +93,30 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
+  Future<void> _kontaktovatCustom() async {
+    final subject =
+        Uri.encodeComponent('Poptávka individuálního plánu Torkis');
+    final body = Uri.encodeComponent(
+      'Dobrý den,\n\n'
+      'Mám zájem o individuální nabídku plánu Custom pro svůj autoservis.\n\n'
+      'Informace o servisu:\n'
+      '  Servis ID: ${globalServisId ?? "neznámé"}\n'
+      '  Aktuální plán: ${globalPlanTyp.toUpperCase()}\n\n'
+      'Prosím o zaslání nabídky.\n\n'
+      's pozdravem',
+    );
+    final uri = Uri.parse(
+        'mailto:$kKontaktEmail?subject=$subject&body=$body');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Nepodařilo se otevřít e-mailového klienta.')),
+      );
+    }
+  }
+
   Package? _packageFor(String tier) {
     final suffix = _period == _Period.monthly ? 'monthly' : 'yearly';
     return _packages['${tier}_$suffix'];
@@ -143,7 +169,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   onChanged: (p) => setState(() => _period = p),
                   options: const [
                     (value: _Period.monthly, label: 'Měsíčně', badge: null),
-                    (value: _Period.yearly, label: 'Ročně', badge: '−15 %'),
+                    (value: _Period.yearly, label: 'Ročně', badge: '−19 %'),
                   ],
                 ),
               ),
@@ -158,31 +184,30 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: TokSpace.lg),
                   child: Column(
                     children: [
-                      _PlanCard(
+                      PaywallPlanCard(
                         name: 'Basic',
                         description: 'Pro malé autoservisy a OSVČ.',
                         features: const [
-                          '50 příjmů / měsíc',
+                          '50 záznamů/měsíc',
                           '3 uživatelé max.',
                           'Fotodokumentace',
                           'Evidence zákazníků a vozidel',
-                          'Historie příjmů',
+                          'Historie záznamů',
                           'Správa týmu',
                         ],
                         package: _packageFor('basic'),
-                        period: _period,
+                        periodMonthly: _period == _Period.monthly,
                         purchasing: _purchasing,
                         onPurchase: _purchase,
                         featured: false,
                       ),
-                      const SizedBox(height: TokSpace.md),
-                      _PlanCard(
+                      PaywallPlanCard(
                         name: 'Standard',
                         description:
                             'Pro střední servisy do 150 zakázek měsíčně.',
                         featured: true,
                         features: const [
-                          '150 příjmů / měsíc',
+                          '150 záznamů/měsíc',
                           '10 uživatelů max.',
                           'Vše z Basic',
                           'Reporty a statistiky',
@@ -190,17 +215,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           'Webový portál pro správu vozidel a zákazníků',
                         ],
                         package: _packageFor('standard'),
-                        period: _period,
+                        periodMonthly: _period == _Period.monthly,
                         purchasing: _purchasing,
                         onPurchase: _purchase,
                       ),
-                      const SizedBox(height: TokSpace.md),
-                      _PlanCard(
+                      PaywallPlanCard(
                         name: 'Pro',
                         description:
-                            'Pro velké servisy a sítě bez limitu příjmů.',
+                            'Pro velké servisy a sítě bez limitu záznamů.',
                         features: const [
-                          'Neomezené příjmy',
+                          'Neomezené záznamy',
                           'Neomezený počet uživatelů',
                           'Vše ze Standard',
                           'Prioritní podpora',
@@ -208,9 +232,24 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           'Vícenásobná pracoviště',
                         ],
                         package: _packageFor('pro'),
-                        period: _period,
+                        periodMonthly: _period == _Period.monthly,
                         purchasing: _purchasing,
                         onPurchase: _purchase,
+                      ),
+                      PaywallPlanCard(
+                        name: 'Custom',
+                        description:
+                            'Individuální úprava pro speciální požadavky a integrace.',
+                        features: const [
+                          'Napojení na vaše ERP/DMS',
+                          'API dekodér VIN pro automatické rozpoznání vozidel',
+                          'Prioritní podpora s SLA',
+                        ],
+                        package: null,
+                        periodMonthly: _period == _Period.monthly,
+                        purchasing: false,
+                        isCustom: true,
+                        onContact: () => _kontaktovatCustom(),
                       ),
                     ],
                   ),
@@ -218,7 +257,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               const SizedBox(height: TokSpace.lg),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: TokSpace.lg),
-                child: _TrustStrip(),
+                child: PaywallTrustStrip(),
               ),
               if (_errorMessage != null)
                 Padding(
@@ -282,45 +321,53 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 }
 
-class _PlanCard extends StatelessWidget {
+class PaywallPlanCard extends StatelessWidget {
   final String name;
   final String description;
   final List<String> features;
   final Package? package;
-  final _Period period;
+  final bool periodMonthly; // true = měsíčně, false = ročně
   final bool purchasing;
   final bool featured;
-  final Future<void> Function(Package?) onPurchase;
+  final Future<void> Function(Package?)? onPurchase;
+  // Custom mód: bez ceny, jen kontakt přes externí akci (např. email).
+  final bool isCustom;
+  final VoidCallback? onContact;
+  // Volitelný stav pro tlačítko (např. "Aktuální plán" disabled).
+  final String? currentPlanLabel;
+  final bool isCurrentPlan;
 
-  const _PlanCard({
+  const PaywallPlanCard({
+    super.key,
     required this.name,
     required this.description,
     required this.features,
     required this.package,
-    required this.period,
+    required this.periodMonthly,
     required this.purchasing,
-    required this.onPurchase,
+    this.onPurchase,
     this.featured = false,
+    this.isCustom = false,
+    this.onContact,
+    this.currentPlanLabel,
+    this.isCurrentPlan = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
-    // Featured = vždy deep ink (kontrast v light i dark modu).
     final bg = featured ? TokColors.ink : tok.surface;
     final fg = featured ? Colors.white : tok.textPrimary;
     final subFg = featured ? TokColors.steelSoft : tok.textSecondary;
     final accentLabel = featured ? TokColors.accent : tok.textSecondary;
 
-    final priceString =
-        package?.storeProduct.priceString ?? '—';
-    final periodLabel =
-        period == _Period.monthly ? 'měsíčně' : 'ročně';
+    final periodLabel = periodMonthly ? 'měsíčně' : 'ročně';
 
     return Stack(
       children: [
         Container(
           padding: const EdgeInsets.all(22),
+          margin: const EdgeInsets.only(bottom: TokSpace.md),
           decoration: BoxDecoration(
             color: bg,
             borderRadius: BorderRadius.circular(TokRadius.xl),
@@ -339,81 +386,60 @@ class _PlanCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Flexible(
-                    child: Text(
-                      priceString,
-                      style: TextStyle(
-                        fontFamily: 'IBMPlexMono',
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        color: fg,
-                        letterSpacing: -0.6,
-                        height: 1,
+              if (isCustom)
+                Text(
+                  'Cena na míru',
+                  style: TextStyle(
+                    fontFamily: 'IBMPlexMono',
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                    letterSpacing: -0.3,
+                    height: 1,
+                  ),
+                )
+              else
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        package?.storeProduct.priceString ?? '—',
+                        style: TextStyle(
+                          fontFamily: 'IBMPlexMono',
+                          fontSize: 34,
+                          fontWeight: FontWeight.w700,
+                          color: fg,
+                          letterSpacing: -0.6,
+                          height: 1,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      '/ $periodLabel',
-                      style: TextStyle(fontSize: 13, color: subFg),
+                    const SizedBox(width: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '/ $periodLabel',
+                        style: TextStyle(fontSize: 13, color: subFg),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               const SizedBox(height: 6),
               Text(
                 description,
                 style: TextStyle(fontSize: 12, color: subFg, height: 1.4),
               ),
               const SizedBox(height: TokSpace.md),
-              ...features.map((f) => TorkisFeatureCheck(text: f, dark: featured)),
+              ...features.map(
+                  (f) => TorkisFeatureCheck(text: f, dark: featured)),
               const SizedBox(height: TokSpace.md),
               SizedBox(
                 height: 46,
                 width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: (purchasing || package == null)
-                      ? null
-                      : () => onPurchase(package),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        featured ? TokColors.accent : tok.bg,
-                    foregroundColor: featured ? Colors.white : tok.textPrimary,
-                    side: featured
-                        ? null
-                        : BorderSide(color: tok.line),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(TokRadius.md),
-                    ),
-                  ),
-                  child: purchasing
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('Vybrat $name',
-                                style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600)),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.arrow_forward_rounded, size: 14),
-                          ],
-                        ),
-                ),
+                child: _buildCta(context, tok, fg),
               ),
             ],
           ),
@@ -422,31 +448,137 @@ class _PlanCard extends StatelessWidget {
           Positioned(
             top: 14,
             right: 14,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: TokColors.accent,
-                borderRadius: BorderRadius.circular(TokRadius.round),
-              ),
-              child: const Text(
-                'DOPORUČUJEME',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                ),
-              ),
+            child: _Pill(
+              text: 'DOPORUČUJEME',
+              bg: TokColors.accent,
+              fg: Colors.white,
+            ),
+          ),
+        if (isCurrentPlan)
+          Positioned(
+            top: 14,
+            right: 14,
+            child: _Pill(
+              text: currentPlanLabel ?? 'AKTUÁLNÍ PLÁN',
+              bg: TokColors.success,
+              fg: Colors.white,
             ),
           ),
       ],
     );
   }
+
+  Widget _buildCta(BuildContext context, TorkisTokens tok, Color fg) {
+    if (isCurrentPlan) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: tok.bg,
+          foregroundColor: tok.textSecondary,
+          disabledBackgroundColor: tok.bg,
+          disabledForegroundColor: tok.textSecondary,
+          side: BorderSide(color: tok.line),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TokRadius.md),
+          ),
+        ),
+        child: const Text('Aktuálně aktivní',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+      );
+    }
+
+    if (isCustom) {
+      return ElevatedButton(
+        onPressed: onContact,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: featured ? TokColors.accent : tok.bg,
+          foregroundColor: featured ? Colors.white : tok.textPrimary,
+          side: featured ? null : BorderSide(color: tok.line),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TokRadius.md),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.mail_outline_rounded, size: 16),
+            const SizedBox(width: 6),
+            const Text('Mám zájem',
+                style:
+                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+    }
+
+    return ElevatedButton(
+      onPressed: (purchasing || package == null || onPurchase == null)
+          ? null
+          : () => onPurchase!(package),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: featured ? TokColors.accent : tok.bg,
+        foregroundColor: featured ? Colors.white : tok.textPrimary,
+        side: featured ? null : BorderSide(color: tok.line),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TokRadius.md),
+        ),
+      ),
+      child: purchasing
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Vybrat $name',
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(width: 6),
+                const Icon(Icons.arrow_forward_rounded, size: 14),
+              ],
+            ),
+    );
+  }
 }
 
-class _TrustStrip extends StatelessWidget {
-  const _TrustStrip();
+class _Pill extends StatelessWidget {
+  final String text;
+  final Color bg;
+  final Color fg;
+
+  const _Pill({required this.text, required this.bg, required this.fg});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(TokRadius.round),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: fg,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
+      ),
+    );
+  }
+}
+
+class PaywallTrustStrip extends StatelessWidget {
+  const PaywallTrustStrip({super.key});
 
   @override
   Widget build(BuildContext context) {
