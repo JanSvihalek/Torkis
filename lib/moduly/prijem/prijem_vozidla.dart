@@ -10,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
+import '../../core/constants.dart';
 import '../../core/pdf_generator.dart';
 import '../auth_gate.dart';
 import 'prijem_vozidla_vyber_zakaznika.dart';
@@ -804,6 +805,43 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   Future<void> _startDirectUpload() async {
+    // Kontrola měsíčního limitu příjmů dle plánu
+    final limit = kPlanPrijemLimit[globalPlanTyp];
+    if (limit != null && _sId != null) {
+      final now = DateTime.now();
+      final mesicStart = DateTime(now.year, now.month, 1);
+      final mesicEnd = DateTime(now.year, now.month + 1, 1);
+      final snap = await FirebaseFirestore.instance
+          .collection('zakazky')
+          .where('servis_id', isEqualTo: _sId)
+          .where('cas_prijeti',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(mesicStart))
+          .where('cas_prijeti', isLessThan: Timestamp.fromDate(mesicEnd))
+          .count()
+          .get();
+      if ((snap.count ?? 0) >= limit) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: const Text('Limit příjmů dosažen'),
+              content: Text(
+                'Váš plán ${globalPlanTyp.toUpperCase()} umožňuje maximálně '
+                '$limit příjmů za měsíc. Pro více příjmů upgradujte plán.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Zavřít'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+    }
+
     setState(() => _isUploading = true);
     try {
       await _uploadToFirebase();

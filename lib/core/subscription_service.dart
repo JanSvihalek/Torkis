@@ -3,9 +3,11 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 
 // TODO: Po nastavení RevenueCat vyplň tyto hodnoty:
 // - kRevenueCatApiKey: Project Settings → API Keys → Public iOS key (appl_...)
-// - kEntitlementId: název entitlementu v RevenueCat (výchozí 'premium')
+// - kPlanEntitlements: identifikátory entitlementů v RevenueCat (basic, standard, pro)
 const String kRevenueCatApiKey = 'PLACEHOLDER_REVENUECAT_API_KEY';
-const String kEntitlementId = 'premium';
+
+/// Identifikátory entitlementů v RevenueCat — musí přesně souhlasit s názvy v RC konzoli.
+const List<String> kPlanEntitlements = ['basic', 'standard', 'pro'];
 
 class SubscriptionService {
   static Future<void> init() async {
@@ -31,14 +33,32 @@ class SubscriptionService {
     }
   }
 
+  /// Vrátí true pokud je aktivní jakýkoliv plán (basic / standard / pro).
   static Future<bool> isEntitlementActive() async {
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return false;
     try {
       final info = await Purchases.getCustomerInfo();
-      return info.entitlements.active.containsKey(kEntitlementId);
+      return kPlanEntitlements.any(
+        (e) => info.entitlements.active.containsKey(e),
+      );
     } catch (e) {
       debugPrint('RevenueCat getCustomerInfo error: $e');
       return false;
+    }
+  }
+
+  /// Vrátí aktivní typ plánu ('pro' > 'standard' > 'basic') nebo null.
+  static Future<String?> getActivePlanTyp() async {
+    if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return null;
+    try {
+      final info = await Purchases.getCustomerInfo();
+      for (final plan in ['pro', 'standard', 'basic']) {
+        if (info.entitlements.active.containsKey(plan)) return plan;
+      }
+      return null;
+    } catch (e) {
+      debugPrint('RevenueCat getCustomerInfo error: $e');
+      return null;
     }
   }
 
@@ -56,7 +76,9 @@ class SubscriptionService {
   static Future<bool> purchasePackage(Package package) async {
     try {
       final info = await Purchases.purchasePackage(package);
-      return info.entitlements.active.containsKey(kEntitlementId);
+      return kPlanEntitlements.any(
+        (e) => info.entitlements.active.containsKey(e),
+      );
     } on PurchasesErrorCode catch (e) {
       if (e == PurchasesErrorCode.purchaseCancelledError) return false;
       rethrow;
@@ -66,7 +88,9 @@ class SubscriptionService {
   static Future<bool> restorePurchases() async {
     try {
       final info = await Purchases.restorePurchases();
-      return info.entitlements.active.containsKey(kEntitlementId);
+      return kPlanEntitlements.any(
+        (e) => info.entitlements.active.containsKey(e),
+      );
     } catch (e) {
       debugPrint('RevenueCat restorePurchases error: $e');
       return false;

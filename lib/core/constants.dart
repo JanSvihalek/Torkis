@@ -64,6 +64,15 @@ const Map<String, List<String>> kPlanModuly = {
     'historie_prijmu',
     'zamestnanci',
   ],
+  'standard': [
+    'prijem',
+    'zakaznici',
+    'vozidla',
+    'historie_prijmu',
+    'planovac',
+    'statistiky',
+    'zamestnanci',
+  ],
   'pro': [
     'prijem',
     'zakaznici',
@@ -73,6 +82,15 @@ const Map<String, List<String>> kPlanModuly = {
     'statistiky',
     'zamestnanci',
   ],
+};
+
+/// Maximální počet příjmů za měsíc dle plánu (null = neomezeno).
+const Map<String, int?> kPlanPrijemLimit = {
+  'basic': 50,
+  'standard': 150,
+  'pro': null,
+  'trial': null,
+  'custom': null,
 };
 
 /// Mapování nav ID → klíč v globalModuly (null = vždy přístupné bez ohledu na plán).

@@ -22,11 +22,13 @@ class _AuthData {
   final DocumentSnapshot? predDoc;
   final bool subscriptionActive;
   final int zbyvajiciDniTrialu;
+  final String? rcPlanTyp; // aktivní plán z RevenueCat (null = trial nebo neaktivní)
   _AuthData({
     required this.userDoc,
     this.predDoc,
     this.subscriptionActive = false,
     this.zbyvajiciDniTrialu = 0,
+    this.rcPlanTyp,
   });
 }
 
@@ -62,8 +64,9 @@ Future<_AuthData> _loadAuthData(String uid) async {
   // Identifikace uživatele v RevenueCat
   await SubscriptionService.identifyUser(uid);
 
-  // 1. Kontrola RevenueCat entitlementu (aktivní předplatné)
-  bool subscriptionActive = await SubscriptionService.isEntitlementActive();
+  // 1. Kontrola RevenueCat entitlementu — vrátí aktivní plán nebo null
+  final rcPlanTyp = await SubscriptionService.getActivePlanTyp();
+  bool subscriptionActive = rcPlanTyp != null;
   int zbyvajiciDni = 0;
 
   // 2. Pokud není aktivní předplatné, zkontrolujeme 30denní trial
@@ -85,6 +88,7 @@ Future<_AuthData> _loadAuthData(String uid) async {
     predDoc: predDoc,
     subscriptionActive: subscriptionActive,
     zbyvajiciDniTrialu: zbyvajiciDni,
+    rcPlanTyp: rcPlanTyp,
   );
 }
 
@@ -190,8 +194,17 @@ class AuthGate extends StatelessWidget {
               SharedPreferences.getInstance().then(
                 (p) => p.setBool('tmavy_rezim', tmavyRezim),
               );
-              // Načtení a aplikace předplatného
+              // Načtení a aplikace předplatného (plan z Firestore jako základ)
               applySubscription(snap.data!.predDoc);
+
+              // RevenueCat plán má přednost před Firestore hodnotou
+              final rcPlan = snap.data!.rcPlanTyp;
+              if (rcPlan != null) {
+                globalPlanTyp = rcPlan;
+                final defaults =
+                    kPlanModuly[rcPlan] ?? kPlanModuly['basic']!;
+                globalModuly = {for (final m in defaults) m: true};
+              }
 
               if (!snap.data!.subscriptionActive) {
                 return PaywallScreen(
