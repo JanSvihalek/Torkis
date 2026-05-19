@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1006,7 +1007,7 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                 const SizedBox(height: 10),
                 Text(_vygenerujNahled(), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 2, color: Colors.blue)),
                 const SizedBox(height: 10),
-                Text('Interní maska: ${_vygenerujMasku()}', style: const TextStyle(color: Colors.grey, fontSize: 11, fontFamily: 'monospace')),
+                Text('Interní maska: ${_vygenerujMasku()}', style: GoogleFonts.ibmPlexMono(color: Colors.grey, fontSize: 11)),
               ],
             ),
           ),

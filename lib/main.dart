@@ -54,6 +54,22 @@ void main() async {
   runApp(const VistoApp());
 }
 
+/// Headings (display, headline) = IBM Plex Sans, vše ostatní = IBM Plex Mono.
+TextTheme _buildTextTheme(TextTheme base) {
+  final sans = GoogleFonts.ibmPlexSansTextTheme(base);
+  return sans.copyWith(
+    bodyLarge: GoogleFonts.ibmPlexMono(textStyle: sans.bodyLarge),
+    bodyMedium: GoogleFonts.ibmPlexMono(textStyle: sans.bodyMedium),
+    bodySmall: GoogleFonts.ibmPlexMono(textStyle: sans.bodySmall),
+    labelLarge: GoogleFonts.ibmPlexMono(textStyle: sans.labelLarge),
+    labelMedium: GoogleFonts.ibmPlexMono(textStyle: sans.labelMedium),
+    labelSmall: GoogleFonts.ibmPlexMono(textStyle: sans.labelSmall),
+    titleLarge: GoogleFonts.ibmPlexMono(textStyle: sans.titleLarge),
+    titleMedium: GoogleFonts.ibmPlexMono(textStyle: sans.titleMedium),
+    titleSmall: GoogleFonts.ibmPlexMono(textStyle: sans.titleSmall),
+  );
+}
+
 class VistoApp extends StatelessWidget {
   const VistoApp({super.key});
 
@@ -85,7 +101,7 @@ class VistoApp extends StatelessWidget {
               surface: const Color(0xFFFBFDFF),
             ),
             useMaterial3: true,
-            textTheme: GoogleFonts.ibmPlexSansTextTheme(
+            textTheme: _buildTextTheme(
               ThemeData(brightness: Brightness.light).textTheme,
             ),
           ),
@@ -100,7 +116,7 @@ class VistoApp extends StatelessWidget {
               surface: const Color(0xFF0B1A2E),
             ),
             useMaterial3: true,
-            textTheme: GoogleFonts.ibmPlexSansTextTheme(
+            textTheme: _buildTextTheme(
               ThemeData(brightness: Brightness.dark).textTheme,
             ),
           ),
