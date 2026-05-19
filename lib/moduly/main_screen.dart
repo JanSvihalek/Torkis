@@ -135,7 +135,8 @@ class _MainScreenState extends State<MainScreen> {
     final prefs = await SharedPreferences.getInstance();
     final savedOrder = prefs.getStringList('nav_order');
     if (savedOrder != null && savedOrder.isNotEmpty) {
-      navOrderNotifier.value = savedOrder;
+      final validOrder = savedOrder.where(_allNavItems.containsKey).toList();
+      if (validOrder.isNotEmpty) navOrderNotifier.value = validOrder;
     }
   }
 
@@ -146,8 +147,9 @@ class _MainScreenState extends State<MainScreen> {
     return ValueListenableBuilder<List<String>>(
         valueListenable: navOrderNotifier,
         builder: (context, navOrder, child) {
-          final filteredNavOrder =
-              navOrder.where((id) => maPristup(id)).toList();
+          final filteredNavOrder = navOrder
+              .where((id) => _allNavItems.containsKey(id) && maPristup(id))
+              .toList();
 
           int currentIndex = filteredNavOrder.indexOf(_currentTabId);
           if (currentIndex == -1) {

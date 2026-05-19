@@ -138,11 +138,15 @@ class AuthGate extends StatelessWidget {
 
               final rawNavOrder = userData['nav_order'];
               if (rawNavOrder is List && rawNavOrder.isNotEmpty) {
-                final navOrder = List<String>.from(rawNavOrder);
-                navOrderNotifier.value = navOrder;
-                SharedPreferences.getInstance().then(
-                  (p) => p.setStringList('nav_order', navOrder),
-                );
+                final navOrder = List<String>.from(rawNavOrder)
+                    .where(navIdToModulKlic.containsKey)
+                    .toList();
+                if (navOrder.isNotEmpty) {
+                  navOrderNotifier.value = navOrder;
+                  SharedPreferences.getInstance().then(
+                    (p) => p.setStringList('nav_order', navOrder),
+                  );
+                }
               }
               SharedPreferences.getInstance().then(
                 (p) => p.setBool('tmavy_rezim', tmavyRezim),
