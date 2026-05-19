@@ -692,22 +692,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey.withOpacity(0.2)),
                       ),
-                      child: Column(
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.build_circle_outlined, color: Colors.blue),
-                            title: const Text('Formát čísla zakázek', style: TextStyle(fontWeight: FontWeight.bold)),
-                            trailing: const Icon(Icons.edit, size: 18),
-                            onTap: () => _otevritKonfiguratorCislovani('zakazka', isDark),
-                          ),
-                          const Divider(height: 1),
-                          ListTile(
-                            leading: const Icon(Icons.receipt_outlined, color: Colors.orange),
-                            title: const Text('Formát čísla faktur', style: TextStyle(fontWeight: FontWeight.bold)),
-                            trailing: const Icon(Icons.edit, size: 18),
-                            onTap: () => _otevritKonfiguratorCislovani('faktura', isDark),
-                          ),
-                        ],
+                      child: ListTile(
+                        leading: const Icon(Icons.build_circle_outlined, color: Colors.blue),
+                        title: const Text('Formát čísla zakázek', style: TextStyle(fontWeight: FontWeight.bold)),
+                        trailing: const Icon(Icons.edit, size: 18),
+                        onTap: () => _otevritKonfiguratorCislovani('zakazka', isDark),
                       ),
                     ),
                     const SizedBox(height: 15),
