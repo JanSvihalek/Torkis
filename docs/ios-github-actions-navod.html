@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>iOS build přes GitHub Actions z Windows — Univerzální návod</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+    color: #1f2937;
+    font-size: 10.5pt;
+    max-width: 100%;
+  }
+  h1 {
+    font-size: 22pt;
+    color: #0b1a2e;
+    border-bottom: 3px solid #2d6cdf;
+    padding-bottom: 8px;
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 15pt;
+    color: #0b1a2e;
+    margin-top: 22px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #2d6cdf;
+    margin-top: 14px;
+    margin-bottom: 4px;
+  }
+  h4 {
+    font-size: 10.5pt;
+    color: #374151;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  code {
+    font-family: "Cascadia Mono", "Consolas", monospace;
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+  }
+  pre {
+    background: #0b1a2e;
+    color: #e5e7eb;
+    padding: 10px 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 9pt;
+    line-height: 1.4;
+    page-break-inside: avoid;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 9.5pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #d1d5db;
+    padding: 6px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f3f4f6; font-weight: 600; }
+  tr:nth-child(even) td { background: #fafbfc; }
+  .note {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 8px 12px;
+    margin: 10px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 10pt;
+  }
+  .warn {
+    background: #fee2e2;
+    border-left: 4px solid #dc2626;
+    padding: 8px 12px;
+    margin: 10px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 10pt;
+  }
+  .ok {
+    background: #d1fae5;
+    border-left: 4px solid #10b981;
+    padding: 8px 12px;
+    margin: 10px 0;
+    border-radius: 0 4px 4px 0;
+    font-size: 10pt;
+  }
+  ol, ul { padding-left: 22px; }
+  li { margin: 3px 0; }
+  .toc { background: #f9fafb; padding: 12px 18px; border-radius: 6px; }
+  .toc ol { margin: 0; }
+  .small { font-size: 9pt; color: #6b7280; }
+  hr { border: 0; border-top: 1px solid #e5e7eb; margin: 18px 0; }
+  .page-break { page-break-before: always; }
+  .footer {
+    text-align: center;
+    font-size: 8.5pt;
+    color: #9ca3af;
+    margin-top: 24px;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<h1>iOS build přes GitHub Actions z Windows</h1>
+<p class="small">Univerzální návod pro Flutter aplikace · Generováno na základě setupu projektu TORKIS · 2026-05-15</p>
+
+<div class="toc">
+<strong>Obsah</strong>
+<ol>
+  <li>Co budeš potřebovat (prerekvizity)</li>
+  <li>Apple Developer — vytvoření certifikátu, App ID a provisioning profilu</li>
+  <li>App Store Connect — registrace aplikace a API key</li>
+  <li>Příprava souborů na Windows (.p12 z certifikátu)</li>
+  <li>GitHub Secrets — seznam 9 hodnot</li>
+  <li>Workflow soubor (kompletní YAML)</li>
+  <li>PowerShell pomocný skript</li>
+  <li>Úprava iOS projektu (project.pbxproj, Info.plist, ikona)</li>
+  <li>První spuštění a TestFlight</li>
+  <li>Troubleshooting nejčastějších chyb</li>
+  <li>Checklist pro nový projekt</li>
+</ol>
+</div>
+
+<h2>1) Co budeš potřebovat</h2>
+
+<table>
+<tr><th>Položka</th><th>Kde získat</th></tr>
+<tr><td>Apple Developer Program ($99/rok)</td><td>developer.apple.com → Enroll</td></tr>
+<tr><td>App Store Connect přístup</td><td>součást Developer programu</td></tr>
+<tr><td>GitHub repozitář s Flutter projektem</td><td>libovolný účet, free pro veřejné repos</td></tr>
+<tr><td>Bundle ID (např. <code>com.firma.app</code>)</td><td>navrhneš si sám, musí být unikátní</td></tr>
+<tr><td>Windows PC s nainstalovaným:</td><td></td></tr>
+<tr><td>&nbsp;&nbsp;• Flutter SDK</td><td>flutter.dev/docs/get-started/install</td></tr>
+<tr><td>&nbsp;&nbsp;• Git for Windows (obsahuje openssl)</td><td>git-scm.com</td></tr>
+<tr><td>&nbsp;&nbsp;• PowerShell 5.1+ (součást Windows)</td><td>—</td></tr>
+</table>
+
+<div class="note">
+<strong>Mac nepotřebuješ.</strong> Veškerý iOS build běží na macOS runnerech v GitHub Actions. Z Windows jenom připravíš certifikáty, profily a zatlačíš to do Gitu.
+</div>
+
+<h2>2) Apple Developer — certifikát, App ID a provisioning profile</h2>
+
+<h3>2.1 App ID (Identifier)</h3>
+<ol>
+  <li>Jdi na <strong>developer.apple.com/account/resources/identifiers</strong></li>
+  <li>Klikni <strong>+</strong> → App IDs → App → Continue</li>
+  <li>Description: libovolný popis (např. "Moje aplikace")</li>
+  <li>Bundle ID: <strong>Explicit</strong> → zadej např. <code>com.firma.app</code> (musí odpovídat tomu v <code>ios/Runner.xcodeproj/project.pbxproj</code> a <code>pubspec.yaml</code>)</li>
+  <li>Capabilities: zaškrtni jen to, co aplikace skutečně používá (Push Notifications, Sign in with Apple, atd.)</li>
+  <li>Continue → Register</li>
+</ol>
+
+<h3>2.2 Distribution certifikát (.cer + .p12)</h3>
+
+<p>Apple vyžaduje, abys měl <strong>Apple Distribution</strong> certifikát pro podpis IPA. Z Macu se vyrobí standardně přes Keychain Access. <strong>Z Windows</strong> potřebuješ obejít CSR (Certificate Signing Request) přes <code>openssl</code>:</p>
+
+<pre><code># Vytvoř složku pro signing materiály mimo repo
+mkdir $env:USERPROFILE\.ios-signing
+cd $env:USERPROFILE\.ios-signing
+
+# Cesta k openssl z Git for Windows
+$openssl = "C:\Program Files\Git\usr\bin\openssl.exe"
+
+# 1) Vygeneruj privátní klíč
+& $openssl genrsa -out distribution.key 2048
+
+# 2) Vytvoř CSR (Certificate Signing Request)
+& $openssl req -new -key distribution.key -out distribution.csr `
+  -subj "/emailAddress=tvuj@email.cz/CN=Tvoje Jmeno/C=CZ"</code></pre>
+
+<p>Pak v Apple Developer portálu:</p>
+<ol>
+  <li><strong>developer.apple.com/account/resources/certificates</strong> → <strong>+</strong></li>
+  <li>Vyber <strong>Apple Distribution</strong> → Continue</li>
+  <li>Upload <code>distribution.csr</code> → Continue</li>
+  <li>Download <code>distribution.cer</code> → ulož do <code>~/.ios-signing/</code></li>
+</ol>
+
+<p>Teď spoj cert s klíčem do <code>.p12</code>:</p>
+
+<pre><code>& $openssl pkcs12 -export `
+  -out distribution.p12 `
+  -inkey distribution.key `
+  -in distribution.cer
+# openssl se zeptá na heslo — zvol něco silného a poznamenej si</code></pre>
+
+<div class="warn">
+<strong>Heslo k .p12 si poznamenej!</strong> Pokud ho zapomeneš, můžeš <code>.p12</code> kdykoliv znovu vygenerovat z <code>.key</code> + <code>.cer</code> (které zůstávají v složce).
+</div>
+
+<h3>2.3 Provisioning Profile (App Store distribution)</h3>
+<ol>
+  <li><strong>developer.apple.com/account/resources/profiles</strong> → <strong>+</strong></li>
+  <li>Sekce <strong>Distribution</strong> → <strong>App Store</strong> → Continue</li>
+  <li>App ID: vyber to, co jsi vytvořil v kroku 2.1</li>
+  <li>Certificate: zaškrtni svůj <strong>Apple Distribution</strong> cert</li>
+  <li>Provisioning Profile Name: např. <code>MyApp_AppStore</code></li>
+  <li>Generate → Download <code>.mobileprovision</code> do <code>Downloads</code></li>
+</ol>
+
+<div class="note">
+Pokud máš víc Distribution certifikátů (Apple povoluje max 3), <strong>zaškrtni všechny</strong> — vyhneš se chybě "Profile doesn't include signing certificate" pokud v budoucnu vytvoříš nový.
+</div>
+
+<h2>3) App Store Connect — aplikace a API key</h2>
+
+<h3>3.1 Vytvoř aplikaci v ASC</h3>
+
+<div class="warn">
+<strong>Důležité:</strong> Aplikaci v App Store Connect <em>musíš vytvořit dřív, než pošleš první build</em>, jinak Apple build "ztratí" a v TestFlight nic neuvidíš.
+</div>
+
+<ol>
+  <li>appstoreconnect.apple.com → <strong>My Apps</strong> → <strong>+</strong> → <strong>New App</strong></li>
+  <li>Platforms: iOS</li>
+  <li>Bundle ID: vyber ten z kroku 2.1</li>
+  <li>Name: zobrazované jméno (max 30 znaků)</li>
+  <li>Primary Language, SKU (libovolný unikátní řetězec)</li>
+  <li>Create</li>
+</ol>
+
+<h3>3.2 App Store Connect API Key (.p8)</h3>
+<ol>
+  <li>appstoreconnect.apple.com/access/integrations/api → tab <strong>Keys</strong> → <strong>+</strong></li>
+  <li>Name: např. "GitHub Actions"</li>
+  <li>Access: <strong>App Manager</strong></li>
+  <li>Generate → <strong>Download API Key</strong> (jen jednorázové stažení, ulož bezpečně)</li>
+  <li>Poznamenej si <strong>Key ID</strong> (10 znaků) a <strong>Issuer ID</strong> (UUID v záhlaví)</li>
+</ol>
+
+<h2>4) Příprava souborů na Windows</h2>
+
+<p>Měl bys teď mít:</p>
+<ul>
+  <li><code>~/.ios-signing/distribution.p12</code> (+ heslo)</li>
+  <li><code>~/.ios-signing/distribution.key</code>, <code>distribution.cer</code> (zachovat pro budoucí re-generaci)</li>
+  <li><code>~/Downloads/MyApp_AppStore.mobileprovision</code></li>
+  <li><code>~/Downloads/AuthKey_XXXXXXXXXX.p8</code></li>
+  <li>Key ID (10 znaků), Issuer ID (UUID), Apple Team ID (10 znaků — najdeš v developer.apple.com → Membership)</li>
+</ul>
+
+<h2>5) GitHub Secrets — 9 hodnot</h2>
+
+<p>V repu jdi do <strong>Settings → Secrets and variables → Actions → New repository secret</strong>:</p>
+
+<table>
+<tr><th>Secret</th><th>Hodnota</th></tr>
+<tr><td><code>IOS_CERT_BASE64</code></td><td>obsah <code>distribution.p12</code> v base64</td></tr>
+<tr><td><code>IOS_CERT_PASSWORD</code></td><td>heslo k <code>.p12</code></td></tr>
+<tr><td><code>KEYCHAIN_PASSWORD</code></td><td>libovolné heslo (např. <code>gh-actions-keychain</code>)</td></tr>
+<tr><td><code>IOS_PROFILE_BASE64</code></td><td>obsah <code>.mobileprovision</code> v base64</td></tr>
+<tr><td><code>APPLE_TEAM_ID</code></td><td>10znakové Team ID (např. <code>CZRDLTZC6L</code>)</td></tr>
+<tr><td><code>ASC_KEY_ID</code></td><td>Key ID z App Store Connect (10 znaků)</td></tr>
+<tr><td><code>ASC_ISSUER_ID</code></td><td>Issuer ID (UUID)</td></tr>
+<tr><td><code>ASC_KEY_BASE64</code></td><td>obsah <code>AuthKey_XXX.p8</code> v base64</td></tr>
+</table>
+
+<div class="note">
+Sdíleno napříč všemi tvými aplikacemi (stačí jeden Apple Developer účet): <code>IOS_CERT_*</code>, <code>KEYCHAIN_PASSWORD</code>, <code>APPLE_TEAM_ID</code>, <code>ASC_*</code>. Specifické pro každou app: jen <code>IOS_PROFILE_BASE64</code>.
+</div>
+
+<h2>6) Workflow soubor</h2>
+
+<p>Vytvoř soubor <code>.github/workflows/ios-testflight.yml</code>:</p>
+
+<pre><code>name: iOS Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Import signing certificate
+        env:
+          CERT_BASE64: ${{ secrets.IOS_CERT_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.IOS_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT=$RUNNER_TEMP/cert.p12
+          KCH=$RUNNER_TEMP/app.keychain-db
+          echo -n "$CERT_BASE64" | base64 --decode -o $CERT
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KCH
+          security set-keychain-settings -lut 21600 $KCH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KCH
+          security import $CERT -P "$CERT_PASSWORD" -A -t cert -f pkcs12 -k $KCH
+          security set-key-partition-list -S apple-tool:,apple: \
+            -k "$KEYCHAIN_PASSWORD" $KCH
+          security list-keychain -d user -s $KCH
+
+      - name: Install provisioning profile
+        env:
+          PROFILE_BASE64: ${{ secrets.IOS_PROFILE_BASE64 }}
+        run: |
+          PP=$RUNNER_TEMP/profile.mobileprovision
+          printf '%s' "$PROFILE_BASE64" | tr -d ' \n\r\t' | base64 --decode > $PP
+          PP_UUID=$(security cms -D -i $PP | plutil -extract UUID raw -)
+          echo "PP_UUID=$PP_UUID" >> $GITHUB_ENV
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp $PP ~/Library/MobileDevice/Provisioning\ Profiles/$PP_UUID.mobileprovision
+
+      - name: Inject signing into xcconfig
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          {
+            echo "CODE_SIGN_STYLE=Manual"
+            echo "DEVELOPMENT_TEAM=$TEAM_ID"
+            echo "CODE_SIGN_IDENTITY=Apple Distribution"
+            echo "PROVISIONING_PROFILE_SPECIFIER=$PP_UUID"
+          } >> ios/Flutter/Release.xcconfig
+
+      - name: Create ExportOptions.plist
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          BUNDLE_ID: com.firma.app   # <-- ZMĚŇ na svůj bundle ID
+        run: |
+          cat > ios/ExportOptions.plist &lt;&lt; PLIST
+          &lt;?xml version="1.0" encoding="UTF-8"?&gt;
+          &lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+            "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;
+          &lt;plist version="1.0"&gt;&lt;dict&gt;
+            &lt;key&gt;method&lt;/key&gt;&lt;string&gt;app-store-connect&lt;/string&gt;
+            &lt;key&gt;teamID&lt;/key&gt;&lt;string&gt;${TEAM_ID}&lt;/string&gt;
+            &lt;key&gt;signingStyle&lt;/key&gt;&lt;string&gt;manual&lt;/string&gt;
+            &lt;key&gt;signingCertificate&lt;/key&gt;&lt;string&gt;Apple Distribution&lt;/string&gt;
+            &lt;key&gt;provisioningProfiles&lt;/key&gt;&lt;dict&gt;
+              &lt;key&gt;${BUNDLE_ID}&lt;/key&gt;&lt;string&gt;${PP_UUID}&lt;/string&gt;
+            &lt;/dict&gt;
+            &lt;key&gt;uploadBitcode&lt;/key&gt;&lt;false/&gt;
+            &lt;key&gt;uploadSymbols&lt;/key&gt;&lt;true/&gt;
+          &lt;/dict&gt;&lt;/plist&gt;
+          PLIST
+
+      - name: Build IPA
+        run: |
+          BUILD_NUMBER=$((100 + ${{ github.run_number }}))
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --build-number=$BUILD_NUMBER
+
+      - name: Upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_BASE64: ${{ secrets.ASC_KEY_BASE64 }}
+        run: |
+          KEY=$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8
+          echo -n "$ASC_KEY_BASE64" | base64 --decode -o $KEY
+          mkdir -p ~/.appstoreconnect/private_keys
+          cp $KEY ~/.appstoreconnect/private_keys/
+          IPA=$(find build/ios/ipa -name '*.ipa' | head -1)
+          set -o pipefail
+          xcrun altool --upload-app -t ios -f "$IPA" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID" 2>&1 | tee /tmp/altool.log
+          if grep -qE "UPLOAD FAILED|ERROR:|Validation failed" /tmp/altool.log; then
+            echo "::error::Apple altool reported failure"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ipa-${{ github.run_number }}
+          path: build/ios/ipa/*.ipa
+          retention-days: 14</code></pre>
+
+<h2>7) PowerShell pomocný skript</h2>
+
+<p>Vytvoř <code>scripts/prepare-ios-secrets.ps1</code> — vygeneruje base64 hodnoty do textových souborů, ze kterých zkopíruješ do GitHub Secrets:</p>
+
+<pre><code>param(
+  [Parameter(Mandatory=$true)][string]$ProfilePath,
+  [Parameter(Mandatory=$true)][string]$P8Path,
+  [string]$P12Path = "$env:USERPROFILE\.ios-signing\distribution.p12"
+)
+$OutDir = "$env:USERPROFILE\.ios-signing\github-secrets"
+New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
+
+function ToBase64($path) {
+  [Convert]::ToBase64String([IO.File]::ReadAllBytes($path))
+}
+function Save-Secret($name, $value) {
+  [IO.File]::WriteAllText((Join-Path $OutDir "$name.txt"), $value)
+  Write-Host "  $name -> $OutDir\$name.txt" -ForegroundColor Green
+}
+
+Save-Secret "IOS_CERT_BASE64"    (ToBase64 $P12Path)
+Save-Secret "IOS_PROFILE_BASE64" (ToBase64 $ProfilePath)
+Save-Secret "ASC_KEY_BASE64"     (ToBase64 $P8Path)
+Save-Secret "ASC_KEY_ID" (
+  [IO.Path]::GetFileNameWithoutExtension($P8Path) -replace '^AuthKey_',''
+)
+
+$text = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($ProfilePath))
+if ($text -match '&lt;key&gt;application-identifier&lt;/key&gt;\s*&lt;string&gt;([A-Z0-9]+)\.') {
+  Save-Secret "APPLE_TEAM_ID" $matches[1]
+}
+
+Start-Process explorer.exe $OutDir
+Write-Host ""
+Write-Host "Rucne dopln tyto 3 secrets:" -ForegroundColor Magenta
+Write-Host "  IOS_CERT_PASSWORD  -> heslo k .p12"
+Write-Host "  KEYCHAIN_PASSWORD  -> libovolne"
+Write-Host "  ASC_ISSUER_ID      -> z App Store Connect (Issuer ID)"</code></pre>
+
+<p>Spuštění:</p>
+<pre><code>.\scripts\prepare-ios-secrets.ps1 `
+  -ProfilePath "$env:USERPROFILE\Downloads\MyApp_AppStore.mobileprovision" `
+  -P8Path "$env:USERPROFILE\Downloads\AuthKey_XXXXXXXXXX.p8"</code></pre>
+
+<h2>8) Úpravy iOS projektu (jednorázové)</h2>
+
+<h3>8.1 project.pbxproj — odstranit Automatic signing pro Runner</h3>
+
+<p>V <code>ios/Runner.xcodeproj/project.pbxproj</code> najdi všechny řádky obsahující <code>CODE_SIGN_STYLE = Automatic;</code> v sekcích Runner targetu (Debug, Release, Profile — typicky 3 výskyty u <strong>Runner</strong>, navíc 3 u RunnerTests — ty <strong>nech</strong>). Řádky u Runneru smaž.</p>
+
+<div class="note">
+Runner targety jsou ty, kde je <code>PRODUCT_BUNDLE_IDENTIFIER = com.firma.app</code>. RunnerTests targety mají <code>PRODUCT_BUNDLE_IDENTIFIER = com.firma.app.RunnerTests</code> — těch se nedotýkej.
+</div>
+
+<h3>8.2 Info.plist — App Encryption</h3>
+
+<p>Aby se Apple Connect po každém uploadu neptal na export compliance, přidej do <code>ios/Runner/Info.plist</code> (kdekoliv mezi <code>&lt;dict&gt;</code> a <code>&lt;/dict&gt;</code>):</p>
+
+<pre><code>&lt;key&gt;ITSAppUsesNonExemptEncryption&lt;/key&gt;
+&lt;false/&gt;</code></pre>
+
+<p>Platí, pokud aplikace používá jen HTTPS přes iOS SDK, Apple Keychain, Face/Touch ID a žádné vlastní šifrování.</p>
+
+<h3>8.3 App ikona — bez alpha kanálu</h3>
+
+<p>Apple odmítá 1024×1024 ikony s transparency. PowerShell flatten s brand barvou:</p>
+
+<pre><code>Add-Type -AssemblyName System.Drawing
+$src = "assets/images/app-icon-1024.png"
+$img = [System.Drawing.Image]::FromFile($src)
+$flat = New-Object System.Drawing.Bitmap 1024,1024,`
+  ([System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
+$g = [System.Drawing.Graphics]::FromImage($flat)
+$g.Clear([System.Drawing.ColorTranslator]::FromHtml('#0B1A2E'))
+$g.DrawImage($img, 0, 0, 1024, 1024)
+$flat.Save($src, [System.Drawing.Imaging.ImageFormat]::Png)
+$img.Dispose(); $flat.Dispose()</code></pre>
+
+<p>Pak regeneruj iOS asset catalog:</p>
+<pre><code>dart run flutter_launcher_icons</code></pre>
+
+<h2>9) První spuštění a TestFlight</h2>
+
+<ol>
+  <li>Commit + push všeho do <code>main</code></li>
+  <li>GitHub → <strong>Actions → iOS Build → Run workflow</strong> → Run</li>
+  <li>Build trvá 15–25 min (první pod install je nejpomalejší)</li>
+  <li>Po úspěšném upload zkontroluj <strong>App Store Connect → Activity → All Builds</strong> — build je nejdřív "Processing" (5–30 min)</li>
+  <li>Po zpracování: <strong>TestFlight → Builds → klik na build → vyřeš Export Compliance</strong> (pokud nemáš v Info.plist klíč z 8.2)</li>
+  <li>Přidej se do <strong>Internal Testing</strong> skupiny → Apple ti pošle email s redeem code</li>
+  <li>Na iPhonu otevři <strong>TestFlight app</strong> → profil → <strong>Redeem</strong> → zadej kód</li>
+  <li>Install → testuj</li>
+</ol>
+
+<h2>10) Troubleshooting</h2>
+
+<h4>Chyba: "Runner has conflicting provisioning settings. Runner is automatically signed, but provisioning profile *** has been manually specified."</h4>
+<p><strong>Příčina:</strong> <code>project.pbxproj</code> má v Runner targetu <code>CODE_SIGN_STYLE = Automatic</code>.<br>
+<strong>Řešení:</strong> Krok 8.1 — smaž tyto řádky.</p>
+
+<h4>Chyba: "Provisioning profile doesn't include signing certificate Apple Distribution"</h4>
+<p><strong>Příčina:</strong> Tvůj <code>.p12</code> obsahuje jiný Distribution cert než ten, který je v provisioning profilu.<br>
+<strong>Řešení:</strong> V Apple Developer portálu otevři profile → Edit → zaškrtni všechny tvoje Distribution certifikáty → Save → stáhni nový <code>.mobileprovision</code> → aktualizuj <code>IOS_PROFILE_BASE64</code> v GitHub Secrets.</p>
+
+<h4>Chyba: "No profile for team '***' matching '***' found"</h4>
+<p><strong>Příčina:</strong> Xcode hledá profile podle jména, ale jméno se mezerou (např. "MyApp App Store") může selhat.<br>
+<strong>Řešení:</strong> Workflow používá UUID místo jména (<code>$PP_UUID</code> v xcconfig i ExportOptions.plist) — ujisti se, že máš to ve workflow.</p>
+
+<h4>Chyba: "security: failed to add data to decoder: UNKNOWN (-8183)"</h4>
+<p><strong>Příčina:</strong> Secret <code>IOS_PROFILE_BASE64</code> má whitespace/newline na konci nebo není správně aktualizovaný.<br>
+<strong>Řešení:</strong> Ve workflow je <code>tr -d ' \n\r\t'</code> pipe co odstraní whitespace. Pokud chyba přetrvává, znovu vlož secret přes:
+<code>Get-Content secret.txt -Raw | Set-Clipboard</code> a Ctrl+V v GitHub UI.</p>
+
+<h4>Chyba: "Invalid large app icon. The large app icon can't be transparent or contain an alpha channel."</h4>
+<p><strong>Příčina:</strong> 1024×1024 ikona má alpha kanál.<br>
+<strong>Řešení:</strong> Krok 8.3 — PowerShell flatten + regenerace přes <code>flutter_launcher_icons</code>.</p>
+
+<h4>Chyba: Build se nahrál, ale v TestFlight "No builds"</h4>
+<p><strong>Příčina A:</strong> Apple build odmítl po nahrání (validation error). Workflow ale ukázal success protože <code>xcrun altool</code> vrátil exit 0. Workflow ve verzi z kroku 6 už toto detekuje a failuje.<br>
+<strong>Příčina B:</strong> Aplikace v App Store Connect neexistovala v době uploadu — Apple build "ztratil". Vytvoř app v ASC a spusť workflow znovu (build number se sám zvýší).<br>
+<strong>Příčina C:</strong> "Missing Compliance" — vyřeš v ASC → TestFlight → klik na build → vyber "None of the algorithms" → Save.</p>
+
+<h4>Chyba: "Invalid Binary. The bundle contains a duplicate build number."</h4>
+<p><strong>Příčina:</strong> Build s tímto číslem už byl jednou nahrán.<br>
+<strong>Řešení:</strong> Workflow ve verzi z kroku 6 používá <code>BUILD_NUMBER=$((100 + github.run_number))</code> — každé spuštění má unikátní číslo automaticky.</p>
+
+<h4>Chyba: "No application records were found with the specified bundle identifier"</h4>
+<p><strong>Příčina:</strong> App v ASC neexistuje nebo byla vytvořena až po uploadu.<br>
+<strong>Řešení:</strong> ASC → My Apps → +. Pak workflow znovu.</p>
+
+<h2>11) Checklist pro nový projekt</h2>
+
+<ol>
+  <li>☐ Bundle ID rozhodnutý a unikátní</li>
+  <li>☐ App ID vytvořeno v Apple Developer</li>
+  <li>☐ Distribution .p12 + heslo</li>
+  <li>☐ App Store provisioning profile</li>
+  <li>☐ App Store Connect API key (.p8) + Key ID + Issuer ID</li>
+  <li>☐ Apple Team ID poznamenán</li>
+  <li>☐ Aplikace vytvořená v App Store Connect <em>před</em> prvním uploadem</li>
+  <li>☐ 9 secrets v GitHub repu</li>
+  <li>☐ <code>.github/workflows/ios-testflight.yml</code> ve repu</li>
+  <li>☐ <code>project.pbxproj</code> bez <code>CODE_SIGN_STYLE = Automatic</code> u Runner targetu</li>
+  <li>☐ <code>Info.plist</code> s <code>ITSAppUsesNonExemptEncryption = false</code></li>
+  <li>☐ App ikona 1024×1024 bez alpha kanálu</li>
+  <li>☐ <code>pubspec.yaml</code> má rozumnou marketing version (např. <code>1.0.0</code>)</li>
+  <li>☐ Bundle ID v <code>ExportOptions.plist</code> dictionary klíči odpovídá tvému App ID</li>
+  <li>☐ TestFlight app na iPhonu nainstalovaná, Apple ID matchuje email testera</li>
+</ol>
+
+<div class="ok">
+<strong>Až bude všechno odškrtnuto:</strong> Actions → Run workflow → ~20 min → email od Apple → TestFlight redeem → testuj.
+</div>
+
+<div class="footer">
+Návod vytvořen pro projekt TORKIS · 15. května 2026 · Aktualizace při změně Flutter/Xcode verzí
+</div>
+
+</body>
+</html>

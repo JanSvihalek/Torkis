@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui'; // Potřebné pro PlatformDispatcher
 import 'firebase_options.dart';
 import 'core/constants.dart';
+import 'core/design_tokens.dart';
 import 'core/subscription_service.dart';
 import 'moduly/auth_gate.dart';
 import 'moduly/main_screen.dart'; // kvůli navOrderNotifier
@@ -70,6 +71,200 @@ TextTheme _buildTextTheme(TextTheme base) {
   );
 }
 
+ThemeData _buildTorkisTheme(Brightness brightness) {
+  final isDark = brightness == Brightness.dark;
+  final tok = TorkisTokens(brightness);
+
+  final colorScheme = ColorScheme(
+    brightness: brightness,
+    primary: TokColors.accent,
+    onPrimary: Colors.white,
+    secondary: TokColors.ink,
+    onSecondary: Colors.white,
+    error: TokColors.danger,
+    onError: Colors.white,
+    surface: tok.surface,
+    onSurface: tok.textPrimary,
+    surfaceContainerHighest: tok.surfaceElevated,
+    surfaceContainer: tok.surface,
+    surfaceContainerLow: tok.bg,
+    surfaceContainerLowest: tok.bg,
+    outline: tok.line,
+    outlineVariant: tok.line,
+    tertiary: TokColors.accent2,
+    onTertiary: Colors.white,
+  );
+
+  final baseText = _buildTextTheme(ThemeData(brightness: brightness).textTheme);
+
+  return ThemeData(
+    brightness: brightness,
+    colorScheme: colorScheme,
+    useMaterial3: true,
+    scaffoldBackgroundColor: tok.bg,
+    canvasColor: tok.bg,
+    dividerColor: tok.line,
+    textTheme: baseText.apply(
+      bodyColor: tok.textPrimary,
+      displayColor: tok.textPrimary,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: tok.bg,
+      foregroundColor: tok.textPrimary,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      centerTitle: false,
+      titleTextStyle: GoogleFonts.ibmPlexSans(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4,
+        color: tok.textPrimary,
+      ),
+    ),
+    cardTheme: CardThemeData(
+      color: tok.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TokRadius.xl),
+        side: BorderSide(color: tok.line),
+      ),
+      margin: EdgeInsets.zero,
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: TokColors.accent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        minimumSize: const Size.fromHeight(52),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TokRadius.lg),
+        ),
+        textStyle: GoogleFonts.ibmPlexSans(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: tok.textPrimary,
+        side: BorderSide(color: tok.lineStrong),
+        minimumSize: const Size.fromHeight(50),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(TokRadius.lg),
+        ),
+        textStyle: GoogleFonts.ibmPlexSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: TokColors.accent,
+        textStyle: GoogleFonts.ibmPlexSans(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: isDark
+          ? Colors.white.withValues(alpha: 0.06)
+          : TokColors.paper,
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      hintStyle: TextStyle(color: tok.textMuted, fontSize: 15),
+      labelStyle: TextStyle(color: tok.textSecondary, fontSize: 13),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        borderSide: BorderSide(color: tok.line),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        borderSide: BorderSide(color: tok.line),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        borderSide: const BorderSide(color: TokColors.accent, width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        borderSide: const BorderSide(color: TokColors.danger),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        borderSide: const BorderSide(color: TokColors.danger, width: 1.5),
+      ),
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: isDark
+          ? TokColors.darkSurface.withValues(alpha: 0.95)
+          : Colors.white.withValues(alpha: 0.96),
+      surfaceTintColor: Colors.transparent,
+      indicatorColor: TokColors.accentSoft,
+      labelTextStyle: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return GoogleFonts.ibmPlexSans(
+          fontSize: 11,
+          fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+          letterSpacing: 0.2,
+          color: selected ? TokColors.accent : tok.textSecondary,
+        );
+      }),
+      iconTheme: WidgetStateProperty.resolveWith((states) {
+        final selected = states.contains(WidgetState.selected);
+        return IconThemeData(
+          color: selected ? TokColors.accent : tok.textSecondary,
+          size: 22,
+        );
+      }),
+      height: 64,
+      elevation: 0,
+    ),
+    dividerTheme: DividerThemeData(
+      color: tok.line,
+      thickness: 1,
+      space: 1,
+    ),
+    chipTheme: ChipThemeData(
+      backgroundColor: tok.bg,
+      side: BorderSide(color: tok.line),
+      labelStyle: GoogleFonts.ibmPlexSans(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: tok.textPrimary,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TokRadius.round),
+      ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: tok.inkSurface,
+      contentTextStyle: GoogleFonts.ibmPlexSans(
+        color: tok.onInk,
+        fontSize: 14,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+      ),
+      behavior: SnackBarBehavior.floating,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: tok.surface,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TokRadius.xl),
+      ),
+    ),
+  );
+}
+
 class VistoApp extends StatelessWidget {
   const VistoApp({super.key});
 
@@ -92,34 +287,8 @@ class VistoApp extends StatelessWidget {
             Locale('cs', 'CZ'),
           ],
 
-          // Tvoje původní, nedotčené nastavení světlého motivu
-          theme: ThemeData(
-            brightness: Brightness.light,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF0061FF),
-              primary: const Color(0xFF0061FF),
-              surface: const Color(0xFFFBFDFF),
-            ),
-            useMaterial3: true,
-            textTheme: _buildTextTheme(
-              ThemeData(brightness: Brightness.light).textTheme,
-            ),
-          ),
-
-          // Tvoje původní, nedotčené nastavení tmavého motivu
-          darkTheme: ThemeData(
-            brightness: Brightness.dark,
-            colorScheme: ColorScheme.fromSeed(
-              brightness: Brightness.dark,
-              seedColor: const Color(0xFF4D94FF),
-              primary: const Color(0xFF4D94FF),
-              surface: const Color(0xFF0B1A2E),
-            ),
-            useMaterial3: true,
-            textTheme: _buildTextTheme(
-              ThemeData(brightness: Brightness.dark).textTheme,
-            ),
-          ),
+          theme: _buildTorkisTheme(Brightness.light),
+          darkTheme: _buildTorkisTheme(Brightness.dark),
           themeMode: currentMode,
 
           home: const AuthGate(),

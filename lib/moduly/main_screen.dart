@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants.dart';
+import '../core/design_tokens.dart';
+import '../core/torkis_ui.dart';
 import 'auth_gate.dart';
 import 'auth_screen.dart';
 
@@ -173,39 +175,41 @@ class _MainScreenState extends State<MainScreen> {
           }).toList();
 
           return Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
+            backgroundColor: context.tok.bg,
             appBar: AppBar(
-              title: FittedBox(
-                fit: BoxFit.scaleDown,
+              titleSpacing: 0,
+              backgroundColor: context.tok.bg,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              title: Padding(
+                padding: const EdgeInsets.only(left: TokSpace.xl),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Image.asset(
-                      'assets/images/torkis-app-icon-192.png',
-                      height: 28,
+                    TorkisMark(size: 26, color: context.tok.ink),
+                    const SizedBox(width: 9),
+                    Text(
+                      'TORKIS',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                        color: context.tok.textPrimary,
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    Text('TORKIS',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: isDark ? Colors.white : Colors.black87,
-                            letterSpacing: -0.5)),
                   ],
                 ),
               ),
-              centerTitle: true,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
+              centerTitle: false,
               actions: [
-                IconButton(
-                  icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode,
-                      color: isDark ? Colors.amber : Colors.black54),
+                _AppBarIconButton(
+                  icon: isDark
+                      ? Icons.light_mode_rounded
+                      : Icons.dark_mode_rounded,
                   onPressed: () async {
                     final newIsDark = !isDark;
                     themeNotifier.value =
                         newIsDark ? ThemeMode.dark : ThemeMode.light;
 
-                    // Uložení do SharedPreferences — načte se při příštím startu
                     final prefs = await SharedPreferences.getInstance();
                     await prefs.setBool('tmavy_rezim', newIsDark);
 
@@ -224,28 +228,63 @@ class _MainScreenState extends State<MainScreen> {
                     }
                   },
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: TokSpace.lg),
               ],
             ),
             body: IndexedStack(
               index: currentIndex,
               children: currentPages,
             ),
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: currentIndex,
-              onDestinationSelected: (index) {
-                setState(() {
-                  _currentTabId = filteredNavOrder[index];
-                });
-              },
-              backgroundColor: isDark ? const Color(0xFF0D2040) : Colors.white,
-              indicatorColor:
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              destinations: currentDestinations,
+            bottomNavigationBar: Container(
+              decoration: BoxDecoration(
+                color: context.tok.surface,
+                border: Border(
+                  top: BorderSide(color: context.tok.line, width: 1),
+                ),
+              ),
+              child: NavigationBar(
+                selectedIndex: currentIndex,
+                onDestinationSelected: (index) {
+                  setState(() {
+                    _currentTabId = filteredNavOrder[index];
+                  });
+                },
+                backgroundColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                indicatorColor: TokColors.accentSoft,
+                labelBehavior:
+                    NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: currentDestinations,
+              ),
             ),
           );
         });
+  }
+}
+
+class _AppBarIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _AppBarIconButton({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    final tok = context.tok;
+    return InkResponse(
+      onTap: onPressed,
+      radius: 24,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: tok.surface,
+          border: Border.all(color: tok.line),
+          borderRadius: BorderRadius.circular(TokRadius.round),
+        ),
+        child: Icon(icon, size: 18, color: tok.textSecondary),
+      ),
+    );
   }
 }
 
@@ -267,261 +306,250 @@ class MenuPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tok = context.tok;
     final role = globalUserRole ?? 'zamestnanec';
 
+    final items = <_ModuleEntry>[
+      if (maPristup('vozidla'))
+        _ModuleEntry('Vozidla', Icons.directions_car_outlined,
+            const VozidlaPage()),
+      if (maPristup('zakaznici'))
+        _ModuleEntry('Zákazníci', Icons.people_alt_outlined,
+            const ZakazniciPage()),
+      if (maPristup('historie_prijmu'))
+        _ModuleEntry('Historie příjmů', Icons.history_rounded,
+            const HistoriePrijmuPage()),
+      if (maPristup('planovac'))
+        _ModuleEntry(
+            'Plánování', Icons.calendar_today_rounded, const PlanovacPage()),
+      if (maPristup('ukony'))
+        _ModuleEntry('Úkony', Icons.playlist_add_check_rounded,
+            const UkonyPage(),
+            accent: true),
+      if (maPristup('zamestnanci'))
+        _ModuleEntry('Tým', Icons.badge_outlined, const ZamestnanciPage()),
+      if (maPristup('statistiky'))
+        _ModuleEntry(
+            'Statistiky', Icons.bar_chart_rounded, const StatisticsPage()),
+      if (maPristup('nastaveni'))
+        _ModuleEntry(
+            'Nastavení', Icons.settings_outlined, const SettingsPage()),
+      if (globalUserRole == 'admin')
+        _ModuleEntry('Předplatné', Icons.workspace_premium_outlined,
+            const PredplatnePage()),
+      if (globalUserRole == 'admin')
+        _ModuleEntry('Web', Icons.public_rounded, const LandingPage()),
+      if (globalUserRole == 'admin')
+        _ModuleEntry('Doplňky', Icons.extension_outlined,
+            const DoplnkyNastaveniPage()),
+    ];
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(
+          TokSpace.lg, TokSpace.sm, TokSpace.lg, TokSpace.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-              padding: EdgeInsets.only(left: 10, top: 10, bottom: 5),
-              child: Text('Moduly',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold))),
           Padding(
-              padding: const EdgeInsets.only(left: 10, bottom: 20),
-              child: Text('Přihlášen jako: ${role.toUpperCase()}',
-                  style: const TextStyle(
-                      color: Colors.blue,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14))),
+            padding:
+                const EdgeInsets.symmetric(horizontal: TokSpace.xs, vertical: 4),
+            child: Text(
+              'Moduly',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+                color: tok.textPrimary,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(
+                left: TokSpace.xs, top: 4, bottom: TokSpace.lg),
+            child: Row(
+              children: [
+                TorkisRolePill(role: role),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    'Přihlášen v servisu',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: tok.textSecondary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 15,
-            crossAxisSpacing: 15,
-            childAspectRatio: 1.1,
-            children: [
-              if (maPristup('vozidla'))
-                _buildMenuCard(context, 'Vozidla', Icons.directions_car,
-                    Colors.teal, const VozidlaPage(), isDark),
-              if (maPristup('zakaznici'))
-                _buildMenuCard(context, 'Zákazníci', Icons.people_alt,
-                    Colors.blue, const ZakazniciPage(), isDark),
-              if (maPristup('historie_prijmu'))
-                _buildMenuCard(context, 'Historie příjmů', Icons.assignment_add,
-                    Colors.blue, const HistoriePrijmuPage(), isDark),
-              if (maPristup('planovac'))
-                _buildMenuCard(context, 'Plánování', Icons.calendar_today,
-                    Colors.green, const PlanovacPage(), isDark),
-              if (maPristup('ukony'))
-                _buildMenuCard(
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1 / 0.95,
+            children: items
+                .map((e) => TorkisModuleCard(
+                      icon: e.icon,
+                      label: e.label,
+                      accent: e.accent,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            backgroundColor: context.tok.bg,
+                            appBar: AppBar(
+                              title: Text(e.label),
+                              backgroundColor: context.tok.bg,
+                              surfaceTintColor: Colors.transparent,
+                              elevation: 0,
+                            ),
+                            body: e.page,
+                          ),
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+          const SizedBox(height: TokSpace.xxl),
+          _ContactCard(tok: tok),
+          const SizedBox(height: TokSpace.md),
+          TorkisSecondaryButton(
+            label: 'Odhlásit se',
+            leadingIcon: Icons.logout_rounded,
+            onPressed: () async {
+              final potvrdit = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Odhlášení'),
+                  content: const Text('Opravdu se chcete odhlásit?'),
+                  actions: [
+                    TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Zrušit')),
+                    TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text(
+                          'Odhlásit',
+                          style: TextStyle(color: TokColors.danger),
+                        )),
+                  ],
+                ),
+              );
+              if (potvrdit == true) {
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
                     context,
-                    'Úkony',
-                    Icons.playlist_add_check_circle,
-                    Colors.deepOrange,
-                    const UkonyPage(),
-                    isDark),
-              if (maPristup('zamestnanci'))
-                _buildMenuCard(context, 'Zaměstnanci', Icons.badge,
-                    Colors.redAccent, const ZamestnanciPage(), isDark),
-              if (maPristup('statistiky'))
-                _buildMenuCard(context, 'Statistiky', Icons.bar_chart,
-                    Colors.purple, const StatisticsPage(), isDark),
-              if (maPristup('nastaveni'))
-                _buildMenuCard(context, 'Nastavení', Icons.settings,
-                    Colors.blueGrey, const SettingsPage(), isDark),
-              if (globalUserRole == 'admin')
-                _buildMenuCard(context, 'Předplatné', Icons.workspace_premium,
-                    Colors.amber, const PredplatnePage(), isDark),
-              if (globalUserRole == 'admin')
-                _buildMenuCard(context, 'WEB', Icons.public, Colors.cyan,
-                    const LandingPage(), isDark),
-              if (globalUserRole == 'admin')
-                _buildMenuCard(context, 'Doplňky', Icons.extension,
-                    Colors.deepPurple, const DoplnkyNastaveniPage(), isDark),
+                    MaterialPageRoute(
+                        builder: (context) => const AuthScreen()),
+                    (route) => false,
+                  );
+                }
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModuleEntry {
+  final String label;
+  final IconData icon;
+  final Widget page;
+  final bool accent;
+  const _ModuleEntry(this.label, this.icon, this.page,
+      {this.accent = false});
+}
+
+class _ContactCard extends StatelessWidget {
+  final TorkisTokens tok;
+  const _ContactCard({required this.tok});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(TokSpace.xl),
+      decoration: BoxDecoration(
+        color: tok.surface,
+        borderRadius: BorderRadius.circular(TokRadius.xl),
+        border: Border.all(color: tok.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              TorkisMark(size: 22, color: tok.ink),
+              const SizedBox(width: 8),
+              Text('TORKIS',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    letterSpacing: 1.1,
+                    color: tok.textPrimary,
+                  )),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: TokColors.accentSoft,
+                  borderRadius: BorderRadius.circular(TokRadius.round),
+                ),
+                child: Text(
+                  'v$kAppVerze',
+                  style: const TextStyle(
+                    color: TokColors.accent,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Card(
-              color: isDark ? const Color(0xFF112240) : Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-                side: BorderSide(
-                    color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-              ),
-              elevation: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Image.asset(
-                          'assets/images/torkis-app-icon-192.png',
-                          height: 28,
-                        ),
-                        const SizedBox(width: 10),
-                        const Text('TORKIS',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w900, fontSize: 18)),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text('v$kAppVerze',
-                              style: const TextStyle(
-                                  color: Colors.blue,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13)),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 24),
-                    _buildKontaktRadek(
-                      Icons.email_outlined,
-                      kKontaktEmail,
-                      () => launchUrl(Uri.parse('mailto:$kKontaktEmail')),
-                      isDark,
-                    ),
-                    const SizedBox(height: 10),
-                    _buildKontaktRadek(
-                      Icons.phone_outlined,
-                      kKontaktTelefon,
-                      () => launchUrl(Uri.parse(
-                          'tel:${kKontaktTelefon.replaceAll(' ', '')}')),
-                      isDark,
-                    ),
-                    const SizedBox(height: 10),
-                    _buildKontaktRadek(
-                      Icons.language_outlined,
-                      kKontaktWeb,
-                      () => launchUrl(Uri.parse('https://$kKontaktWeb')),
-                      isDark,
-                    ),
-                  ],
+          Divider(height: 24, color: tok.line),
+          _kontaktRadek(Icons.email_outlined, kKontaktEmail,
+              () => launchUrl(Uri.parse('mailto:$kKontaktEmail'))),
+          const SizedBox(height: 10),
+          _kontaktRadek(
+              Icons.phone_outlined,
+              kKontaktTelefon,
+              () => launchUrl(
+                  Uri.parse('tel:${kKontaktTelefon.replaceAll(' ', '')}'))),
+          const SizedBox(height: 10),
+          _kontaktRadek(Icons.language_outlined, kKontaktWeb,
+              () => launchUrl(Uri.parse('https://$kKontaktWeb'))),
+        ],
+      ),
+    );
+  }
+
+  Widget _kontaktRadek(IconData icon, String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(TokRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: TokColors.accent),
+            const SizedBox(width: 10),
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: TokColors.accent,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 15),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                final potvrdit = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Odhlášení'),
-                    content: const Text('Opravdu se chcete odhlásit?'),
-                    actions: [
-                      TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('ZRUŠIT')),
-                      TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text('ODHLÁSIT',
-                              style: TextStyle(color: Colors.red))),
-                    ],
-                  ),
-                );
-                if (potvrdit == true) {
-                  await FirebaseAuth.instance.signOut();
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const AuthScreen()),
-                      (route) => false,
-                    );
-                  }
-                }
-              },
-              icon: const Icon(Icons.logout, color: Colors.red),
-              label: const Text('Odhlásit se',
-                  style: TextStyle(
-                      color: Colors.red, fontWeight: FontWeight.bold)),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 50),
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 30),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildKontaktRadek(
-      IconData icon, String label, VoidCallback onTap, bool isDark) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: Colors.blue),
-          const SizedBox(width: 10),
-          Text(label, style: const TextStyle(color: Colors.blue, fontSize: 14)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuCard(BuildContext context, String title, IconData icon,
-      Color color, Widget? page, bool isDark,
-      {bool isLocked = false, bool hasOwnScaffold = false}) {
-    return InkWell(
-      onTap: isLocked || page == null
-          ? () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Tento modul připravujeme v další verzi!')))
-          : () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => hasOwnScaffold
-                      ? page
-                      : Scaffold(
-                          appBar: AppBar(
-                              backgroundColor: isDark
-                                  ? const Color(0xFF1E3A5F)
-                                  : Colors.white,
-                              elevation: 1,
-                              title: Text(title,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold))),
-                          body: page))),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF112240) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: isLocked
-                  ? Colors.grey.withValues(alpha: 0.2)
-                  : color.withValues(alpha: 0.3),
-              width: 2),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                  color: color.withValues(alpha: 0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5))
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 40, color: isLocked ? Colors.grey : color),
-            const SizedBox(height: 15),
-            Text(title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: isLocked
-                        ? Colors.grey
-                        : (isDark ? Colors.white : Colors.black87))),
           ],
         ),
       ),

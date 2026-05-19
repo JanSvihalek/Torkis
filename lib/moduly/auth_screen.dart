@@ -5,6 +5,8 @@ import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/biometric_gate.dart';
+import '../core/design_tokens.dart';
+import '../core/torkis_ui.dart';
 import 'auth_gate.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -193,64 +195,91 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Widget _buildFormScreen() {
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: TokColors.ink,
       body: Stack(
         children: [
-          Container(color: const Color(0xFF0B1A2E)),
+          // Decorative radial glow behind the logo.
+          Positioned(
+            top: 60,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Container(
+                width: 360,
+                height: 360,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      TokColors.accent.withValues(alpha: 0.18),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.65],
+                  ),
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(30.0),
+                padding: const EdgeInsets.symmetric(horizontal: 28),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Image.asset(
-                      'assets/images/torkis-app-icon-192.png',
-                      width: 192,
-                      height: 192,
+                    const SizedBox(height: 24),
+                    const Center(
+                      child: TorkisMark(
+                        size: 76,
+                        color: TokColors.paper,
+                        inner: TokColors.ink,
+                      ),
                     ),
-                    const SizedBox(height: 15),
+                    const SizedBox(height: 22),
                     const Text(
                       'TORKIS',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4,
+                        color: TokColors.paper,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Text(
                       _isLogin
-                          ? 'Váš digitální servis v kapse'
+                          ? 'Digitální příjem vozidel'
                           : 'Zaregistrujte svůj servis',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white.withValues(alpha: 0.7)),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: TokColors.steelSoft,
+                        fontWeight: FontWeight.w400,
+                      ),
                     ),
                     const SizedBox(height: 40),
-                    _buildTextField(
+
+                    _buildDarkField(
                       controller: _emailController,
-                      hint: 'E-mailová adresa',
-                      icon: Icons.email_outlined,
+                      hint: 'E-mail',
+                      icon: Icons.mail_outline_rounded,
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    const SizedBox(height: 15),
-                    _buildTextField(
+                    const SizedBox(height: 12),
+                    _buildDarkField(
                       controller: _passwordController,
                       hint: 'Heslo',
-                      icon: Icons.lock_outline,
+                      icon: Icons.lock_outline_rounded,
                       isPassword: true,
                     ),
                     if (!_isLogin) ...[
-                      const SizedBox(height: 15),
-                      _buildTextField(
+                      const SizedBox(height: 12),
+                      _buildDarkField(
                         controller: _confirmPasswordController,
                         hint: 'Potvrzení hesla',
-                        icon: Icons.lock_reset,
+                        icon: Icons.lock_reset_rounded,
                         isPassword: true,
                       ),
                     ],
@@ -259,62 +288,45 @@ class _AuthScreenState extends State<AuthScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: _resetPassword,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 8),
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: const Text(
                             'Zapomněli jste heslo?',
-                            style: TextStyle(color: Colors.white70),
+                            style: TextStyle(
+                              color: TokColors.steelSoft,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
-                      ),
-                    const SizedBox(height: 20),
-                    // Face ID tlačítko (vždy v login módu).
-                    if (_isLogin) ...[
-                      OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _loginWithBiometric,
-                        icon: const Icon(Icons.fingerprint, size: 20),
-                        label: const Text('Přihlásit přes Face ID'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.blueAccent,
-                          side: const BorderSide(
-                              color: Colors.blueAccent, width: 1.5),
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15)),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                    ElevatedButton(
+                      )
+                    else
+                      const SizedBox(height: 18),
+                    const SizedBox(height: 18),
+
+                    TorkisPrimaryButton(
+                      label: _isLogin ? 'Přihlásit se' : 'Vytvořit účet',
+                      loading: _isLoading,
+                      dark: true,
                       onPressed: _isLoading ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 18),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 5,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                            )
-                          : Text(
-                              _isLogin ? 'PŘIHLÁSIT SE' : 'VYTVOŘIT ÚČET',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                      trailingIcon: Icons.arrow_forward_rounded,
                     ),
-                    const SizedBox(height: 20),
+                    if (_isLogin) ...[
+                      const SizedBox(height: 12),
+                      TorkisSecondaryButton(
+                        label: 'Přihlásit přes Face ID',
+                        leadingIcon: Icons.face_retouching_natural,
+                        dark: true,
+                        onPressed:
+                            _isLoading ? null : _loginWithBiometric,
+                      ),
+                    ],
+                    const SizedBox(height: 40),
+
                     TextButton(
                       onPressed: () {
                         setState(() {
@@ -327,11 +339,11 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: RichText(
                         text: TextSpan(
                           text: _isLogin
-                              ? 'Nemáte ještě účet? '
+                              ? 'Nemáte účet? '
                               : 'Již máte účet? ',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 15,
+                          style: const TextStyle(
+                            color: TokColors.steelSoft,
+                            fontSize: 13,
                           ),
                           children: [
                             TextSpan(
@@ -339,14 +351,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                   ? 'Zaregistrujte se'
                                   : 'Přihlaste se',
                               style: const TextStyle(
-                                color: Colors.blueAccent,
-                                fontWeight: FontWeight.bold,
+                                color: TokColors.accent,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -357,7 +370,7 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildDarkField({
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -368,37 +381,39 @@ class _AuthScreenState extends State<AuthScreen> {
       controller: controller,
       obscureText: isPassword && _obscurePassword,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 16, color: Colors.white),
-      cursorColor: Colors.white,
+      style: const TextStyle(fontSize: 15, color: Colors.white),
+      cursorColor: TokColors.accent,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-        prefixIcon: Icon(icon, color: Colors.blueAccent),
+        hintStyle: const TextStyle(
+            color: TokColors.steelSoft, fontWeight: FontWeight.w400),
+        prefixIcon: Icon(icon, color: TokColors.accent, size: 18),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
                   _obscurePassword
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: Colors.white70,
+                      ? Icons.visibility_off_rounded
+                      : Icons.visibility_rounded,
+                  color: TokColors.steelSoft,
+                  size: 18,
                 ),
-                onPressed: () {
-                  setState(() {
-                    _obscurePassword = !_obscurePassword;
-                  });
-                },
+                onPressed: () => setState(
+                    () => _obscurePassword = !_obscurePassword),
               )
             : null,
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.1),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+        fillColor: Colors.white.withValues(alpha: 0.06),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TokRadius.md),
+          borderSide:
+              BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(TokRadius.md),
           borderSide:
-              const BorderSide(color: Colors.blueAccent, width: 1.5),
+              const BorderSide(color: TokColors.accent, width: 1.5),
         ),
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/design_tokens.dart';
 import 'prijem_vozidla_helpers.dart';
 
 /// Krok 1 – Identifikace vozidla.
@@ -94,52 +95,69 @@ class StepVozidlo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tok = context.tok;
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(30),
+      padding: const EdgeInsets.fromLTRB(
+          TokSpace.xl, TokSpace.lg, TokSpace.xl, TokSpace.xxxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
               final Widget cisloInput = buildInput(
-                'Číslo zakázky *',
-                Icons.onetwothree,
+                'Číslo zakázky',
+                Icons.tag_rounded,
                 zakazkaController,
                 isDark,
                 caps: true,
                 customSuffix: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                          icon: const Icon(Icons.document_scanner),
-                          onPressed: () => onScan(zakazkaController, false),
-                          tooltip: 'Naskenovat číslo zakázky'),
-                      if (autoGenerateCislo)
-                        isGeneratingCislo
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2)))
-                            : IconButton(
-                                icon: const Icon(Icons.refresh,
-                                    color: Colors.blue),
-                                onPressed: onRegenerateCislo,
-                                tooltip: 'Vygenerovat nové číslo'),
-                    ],
-                  ),
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.qr_code_scanner_rounded,
+                          size: 18, color: TokColors.steel),
+                      onPressed: () => onScan(zakazkaController, false),
+                      tooltip: 'Naskenovat číslo zakázky',
+                    ),
+                    if (autoGenerateCislo)
+                      isGeneratingCislo
+                          ? const Padding(
+                              padding: EdgeInsets.all(12),
+                              child: SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: TokColors.accent)))
+                          : IconButton(
+                              icon: const Icon(Icons.refresh_rounded,
+                                  size: 18, color: TokColors.accent),
+                              onPressed: onRegenerateCislo,
+                              tooltip: 'Vygenerovat nové číslo',
+                            ),
+                  ],
+                ),
               );
+
+              final titulek = Text('Příjem vozidla',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.4,
+                    color: tok.textPrimary,
+                    height: 1.1,
+                  ));
 
               if (constraints.maxWidth < 400) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Příjem vozidla',
+                    titulek,
+                    const SizedBox(height: 6),
+                    Text('Vyplňte údaje, nebo naskenujte technický průkaz.',
                         style: TextStyle(
-                            fontSize: 28, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
+                            fontSize: 13, color: tok.textSecondary)),
+                    const SizedBox(height: TokSpace.lg),
                     cisloInput,
                   ],
                 );
@@ -148,62 +166,73 @@ class StepVozidlo extends StatelessWidget {
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(
-                      flex: 3,
-                      child: Padding(
-                          padding: EdgeInsets.only(top: 8.0),
-                          child: Text('Příjem vozidla',
-                              style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold)))),
+                  Expanded(flex: 3, child: titulek),
                   const SizedBox(width: 15),
                   Expanded(flex: 2, child: cisloInput),
                 ],
               );
             },
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: TokSpace.xl),
           if (nalezenaVozidla.isNotEmpty) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(TokSpace.lg),
               decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.05),
-                  border: Border.all(
-                      color: Colors.blue.withValues(alpha: 0.3)),
-                  borderRadius: BorderRadius.circular(15)),
+                color: tok.surface,
+                border: Border(
+                  left: const BorderSide(color: TokColors.accent, width: 3),
+                  top: BorderSide(color: tok.line),
+                  right: BorderSide(color: tok.line),
+                  bottom: BorderSide(color: tok.line),
+                ),
+                borderRadius: BorderRadius.circular(TokRadius.xl),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(children: [
-                    Icon(Icons.directions_car, color: Colors.blue),
-                    SizedBox(width: 10),
-                    Text('Zákazník má uložená tato vozidla:',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue))
-                  ]),
-                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      const Icon(Icons.directions_car_outlined,
+                          color: TokColors.accent, size: 18),
+                      const SizedBox(width: 10),
+                      Text('Zákazník má uložená tato vozidla',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: tok.textPrimary,
+                          )),
+                    ],
+                  ),
+                  const SizedBox(height: TokSpace.md),
                   Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: nalezenaVozidla
-                        .map((v) => ActionChip(
-                            backgroundColor: isDark
-                                ? const Color(0xFF1E3A5F)
-                                : Colors.white,
-                            side: const BorderSide(color: Colors.blue),
-                            label: Text(
-                                '${v['spz']} ${v['znacka'] != null && v['znacka'].toString().isNotEmpty ? '(${v['znacka']} ${v['model'] ?? ''})' : ''}',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            onPressed: () => onVozidloSelected(v)))
-                        .toList(),
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: nalezenaVozidla.map((v) {
+                      final spz = v['spz'] ?? '';
+                      final znacka = v['znacka']?.toString() ?? '';
+                      final model = v['model']?.toString() ?? '';
+                      final podtitul =
+                          znacka.isNotEmpty ? ' ($znacka $model)' : '';
+                      return ActionChip(
+                        backgroundColor: TokColors.accentSoft,
+                        side: BorderSide.none,
+                        label: Text(
+                          '$spz$podtitul',
+                          style: const TextStyle(
+                            color: TokColors.accent,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        onPressed: () => onVozidloSelected(v),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: TokSpace.xl),
           ],
           buildInput(
             'SPZ vozidla (Klikněte na lupu pro dotažení) *',
@@ -242,11 +271,18 @@ class StepVozidlo extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Značka (např. Škoda)',
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6, left: 2),
+                child: Text(
+                  'Značka (např. Škoda)',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey)),
-              const SizedBox(height: 8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: tok.textSecondary,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
               Autocomplete<String>(
                 key: ValueKey('znacka_$autocompleteResetKey'),
                 initialValue:
@@ -263,54 +299,52 @@ class StepVozidlo extends StatelessWidget {
                   onZnackaSelected(val);
                 },
                 fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        if (!isDark)
-                          BoxShadow(
-                              color: Colors.black
-                                  .withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4))
-                      ],
-                      borderRadius: BorderRadius.circular(15),
+                  return TextField(
+                    controller: ctrl,
+                    focusNode: focusNode,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white : TokColors.ink,
                     ),
-                    child: TextField(
-                      controller: ctrl,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.directions_car,
-                            color: Colors.blue),
-                        suffixIcon: onScanZnacka != null
-                            ? IconButton(
-                                icon: const Icon(Icons.document_scanner),
-                                onPressed: onScanZnacka,
-                                tooltip: 'Naskenovat značku fotoaparátem')
-                            : null,
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15, horizontal: 15),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                                color: Colors.blue, width: 2)),
-                      ),
-                      onChanged: (val) {
-                        znackaController.text = val;
-                        if (databazeZnacek.containsKey(val)) {
-                          onZnackaSelected(val);
-                        }
-                      },
+                    cursorColor: TokColors.accent,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.directions_car_outlined,
+                          color: TokColors.accent, size: 18),
+                      suffixIcon: onScanZnacka != null
+                          ? IconButton(
+                              icon: const Icon(
+                                  Icons.qr_code_scanner_rounded,
+                                  size: 18,
+                                  color: TokColors.steel),
+                              onPressed: onScanZnacka,
+                              tooltip: 'Naskenovat značku fotoaparátem')
+                          : null,
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : TokColors.paper,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TokRadius.md),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : context.tok.line)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TokRadius.md),
+                          borderSide: const BorderSide(
+                              color: TokColors.accent, width: 1.5)),
                     ),
+                    onChanged: (val) {
+                      znackaController.text = val;
+                      if (databazeZnacek.containsKey(val)) {
+                        onZnackaSelected(val);
+                      }
+                    },
                   );
                 },
                 optionsViewBuilder: (ctx, onSel, options) {
@@ -363,11 +397,18 @@ class StepVozidlo extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Model (např. Octavia)',
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6, left: 2),
+                child: Text(
+                  'Model (např. Octavia)',
                   style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey)),
-              const SizedBox(height: 8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: tok.textSecondary,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
               Autocomplete<String>(
                 key: ValueKey('model_$autocompleteResetKey'),
                 initialValue:
@@ -387,50 +428,49 @@ class StepVozidlo extends StatelessWidget {
                   onModelSelected(val);
                 },
                 fieldViewBuilder: (ctx, ctrl, focusNode, onSubmit) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        if (!isDark)
-                          BoxShadow(
-                              color: Colors.black
-                                  .withValues(alpha: 0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4))
-                      ],
-                      borderRadius: BorderRadius.circular(15),
+                  return TextField(
+                    controller: ctrl,
+                    focusNode: focusNode,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white : TokColors.ink,
                     ),
-                    child: TextField(
-                      controller: ctrl,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(
-                            Icons.directions_car_filled,
-                            color: Colors.blue),
-                        suffixIcon: onScanModel != null
-                            ? IconButton(
-                                icon: const Icon(Icons.document_scanner),
-                                onPressed: onScanModel,
-                                tooltip: 'Naskenovat model fotoaparátem')
-                            : null,
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 15, horizontal: 15),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: BorderSide(
-                                color: isDark
-                                    ? Colors.grey[800]!
-                                    : Colors.grey[300]!)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                                color: Colors.blue, width: 2)),
-                      ),
-                      onChanged: (val) => modelController.text = val,
+                    cursorColor: TokColors.accent,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(
+                          Icons.directions_car_filled_outlined,
+                          color: TokColors.accent,
+                          size: 18),
+                      suffixIcon: onScanModel != null
+                          ? IconButton(
+                              icon: const Icon(
+                                  Icons.qr_code_scanner_rounded,
+                                  size: 18,
+                                  color: TokColors.steel),
+                              onPressed: onScanModel,
+                              tooltip: 'Naskenovat model fotoaparátem')
+                          : null,
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : TokColors.paper,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TokRadius.md),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : context.tok.line)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TokRadius.md),
+                          borderSide: const BorderSide(
+                              color: TokColors.accent, width: 1.5)),
                     ),
+                    onChanged: (val) => modelController.text = val,
                   );
                 },
                 optionsViewBuilder: (ctx, onSel, options) {
