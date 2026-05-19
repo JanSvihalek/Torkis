@@ -163,6 +163,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         description: 'Pro malé autoservisy a OSVČ.',
                         features: const [
                           '50 příjmů / měsíc',
+                          '3 uživatelé max.',
                           'Fotodokumentace',
                           'Evidence zákazníků a vozidel',
                           'Historie příjmů',
@@ -182,6 +183,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         featured: true,
                         features: const [
                           '150 příjmů / měsíc',
+                          '10 uživatelů max.',
                           'Vše z Basic',
                           'Plánovač servisů',
                           'Reporty a statistiky',
@@ -199,6 +201,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                             'Pro velké servisy a sítě bez limitu příjmů.',
                         features: const [
                           'Neomezené příjmy',
+                          'Neomezený počet uživatelů',
                           'Vše ze Standard',
                           'Prioritní podpora',
                           'Pokročilé statistiky',
