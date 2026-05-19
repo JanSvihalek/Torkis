@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '4.2.6';
+const String kAppVerze = '4.2.7';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';

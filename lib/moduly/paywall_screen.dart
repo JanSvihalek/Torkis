@@ -32,11 +32,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
     for (final pkg in list) {
       map[pkg.identifier] = pkg;
     }
-    if (mounted) setState(() { _packages = map; _loading = false; });
+    if (mounted)
+      setState(() {
+        _packages = map;
+        _loading = false;
+      });
   }
 
   Future<void> _purchase(Package package) async {
-    setState(() { _purchasing = true; _errorMessage = null; });
+    setState(() {
+      _purchasing = true;
+      _errorMessage = null;
+    });
     try {
       final ok = await SubscriptionService.purchasePackage(package);
       if (ok && mounted) _restartApp();
@@ -48,14 +55,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   Future<void> _restore() async {
-    setState(() { _purchasing = true; _errorMessage = null; });
+    setState(() {
+      _purchasing = true;
+      _errorMessage = null;
+    });
     try {
       final ok = await SubscriptionService.restorePurchases();
       if (mounted) {
         if (ok) {
           _restartApp();
         } else {
-          setState(() => _errorMessage = 'Nenalezeno žádné aktivní předplatné.');
+          setState(
+              () => _errorMessage = 'Nenalezeno žádné aktivní předplatné.');
         }
       }
     } catch (e) {
@@ -79,7 +90,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final jeTrialAktivni = (widget.zbyvajiciDniTrialu ?? 0) > 0;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0B1A2E) : const Color(0xFFF5F8FF),
+      backgroundColor:
+          isDark ? const Color(0xFF0B1A2E) : const Color(0xFFF5F8FF),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -87,7 +99,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 16),
-              Image.asset('assets/images/torkis-app-icon-192.png', width: 64, height: 64),
+              Image.asset('assets/images/torkis-app-icon-192.png',
+                  width: 64, height: 64),
               const SizedBox(height: 12),
               Text('TORKIS',
                   style: TextStyle(
@@ -97,12 +110,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     color: isDark ? Colors.white : const Color(0xFF0B1A2E),
                   )),
               const SizedBox(height: 24),
-
               if (jeTrialAktivni)
                 _infoBanner(
                   icon: Icons.access_time_rounded,
                   color: Colors.orange,
-                  text: 'Zbývá ${widget.zbyvajiciDniTrialu} dní zkušebního období.',
+                  text:
+                      'Zbývá ${widget.zbyvajiciDniTrialu} dní zkušebního období.',
                   isDark: isDark,
                 )
               else
@@ -112,9 +125,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   text: 'Zkušební období vypršelo. Vyberte plán.',
                   isDark: isDark,
                 ),
-
               const SizedBox(height: 28),
-
               if (_loading)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
@@ -144,9 +155,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     'Příjem vozidla s fotodokumentací',
                     'Evidence zákazníků a vozidel',
                     'Historie příjmů',
-                    'Plánovač servisů',
-                    'Statistiky',
                     'Správa týmu a práv',
+                    'Statistiky',
                   ],
                   monthlyPkg: _packages['standard_monthly'],
                   yearlyPkg: _packages['standard_yearly'],
@@ -161,26 +171,23 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     'Příjem vozidla s fotodokumentací',
                     'Evidence zákazníků a vozidel',
                     'Historie příjmů',
-                    'Plánovač servisů',
-                    'Statistiky',
                     'Správa týmu a práv',
+                    'Statistiky',
                   ],
                   monthlyPkg: _packages['pro_monthly'],
                   yearlyPkg: _packages['pro_yearly'],
                   highlight: false,
                 ),
               ],
-
               const SizedBox(height: 16),
-
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: Text(_errorMessage!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                      style: const TextStyle(
+                          color: Colors.redAccent, fontSize: 13)),
                 ),
-
               TextButton(
                 onPressed: _purchasing ? null : _restore,
                 child: Text('Obnovit nákupy',
@@ -268,7 +275,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.inbox_rounded, size: 14, color: Colors.blue),
+                    const Icon(Icons.inbox_rounded,
+                        size: 14, color: Colors.blue),
                     const SizedBox(width: 5),
                     Text(limit,
                         style: const TextStyle(
@@ -306,8 +314,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     Expanded(
                         child: _priceButton(monthlyPkg, '/ měsíc', isDark)),
                     const SizedBox(width: 8),
-                    Expanded(
-                        child: _priceButton(yearlyPkg, '/ rok', isDark)),
+                    Expanded(child: _priceButton(yearlyPkg, '/ rok', isDark)),
                   ],
                 ),
               ],
@@ -328,8 +335,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
         ),
         child: Center(
           child: Text('—',
-              style: TextStyle(
-                  color: isDark ? Colors.white30 : Colors.black26)),
+              style:
+                  TextStyle(color: isDark ? Colors.white30 : Colors.black26)),
         ),
       );
     }
@@ -355,8 +362,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     style: const TextStyle(
                         fontWeight: FontWeight.bold, fontSize: 15)),
                 Text(period,
-                    style: const TextStyle(
-                        fontSize: 11, color: Colors.white70)),
+                    style:
+                        const TextStyle(fontSize: 11, color: Colors.white70)),
               ],
             ),
     );
