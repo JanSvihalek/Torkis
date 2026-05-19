@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui'; // Potřebné pro PlatformDispatcher
 import 'firebase_options.dart';
 import 'core/constants.dart';
+import 'core/subscription_service.dart';
 import 'moduly/auth_gate.dart';
 import 'moduly/main_screen.dart'; // kvůli navOrderNotifier
 
@@ -17,7 +18,7 @@ void main() async {
 
   // Inicializace Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // Tvoje původní inicializace českého formátování času
+  await SubscriptionService.init();
   await initializeDateFormatting('cs_CZ', null);
 
   // Načteme uložené preference PŘED prvním snímkem, aby nedošlo k záblesku

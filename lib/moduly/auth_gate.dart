@@ -5,9 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/biometric_gate.dart';
 import '../core/constants.dart';
+import '../core/subscription_service.dart';
 import 'auth_screen.dart';
 import 'main_screen.dart';
 import 'onboarding.dart';
+import 'paywall_screen.dart';
 
 // --- GLOBÁLNÍ PROMĚNNÉ PRO CELOU APLIKACI ---
 String? globalServisId;
@@ -18,7 +20,14 @@ String? globalUserJmeno;
 class _AuthData {
   final DocumentSnapshot userDoc;
   final DocumentSnapshot? predDoc;
-  _AuthData({required this.userDoc, this.predDoc});
+  final bool subscriptionActive;
+  final int zbyvajiciDniTrialu;
+  _AuthData({
+    required this.userDoc,
+    this.predDoc,
+    this.subscriptionActive = false,
+    this.zbyvajiciDniTrialu = 0,
+  });
 }
 
 Future<_AuthData> _loadAuthData(String uid) async {
@@ -28,7 +37,6 @@ Future<_AuthData> _loadAuthData(String uid) async {
       .get();
 
   if (!userDoc.exists) {
-    // Načteme plán i pro nové uživatele, aby onboarding věděl které kroky zobrazit
     final predDoc = await FirebaseFirestore.instance
         .collection('predplatne')
         .doc(uid)
@@ -39,14 +47,45 @@ Future<_AuthData> _loadAuthData(String uid) async {
 
   final servisId =
       (userDoc.data() as Map<String, dynamic>)['servis_id']?.toString();
-  if (servisId == null) return _AuthData(userDoc: userDoc);
+  if (servisId == null) return _AuthData(userDoc: userDoc, subscriptionActive: true);
 
   final predDoc = await FirebaseFirestore.instance
       .collection('predplatne')
       .doc(servisId)
       .get();
 
-  return _AuthData(userDoc: userDoc, predDoc: predDoc);
+  // Dokud není RevenueCat nakonfigurován, propustíme všechny uživatele
+  if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') {
+    return _AuthData(userDoc: userDoc, predDoc: predDoc, subscriptionActive: true);
+  }
+
+  // Identifikace uživatele v RevenueCat
+  await SubscriptionService.identifyUser(uid);
+
+  // 1. Kontrola RevenueCat entitlementu (aktivní předplatné)
+  bool subscriptionActive = await SubscriptionService.isEntitlementActive();
+  int zbyvajiciDni = 0;
+
+  // 2. Pokud není aktivní předplatné, zkontrolujeme 30denní trial
+  if (!subscriptionActive && predDoc.exists) {
+    final data = predDoc.data() as Map<String, dynamic>;
+    final trialStart = (data['trial_zacatek'] as Timestamp?)?.toDate();
+    if (trialStart != null) {
+      final trialEnd = trialStart.add(const Duration(days: 30));
+      final now = DateTime.now();
+      if (now.isBefore(trialEnd)) {
+        subscriptionActive = true;
+        zbyvajiciDni = trialEnd.difference(now).inDays + 1;
+      }
+    }
+  }
+
+  return _AuthData(
+    userDoc: userDoc,
+    predDoc: predDoc,
+    subscriptionActive: subscriptionActive,
+    zbyvajiciDniTrialu: zbyvajiciDni,
+  );
 }
 
 void applySubscription(DocumentSnapshot? predDoc) {
@@ -154,6 +193,10 @@ class AuthGate extends StatelessWidget {
               // Načtení a aplikace předplatného
               applySubscription(snap.data!.predDoc);
 
+              if (!snap.data!.subscriptionActive) {
+                return PaywallScreen(
+                    zbyvajiciDniTrialu: snap.data!.zbyvajiciDniTrialu);
+              }
               return const BiometricGate();
             }
             return const SetupWizardScreen();

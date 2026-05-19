@@ -216,6 +216,17 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           });
         }
 
+        // Trial předplatné — 30 dní zdarma bez platební karty
+        batch.set(
+          FirebaseFirestore.instance.collection('predplatne').doc(user.uid),
+          {
+            'servis_id': user.uid,
+            'plan_typ': 'trial',
+            'trial_zacatek': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+
         // SPUŠTĚNÍ DÁVKOVÉHO ZÁPISU
         await batch.commit();
 
