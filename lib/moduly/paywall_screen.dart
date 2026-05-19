@@ -185,9 +185,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           '150 příjmů / měsíc',
                           '10 uživatelů max.',
                           'Vše z Basic',
-                          'Plánovač servisů',
                           'Reporty a statistiky',
-                          'SMS notifikace',
+                          'Chat se zákazníkem',
+                          'Webový portál pro správu vozidel a zákazníků',
                         ],
                         package: _packageFor('standard'),
                         period: _period,
@@ -215,6 +215,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     ],
                   ),
                 ),
+              const SizedBox(height: TokSpace.lg),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: TokSpace.lg),
+                child: _TrustStrip(),
+              ),
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -436,6 +441,96 @@ class _PlanCard extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _TrustStrip extends StatelessWidget {
+  const _TrustStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final tok = context.tok;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: TokSpace.md, vertical: TokSpace.md),
+      decoration: BoxDecoration(
+        color: tok.surface,
+        border: Border.all(color: tok.line),
+        borderRadius: BorderRadius.circular(TokRadius.xl),
+      ),
+      child: Row(
+        children: const [
+          Expanded(
+            child: _TrustItem(
+              icon: Icons.cloud_done_outlined,
+              title: '99,9 % dostupnost',
+              subtitle: 'Garantovaná uptime SLA',
+            ),
+          ),
+          _TrustDivider(),
+          Expanded(
+            child: _TrustItem(
+              icon: Icons.download_done_rounded,
+              title: 'Export dat zdarma',
+              subtitle: 'Vaše data jsou vždy vaše',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _TrustItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tok = context.tok;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: TokColors.accent),
+        const SizedBox(height: 6),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: tok.textPrimary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          subtitle,
+          style: TextStyle(fontSize: 10, color: tok.textSecondary),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+class _TrustDivider extends StatelessWidget {
+  const _TrustDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      height: 40,
+      color: context.tok.line,
+      margin: const EdgeInsets.symmetric(horizontal: TokSpace.sm),
     );
   }
 }
