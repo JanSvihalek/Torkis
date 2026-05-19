@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '4.3.2';
+const String kAppVerze = '4.3.3';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -88,6 +88,16 @@ const Map<String, List<String>> kPlanModuly = {
 const Map<String, int?> kPlanPrijemLimit = {
   'basic': 50,
   'standard': 150,
+  'pro': null,
+  'trial': null,
+  'custom': null,
+};
+
+/// Maximální počet uživatelských účtů (členů týmu) dle plánu (null = neomezeno).
+/// Limit zahrnuje admina i všechny zaměstnance.
+const Map<String, int?> kPlanUserLimit = {
+  'basic': 3,
+  'standard': 10,
   'pro': null,
   'trial': null,
   'custom': null,
