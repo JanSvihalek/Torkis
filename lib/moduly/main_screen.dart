@@ -19,7 +19,6 @@ import 'statistiky.dart';
 import 'nastaveni.dart';
 import 'zamestnanci.dart';
 import 'welcome_screen.dart';
-import 'Add_ons.dart';
 import 'predplatne_page.dart';
 
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
@@ -330,9 +329,6 @@ class MenuPage extends StatelessWidget {
             const PredplatnePage()),
       if (globalUserRole == 'admin')
         _ModuleEntry('Web', Icons.public_rounded, const LandingPage()),
-      if (globalUserRole == 'admin')
-        _ModuleEntry('Doplňky', Icons.extension_outlined,
-            const DoplnkyNastaveniPage()),
     ];
 
     return SingleChildScrollView(
