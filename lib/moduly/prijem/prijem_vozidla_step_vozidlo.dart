@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/design_tokens.dart';
+import '../../core/torkis_ui.dart';
 import 'prijem_vozidla_helpers.dart';
 
 /// Krok 1 – Identifikace vozidla.
@@ -27,6 +28,7 @@ class StepVozidlo extends StatelessWidget {
   final void Function(TextEditingController, bool) onScan;
   final VoidCallback? onScanZnacka;
   final VoidCallback? onScanModel;
+  final VoidCallback? onScanVinOrSpz;
 
   // Autocomplete
   final int autocompleteResetKey;
@@ -73,6 +75,7 @@ class StepVozidlo extends StatelessWidget {
     required this.onScan,
     this.onScanZnacka,
     this.onScanModel,
+    this.onScanVinOrSpz,
     required this.autocompleteResetKey,
     required this.dostupneZnacky,
     required this.dostupneModely,
@@ -102,76 +105,59 @@ class StepVozidlo extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final Widget cisloInput = buildInput(
-                'Číslo zakázky',
-                Icons.tag_rounded,
-                zakazkaController,
-                isDark,
-                caps: true,
-                customSuffix: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.qr_code_scanner_rounded,
-                          size: 18, color: TokColors.steel),
-                      onPressed: () => onScan(zakazkaController, false),
-                      tooltip: 'Naskenovat číslo zakázky',
-                    ),
-                    if (autoGenerateCislo)
-                      isGeneratingCislo
-                          ? const Padding(
-                              padding: EdgeInsets.all(12),
-                              child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: TokColors.accent)))
-                          : IconButton(
-                              icon: const Icon(Icons.refresh_rounded,
-                                  size: 18, color: TokColors.accent),
-                              onPressed: onRegenerateCislo,
-                              tooltip: 'Vygenerovat nové číslo',
-                            ),
-                  ],
+          Text('Příjem vozidla',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+                color: tok.textPrimary,
+                height: 1.1,
+              )),
+          const SizedBox(height: 6),
+          Text('Naskenujte VIN nebo SPZ, nebo údaje doplňte ručně.',
+              style:
+                  TextStyle(fontSize: 13, color: tok.textSecondary)),
+          const SizedBox(height: TokSpace.lg),
+          TorkisActionTile(
+            icon: Icons.qr_code_scanner_rounded,
+            title: 'Skenovat VIN / SPZ',
+            subtitle: 'Automaticky rozpozná typ kódu',
+            onTap: onScanVinOrSpz,
+          ),
+          const SizedBox(height: TokSpace.lg),
+          buildInput(
+            'Číslo zakázky',
+            Icons.tag_rounded,
+            zakazkaController,
+            isDark,
+            caps: true,
+            customSuffix: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.qr_code_scanner_rounded,
+                      size: 18, color: TokColors.steel),
+                  onPressed: () => onScan(zakazkaController, false),
+                  tooltip: 'Naskenovat číslo zakázky',
                 ),
-              );
-
-              final titulek = Text('Příjem vozidla',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.4,
-                    color: tok.textPrimary,
-                    height: 1.1,
-                  ));
-
-              if (constraints.maxWidth < 400) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    titulek,
-                    const SizedBox(height: 6),
-                    Text('Vyplňte údaje, nebo naskenujte technický průkaz.',
-                        style: TextStyle(
-                            fontSize: 13, color: tok.textSecondary)),
-                    const SizedBox(height: TokSpace.lg),
-                    cisloInput,
-                  ],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 3, child: titulek),
-                  const SizedBox(width: 15),
-                  Expanded(flex: 2, child: cisloInput),
-                ],
-              );
-            },
+                if (autoGenerateCislo)
+                  isGeneratingCislo
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: TokColors.accent)))
+                      : IconButton(
+                          icon: const Icon(Icons.refresh_rounded,
+                              size: 18, color: TokColors.accent),
+                          onPressed: onRegenerateCislo,
+                          tooltip: 'Vygenerovat nové číslo',
+                        ),
+              ],
+            ),
           ),
           const SizedBox(height: TokSpace.xl),
           if (nalezenaVozidla.isNotEmpty) ...[

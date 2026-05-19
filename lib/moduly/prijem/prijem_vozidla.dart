@@ -11,6 +11,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/design_tokens.dart';
+import '../../core/torkis_ui.dart';
 import '../../core/pdf_generator.dart';
 import '../auth_gate.dart';
 import 'prijem_vozidla_vyber_zakaznika.dart';
@@ -1262,13 +1264,83 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
+  /// Naskenuje řetězec a automaticky určí, zda jde o VIN (17 znaků, povolené znaky)
+  /// nebo SPZ. Pokud nelze rozhodnout, nechá uživatele vybrat.
+  Future<void> _scanVinOrSpz() async {
+    final raw = await _openOcrCamera('VIN nebo SPZ');
+    if (raw == null || raw.isEmpty || !mounted) return;
+
+    final clean = raw.replaceAll(RegExp(r'\s+'), '').toUpperCase();
+    final isVin = clean.length == 17 &&
+        RegExp(r'^[A-HJ-NPR-Z0-9]+$').hasMatch(clean);
+
+    if (isVin) {
+      setState(() => _vinController.text = clean);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Naskenován VIN kód.')),
+      );
+      return;
+    }
+
+    // Krátký řetězec (typická SPZ) → bez dialogu.
+    if (clean.length >= 5 && clean.length <= 8) {
+      setState(() => _spzController.text = clean);
+      await _hledatPodleSpz();
+      return;
+    }
+
+    // Nejasné — necháme uživatele rozhodnout.
+    if (!mounted) return;
+    final volba = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Co bylo naskenováno?'),
+        content: Text('Naskenováno: $clean'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'spz'),
+            child: const Text('SPZ'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'vin'),
+            child: const Text('VIN'),
+          ),
+        ],
+      ),
+    );
+    if (volba == 'vin') {
+      setState(() => _vinController.text = clean);
+    } else if (volba == 'spz') {
+      setState(() => _spzController.text = clean);
+      await _hledatPodleSpz();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    const stepLabels = [
+      'Identifikace vozu',
+      'Zákazník',
+      'Fotodokumentace',
+      'Stav vozu',
+      'Práce',
+      'Podpis',
+    ];
+
     return Stack(
       children: [
         Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  TokSpace.xl, TokSpace.md, TokSpace.xl, 0),
+              child: TorkisStepProgress(
+                currentStep: _currentPage + 1,
+                totalSteps: _totalPages,
+                stepLabel: stepLabels[_currentPage.clamp(0, _totalPages - 1)],
+              ),
+            ),
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -1330,6 +1402,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         onScan: _scanText,
         onScanZnacka: _scanZnacka,
         onScanModel: _scanModel,
+        onScanVinOrSpz: _scanVinOrSpz,
         autocompleteResetKey: _autocompleteResetKey,
         dostupneZnacky: _dostupneZnacky,
         dostupneModely: _dostupneModely,
@@ -1474,74 +1547,51 @@ class _MainWizardPageState extends State<MainWizardPage> {
       );
 
   // â”€â”€ SpodnĂ­ navigaÄŤnĂ­ panel (ZpÄ›t / DalĹˇĂ­ / DokonÄŤit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  Widget _buildBottomPanel(bool isDark) => Container(
-        padding: const EdgeInsets.fromLTRB(30, 20, 30, 30),
-        decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0D2040) : Colors.white,
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -5))
-            ]),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                  children: List.generate(
-                      _totalPages,
-                      (index) => Expanded(
-                          child: Container(
-                              height: 4,
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              decoration: BoxDecoration(
-                                  color: index <= _currentPage
-                                      ? Colors.blue
-                                      : Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(2)))))),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  if (_currentPage > 0)
-                    IconButton.filledTonal(
-                        onPressed: _moveBack,
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                        padding: const EdgeInsets.all(15)),
-                  if (_currentPage > 0) const SizedBox(width: 15),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: (_isCheckingZakazka ||
-                              _isUploading ||
-                              _isGeneratingCislo)
-                          ? null
-                          : _moveNext,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 18),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18))),
-                      child: (_isCheckingZakazka ||
-                              _isUploading ||
-                              _isGeneratingCislo)
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                          : Text(
-                              _currentPage == _totalPages - 1
-                                  ? 'DOKONČIT A ODESLAT'
-                                  : 'DALŠÍ KROK',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
+  Widget _buildBottomPanel(bool isDark) {
+    final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
+    final isBusy =
+        _isCheckingZakazka || _isUploading || _isGeneratingCislo;
+    final isLast = _currentPage == _totalPages - 1;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+          TokSpace.xl, TokSpace.md, TokSpace.xl, TokSpace.md),
+      decoration: BoxDecoration(
+        color: tok.surface,
+        border: Border(top: BorderSide(color: tok.line)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            if (_currentPage > 0) ...[
+              SizedBox(
+                width: 52,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: _moveBack,
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.zero,
+                    side: BorderSide(color: tok.lineStrong),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TokRadius.lg),
                     ),
                   ),
-                ],
+                  child: Icon(Icons.arrow_back_ios_new_rounded,
+                      size: 16, color: tok.textPrimary),
+                ),
               ),
+              const SizedBox(width: 10),
             ],
-          ),
+            Expanded(
+              child: TorkisPrimaryButton(
+                label: isLast ? 'Dokončit a odeslat' : 'Pokračovat',
+                loading: isBusy,
+                onPressed: isBusy ? null : _moveNext,
+              ),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 }
