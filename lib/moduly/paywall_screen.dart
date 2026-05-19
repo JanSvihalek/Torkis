@@ -15,7 +15,7 @@ class PaywallScreen extends StatefulWidget {
 }
 
 class _PaywallScreenState extends State<PaywallScreen> {
-  List<Package> _packages = [];
+  Map<String, Package> _packages = {};
   bool _loading = true;
   bool _purchasing = false;
   String? _errorMessage;
@@ -27,8 +27,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   Future<void> _loadPackages() async {
-    final packages = await SubscriptionService.getPackages();
-    if (mounted) setState(() { _packages = packages; _loading = false; });
+    final list = await SubscriptionService.getPackages();
+    final map = <String, Package>{};
+    for (final pkg in list) {
+      map[pkg.identifier] = pkg;
+    }
+    if (mounted) setState(() { _packages = map; _loading = false; });
   }
 
   Future<void> _purchase(Package package) async {
@@ -69,21 +73,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  String _formatPrice(Package package) {
-    final product = package.storeProduct;
-    return product.priceString;
-  }
-
-  String _formatPeriod(Package package) {
-    switch (package.packageType) {
-      case PackageType.monthly:    return '/ měsíc';
-      case PackageType.annual:     return '/ rok';
-      case PackageType.weekly:     return '/ týden';
-      case PackageType.lifetime:   return 'jednorázově';
-      default:                     return '';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -93,61 +82,94 @@ class _PaywallScreenState extends State<PaywallScreen> {
       backgroundColor: isDark ? const Color(0xFF0B1A2E) : const Color(0xFFF5F8FF),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 20),
-
-              // Logo + název
-              Image.asset('assets/images/torkis-app-icon-192.png', width: 72, height: 72),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
+              Image.asset('assets/images/torkis-app-icon-192.png', width: 64, height: 64),
+              const SizedBox(height: 12),
               Text('TORKIS',
                   style: TextStyle(
-                    fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: -1,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
                     color: isDark ? Colors.white : const Color(0xFF0B1A2E),
                   )),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-              // Stav trialu
-              if (jeTrialAktivni) ...[
+              if (jeTrialAktivni)
                 _infoBanner(
                   icon: Icons.access_time_rounded,
                   color: Colors.orange,
-                  text: 'Zbývá ${widget.zbyvajiciDniTrialu} dní bezplatného zkušebního období.',
+                  text: 'Zbývá ${widget.zbyvajiciDniTrialu} dní zkušebního období.',
                   isDark: isDark,
-                ),
-                const SizedBox(height: 16),
-                Text('Pokračujte s plným přístupem\npodle vašeho výběru.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: isDark ? Colors.white70 : Colors.black54)),
-              ] else ...[
+                )
+              else
                 _infoBanner(
                   icon: Icons.lock_outline_rounded,
                   color: Colors.redAccent,
-                  text: 'Zkušební období vypršelo.',
+                  text: 'Zkušební období vypršelo. Vyberte plán.',
                   isDark: isDark,
                 ),
-                const SizedBox(height: 16),
-                Text('Pro pokračování v používání Torkis\naktivujte předplatné.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16, color: isDark ? Colors.white70 : Colors.black54)),
-              ],
-
-              const SizedBox(height: 32),
-
-              // Co zahrnuje předplatné
-              _featureList(isDark),
 
               const SizedBox(height: 28),
 
-              // Balíčky z RevenueCat
               if (_loading)
-                const CircularProgressIndicator()
-              else if (_packages.isEmpty)
-                _placeholderPricing(isDark)
-              else
-                ..._packages.map((pkg) => _packageCard(pkg, isDark)),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: CircularProgressIndicator(),
+                )
+              else ...[
+                _planCard(
+                  isDark: isDark,
+                  planName: 'Basic',
+                  limit: '50 příjmů / měsíc',
+                  features: const [
+                    'Příjem vozidla s fotodokumentací',
+                    'Evidence zákazníků a vozidel',
+                    'Historie příjmů',
+                    'Správa týmu a práv',
+                  ],
+                  monthlyPkg: _packages['basic_monthly'],
+                  yearlyPkg: _packages['basic_yearly'],
+                  highlight: false,
+                ),
+                const SizedBox(height: 12),
+                _planCard(
+                  isDark: isDark,
+                  planName: 'Standard',
+                  limit: '150 příjmů / měsíc',
+                  features: const [
+                    'Příjem vozidla s fotodokumentací',
+                    'Evidence zákazníků a vozidel',
+                    'Historie příjmů',
+                    'Plánovač servisů',
+                    'Statistiky',
+                    'Správa týmu a práv',
+                  ],
+                  monthlyPkg: _packages['standard_monthly'],
+                  yearlyPkg: _packages['standard_yearly'],
+                  highlight: true,
+                ),
+                const SizedBox(height: 12),
+                _planCard(
+                  isDark: isDark,
+                  planName: 'Pro',
+                  limit: 'Neomezené příjmy',
+                  features: const [
+                    'Příjem vozidla s fotodokumentací',
+                    'Evidence zákazníků a vozidel',
+                    'Historie příjmů',
+                    'Plánovač servisů',
+                    'Statistiky',
+                    'Správa týmu a práv',
+                  ],
+                  monthlyPkg: _packages['pro_monthly'],
+                  yearlyPkg: _packages['pro_yearly'],
+                  highlight: false,
+                ),
+              ],
 
               const SizedBox(height: 16),
 
@@ -159,20 +181,19 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
                 ),
 
-              // Obnovit nákupy
               TextButton(
                 onPressed: _purchasing ? null : _restore,
                 child: Text('Obnovit nákupy',
                     style: TextStyle(
-                        color: isDark ? Colors.white38 : Colors.black38, fontSize: 13)),
+                        color: isDark ? Colors.white38 : Colors.black38,
+                        fontSize: 13)),
               ),
-
-              // Odhlásit se
               TextButton(
                 onPressed: () => FirebaseAuth.instance.signOut(),
                 child: Text('Odhlásit se',
                     style: TextStyle(
-                        color: isDark ? Colors.white24 : Colors.black26, fontSize: 12)),
+                        color: isDark ? Colors.white24 : Colors.black26,
+                        fontSize: 12)),
               ),
               const SizedBox(height: 20),
             ],
@@ -182,7 +203,171 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  Widget _infoBanner({required IconData icon, required Color color, required String text, required bool isDark}) {
+  Widget _planCard({
+    required bool isDark,
+    required String planName,
+    required String limit,
+    required List<String> features,
+    required Package? monthlyPkg,
+    required Package? yearlyPkg,
+    required bool highlight,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: highlight
+              ? Colors.blue
+              : (isDark ? Colors.grey[800]! : Colors.grey[200]!),
+          width: highlight ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: highlight
+                  ? Colors.blue.withValues(alpha: 0.12)
+                  : Colors.transparent,
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(15)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(planName,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                      color: isDark ? Colors.white : const Color(0xFF0B1A2E),
+                    )),
+                if (highlight)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text('Nejpopulárnější',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600)),
+                  ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 6, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.inbox_rounded, size: 14, color: Colors.blue),
+                    const SizedBox(width: 5),
+                    Text(limit,
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ...features.map((f) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.only(top: 1),
+                            child: Icon(Icons.check_rounded,
+                                size: 14, color: Colors.green),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(f,
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Colors.black87)),
+                          ),
+                        ],
+                      ),
+                    )),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                        child: _priceButton(monthlyPkg, '/ měsíc', isDark)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        child: _priceButton(yearlyPkg, '/ rok', isDark)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _priceButton(Package? pkg, String period, bool isDark) {
+    if (pkg == null) {
+      return Container(
+        height: 54,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white10 : Colors.grey[100],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text('—',
+              style: TextStyle(
+                  color: isDark ? Colors.white30 : Colors.black26)),
+        ),
+      );
+    }
+    return ElevatedButton(
+      onPressed: _purchasing ? null : () => _purchase(pkg),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 0,
+      ),
+      child: _purchasing
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                  color: Colors.white, strokeWidth: 2))
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(pkg.storeProduct.priceString,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(period,
+                    style: const TextStyle(
+                        fontSize: 11, color: Colors.white70)),
+              ],
+            ),
+    );
+  }
+
+  Widget _infoBanner({
+    required IconData icon,
+    required Color color,
+    required String text,
+    required bool isDark,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -194,99 +379,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(width: 10),
-          Expanded(child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 14))),
-        ],
-      ),
-    );
-  }
-
-  Widget _featureList(bool isDark) {
-    final features = [
-      'Příjem vozidla s fotodokumentací',
-      'Historie příjmů a zákazníků',
-      'Evidence vozidel',
-      'Plánovač a statistiky',
-      'Správa týmu a práv',
-    ];
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Co předplatné zahrnuje:',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white70 : Colors.black54,
-                  fontSize: 13)),
-          const SizedBox(height: 10),
-          ...features.map((f) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(Icons.check_circle_rounded, color: Colors.green, size: 18),
-                    const SizedBox(width: 8),
-                    Text(f, style: const TextStyle(fontSize: 14)),
-                  ],
-                ),
-              )),
-        ],
-      ),
-    );
-  }
-
-  Widget _packageCard(Package package, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: _purchasing ? null : () => _purchase(package),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-          child: _purchasing
-              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : Column(
-                  children: [
-                    Text(package.storeProduct.title.isNotEmpty
-                            ? package.storeProduct.title
-                            : 'Torkis předplatné',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    Text('${_formatPrice(package)} ${_formatPeriod(package)}',
-                        style: const TextStyle(fontSize: 13, color: Colors.white70)),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-
-  Widget _placeholderPricing(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.workspace_premium_outlined, color: Colors.blue, size: 36),
-          const SizedBox(height: 10),
-          const Text('Předplatné se připravuje',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 6),
-          Text('Pro aktivaci kontaktujte podporu na\npodpora@torkis.cz',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black45)),
+          Expanded(
+              child: Text(text,
+                  style: TextStyle(
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14))),
         ],
       ),
     );
