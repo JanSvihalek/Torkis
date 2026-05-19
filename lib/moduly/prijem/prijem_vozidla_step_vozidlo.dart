@@ -25,6 +25,8 @@ class StepVozidlo extends StatelessWidget {
 
   final bool isLoadingSpz;
   final VoidCallback onHledatSpz;
+  final bool isLoadingVin;
+  final VoidCallback onHledatVin;
   final void Function(TextEditingController, bool) onScan;
   final VoidCallback? onScanZnacka;
   final VoidCallback? onScanModel;
@@ -72,6 +74,8 @@ class StepVozidlo extends StatelessWidget {
     required this.motorizaceController,
     required this.isLoadingSpz,
     required this.onHledatSpz,
+    required this.isLoadingVin,
+    required this.onHledatVin,
     required this.onScan,
     this.onScanZnacka,
     this.onScanModel,
@@ -221,37 +225,70 @@ class StepVozidlo extends StatelessWidget {
             const SizedBox(height: TokSpace.xl),
           ],
           buildInput(
-            'SPZ vozidla (Klikněte na lupu pro dotažení) *',
-            Icons.abc,
+            'SPZ vozidla',
+            Icons.confirmation_number_outlined,
             spzController,
             isDark,
             caps: true,
             customSuffix: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                      icon: const Icon(Icons.document_scanner),
-                      onPressed: () => onScan(spzController, false),
-                      tooltip: 'Naskenovat SPZ fotoaparátem'),
-                  isLoadingSpz
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2)))
-                      : IconButton(
-                          icon: const Icon(Icons.search,
-                              color: Colors.blue),
-                          onPressed: onHledatSpz,
-                          tooltip:
-                              'Vyhledat auto a majitele z historie')
-                ]),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.qr_code_scanner_rounded,
+                      size: 18, color: TokColors.steel),
+                  onPressed: () => onScan(spzController, false),
+                  tooltip: 'Naskenovat SPZ fotoaparátem',
+                ),
+                isLoadingSpz
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: TokColors.accent)))
+                    : IconButton(
+                        icon: const Icon(Icons.search_rounded,
+                            size: 18, color: TokColors.accent),
+                        onPressed: onHledatSpz,
+                        tooltip: 'Vyhledat vozidlo a majitele z historie',
+                      ),
+              ],
+            ),
           ),
           const SizedBox(height: 20),
-          buildInput('VIN kód', Icons.abc, vinController, isDark,
-              caps: true, onScan: onScan),
+          buildInput(
+            'VIN kód',
+            Icons.tag_outlined,
+            vinController,
+            isDark,
+            caps: true,
+            customSuffix: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.qr_code_scanner_rounded,
+                      size: 18, color: TokColors.steel),
+                  onPressed: () => onScan(vinController, false),
+                  tooltip: 'Naskenovat VIN fotoaparátem',
+                ),
+                isLoadingVin
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: TokColors.accent)))
+                    : IconButton(
+                        icon: const Icon(Icons.search_rounded,
+                            size: 18, color: TokColors.accent),
+                        onPressed: onHledatVin,
+                        tooltip: 'Vyhledat vozidlo a majitele z historie',
+                      ),
+              ],
+            ),
+          ),
           const SizedBox(height: 20),
           // Značka autocomplete
           Column(

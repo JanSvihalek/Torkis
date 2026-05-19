@@ -453,6 +453,56 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   /// Vyhledá vozidlo v databázi servisu podle SPZ (prefixová shoda).
   /// Při jediném výsledku přednaplní formulář okamžitě, při více zobrazí výběrový dialog.
+  bool _isLoadingVin = false;
+
+  /// Vyhledá vozidlo podle VIN a načte vozidlo i navázaného zákazníka.
+  /// Logika je stejná jako `_hledatPodleSpz`, jen filtrujeme přes pole VIN.
+  Future<void> _hledatPodleVin() async {
+    final vin =
+        _vinController.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    if (vin.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Zadejte alespoň část VIN pro vyhledání.'),
+          backgroundColor: Colors.orange));
+      return;
+    }
+    setState(() => _isLoadingVin = true);
+    try {
+      if (_sId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Chyba: ID Servisu se nepodařilo načíst.'),
+            backgroundColor: Colors.red));
+        return;
+      }
+      final vozidlaQuery = await FirebaseFirestore.instance
+          .collection('vozidla')
+          .where('servis_id', isEqualTo: _sId)
+          .get();
+      final nalezenaVozidla = vozidlaQuery.docs.map((d) => d.data()).where((v) {
+        final ulozenoVin = (v['vin'] ?? '').toString().toUpperCase();
+        return ulozenoVin.isNotEmpty && ulozenoVin.contains(vin);
+      }).toList();
+
+      if (nalezenaVozidla.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Žádné vozidlo s tímto VIN nebylo nalezeno.'),
+            backgroundColor: Colors.blueGrey));
+        return;
+      }
+      if (nalezenaVozidla.length == 1) {
+        await _aplikovatVybraneVozidlo(nalezenaVozidla.first);
+      } else {
+        _otevritVyberNalezenychVozidel(nalezenaVozidla);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Chyba při vyhledávání: $e'),
+          backgroundColor: Colors.red));
+    } finally {
+      if (mounted) setState(() => _isLoadingVin = false);
+    }
+  }
+
   Future<void> _hledatPodleSpz() async {
     final spz = _spzController.text.trim().toUpperCase().replaceAll(' ', '');
     if (spz.isEmpty) {
@@ -1244,6 +1294,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
       setState(() => controller.text = result);
       if (controller == _spzController) {
         await _hledatPodleSpz();
+      } else if (controller == _vinController) {
+        await _hledatPodleVin();
       }
     }
   }
@@ -1271,14 +1323,33 @@ class _MainWizardPageState extends State<MainWizardPage> {
     if (raw == null || raw.isEmpty || !mounted) return;
 
     final clean = raw.replaceAll(RegExp(r'\s+'), '').toUpperCase();
-    final isVin = clean.length == 17 &&
-        RegExp(r'^[A-HJ-NPR-Z0-9]+$').hasMatch(clean);
+
+    // VIN: přesně 17 znaků, povoleno [A-Z0-9] kromě I, O, Q.
+    // OCR často plete 0↔O, 1↔I, Q↔0 — pokud má řetězec 17 znaků,
+    // nahradíme tyto OCR záměny (ve VIN se I/O/Q nikdy nevyskytují).
+    String vinCandidate = clean;
+    bool wasNormalized = false;
+    if (clean.length == 17 && RegExp(r'[IOQ]').hasMatch(clean)) {
+      vinCandidate = clean
+          .replaceAll('O', '0')
+          .replaceAll('I', '1')
+          .replaceAll('Q', '0');
+      wasNormalized = true;
+    }
+    final isVin =
+        RegExp(r'^[A-HJ-NPR-Z0-9]{17}$').hasMatch(vinCandidate);
 
     if (isVin) {
-      setState(() => _vinController.text = clean);
+      setState(() => _vinController.text = vinCandidate);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Naskenován VIN kód.')),
+        SnackBar(
+          content: Text(wasNormalized
+              ? 'Naskenován VIN kód (OCR záměna O/I/Q opravena).'
+              : 'Naskenován VIN kód.'),
+        ),
       );
+      // Automaticky dotáhneme vozidlo a zákazníka z historie.
+      await _hledatPodleVin();
       return;
     }
 
@@ -1310,6 +1381,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     );
     if (volba == 'vin') {
       setState(() => _vinController.text = clean);
+      await _hledatPodleVin();
     } else if (volba == 'spz') {
       setState(() => _spzController.text = clean);
       await _hledatPodleSpz();
@@ -1399,6 +1471,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
         motorizaceController: _motorizaceController,
         isLoadingSpz: _isLoadingSpz,
         onHledatSpz: _hledatPodleSpz,
+        isLoadingVin: _isLoadingVin,
+        onHledatVin: _hledatPodleVin,
         onScan: _scanText,
         onScanZnacka: _scanZnacka,
         onScanModel: _scanModel,
