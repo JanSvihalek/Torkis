@@ -10,7 +10,6 @@ import 'auth_gate.dart';
 import 'auth_screen.dart';
 
 // Sjednocené relativní importy!
-import 'planovac.dart';
 import 'prijem/prijem_vozidla.dart';
 import 'historie_prijmu/historie_prijmu_page.dart';
 import 'zakaznici/zakaznici_page.dart';
@@ -62,11 +61,6 @@ class _MainScreenState extends State<MainScreen> {
         icon: Icons.grid_view,
         activeIcon: Icons.grid_view_rounded,
         label: 'Menu'),
-    'planovac': _NavData(
-        page: const PlanovacPage(),
-        icon: Icons.calendar_today,
-        activeIcon: Icons.calendar_today,
-        label: 'Plánování'),
     'vozidla': _NavData(
         page: const VozidlaPage(),
         icon: Icons.directions_car_outlined,
@@ -319,9 +313,6 @@ class MenuPage extends StatelessWidget {
       if (maPristup('historie_prijmu'))
         _ModuleEntry('Historie příjmů', Icons.history_rounded,
             const HistoriePrijmuPage()),
-      if (maPristup('planovac'))
-        _ModuleEntry(
-            'Plánování', Icons.calendar_today_rounded, const PlanovacPage()),
       if (maPristup('ukony'))
         _ModuleEntry('Úkony', Icons.playlist_add_check_rounded,
             const UkonyPage(),

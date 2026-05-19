@@ -32,10 +32,6 @@ import 'prijem_vozidla_step_podpis.dart';
 // Po dokončení se zakázka zapíše do Firestore (kolekce 'zakazky') a
 // volitelně se zákazníkovi pošle protokol o příjmu na e-mail jako PDF.
 
-// Notifier používaný Plánovačem: když dispatcher klikne „Přijmout na servis",
-// sem pošle ID rezervace a formulář se přednaplní jejími daty.
-final ValueNotifier<String?> rezervaceKeZpracovani = ValueNotifier(null);
-
 class MainWizardPage extends StatefulWidget {
   const MainWizardPage({super.key});
   @override
@@ -69,7 +65,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _defaultOdeslatEmail = true;
 
   String? _vybranyZakaznikId;
-  String? _zpracovavanaRezervaceId;
   List<Map<String, dynamic>> _nalezenaVozidla = [];
 
   final _zakazkaController = TextEditingController();
@@ -151,8 +146,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _nactiNastaveni();
     _nactiUkonyZDatabaze();
     _nactiDatabaziZnacek();
-
-    rezervaceKeZpracovani.addListener(_zpracujRezervaciZPlanovace);
   }
 
   /// Načte katalog úkonů servisu — zobrazí se jako rychlé tipy na stránce 5 (Požadované práce).
@@ -192,64 +185,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     } catch (e) {
       debugPrint("Chyba při načítání úkonů: $e");
       if (mounted) setState(() => _isLoadingUkony = false);
-    }
-  }
-
-  /// Přednaplní formulář daty z rezervace v plánovači.
-  /// Volá se automaticky přes listener na [rezervaceKeZpracovani].
-  /// Přednaplní formulář daty z rezervace v plánovači.
-  /// Volá se automaticky přes listener na [rezervaceKeZpracovani].
-  Future<void> _zpracujRezervaciZPlanovace() async {
-    final id = rezervaceKeZpracovani.value;
-    if (id == null) return;
-
-    try {
-      _zpracovavanaRezervaceId = id;
-      final doc =
-          await FirebaseFirestore.instance.collection('planovac').doc(id).get();
-
-      if (doc.exists) {
-        final data = doc.data()!;
-        setState(() {
-          _autocompleteResetKey++;
-          _spzController.text = data['spz'] ?? '';
-          _znackaController.text = data['znacka'] ?? '';
-          _modelController.text = data['model'] ?? '';
-          _vinController.text = data['vin'] ?? '';
-
-          _jmenoController.text = data['zakaznik_jmeno'] ?? '';
-          _icoController.text = data['zakaznik_ico'] ?? '';
-          _nastavitTelefon(data['zakaznik_telefon'] ?? '');
-          _emailZController.text = data['zakaznik_email'] ?? '';
-          _vybranyZakaznikId = data['zakaznik_id'];
-
-          final ukon = data['nazev_ukonu'];
-          if (ukon != null && ukon.toString().isNotEmpty) {
-            _pozadavkyControllers.clear();
-            _pozadavkyControllers
-                .add(TextEditingController(text: ukon.toString()));
-          }
-        });
-
-        if (_spzController.text.isNotEmpty && _sId != null) {
-          final vozidlaQuery = await FirebaseFirestore.instance
-              .collection('vozidla')
-              .where('servis_id', isEqualTo: _sId)
-              .where('spz', isEqualTo: _spzController.text)
-              .limit(1)
-              .get();
-          if (vozidlaQuery.docs.isNotEmpty) {
-            await _aplikovatVybraneVozidlo(vozidlaQuery.docs.first.data());
-          }
-        }
-
-        setState(() => _currentPage = 0);
-        _pageController.jumpToPage(0);
-      }
-    } catch (e) {
-      debugPrint("Chyba při načítání rezervace: $e");
-    } finally {
-      rezervaceKeZpracovani.value = null;
     }
   }
 
@@ -680,7 +615,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     for (var c in _pozadavkyControllers) {
       c.dispose();
     }
-    rezervaceKeZpracovani.removeListener(_zpracujRezervaciZPlanovace);
     super.dispose();
   }
 
@@ -1064,7 +998,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'palivo_typ': _vybranePalivo,
       'prevodovka': _vybranaPrevodovka,
       'stav_zakazky': 'Přijato',
-      'rezervace_id': _zpracovavanaRezervaceId, // Uložíme ID pro Dokončeno
       'zakaznik': {
         'id_zakaznika': zakaznikId,
         'jmeno': _jmenoController.text.trim(),
@@ -1105,20 +1038,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
         .collection('zakazky')
         .doc('${_sId}_$zakazkaId')
         .set(zakazkaData);
-
-    if (_zpracovavanaRezervaceId != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('planovac')
-            .doc(_zpracovavanaRezervaceId)
-            .update({
-          'zakazka_doc_id': '${_sId}_$zakazkaId',
-          'stav': 'Přijato na servis'
-        });
-      } catch (e) {
-        debugPrint("Chyba při updatování plánovače: $e");
-      }
-    }
 
     final emailZakanika = _emailZController.text.trim();
     if (_odeslatEmail &&
@@ -1182,7 +1101,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _telefonController.clear();
     _emailZController.clear();
     _vybranyZakaznikId = null;
-    _zpracovavanaRezervaceId = null;
     _nalezenaVozidla.clear();
 
     _spzController.clear();

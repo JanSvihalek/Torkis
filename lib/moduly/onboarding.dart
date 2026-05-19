@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'auth_gate.dart';
+import 'trial_welcome_screen.dart';
 import '../core/constants.dart';
 
 class _UkonData {
@@ -233,7 +233,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const AuthGate()),
+            MaterialPageRoute(
+                builder: (context) => const TrialWelcomeScreen()),
             (route) => false,
           );
         }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '4.3.4';
+const String kAppVerze = '4.3.5';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -69,7 +69,6 @@ const Map<String, List<String>> kPlanModuly = {
     'zakaznici',
     'vozidla',
     'historie_prijmu',
-    'planovac',
     'statistiky',
     'zamestnanci',
   ],
@@ -78,7 +77,16 @@ const Map<String, List<String>> kPlanModuly = {
     'zakaznici',
     'vozidla',
     'historie_prijmu',
-    'planovac',
+    'statistiky',
+    'zamestnanci',
+  ],
+  // Trial = plný přístup (jako Pro), aby uživatel viděl všechny funkce.
+  // Limity (kPlanPrijemLimit, kPlanUserLimit) jsou pro 'trial' také null.
+  'trial': [
+    'prijem',
+    'zakaznici',
+    'vozidla',
+    'historie_prijmu',
     'statistiky',
     'zamestnanci',
   ],
@@ -106,7 +114,6 @@ const Map<String, int?> kPlanUserLimit = {
 /// Mapování nav ID → klíč v globalModuly (null = vždy přístupné bez ohledu na plán).
 const Map<String, String?> navIdToModulKlic = {
   'prijem': 'prijem',
-  'planovac': 'planovac',
   'statistiky': 'statistiky',
   'zamestnanci': 'zamestnanci',
   'historie_prijmu': 'prijem',

@@ -25,7 +25,12 @@ class _MultiShotCameraPageState extends State<MultiShotCameraPage> {
   }
 
   Future<void> _initCamera() async {
-    final status = await Permission.camera.request();
+    // Nejdřív zkontrolujeme aktuální status — pokud je už granted,
+    // vyhneme se zbytečnému system dialogu při každém otevření kamery.
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      status = await Permission.camera.request();
+    }
     if (!status.isGranted) {
       if (mounted) {
         setState(() => _error =

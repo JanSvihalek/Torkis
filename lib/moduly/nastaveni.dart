@@ -7,9 +7,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 
 import '../core/constants.dart';
+import '../core/design_tokens.dart';
 import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
 import 'main_screen.dart'; // Kvůli navOrderNotifier
 import 'app_logger.dart'; // Přidán náš logger pro odchytávání chyb
+import 'predplatne_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -274,7 +276,6 @@ class _SettingsPageState extends State<SettingsPage> {
       'vozidla': {'nazev': 'Vozidla', 'ikona': Icons.directions_car_outlined},
       'ukony': {'nazev': 'Úkony', 'ikona': Icons.playlist_add_check_circle_outlined},
       'zakaznici': {'nazev': 'Zákazníci', 'ikona': Icons.people_alt_outlined},
-      'planovac': {'nazev': 'Plánovač', 'ikona': Icons.calendar_today_outlined},
       'zamestnanci': {'nazev': 'Tým a práva', 'ikona': Icons.badge_outlined},
       'statistiky': {'nazev': 'Statistiky', 'ikona': Icons.bar_chart_outlined},
       'nastaveni': {'nazev': 'Nastavení', 'ikona': Icons.settings_outlined},
@@ -491,6 +492,13 @@ class _SettingsPageState extends State<SettingsPage> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              // ---------------------------------------------
+              // PŘEDPLATNÉ — info karta nahoře
+              // ---------------------------------------------
+              if (_isAdmin) ...[
+                const _SubscriptionStatusCard(),
+                const SizedBox(height: 16),
+              ],
               // ---------------------------------------------
               // SEKCE PRO ADMINA (FIREMNÍ ÚDAJE)
               // ---------------------------------------------
@@ -1148,5 +1156,184 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
         ],
       ),
     );
+  }
+}
+
+/// Karta zobrazená v Nastavení (jen pro admina) — stav předplatného.
+/// Pro trial ukazuje zbývající dny + CTA upgrade. Pro placené plány ukazuje
+/// plán a platnost. Po vypršení vede na paywall.
+class _SubscriptionStatusCard extends StatelessWidget {
+  const _SubscriptionStatusCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final tok = context.tok;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const SizedBox.shrink();
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('predplatne')
+          .doc(uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return Container(
+            height: 110,
+            decoration: BoxDecoration(
+              color: tok.surface,
+              border: Border.all(color: tok.line),
+              borderRadius: BorderRadius.circular(TokRadius.xl),
+            ),
+            child: const Center(
+                child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2))),
+          );
+        }
+
+        final data =
+            snapshot.data!.data() as Map<String, dynamic>? ?? const {};
+        final planTyp = (data['plan_typ'] ?? 'trial').toString();
+        final trialStart = (data['trial_zacatek'] as Timestamp?)?.toDate();
+        final platnostDo = (data['platnost_do'] as Timestamp?)?.toDate();
+
+        final isTrial = planTyp == 'trial';
+        final now = DateTime.now();
+
+        int? zbyvajiciDni;
+        bool vyprseno = false;
+        double progress = 0;
+
+        if (isTrial && trialStart != null) {
+          final trialEnd = trialStart.add(const Duration(days: 30));
+          if (now.isBefore(trialEnd)) {
+            zbyvajiciDni = trialEnd.difference(now).inDays + 1;
+            progress = 1 - (zbyvajiciDni / 30);
+          } else {
+            vyprseno = true;
+            progress = 1;
+          }
+        } else if (platnostDo != null) {
+          if (now.isAfter(platnostDo)) vyprseno = true;
+        }
+
+        final accent = vyprseno
+            ? TokColors.danger
+            : (isTrial ? TokColors.warning : TokColors.success);
+
+        return Container(
+          padding: const EdgeInsets.all(TokSpace.lg),
+          decoration: BoxDecoration(
+            color: tok.surface,
+            border: Border.all(color: tok.line),
+            borderRadius: BorderRadius.circular(TokRadius.xl),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(TokRadius.sm),
+                    ),
+                    child: Icon(
+                      isTrial
+                          ? Icons.access_time_rounded
+                          : Icons.workspace_premium_outlined,
+                      color: accent,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          isTrial
+                              ? (vyprseno
+                                  ? 'Zkušební doba vypršela'
+                                  : 'Zkušební doba zdarma')
+                              : 'Plán ${planTyp.toUpperCase()}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: tok.textPrimary,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          isTrial
+                              ? (vyprseno
+                                  ? 'Vyberte plán pro pokračování'
+                                  : 'Zbývá ${zbyvajiciDni!} ${_dayWord(zbyvajiciDni)} · bez závazku')
+                              : (platnostDo != null
+                                  ? 'Platnost do ${DateFormat('d. M. yyyy').format(platnostDo)}'
+                                  : 'Aktivní'),
+                          style: TextStyle(
+                              fontSize: 12, color: tok.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (isTrial) ...[
+                const SizedBox(height: TokSpace.md),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(TokRadius.round),
+                  child: LinearProgressIndicator(
+                    value: progress.clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: tok.line,
+                    valueColor: AlwaysStoppedAnimation(accent),
+                  ),
+                ),
+                const SizedBox(height: TokSpace.md),
+                SizedBox(
+                  height: 44,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PredplatnePage()),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          vyprseno ? TokColors.accent : TokColors.ink,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(TokRadius.md),
+                      ),
+                    ),
+                    child: Text(
+                      vyprseno ? 'Vybrat plán' : 'Zobrazit plány',
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _dayWord(int n) {
+    if (n == 1) return 'den';
+    if (n >= 2 && n <= 4) return 'dny';
+    return 'dní';
   }
 }

@@ -7,14 +7,12 @@ import 'auth_gate.dart';
 // Lidsky čitelné názvy modulů
 const Map<String, String> _modulNazvy = {
   'prijem':          'Příjem vozidla & Historie příjmů',
-  'planovac':        'Plánovač',
   'statistiky':      'Statistiky',
   'zamestnanci':     'Zaměstnanci / Tým',
 };
 
 const Map<String, Color> _modulBarvy = {
   'prijem':      Colors.blue,
-  'planovac':    Colors.green,
   'statistiky':  Colors.purple,
   'zamestnanci': Colors.redAccent,
 };
