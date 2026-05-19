@@ -4,7 +4,7 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 // TODO: Po nastavení RevenueCat vyplň tyto hodnoty:
 // - kRevenueCatApiKey: Project Settings → API Keys → Public iOS key (appl_...)
 // - kPlanEntitlements: identifikátory entitlementů v RevenueCat (basic, standard, pro)
-const String kRevenueCatApiKey = 'PLACEHOLDER_REVENUECAT_API_KEY';
+const String kRevenueCatApiKey = 'appl_TjtSivEXQlOMtVBsuMJPDxMNMWb';
 
 /// Identifikátory entitlementů v RevenueCat — musí přesně souhlasit s názvy v RC konzoli.
 const List<String> kPlanEntitlements = ['basic', 'standard', 'pro'];
