@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:permission_handler/permission_handler.dart' show openAppSettings;
 import 'dart:io';
 
 // Vlastní kamera pro pořízení více snímků bez potvrzování každého foto.
@@ -25,19 +25,6 @@ class _MultiShotCameraPageState extends State<MultiShotCameraPage> {
   }
 
   Future<void> _initCamera() async {
-    // Nejdřív zkontrolujeme aktuální status — pokud je už granted,
-    // vyhneme se zbytečnému system dialogu při každém otevření kamery.
-    var status = await Permission.camera.status;
-    if (!status.isGranted) {
-      status = await Permission.camera.request();
-    }
-    if (!status.isGranted) {
-      if (mounted) {
-        setState(() => _error =
-            'Přístup ke kameře nebyl povolen.\nPovolte ho v nastavení aplikace.');
-      }
-      return;
-    }
     try {
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
