@@ -174,6 +174,12 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                   final maPodpis = data['podpis_url']?.toString().isNotEmpty == true;
                   final prijal = data['prijal_jmeno']?.toString() ?? '';
                   final cisloZakazky = data['cislo_zakazky']?.toString() ?? '';
+                  final vin = data['vin']?.toString() ?? '';
+                  final poskozeni = (stavVozidla['poskozeni'] as List<dynamic>?)
+                          ?.map((e) => e.toString())
+                          .where((e) => e.isNotEmpty && e != 'Neuvedeno')
+                          .toList() ??
+                      [];
                   final stav = data['stav']?.toString() ?? 'Přijato';
                   final stavColor = getStatusColor(stav);
 
@@ -234,33 +240,44 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 8),
                                 Text(
-                                  _formatDateHeader(data['cas_prijeti']),
+                                  spz.isNotEmpty ? spz : cisloZakazky,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 20,
+                                    fontSize: 26,
                                     fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.3,
+                                    letterSpacing: 1.5,
                                   ),
                                 ),
+                                if (vin.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    vin,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.75),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                ],
                                 const SizedBox(height: 10),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Číslo zakázky',
+                                      _formatDateHeader(data['cas_prijeti']),
                                       style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.5),
+                                        color: Colors.white.withValues(alpha: 0.6),
                                         fontSize: 12,
                                       ),
                                     ),
                                     Text(
                                       cisloZakazky,
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.6),
                                         fontSize: 12,
-                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
@@ -320,6 +337,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                             child: Column(
                               children: [
+                                // Vozidlo
                                 Row(
                                   children: [
                                     Container(
@@ -363,6 +381,52 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                       ),
                                   ],
                                 ),
+                                // Tachometr pod autem
+                                if (tacho.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      const SizedBox(width: 42),
+                                      const Icon(Icons.speed,
+                                          size: 13, color: Colors.teal),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '$tacho km',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.teal,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                // Poškození pod tachometrem
+                                if (poskozeni.isNotEmpty) ...[
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(width: 42),
+                                      const Icon(Icons.warning_amber_rounded,
+                                          size: 13, color: Colors.orange),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          poskozeni.join(', '),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.orange,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                // Zákazník
                                 if (jmeno.isNotEmpty) ...[
                                   Divider(
                                     height: 14,
@@ -398,7 +462,8 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                     ],
                                   ),
                                 ],
-                                if (pocetFotek > 0 || maPodpis || tacho.isNotEmpty) ...[
+                                // Badgy + šipka
+                                if (pocetFotek > 0 || maPodpis) ...[
                                   const SizedBox(height: 10),
                                   Row(
                                     children: [
@@ -408,10 +473,6 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                       if (maPodpis) ...[
                                         const SizedBox(width: 6),
                                         buildBadge(Icons.draw, 'Podepsáno', Colors.green),
-                                      ],
-                                      if (tacho.isNotEmpty) ...[
-                                        const SizedBox(width: 6),
-                                        buildBadge(Icons.speed, '$tacho km', Colors.teal),
                                       ],
                                       const Spacer(),
                                       const Icon(Icons.arrow_forward_ios,
