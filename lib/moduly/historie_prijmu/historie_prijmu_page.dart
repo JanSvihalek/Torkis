@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import '../auth_gate.dart';
+import '../../core/constants.dart';
 import '../../core/shared_widgets.dart';
 import 'prijem_detail.dart';
 
@@ -15,10 +16,17 @@ class HistoriePrijmuPage extends StatefulWidget {
 class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
   String _searchQuery = '';
 
-  String _formatDate(dynamic timestamp) {
+  String _formatDateHeader(dynamic timestamp) {
     if (timestamp == null) return 'Zpracovává se...';
     final dt = (timestamp as Timestamp).toDate();
-    return DateFormat('dd.MM.yyyy HH:mm').format(dt);
+    return DateFormat('dd. MM. yyyy  HH:mm').format(dt);
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
   @override
@@ -150,55 +158,34 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                 itemCount: docs.length,
                 itemBuilder: (context, index) {
-                  final data =
-                      docs[index].data() as Map<String, dynamic>;
+                  final data = docs[index].data() as Map<String, dynamic>;
                   final docId = docs[index].id;
                   final spz = data['spz']?.toString() ?? '';
-                  final jmeno =
-                      (data['zakaznik'] as Map?)?['jmeno']?.toString() ??
-                          '';
+                  final jmeno = (data['zakaznik'] as Map?)?['jmeno']?.toString() ?? '';
                   final znacka = data['znacka']?.toString() ?? '';
                   final model = data['model']?.toString() ?? '';
-                  final vin = data['vin']?.toString() ?? '';
-                  final stavVozidla =
-                      (data['stav_vozidla'] as Map<String, dynamic>?) ?? {};
-                  final tacho =
-                      stavVozidla['tachometr']?.toString() ?? '';
-                  final poskozeni =
-                      (stavVozidla['poskozeni'] as List<dynamic>?) ?? [];
-                  final pozadavky =
-                      (data['pozadavky_zakaznika'] as List<dynamic>?) ?? [];
-                  final fotografieMap =
-                      (data['fotografie_urls'] as Map<String, dynamic>?) ??
-                          {};
+                  final stavVozidla = (data['stav_vozidla'] as Map<String, dynamic>?) ?? {};
+                  final tacho = stavVozidla['tachometr']?.toString() ?? '';
+                  final fotografieMap = (data['fotografie_urls'] as Map<String, dynamic>?) ?? {};
                   int pocetFotek = 0;
-                  final List<String> nahledFotek = [];
                   for (final urls in fotografieMap.values) {
-                    final list = urls as List<dynamic>;
-                    pocetFotek += list.length;
-                    if (nahledFotek.length < 4 && list.isNotEmpty) {
-                      nahledFotek.add(list.first.toString());
-                    }
+                    pocetFotek += (urls as List<dynamic>).length;
                   }
-                  final maPodpis =
-                      data['podpis_url']?.toString().isNotEmpty == true;
-                  final prijal =
-                      data['prijal_jmeno']?.toString() ?? '';
+                  final maPodpis = data['podpis_url']?.toString().isNotEmpty == true;
+                  final prijal = data['prijal_jmeno']?.toString() ?? '';
+                  final cisloZakazky = data['cislo_zakazky']?.toString() ?? '';
+                  final stav = data['stav']?.toString() ?? 'Přijato';
+                  final stavColor = getStatusColor(stav);
 
                   return Card(
-                    elevation: 0,
-                    color:
-                        isDark ? const Color(0xFF1E3A5F) : Colors.white,
-                    margin: const EdgeInsets.only(bottom: 12),
+                    elevation: 2,
+                    shadowColor: Colors.black.withValues(alpha: 0.12),
+                    margin: const EdgeInsets.only(bottom: 14),
+                    clipBehavior: Clip.antiAlias,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                      side: BorderSide(
-                          color: isDark
-                              ? Colors.grey[800]!
-                              : Colors.grey[200]!),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(15),
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -208,156 +195,242 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                           ),
                         ),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(15),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ── Tmavý header ──────────────────────────────
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF0D2137), Color(0xFF1E3A5F)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  spz.isNotEmpty
-                                      ? spz
-                                      : 'Zakázka ${data['cislo_zakazky']}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: stavColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      stav.toUpperCase(),
+                                      style: TextStyle(
+                                        color: stavColor.withValues(alpha: 0.9),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 6),
                                 Text(
-                                  _formatDate(data['cas_prijeti']),
+                                  _formatDateHeader(data['cas_prijeti']),
                                   style: const TextStyle(
-                                      color: Colors.grey, fontSize: 12),
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.3,
+                                  ),
                                 ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Číslo zakázky',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.5),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      cisloZakazky,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (prijal.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Přijal',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(alpha: 0.5),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 22,
+                                            height: 22,
+                                            decoration: const BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: Colors.blue,
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                _initials(prijal),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            prijal,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
-                            if (spz.isNotEmpty)
-                              Text(
-                                'Zakázka ${data['cislo_zakazky']}',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[500]),
-                              ),
-                            if (jmeno.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(jmeno,
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey[600])),
-                            ],
-                            if (znacka.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                '$znacka $model'.trim(),
-                                style: TextStyle(
-                                    fontSize: 13, color: Colors.grey[500]),
-                              ),
-                            ],
-                            if (vin.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                'VIN: $vin',
-                                style: TextStyle(
-                                    fontSize: 11, color: Colors.grey[500]),
-                              ),
-                            ],
-                            if (tacho.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  const Icon(Icons.speed,
-                                      size: 14, color: Colors.teal),
-                                  const SizedBox(width: 4),
-                                  Text('$tacho km',
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.teal)),
-                                ],
-                              ),
-                            ],
-                            if (pozadavky.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(
-                                pozadavky.take(2).join(', '),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600]),
-                              ),
-                            ],
-                            if (poskozeni.isNotEmpty &&
-                                !(poskozeni.length == 1 &&
-                                    poskozeni.first ==
-                                        'Neuvedeno')) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Poškození: ${poskozeni.join(', ')}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.orange),
-                              ),
-                            ],
-                            if (nahledFotek.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                height: 60,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: nahledFotek.length,
-                                  itemBuilder: (context, i) =>
-                                      Padding(
-                                    padding: const EdgeInsets.only(
-                                        right: 6),
-                                    child: ClipRRect(
-                                      borderRadius:
-                                          BorderRadius.circular(6),
-                                      child: Image.network(
-                                        nahledFotek[i],
-                                        width: 60,
-                                        height: 60,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (c, e, s) =>
-                                            Container(
-                                          width: 60,
-                                          height: 60,
-                                          color: Colors.grey[300],
-                                          child: const Icon(
-                                              Icons.broken_image,
-                                              color: Colors.grey),
+                          ),
+                          // ── Bílé tělo ─────────────────────────────────
+                          Container(
+                            color: isDark ? const Color(0xFF1A2B3C) : Colors.white,
+                            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 32,
+                                      height: 32,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.blue.withValues(alpha: 0.1),
+                                      ),
+                                      child: const Icon(Icons.directions_car,
+                                          color: Colors.blue, size: 17),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        znacka.isNotEmpty
+                                            ? '$znacka $model'.trim()
+                                            : 'Nespecifikováno',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
                                         ),
                                       ),
                                     ),
-                                  ),
+                                    if (spz.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 9, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.withValues(alpha: 0.08),
+                                          borderRadius: BorderRadius.circular(7),
+                                        ),
+                                        child: Text(
+                                          spz,
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                if (pocetFotek > 0)
-                                  buildBadge(Icons.photo_library,
-                                      '$pocetFotek foto', Colors.blue),
-                                if (maPodpis) ...[
-                                  const SizedBox(width: 6),
-                                  buildBadge(Icons.draw, 'Podepsáno',
-                                      Colors.green),
+                                if (jmeno.isNotEmpty) ...[
+                                  Divider(
+                                    height: 14,
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.08)
+                                        : Colors.grey.withValues(alpha: 0.15),
+                                  ),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.teal.withValues(alpha: 0.1),
+                                        ),
+                                        child: const Icon(Icons.person,
+                                            color: Colors.teal, size: 17),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          jmeno,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDark
+                                                ? Colors.white70
+                                                : Colors.black87,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
-                                if (prijal.isNotEmpty) ...[
-                                  const SizedBox(width: 6),
-                                  buildBadge(Icons.person_outline,
-                                      prijal, Colors.grey),
-                                ],
-                                const Spacer(),
-                                const Icon(Icons.arrow_forward_ios,
-                                    size: 14, color: Colors.grey),
+                                if (pocetFotek > 0 || maPodpis || tacho.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      if (pocetFotek > 0)
+                                        buildBadge(Icons.photo_library,
+                                            '$pocetFotek foto', Colors.blue),
+                                      if (maPodpis) ...[
+                                        const SizedBox(width: 6),
+                                        buildBadge(Icons.draw, 'Podepsáno', Colors.green),
+                                      ],
+                                      if (tacho.isNotEmpty) ...[
+                                        const SizedBox(width: 6),
+                                        buildBadge(Icons.speed, '$tacho km', Colors.teal),
+                                      ],
+                                      const Spacer(),
+                                      const Icon(Icons.arrow_forward_ios,
+                                          size: 14, color: Colors.grey),
+                                    ],
+                                  ),
+                                ] else
+                                  const Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Padding(
+                                      padding: EdgeInsets.only(top: 6),
+                                      child: Icon(Icons.arrow_forward_ios,
+                                          size: 14, color: Colors.grey),
+                                    ),
+                                  ),
                               ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     ),
                   );

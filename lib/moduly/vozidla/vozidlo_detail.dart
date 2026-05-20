@@ -384,8 +384,8 @@ class VozidloDetailScreen extends StatelessWidget {
           child: Scaffold(
             backgroundColor: Theme.of(context).colorScheme.surface,
             appBar: AppBar(
-              title: const Text('Karta vozidla',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(spz,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
               backgroundColor:
                   isDark ? const Color(0xFF1E3A5F) : Colors.white,
               elevation: 0,

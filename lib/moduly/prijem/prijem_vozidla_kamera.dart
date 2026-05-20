@@ -129,7 +129,18 @@ class _MultiShotCameraPageState extends State<MultiShotCameraPage> {
                       ),
                     )
                   : _isInitialized
-                      ? CameraPreview(_controller!)
+                      ? ClipRect(
+                          child: SizedBox.expand(
+                            child: FittedBox(
+                              fit: BoxFit.cover,
+                              child: SizedBox(
+                                width: _controller!.value.previewSize!.height,
+                                height: _controller!.value.previewSize!.width,
+                                child: CameraPreview(_controller!),
+                              ),
+                            ),
+                          ),
+                        )
                       : const Center(
                           child: CircularProgressIndicator(color: Colors.white)),
             ),
