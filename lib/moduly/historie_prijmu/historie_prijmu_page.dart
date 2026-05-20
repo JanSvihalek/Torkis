@@ -210,7 +210,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                             padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                             decoration: const BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [Color(0xFF0D2137), Color(0xFF1E3A5F)],
+                                colors: [Color(0xFF0B1A2E), Color(0xFF0D1F35)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -245,7 +245,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                   spz.isNotEmpty ? spz : cisloZakazky,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 26,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 1.5,
                                   ),
@@ -254,9 +254,9 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                   const SizedBox(height: 2),
                                   Text(
                                     vin,
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.75),
-                                      fontSize: 14,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 1.0,
                                     ),

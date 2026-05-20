@@ -22,10 +22,10 @@ class TokColors {
   static const steel = Color(0xFF64748B);
   static const steelSoft = Color(0xFF94A3B8);
 
-  // Neutral (dark) — světlejší ladění (bg = původní scan tile)
-  static const darkBg = Color(0xFF1B2E4D);
-  static const darkSurface = Color(0xFF22365A);
-  static const darkSurface2 = Color(0xFF2A3F6B);
+  // Neutral (dark) — ink ladění (bg = barva scan tile tlačítka)
+  static const darkBg = Color(0xFF0B1A2E);
+  static const darkSurface = Color(0xFF14253D);
+  static const darkSurface2 = Color(0xFF1B2E4D);
   static const darkLine = Color(0x1AFFFFFF); // ~10% white
   static const darkLineStrong = Color(0x26FFFFFF); // ~15% white
 

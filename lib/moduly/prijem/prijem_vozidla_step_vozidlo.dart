@@ -119,12 +119,11 @@ class StepVozidlo extends StatelessWidget {
               )),
           const SizedBox(height: 6),
           Text('Naskenujte VIN nebo SPZ, nebo údaje doplňte ručně.',
-              style:
-                  TextStyle(fontSize: 13, color: tok.textSecondary)),
+              style: TextStyle(fontSize: 13, color: tok.textSecondary)),
           const SizedBox(height: TokSpace.lg),
           TorkisActionTile(
             icon: Icons.qr_code_scanner_rounded,
-            title: 'Skenovat VIN / SPZ',
+            title: 'Skenovat VIN/SPZ',
             subtitle: 'Automaticky rozpozná typ kódu',
             onTap: onScanVinOrSpz,
           ),
@@ -152,8 +151,7 @@ class StepVozidlo extends StatelessWidget {
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: TokColors.accent)))
+                                  strokeWidth: 2, color: TokColors.accent)))
                       : IconButton(
                           icon: const Icon(Icons.refresh_rounded,
                               size: 18, color: TokColors.accent),
@@ -308,14 +306,12 @@ class StepVozidlo extends StatelessWidget {
               ),
               Autocomplete<String>(
                 key: ValueKey('znacka_$autocompleteResetKey'),
-                initialValue:
-                    TextEditingValue(text: znackaController.text),
+                initialValue: TextEditingValue(text: znackaController.text),
                 displayStringForOption: (z) => z,
                 optionsBuilder: (TextEditingValue value) {
                   if (value.text.isEmpty) return dostupneZnacky;
-                  return dostupneZnacky.where((z) => z
-                      .toLowerCase()
-                      .contains(value.text.toLowerCase()));
+                  return dostupneZnacky.where((z) =>
+                      z.toLowerCase().contains(value.text.toLowerCase()));
                 },
                 onSelected: (String val) {
                   znackaController.text = val;
@@ -336,10 +332,8 @@ class StepVozidlo extends StatelessWidget {
                           color: TokColors.accent, size: 18),
                       suffixIcon: onScanZnacka != null
                           ? IconButton(
-                              icon: const Icon(
-                                  Icons.qr_code_scanner_rounded,
-                                  size: 18,
-                                  color: TokColors.steel),
+                              icon: const Icon(Icons.qr_code_scanner_rounded,
+                                  size: 18, color: TokColors.steel),
                               onPressed: onScanZnacka,
                               tooltip: 'Naskenovat značku fotoaparátem')
                           : null,
@@ -350,15 +344,13 @@ class StepVozidlo extends StatelessWidget {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 14),
                       enabledBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(TokRadius.md),
+                          borderRadius: BorderRadius.circular(TokRadius.md),
                           borderSide: BorderSide(
                               color: isDark
                                   ? Colors.white.withValues(alpha: 0.08)
                                   : context.tok.line)),
                       focusedBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(TokRadius.md),
+                          borderRadius: BorderRadius.circular(TokRadius.md),
                           borderSide: const BorderSide(
                               color: TokColors.accent, width: 1.5)),
                     ),
@@ -377,8 +369,7 @@ class StepVozidlo extends StatelessWidget {
                       elevation: 4,
                       borderRadius: BorderRadius.circular(12),
                       child: ConstrainedBox(
-                        constraints:
-                            const BoxConstraints(maxHeight: 250),
+                        constraints: const BoxConstraints(maxHeight: 250),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: ListView.builder(
@@ -395,8 +386,7 @@ class StepVozidlo extends StatelessWidget {
                                         height: 28,
                                         fit: BoxFit.contain,
                                         errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                                Icons.directions_car,
+                                            const Icon(Icons.directions_car,
                                                 color: Colors.blue))
                                     : const Icon(Icons.directions_car,
                                         color: Colors.blue),
@@ -434,17 +424,15 @@ class StepVozidlo extends StatelessWidget {
               ),
               Autocomplete<String>(
                 key: ValueKey('model_$autocompleteResetKey'),
-                initialValue:
-                    TextEditingValue(text: modelController.text),
+                initialValue: TextEditingValue(text: modelController.text),
                 displayStringForOption: (m) => m,
                 optionsBuilder: (TextEditingValue value) {
                   if (dostupneModely.isEmpty) {
                     return const Iterable<String>.empty();
                   }
                   if (value.text.isEmpty) return dostupneModely;
-                  return dostupneModely.where((m) => m
-                      .toLowerCase()
-                      .contains(value.text.toLowerCase()));
+                  return dostupneModely.where((m) =>
+                      m.toLowerCase().contains(value.text.toLowerCase()));
                 },
                 onSelected: (String val) {
                   modelController.text = val;
@@ -467,10 +455,8 @@ class StepVozidlo extends StatelessWidget {
                           size: 18),
                       suffixIcon: onScanModel != null
                           ? IconButton(
-                              icon: const Icon(
-                                  Icons.qr_code_scanner_rounded,
-                                  size: 18,
-                                  color: TokColors.steel),
+                              icon: const Icon(Icons.qr_code_scanner_rounded,
+                                  size: 18, color: TokColors.steel),
                               onPressed: onScanModel,
                               tooltip: 'Naskenovat model fotoaparátem')
                           : null,
@@ -481,15 +467,13 @@ class StepVozidlo extends StatelessWidget {
                       contentPadding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 14),
                       enabledBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(TokRadius.md),
+                          borderRadius: BorderRadius.circular(TokRadius.md),
                           borderSide: BorderSide(
                               color: isDark
                                   ? Colors.white.withValues(alpha: 0.08)
                                   : context.tok.line)),
                       focusedBorder: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(TokRadius.md),
+                          borderRadius: BorderRadius.circular(TokRadius.md),
                           borderSide: const BorderSide(
                               color: TokColors.accent, width: 1.5)),
                     ),
@@ -503,8 +487,7 @@ class StepVozidlo extends StatelessWidget {
                       elevation: 4,
                       borderRadius: BorderRadius.circular(12),
                       child: ConstrainedBox(
-                        constraints:
-                            const BoxConstraints(maxHeight: 200),
+                        constraints: const BoxConstraints(maxHeight: 200),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: ListView.builder(
@@ -530,16 +513,16 @@ class StepVozidlo extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          buildInput('Rok výroby', Icons.calendar_today,
-              rokVyrobyController, isDark,
+          buildInput(
+              'Rok výroby', Icons.calendar_today, rokVyrobyController, isDark,
               numbersOnly: true, onScan: onScan),
           const SizedBox(height: 20),
           buildInput('Motorizace (např. 2.0 TDI)', Icons.settings,
               motorizaceController, isDark,
               onScan: onScan),
           const SizedBox(height: 20),
-          buildDropdown('Typ paliva', Icons.local_gas_station,
-              vybranePalivo, moznostiPaliva, onPalivoChanged, isDark),
+          buildDropdown('Typ paliva', Icons.local_gas_station, vybranePalivo,
+              moznostiPaliva, onPalivoChanged, isDark),
           const SizedBox(height: 20),
           buildDropdown(
               'Převodovka',
@@ -549,13 +532,8 @@ class StepVozidlo extends StatelessWidget {
               onPrevodovkaChanged,
               isDark),
           const SizedBox(height: 20),
-          buildDropdown(
-              'Typ karosérie',
-              Icons.directions_car_outlined,
-              typKaroserie,
-              moznostiKaroserie,
-              onKaroserieChanged,
-              isDark),
+          buildDropdown('Typ karosérie', Icons.directions_car_outlined,
+              typKaroserie, moznostiKaroserie, onKaroserieChanged, isDark),
         ],
       ),
     );
