@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'vozidlo_detail.dart';
+import '../../core/design_tokens.dart';
 
 class VozidlaPage extends StatefulWidget {
   const VozidlaPage({super.key});
@@ -222,7 +223,7 @@ class _VozidlaPageState extends State<VozidlaPage> {
                   final maStk = stkM.isNotEmpty && stkR.isNotEmpty;
 
                   return Card(
-                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                    color: isDark ? TokColors.darkSurface : Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                       side: BorderSide(

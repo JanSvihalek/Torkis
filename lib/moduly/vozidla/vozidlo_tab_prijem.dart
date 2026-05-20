@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../historie_prijmu/prijem_detail.dart';
 import '../../core/shared_widgets.dart';
+import '../../core/design_tokens.dart';
 
 class VozidloPrijemTab extends StatelessWidget {
   final bool isDark;
@@ -77,7 +78,7 @@ class VozidloPrijemTab extends StatelessWidget {
             final prijal = data['prijal_jmeno']?.toString() ?? '';
 
             return Card(
-              color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+              color: isDark ? TokColors.darkSurface : Colors.white,
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),

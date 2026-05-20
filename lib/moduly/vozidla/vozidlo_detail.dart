@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'vozidlo_tab_info.dart';
 import 'vozidlo_tab_prijem.dart';
+import '../../core/design_tokens.dart';
 
 class VozidloDetailScreen extends StatelessWidget {
   final String vozidloDocId;
@@ -387,7 +388,7 @@ class VozidloDetailScreen extends StatelessWidget {
               title: Text(spz,
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               backgroundColor:
-                  isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                  isDark ? TokColors.darkSurface : Colors.white,
               elevation: 0,
               actions: [
                 IconButton(

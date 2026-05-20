@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../zakaznici/zakaznik_detail.dart';
+import '../../core/design_tokens.dart';
 
 class VozidloInfoTab extends StatelessWidget {
   final bool isDark;
@@ -60,7 +61,7 @@ class VozidloInfoTab extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFF0D2137), Color(0xFF1E3A5F)],
+                    colors: [TokColors.ink, TokColors.inkSoft],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -232,7 +233,7 @@ class VozidloInfoTab extends StatelessWidget {
     final container = Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        color: isDark ? TokColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),

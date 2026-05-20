@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
 import '../../core/pdf_generator.dart';
+import '../../core/design_tokens.dart';
 import '../vozidla/vozidlo_detail.dart';
 import '../zakaznici/zakaznik_detail.dart';
 
@@ -114,7 +115,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
           d['spz']?.toString() ?? 'Detail příjmu',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
         elevation: 0,
         actions: [
           IconButton(
@@ -384,7 +385,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     final container = Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        color: isDark ? TokColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
@@ -453,7 +454,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        color: isDark ? TokColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
@@ -552,7 +553,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   Widget _buildPodpisSection(bool isDark, String podpisUrl) {
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        color: isDark ? TokColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
             color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
