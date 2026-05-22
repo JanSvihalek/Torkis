@@ -197,7 +197,7 @@ class _SettingsPageState extends State<SettingsPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
         title: Text(editIndex != null ? 'Upravit šablonu' : 'Nová šablona'),
         content: TextField(
           controller: ctrl,
@@ -291,7 +291,7 @@ class _SettingsPageState extends State<SettingsPage> {
             return Container(
               height: MediaQuery.of(context).size.height * 0.65,
               decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                color: isDark ? TokColors.darkSurface : Colors.white,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
               ),
               padding: const EdgeInsets.all(20),
@@ -326,7 +326,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         for (int i = 0; i < lokalniPoradi.length; i++)
                           Card(
                             key: ValueKey(lokalniPoradi[i]),
-                            color: isDark ? const Color(0xFF1E3A5F) : Colors.grey[50],
+                            color: isDark ? TokColors.darkSurface : Colors.grey[50],
                             elevation: 0,
                             margin: const EdgeInsets.symmetric(vertical: 5),
                             child: ListTile(
@@ -478,6 +478,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
+                  minimumSize: Size.zero,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   shape: RoundedRectangleBorder(
@@ -564,7 +565,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     // NOVÁ TLAČÍTKA PRO KONFIGURÁTOR MÍSTO TEXTOVÝCH POLÍ
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                        color: isDark ? TokColors.darkSurface : Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey.withOpacity(0.2)),
                       ),
@@ -579,7 +580,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Container(
                       decoration: BoxDecoration(
                           color: isDark
-                              ? const Color(0xFF1E3A5F)
+                              ? TokColors.darkSurface
                               : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10)),
                       child: SwitchListTile(
@@ -597,7 +598,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Container(
                       decoration: BoxDecoration(
                           color: isDark
-                              ? const Color(0xFF1E3A5F)
+                              ? TokColors.darkSurface
                               : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10)),
                       child: SwitchListTile(
@@ -643,7 +644,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? const Color(0xFF1E3A5F)
+                            ? TokColors.darkSurface
                             : Colors.grey[50],
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
@@ -708,7 +709,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 isDark: isDark,
                 children: [
                   Card(
-                    color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                    color: isDark ? TokColors.darkSurface : Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -734,7 +735,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   Container(
                     decoration: BoxDecoration(
                       color:
-                          isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                          isDark ? TokColors.darkSurface : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.grey.withOpacity(0.2)),
                     ),
@@ -753,7 +754,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 10),
                     Container(
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+                        color: isDark ? TokColors.darkSurface : Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.grey.withOpacity(0.2)),
                       ),
@@ -791,7 +792,7 @@ class _SettingsPageState extends State<SettingsPage> {
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        color: isDark ? TokColors.darkSurface : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           if (!isDark)
@@ -983,7 +984,7 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.85, // Vyšší sheet kvůli klávesnici
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        color: isDark ? TokColors.darkSurface : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),

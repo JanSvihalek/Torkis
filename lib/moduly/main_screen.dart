@@ -314,8 +314,7 @@ class MenuPage extends StatelessWidget {
             const HistoriePrijmuPage()),
       if (maPristup('ukony'))
         _ModuleEntry('Úkony', Icons.playlist_add_check_rounded,
-            const UkonyPage(),
-            accent: true),
+            const UkonyPage()),
       if (maPristup('zamestnanci'))
         _ModuleEntry('Tým', Icons.badge_outlined, const ZamestnanciPage()),
       if (maPristup('statistiky'))
@@ -381,7 +380,6 @@ class MenuPage extends StatelessWidget {
                 .map((e) => TorkisModuleCard(
                       icon: e.icon,
                       label: e.label,
-                      accent: e.accent,
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -448,9 +446,7 @@ class _ModuleEntry {
   final String label;
   final IconData icon;
   final Widget page;
-  final bool accent;
-  const _ModuleEntry(this.label, this.icon, this.page,
-      {this.accent = false});
+  const _ModuleEntry(this.label, this.icon, this.page);
 }
 
 class _ContactCard extends StatelessWidget {
