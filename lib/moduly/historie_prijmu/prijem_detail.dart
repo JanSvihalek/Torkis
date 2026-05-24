@@ -5,6 +5,7 @@ import 'package:printing/printing.dart';
 import 'dart:typed_data';
 import '../../core/pdf_generator.dart';
 import '../../core/design_tokens.dart';
+import '../../core/constants.dart';
 import '../vozidla/vozidlo_detail.dart';
 import '../zakaznici/zakaznik_detail.dart';
 
@@ -26,6 +27,19 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     if (timestamp == null) return '-';
     final dt = (timestamp as Timestamp).toDate();
     return DateFormat('dd.MM.yyyy HH:mm').format(dt);
+  }
+
+  String _formatDateHeader(dynamic timestamp) {
+    if (timestamp == null) return '-';
+    final dt = (timestamp as Timestamp).toDate();
+    return DateFormat('dd. MM. yyyy  HH:mm').format(dt);
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
   }
 
   Future<Uint8List> _generatePdfBytes() async {
@@ -109,7 +123,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     final zakaznik = d['zakaznik'] as Map<String, dynamic>? ?? {};
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: context.tok.bg,
       appBar: AppBar(
         title: Text(
           d['spz']?.toString() ?? 'Detail příjmu',
@@ -150,51 +164,117 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     final pozadavky =
         (d['pozadavky_zakaznika'] as List<dynamic>? ?? []).cast<String>();
 
+    final spz = d['spz']?.toString() ?? '';
+    final vin = d['vin']?.toString() ?? '';
+    final stav = d['stav']?.toString() ?? 'Přijato';
+    final stavColor = getStatusColor(stav);
+    final prijal = d['prijal_jmeno']?.toString() ?? '';
+    final cisloZakazky = d['cislo_zakazky']?.toString() ?? '';
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Tmavý gradient header ────────────────────────
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF0B1A2E), Color(0xFF0D1F35)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.schedule, color: Colors.blue, size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Přijato: ${_formatDate(d['cas_prijeti'])}',
-                        style: const TextStyle(
-                            color: Colors.blue, fontWeight: FontWeight.w600),
-                      ),
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                          shape: BoxShape.circle, color: stavColor),
                     ),
+                    const SizedBox(width: 6),
                     Text(
-                      'Zakázka: ${d['cislo_zakazky'] ?? ''}',
-                      style: const TextStyle(color: Colors.blue, fontSize: 12),
+                      stav.toUpperCase(),
+                      style: TextStyle(
+                        color: stavColor.withValues(alpha: 0.9),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ],
                 ),
-                if (d['prijal_jmeno'] != null) ...[
-                  const SizedBox(height: 4),
+                const SizedBox(height: 8),
+                if (spz.isNotEmpty)
+                  Text(spz,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5)),
+                if (vin.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(vin,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0)),
+                ],
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDateHeader(d['cas_prijeti']),
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12),
+                    ),
+                    Text(
+                      cisloZakazky,
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12),
+                    ),
+                  ],
+                ),
+                if (prijal.isNotEmpty) ...[
+                  const SizedBox(height: 8),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(Icons.person_outline,
-                          color: Colors.blue, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Přijal: ${d['prijal_jmeno']}',
-                        style: TextStyle(
-                            color: Colors.blue.withValues(alpha: 0.8),
-                            fontSize: 13),
+                      Text('Přijal',
+                          style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 12)),
+                      Row(
+                        children: [
+                          Container(
+                            width: 22,
+                            height: 22,
+                            decoration: const BoxDecoration(
+                                shape: BoxShape.circle, color: Colors.blue),
+                            child: Center(
+                              child: Text(_initials(prijal),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(prijal,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500)),
+                        ],
                       ),
                     ],
                   ),
@@ -202,7 +282,12 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 15),
+          // ── Sekce karet ──────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
           _sectionCard(isDark,
               icon: Icons.directions_car,
               color: Colors.blue,
@@ -366,7 +451,10 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 30),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
         ],
       ),
     );
