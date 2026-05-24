@@ -3,6 +3,31 @@ import '../../core/design_tokens.dart';
 import '../../core/torkis_ui.dart';
 import 'prijem_vozidla_helpers.dart';
 
+const _kZemeRychle = ['CZ', 'SK', 'DE', 'AT', 'PL'];
+
+const _kVsechnyZeme = {
+  'CZ': '🇨🇿 Česká republika',
+  'SK': '🇸🇰 Slovensko',
+  'DE': '🇩🇪 Německo',
+  'AT': '🇦🇹 Rakousko',
+  'PL': '🇵🇱 Polsko',
+  'HU': '🇭🇺 Maďarsko',
+  'FR': '🇫🇷 Francie',
+  'IT': '🇮🇹 Itálie',
+  'GB': '🇬🇧 Velká Británie',
+  'NL': '🇳🇱 Nizozemsko',
+  'BE': '🇧🇪 Belgie',
+  'RO': '🇷🇴 Rumunsko',
+  'UA': '🇺🇦 Ukrajina',
+  'HR': '🇭🇷 Chorvatsko',
+  'SI': '🇸🇮 Slovinsko',
+  'BG': '🇧🇬 Bulharsko',
+  'LT': '🇱🇹 Litva',
+  'LV': '🇱🇻 Lotyšsko',
+  'EE': '🇪🇪 Estonsko',
+  'RU': '🇷🇺 Rusko',
+};
+
 /// Krok 1 – Identifikace vozidla.
 /// Pole: číslo zakázky, SPZ, VIN, značka + model (autocomplete), rok výroby,
 /// palivo, převodovka, motorizace.
@@ -59,6 +84,10 @@ class StepVozidlo extends StatelessWidget {
   final List<String> moznostiKaroserie;
   final ValueChanged<String?> onKaroserieChanged;
 
+  // Země registrace
+  final String zemeRegistrace;
+  final ValueChanged<String> onZemeChanged;
+
   const StepVozidlo({
     super.key,
     required this.isDark,
@@ -98,6 +127,8 @@ class StepVozidlo extends StatelessWidget {
     required this.typKaroserie,
     required this.moznostiKaroserie,
     required this.onKaroserieChanged,
+    required this.zemeRegistrace,
+    required this.onZemeChanged,
   });
 
   @override
@@ -222,6 +253,103 @@ class StepVozidlo extends StatelessWidget {
             ),
             const SizedBox(height: TokSpace.xl),
           ],
+          // ── Země registrace ──────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6, left: 2),
+            child: Text('Země registrace',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: tok.textSecondary,
+                    letterSpacing: 0.2)),
+          ),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              ..._kZemeRychle.map((kod) => ChoiceChip(
+                    label: Text(
+                      '${_kVsechnyZeme[kod]!.split(' ').first} $kod',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: zemeRegistrace == kod
+                            ? Colors.white
+                            : tok.textPrimary,
+                      ),
+                    ),
+                    selected: zemeRegistrace == kod,
+                    selectedColor: TokColors.accent,
+                    backgroundColor: tok.surface,
+                    side: BorderSide(
+                      color: zemeRegistrace == kod
+                          ? TokColors.accent
+                          : tok.line,
+                    ),
+                    showCheckmark: false,
+                    onSelected: (_) => onZemeChanged(kod),
+                  )),
+              ChoiceChip(
+                label: Text(
+                  _kZemeRychle.contains(zemeRegistrace)
+                      ? 'Další...'
+                      : '${_kVsechnyZeme[zemeRegistrace]!.split(' ').first} $zemeRegistrace',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: !_kZemeRychle.contains(zemeRegistrace)
+                        ? Colors.white
+                        : tok.textSecondary,
+                  ),
+                ),
+                selected: !_kZemeRychle.contains(zemeRegistrace),
+                selectedColor: TokColors.accent,
+                backgroundColor: tok.surface,
+                side: BorderSide(
+                  color: !_kZemeRychle.contains(zemeRegistrace)
+                      ? TokColors.accent
+                      : tok.line,
+                ),
+                showCheckmark: false,
+                onSelected: (_) => showModalBottomSheet(
+                  context: context,
+                  backgroundColor: tok.surface,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (_) => ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text('Vyberte zemi registrace',
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: tok.textPrimary)),
+                      ),
+                      ..._kVsechnyZeme.entries.map((e) => ListTile(
+                            title: Text(e.value,
+                                style:
+                                    TextStyle(color: tok.textPrimary)),
+                            trailing: zemeRegistrace == e.key
+                                ? const Icon(Icons.check,
+                                    color: TokColors.accent)
+                                : null,
+                            onTap: () {
+                              onZemeChanged(e.key);
+                              Navigator.pop(context);
+                            },
+                          )),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: TokSpace.lg),
+          // ── SPZ ──────────────────────────────────────────
           buildInput(
             'SPZ vozidla',
             Icons.confirmation_number_outlined,

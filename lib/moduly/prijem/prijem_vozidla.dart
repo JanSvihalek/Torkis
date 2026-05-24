@@ -88,6 +88,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   ];
 
   String _typKaroserie = 'Nespecifikováno';
+  String _zemeRegistrace = 'CZ';
   Uint8List? _schemaKresba;
 
   String _vybranaPrevodovka = 'Manuální';
@@ -965,6 +966,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'servis_id': _sId,
         'zakaznik_id': zakaznikId,
         'spz': spz,
+        'zeme_registrace': _zemeRegistrace,
         'vin': _vinController.text.trim().toUpperCase(),
         'znacka': _znackaController.text.trim(),
         'model': _modelController.text.trim(),
@@ -990,6 +992,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'zakaznik_id': zakaznikId,
       'cislo_zakazky': zakazkaId,
       'spz': spz,
+      'zeme_registrace': _zemeRegistrace,
       'vin': _vinController.text.trim().toUpperCase(),
       'znacka': _znackaController.text.trim(),
       'model': _modelController.text.trim(),
@@ -1413,6 +1416,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
         typKaroserie: _typKaroserie,
         moznostiKaroserie: kTypyKaroserie,
         onKaroserieChanged: (v) => setState(() => _typKaroserie = v!),
+        zemeRegistrace: _zemeRegistrace,
+        onZemeChanged: (v) => setState(() => _zemeRegistrace = v),
       );
 
   // ── STRANA 2: Zákazník ────────────────────────────────
