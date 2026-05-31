@@ -34,6 +34,7 @@ class VozidloInfoTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tok = context.tok;
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +59,8 @@ class VozidloInfoTab extends StatelessWidget {
               }
               return Container(
                 width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                padding: const EdgeInsets.fromLTRB(
+                    TokSpace.xl, TokSpace.xxl, TokSpace.xl, TokSpace.xxl),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [TokColors.ink, TokColors.inkSoft],
@@ -72,10 +74,10 @@ class VozidloInfoTab extends StatelessWidget {
                       Container(
                         height: 56,
                         constraints: const BoxConstraints(maxWidth: 120),
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(TokSpace.sm),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(TokRadius.md),
                         ),
                         child: Image.network(
                           logoUrl,
@@ -83,7 +85,7 @@ class VozidloInfoTab extends StatelessWidget {
                           errorBuilder: (_, __, ___) => const SizedBox(),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: TokSpace.lg),
                     ],
                     // SPZ tabulka
                     Container(
@@ -91,14 +93,7 @@ class VozidloInfoTab extends StatelessWidget {
                           horizontal: 22, vertical: 10),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(TokRadius.md),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -106,7 +101,7 @@ class VozidloInfoTab extends StatelessWidget {
                           Container(
                             width: 14,
                             height: 24,
-                            color: Colors.blue[700],
+                            color: TokColors.accent2,
                             margin: const EdgeInsets.only(right: 12),
                           ),
                           Text(
@@ -115,14 +110,14 @@ class VozidloInfoTab extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                               fontSize: 32,
                               letterSpacing: 2,
-                              color: Colors.black,
+                              color: TokColors.ink,
                             ),
                           ),
                         ],
                       ),
                     ),
                     if (znackaNazev.isNotEmpty) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: TokSpace.md),
                       Text(
                         '${autoData['znacka'] ?? ''} ${autoData['model'] ?? ''}'
                             .trim(),
@@ -141,28 +136,29 @@ class VozidloInfoTab extends StatelessWidget {
 
           // ── Sekce karet ────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(TokSpace.xl),
             child: Column(
               children: [
                 _sectionCard(
-                  isDark,
+                  tok,
                   icon: Icons.directions_car,
-                  color: Colors.blue,
                   title: 'Technické údaje',
                   children: [
-                    _infoRow('Značka a model',
+                    _infoRow(tok, 'Značka a model',
                         '${autoData['znacka'] ?? ''} ${autoData['model'] ?? ''}'
                             .trim()),
-                    _infoRow('Motorizace', autoData['motorizace']),
-                    _infoRow('VIN', autoData['vin']),
-                    _infoRow('Rok výroby', autoData['rok_vyroby']),
-                    _infoRow('Palivo', autoData['palivo']),
-                    _infoRow('Převodovka', autoData['prevodovka']),
+                    _infoRow(tok, 'Motorizace', autoData['motorizace']),
+                    _infoRow(tok, 'VIN', autoData['vin']),
+                    _infoRow(tok, 'Rok výroby', autoData['rok_vyroby']),
+                    _infoRow(tok, 'Palivo', autoData['palivo']),
+                    _infoRow(tok, 'Převodovka', autoData['prevodovka']),
                     _infoRow(
+                      tok,
                       'Tachometr',
                       tacho.isNotEmpty ? '$tacho km' : null,
                     ),
                     _infoRow(
+                      tok,
                       'Platnost STK',
                       stkM.isNotEmpty && stkR.isNotEmpty
                           ? '$stkM / $stkR'
@@ -171,7 +167,7 @@ class VozidloInfoTab extends StatelessWidget {
                   ],
                 ),
                 if (zakaznikId.isNotEmpty) ...[
-                  const SizedBox(height: 15),
+                  const SizedBox(height: TokSpace.lg),
                   FutureBuilder<QuerySnapshot>(
                     future: FirebaseFirestore.instance
                         .collection('zakaznici')
@@ -190,9 +186,8 @@ class VozidloInfoTab extends StatelessWidget {
                       final zd = snap.data!.docs.first.data()
                           as Map<String, dynamic>;
                       return _sectionCard(
-                        isDark,
+                        tok,
                         icon: Icons.person,
-                        color: Colors.teal,
                         title: 'Majitel vozidla',
                         onTap: () => Navigator.push(
                           context,
@@ -202,16 +197,16 @@ class VozidloInfoTab extends StatelessWidget {
                           ),
                         ),
                         children: [
-                          _infoRow('Jméno', zd['jmeno']),
-                          _infoRow('Telefon', zd['telefon']),
-                          _infoRow('E-mail', zd['email']),
-                          _infoRow('Adresa', zd['adresa']),
+                          _infoRow(tok, 'Jméno', zd['jmeno']),
+                          _infoRow(tok, 'Telefon', zd['telefon']),
+                          _infoRow(tok, 'E-mail', zd['email']),
+                          _infoRow(tok, 'Adresa', zd['adresa']),
                         ],
                       );
                     },
                   ),
                 ],
-                const SizedBox(height: 20),
+                const SizedBox(height: TokSpace.xl),
               ],
             ),
           ),
@@ -221,9 +216,8 @@ class VozidloInfoTab extends StatelessWidget {
   }
 
   Widget _sectionCard(
-    bool isDark, {
+    TorkisTokens tok, {
     required IconData icon,
-    required Color color,
     required String title,
     required List<Widget> children,
     VoidCallback? onTap,
@@ -233,31 +227,31 @@ class VozidloInfoTab extends StatelessWidget {
     final container = Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: isDark ? TokColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-            color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+        color: tok.surface,
+        borderRadius: BorderRadius.circular(TokRadius.xl),
+        border: Border.all(color: tok.line),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(TokSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
+              Icon(icon, color: tok.accent, size: 20),
+              const SizedBox(width: TokSpace.sm),
               Expanded(
                 child: Text(title,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: color)),
+                        color: tok.textPrimary)),
               ),
               if (onTap != null)
-                Icon(Icons.arrow_forward_ios, size: 14, color: color),
+                Icon(Icons.arrow_forward_ios,
+                    size: 14, color: tok.textSecondary),
             ],
           ),
-          const Divider(height: 20),
+          Divider(height: TokSpace.xl, color: tok.line),
           ...children,
         ],
       ),
@@ -265,28 +259,30 @@ class VozidloInfoTab extends StatelessWidget {
     if (onTap == null) return container;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
+      borderRadius: BorderRadius.circular(TokRadius.xl),
       child: container,
     );
   }
 
-  Widget _infoRow(String label, dynamic value) {
+  Widget _infoRow(TorkisTokens tok, String label, dynamic value) {
     final val = value?.toString() ?? '';
     if (val.isEmpty) return const SizedBox();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: TokSpace.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 140,
             child: Text(label,
-                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                style: TextStyle(color: tok.textSecondary, fontSize: 13)),
           ),
           Expanded(
             child: Text(val,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w500, fontSize: 14)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: tok.textPrimary)),
           ),
         ],
       ),
