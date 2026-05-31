@@ -23,11 +23,13 @@ class ZakaznikInfoTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final tok = context.tok;
 
+    final jmeno = dataZakaznika['jmeno']?.toString().trim() ?? '';
     final ico = dataZakaznika['ico']?.toString() ?? '';
     final dic = dataZakaznika['dic']?.toString() ?? '';
     final telefon = dataZakaznika['telefon']?.toString() ?? '';
     final email = dataZakaznika['email']?.toString() ?? '';
     final adresa = dataZakaznika['adresa']?.toString() ?? '';
+    final jeFirma = ico.isNotEmpty;
 
     final contactRows = <Widget>[
       if (ico.isNotEmpty)
@@ -53,6 +55,55 @@ class ZakaznikInfoTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Identita zákazníka ──────────────────────────────────
+          Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tok.accent,
+                  borderRadius: BorderRadius.circular(TokRadius.lg),
+                ),
+                child: Text(
+                  _initials(jmeno),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: TokSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      jmeno.isEmpty ? 'Neznámý zákazník' : jmeno,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: tok.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      jeFirma ? 'Firma' : 'Soukromá osoba',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: tok.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: TokSpace.xl),
+
           // ── Kontaktní karta ─────────────────────────────────────
           if (contactRows.isNotEmpty)
             Container(
@@ -160,6 +211,18 @@ class ZakaznikInfoTab extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // Iniciály z jména / názvu firmy (max 2 znaky).
+  String _initials(String jmeno) {
+    final slova = jmeno
+        .split(RegExp(r'\s+'))
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (slova.isEmpty) return '?';
+    if (slova.length == 1) return slova.first.characters.first.toUpperCase();
+    return (slova.first.characters.first + slova[1].characters.first)
+        .toUpperCase();
   }
 
   // ── Řádek kontaktu s ikonovou dlaždicí ────────────────────────
