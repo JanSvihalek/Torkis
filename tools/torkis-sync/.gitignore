@@ -1,0 +1,8 @@
+# Build výstupy
+bin/
+obj/
+
+# TAJNÉ — nikdy necommitovat
+appsettings.json
+service-account.json
+*.log
