@@ -22,6 +22,22 @@ class StepZakaznik extends StatelessWidget {
   final List<Map<String, String>> predvolby;
   final ValueChanged<String> onPredvolbaChanged;
 
+  final String pravniForma;
+  final ValueChanged<String> onPravniFormaChanged;
+
+  static const pravniFormyMoznosti = [
+    'Fyzická osoba',
+    'OSVČ',
+    's.r.o.',
+    'a.s.',
+    'v.o.s.',
+    'k.s.',
+    'z.s.',
+    'o.p.s.',
+    'Příspěvková org.',
+    'Jiná',
+  ];
+
   const StepZakaznik({
     super.key,
     required this.isDark,
@@ -38,6 +54,8 @@ class StepZakaznik extends StatelessWidget {
     required this.telPredvolba,
     required this.predvolby,
     required this.onPredvolbaChanged,
+    required this.pravniForma,
+    required this.onPravniFormaChanged,
   });
 
   @override
@@ -124,6 +142,72 @@ class StepZakaznik extends StatelessWidget {
                                   ? Colors.grey[800]!
                                   : Colors.grey[300]!,
                               width: 1))),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Právní forma',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey)),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                    boxShadow: [
+                      if (!isDark)
+                        BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4))
+                    ],
+                    borderRadius: BorderRadius.circular(15)),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.account_balance,
+                          color: Colors.blue),
+                      filled: true,
+                      fillColor: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.white,
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.grey[800]!
+                                  : Colors.grey[300]!,
+                              width: 1)),
+                      focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: const BorderSide(
+                              color: Colors.blue, width: 2)),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide(
+                              color: isDark
+                                  ? Colors.grey[800]!
+                                  : Colors.grey[300]!,
+                              width: 1))),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: pravniFormyMoznosti.contains(pravniForma)
+                          ? pravniForma
+                          : 'Jiná',
+                      isDense: true,
+                      dropdownColor:
+                          isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                      items: pravniFormyMoznosti
+                          .map((f) => DropdownMenuItem(
+                              value: f, child: Text(f)))
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null) onPravniFormaChanged(v);
+                      },
+                    ),
+                  ),
                 ),
               ),
             ],

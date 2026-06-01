@@ -66,6 +66,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   String? _vybranyZakaznikId;
   List<Map<String, dynamic>> _nalezenaVozidla = [];
+  String _pravniForma = 'Fyzická osoba';
+
+  List<String> _typyZaznamu = ['Servis', 'Výkup'];
+  String _typZaznamu = 'Servis';
+  String _defaultTypZaznamu = 'Servis';
 
   final _zakazkaController = TextEditingController();
   final _spzController = TextEditingController();
@@ -294,6 +299,12 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 _defaultOdeslatEmail = data['default_odesilat_emaily'] as bool;
                 _odeslatEmail = _defaultOdeslatEmail;
               }
+              final typy = List<String>.from(
+                  data['typy_zaznamu'] ?? ['Servis', 'Výkup']);
+              _typyZaznamu = typy.isNotEmpty ? typy : ['Servis', 'Výkup'];
+              _defaultTypZaznamu =
+                  data['default_typ_zaznamu']?.toString() ?? _typyZaznamu.first;
+              _typZaznamu = _defaultTypZaznamu;
             });
           }
         }
@@ -647,6 +658,29 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   String get _plneTelCislo => '$_telPredvolba${_telefonController.text.trim()}';
 
+  static const _aresPravniFormyKody = {
+    '101': 'Fyzická osoba',
+    '102': 'Fyzická osoba',
+    '104': 'Fyzická osoba',
+    '105': 'Fyzická osoba',
+    '111': 'v.o.s.',
+    '112': 'v.o.s.',
+    '113': 'k.s.',
+    '117': 's.r.o.',
+    '118': 's.r.o.',
+    '121': 'a.s.',
+    '141': 'o.p.s.',
+    '205': 'Státní podnik',
+    '301': 'Příspěvková org.',
+    '601': 'Příspěvková org.',
+    '706': 'z.s.',
+    '741': 'z.s.',
+  };
+
+  String _mapAresPravniForma(dynamic kod) {
+    return _aresPravniFormyKody[kod?.toString()] ?? _pravniForma;
+  }
+
   /// Dotáže ARES API na IČO a přednaplní jméno a adresu zákazníka (strana 2).
   Future<void> _fetchAresData() async {
     final ico = _icoController.text.trim();
@@ -664,6 +698,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         final data = json.decode(utf8.decode(response.bodyBytes));
         setState(() {
           _jmenoController.text = data['obchodniJmeno'] ?? '';
+          _pravniForma = _mapAresPravniForma(data['pravniForma']);
           final sidlo = data['sidlo'] ?? {};
           final ulice = sidlo['nazevUlice'] ?? sidlo['nazevObce'] ?? '';
           final cp =
@@ -711,6 +746,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
             _vybranyZakaznikId = zakaznik['id_zakaznika'];
             _jmenoController.text = zakaznik['jmeno'] ?? '';
             _icoController.text = zakaznik['ico'] ?? '';
+            _pravniForma = zakaznik['pravni_forma']?.toString() ?? 'Fyzická osoba';
             _uliceController.text = zakaznik['ulice']?.toString() ??
                 (zakaznik['adresa']?.toString() ?? '');
             _mestoController.text = zakaznik['mesto']?.toString() ?? '';
@@ -947,6 +983,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'id_zakaznika': zakaznikId,
         'jmeno': _jmenoController.text.trim(),
         'ico': _icoController.text.trim(),
+        'pravni_forma': _pravniForma,
         'ulice': ulice,
         'mesto': mesto,
         'psc': psc,
@@ -990,6 +1027,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     Map<String, dynamic> zakazkaData = {
       'servis_id': _sId,
       'zakaznik_id': zakaznikId,
+      'typ_zaznamu': _typZaznamu,
       'cislo_zakazky': zakazkaId,
       'spz': spz,
       'zeme_registrace': _zemeRegistrace,
@@ -1005,6 +1043,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'id_zakaznika': zakaznikId,
         'jmeno': _jmenoController.text.trim(),
         'ico': _icoController.text.trim(),
+        'pravni_forma': _pravniForma,
         'ulice': ulice,
         'mesto': mesto,
         'psc': psc,
@@ -1096,8 +1135,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
   }
 
   void _resetForm() {
+    _typZaznamu = _defaultTypZaznamu;
     _jmenoController.clear();
     _icoController.clear();
+    _pravniForma = 'Fyzická osoba';
     _uliceController.clear();
     _mestoController.clear();
     _pscController.clear();
@@ -1418,6 +1459,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
         onKaroserieChanged: (v) => setState(() => _typKaroserie = v!),
         zemeRegistrace: _zemeRegistrace,
         onZemeChanged: (v) => setState(() => _zemeRegistrace = v),
+        typZaznamu: _typZaznamu,
+        typyZaznamu: _typyZaznamu,
+        onTypZaznamuChanged: (v) => setState(() => _typZaznamu = v),
       );
 
   // ── STRANA 2: Zákazník ────────────────────────────────
@@ -1436,6 +1480,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
         telPredvolba: _telPredvolba,
         predvolby: _predvolby,
         onPredvolbaChanged: (kod) => setState(() => _telPredvolba = kod),
+        pravniForma: _pravniForma,
+        onPravniFormaChanged: (v) => setState(() => _pravniForma = v),
       );
 
   void _pridatVlastniPoskozeni() {

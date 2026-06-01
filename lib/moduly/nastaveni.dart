@@ -35,6 +35,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _defaultEmail = true;
   bool _autoCisloZakazky = true;
   List<String> _sablonyZprav = [];
+  List<String> _typyZaznamu = ['Servis', 'Výkup'];
+  String _defaultTypZaznamu = 'Servis';
 
   // Uživatelské nastavení (pro všechny)
   bool _tmavyRezim = false;
@@ -107,6 +109,11 @@ class _SettingsPageState extends State<SettingsPage> {
             _defaultEmail = data['default_odesilat_emaily'] ?? true;
             _autoCisloZakazky = data['auto_cislo_zakazky'] ?? true;
             _sablonyZprav = List<String>.from(data['sablony_zprav'] ?? []);
+            _typyZaznamu = List<String>.from(
+                data['typy_zaznamu'] ?? ['Servis', 'Výkup']);
+            if (_typyZaznamu.isEmpty) _typyZaznamu = ['Servis', 'Výkup'];
+            _defaultTypZaznamu = data['default_typ_zaznamu']?.toString() ??
+                _typyZaznamu.first;
           });
         }
       }
@@ -189,6 +196,67 @@ class _SettingsPageState extends State<SettingsPage> {
         .collection('nastaveni_servisu')
         .doc(globalServisId)
         .set({'sablony_zprav': _sablonyZprav}, SetOptions(merge: true));
+  }
+
+  Future<void> _ulozitTypyZaznamu() async {
+    if (globalServisId == null) return;
+    await FirebaseFirestore.instance
+        .collection('nastaveni_servisu')
+        .doc(globalServisId)
+        .set({
+      'typy_zaznamu': _typyZaznamu,
+      'default_typ_zaznamu': _defaultTypZaznamu,
+    }, SetOptions(merge: true));
+  }
+
+  void _otevritDialogTypuZaznamu({String? initialText, int? editIndex}) {
+    final ctrl = TextEditingController(text: initialText ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
+        title: Text(editIndex != null ? 'Upravit typ' : 'Nový typ záznamu'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Název typu (např. Servis, Výkup...)',
+            filled: true,
+            fillColor:
+                isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Zrušit'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                if (editIndex != null) {
+                  if (_defaultTypZaznamu == _typyZaznamu[editIndex]) {
+                    _defaultTypZaznamu = text;
+                  }
+                  _typyZaznamu[editIndex] = text;
+                } else {
+                  _typyZaznamu.add(text);
+                }
+              });
+              await _ulozitTypyZaznamu();
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Uložit'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _otevritDialogSablony({String? initialText, int? editIndex}) {
@@ -695,6 +763,104 @@ class _SettingsPageState extends State<SettingsPage> {
                             borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
+                  ),
+                ],
+              ),
+
+              _buildCard(
+                title: 'Typy záznamu',
+                icon: Icons.label_outline,
+                color: Colors.indigo,
+                isDark: isDark,
+                children: [
+                  const Text(
+                    'Typy záznamu slouží k rozlišení příjmu vozidla (např. Servis, Výkup). První přidaný typ je výchozí.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  for (int i = 0; i < _typyZaznamu.length; i++)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? TokColors.darkSurface
+                            : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.grey[700]!
+                                : Colors.grey[200]!),
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 14),
+                        title: Text(_typyZaznamu[i],
+                            style: const TextStyle(fontSize: 13)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_defaultTypZaznamu == _typyZaznamu[i])
+                              const Padding(
+                                padding: EdgeInsets.only(right: 4),
+                                child: Chip(
+                                  label: Text('výchozí',
+                                      style: TextStyle(fontSize: 11)),
+                                  visualDensity: VisualDensity.compact,
+                                  padding: EdgeInsets.zero,
+                                ),
+                              ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined,
+                                  size: 18, color: Colors.blue),
+                              onPressed: () => _otevritDialogTypuZaznamu(
+                                  initialText: _typyZaznamu[i],
+                                  editIndex: i),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline,
+                                  size: 18, color: Colors.redAccent),
+                              onPressed: _typyZaznamu.length <= 1
+                                  ? null
+                                  : () async {
+                                      final deleted = _typyZaznamu[i];
+                                      setState(() {
+                                        _typyZaznamu.removeAt(i);
+                                        if (_defaultTypZaznamu == deleted) {
+                                          _defaultTypZaznamu =
+                                              _typyZaznamu.first;
+                                        }
+                                      });
+                                      await _ulozitTypyZaznamu();
+                                    },
+                            ),
+                          ],
+                        ),
+                        onLongPress: () async {
+                          setState(() => _defaultTypZaznamu = _typyZaznamu[i]);
+                          await _ulozitTypyZaznamu();
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _otevritDialogTypuZaznamu(),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Přidat typ'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.indigo,
+                        side: const BorderSide(color: Colors.indigo),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Dlouhý stisk = nastavit jako výchozí.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],
               ),
