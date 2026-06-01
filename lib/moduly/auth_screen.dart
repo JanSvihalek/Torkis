@@ -222,12 +222,14 @@ class _AuthScreenState extends State<AuthScreen> {
           ),
           SafeArea(
             child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                     const SizedBox(height: 24),
                     const Center(
                       child: TorkisMark(
@@ -365,6 +367,7 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
           ),
+        ),
         ],
       ),
     );

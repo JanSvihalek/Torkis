@@ -339,7 +339,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final Map<String, Map<String, dynamic>> vizual = {
       'prijem': {'nazev': 'Příjem vozidla', 'ikona': Icons.add_circle_outline_rounded},
-      'historie': {'nazev': 'Historie', 'ikona': Icons.history_rounded},
+      'historie_prijmu': {'nazev': 'Historie příjmů', 'ikona': Icons.history_rounded},
       'menu': {'nazev': 'Menu (Ostatní moduly)', 'ikona': Icons.grid_view},
       'vozidla': {'nazev': 'Vozidla', 'ikona': Icons.directions_car_outlined},
       'ukony': {'nazev': 'Úkony', 'ikona': Icons.playlist_add_check_circle_outlined},

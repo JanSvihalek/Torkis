@@ -26,7 +26,7 @@ class PrijemTabletSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: kSidebarWidth,
-      color: TokColors.ink,
+      color: TokColors.paper,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -55,7 +55,7 @@ class PrijemTabletSidebar extends StatelessWidget {
                   const SizedBox(width: 10),
                   const Text('Torkis',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: TokColors.ink,
                           fontWeight: FontWeight.w600,
                           fontSize: 15)),
                 ],
@@ -63,7 +63,7 @@ class PrijemTabletSidebar extends StatelessWidget {
             ),
           ),
           Divider(
-              color: TokColors.darkLine, height: 1, indent: 0, endIndent: 0),
+              color: TokColors.line, height: 1, indent: 0, endIndent: 0),
           const SizedBox(height: TokSpace.md),
           Expanded(
             child: ListView.builder(
@@ -80,11 +80,20 @@ class PrijemTabletSidebar extends StatelessWidget {
             ),
           ),
           Divider(
-              color: TokColors.darkLine, height: 1, indent: 0, endIndent: 0),
+              color: TokColors.line, height: 1, indent: 0, endIndent: 0),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                TokSpace.lg, TokSpace.md, TokSpace.lg, TokSpace.sm),
+            child: _SidebarProgress(
+              currentStep: currentStep,
+              totalSteps: totalSteps,
+            ),
+          ),
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.all(TokSpace.lg),
+              padding: const EdgeInsets.fromLTRB(
+                  TokSpace.lg, TokSpace.sm, TokSpace.lg, TokSpace.lg),
               child: _UserInitialsChip(),
             ),
           ),
@@ -136,8 +145,8 @@ class _SidebarStepTile extends StatelessWidget {
                     label,
                     style: TextStyle(
                       color: isActive
-                          ? Colors.white
-                          : TokColors.steelSoft,
+                          ? TokColors.accent
+                          : TokColors.steel,
                       fontSize: 13,
                       fontWeight: isActive
                           ? FontWeight.w600
@@ -147,7 +156,7 @@ class _SidebarStepTile extends StatelessWidget {
                 ),
                 if (isActive)
                   const Icon(Icons.chevron_right_rounded,
-                      size: 16, color: TokColors.steelSoft),
+                      size: 16, color: TokColors.accent),
               ],
             ),
           ),
@@ -175,7 +184,7 @@ class _StepBadge extends StatelessWidget {
     } else if (isCompleted) {
       bg = TokColors.success;
     } else {
-      bg = TokColors.darkSurface2;
+      bg = TokColors.line;
     }
     return Container(
       width: 22,
@@ -187,8 +196,8 @@ class _StepBadge extends StatelessWidget {
                 size: 12, color: Colors.white)
             : Text(
                 '${index + 1}',
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: isActive ? Colors.white : TokColors.steel,
                     fontSize: 11,
                     fontWeight: FontWeight.bold),
               ),
@@ -228,6 +237,64 @@ class _UserInitialsChip extends StatelessWidget {
     final email = user.email;
     if (email != null && email.isNotEmpty) return email[0].toUpperCase();
     return '?';
+  }
+}
+
+class _SidebarProgress extends StatelessWidget {
+  final int currentStep;
+  final int totalSteps;
+
+  const _SidebarProgress({
+    required this.currentStep,
+    required this.totalSteps,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'POSTUP',
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.1,
+                color: TokColors.steel,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              '${currentStep + 1} / $totalSteps',
+              style: const TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                color: TokColors.steel,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: List.generate(totalSteps, (i) {
+            final done = i <= currentStep;
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.only(right: i < totalSteps - 1 ? 3 : 0),
+                height: 3,
+                decoration: BoxDecoration(
+                  color: done ? TokColors.accent : TokColors.line,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
   }
 }
 

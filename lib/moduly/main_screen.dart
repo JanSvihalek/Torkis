@@ -24,7 +24,7 @@ import 'prijem/prijem_vozidla_tablet_layout.dart' show kTabletBreakpoint;
 
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
 final ValueNotifier<List<String>> navOrderNotifier =
-    ValueNotifier(['prijem', 'menu']);
+    ValueNotifier(['prijem', 'vozidla', 'zakaznici', 'menu']);
 
 bool maPristup(String navId) {
   // 1. Platnost předplatného — blokuje všechny role

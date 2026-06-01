@@ -190,6 +190,20 @@ class AuthGate extends StatelessWidget {
                     (p) => p.setStringList('nav_order', navOrder),
                   );
                 }
+              } else {
+                // Uživatel nemá uložený nav_order — nastavíme výchozí a uložíme
+                const defaultNav = ['prijem', 'vozidla', 'zakaznici', 'menu'];
+                navOrderNotifier.value = defaultNav;
+                SharedPreferences.getInstance().then(
+                  (p) => p.setStringList('nav_order', defaultNav),
+                );
+                final uid = FirebaseAuth.instance.currentUser?.uid;
+                if (uid != null) {
+                  FirebaseFirestore.instance
+                      .collection('uzivatele')
+                      .doc(uid)
+                      .set({'nav_order': defaultNav}, SetOptions(merge: true));
+                }
               }
               SharedPreferences.getInstance().then(
                 (p) => p.setBool('tmavy_rezim', tmavyRezim),
