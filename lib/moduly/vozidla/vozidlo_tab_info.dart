@@ -54,7 +54,8 @@ class VozidloInfoTab extends StatelessWidget {
         }
         return LayoutBuilder(
           builder: (context, constraints) {
-            if (constraints.maxWidth >= kTabletBreakpoint) {
+            if (constraints.maxWidth >= kTabletBreakpoint &&
+                MediaQuery.orientationOf(context) == Orientation.landscape) {
               return _buildTabletLayout(context, tok, logoUrl);
             }
             return _buildMobileLayout(context, tok, logoUrl);

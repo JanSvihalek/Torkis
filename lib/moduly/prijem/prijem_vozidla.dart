@@ -67,6 +67,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   String? _vybranyZakaznikId;
   List<Map<String, dynamic>> _nalezenaVozidla = [];
+  Map<String, dynamic>? _nalezenoVozidloInfo;
   String _pravniForma = 'Fyzická osoba';
 
   List<String> _typyZaznamu = ['Servis', 'Výkup'];
@@ -496,6 +497,16 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
+  String _formatTimestamp(dynamic ts) {
+    if (ts == null) return '';
+    try {
+      final dt = (ts as Timestamp).toDate();
+      return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')}.${dt.year}';
+    } catch (_) {
+      return '';
+    }
+  }
+
   /// Přenese data nalezeného vozidla (SPZ, VIN, značka…) i navázaného zákazníka do formuláře.
   Future<void> _aplikovatVybraneVozidlo(
       Map<String, dynamic> vozidloData) async {
@@ -526,6 +537,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
     });
 
+    String zakaznikJmeno = '';
     final zakaznikId = vozidloData['zakaznik_id'];
     if (zakaznikId != null && zakaznikId.toString().isNotEmpty) {
       final zakQuery = await FirebaseFirestore.instance
@@ -535,20 +547,74 @@ class _MainWizardPageState extends State<MainWizardPage> {
           .get();
       if (zakQuery.docs.isNotEmpty) {
         final z = zakQuery.docs.first.data();
-        setState(() {
-          _vybranyZakaznikId = z['id_zakaznika']?.toString();
-          _jmenoController.text = z['jmeno']?.toString() ?? '';
-          _icoController.text = z['ico']?.toString() ?? '';
-          _uliceController.text =
-              z['ulice']?.toString() ?? (z['adresa']?.toString() ?? '');
-          _mestoController.text = z['mesto']?.toString() ?? '';
-          _pscController.text = z['psc']?.toString() ?? '';
-          _nastavitTelefon(z['telefon']?.toString() ?? '');
-          _emailZController.text = z['email']?.toString() ?? '';
-        });
+        zakaznikJmeno = z['jmeno']?.toString() ?? '';
+        if (mounted) {
+          setState(() {
+            _vybranyZakaznikId = z['id_zakaznika']?.toString();
+            _jmenoController.text = zakaznikJmeno;
+            _icoController.text = z['ico']?.toString() ?? '';
+            _uliceController.text =
+                z['ulice']?.toString() ?? (z['adresa']?.toString() ?? '');
+            _mestoController.text = z['mesto']?.toString() ?? '';
+            _pscController.text = z['psc']?.toString() ?? '';
+            _nastavitTelefon(z['telefon']?.toString() ?? '');
+            _emailZController.text = z['email']?.toString() ?? '';
+          });
+        }
       }
     }
+
+    // Fetch poslední zakázky pro toto vozidlo
+    final spz = vozidloData['spz']?.toString() ?? '';
+    String posledniZakazkaCislo = '';
+    String posledniZakazkaDatum = '';
+    String posledniZakazkaStav = '';
+    if (spz.isNotEmpty) {
+      try {
+        final zakazkySnap = await FirebaseFirestore.instance
+            .collection('zakazky')
+            .where('servis_id', isEqualTo: _sId)
+            .where('spz', isEqualTo: spz)
+            .get();
+        if (zakazkySnap.docs.isNotEmpty) {
+          final docs = zakazkySnap.docs.map((d) => d.data()).toList()
+            ..sort((a, b) {
+              final ta = a['cas_prijeti'];
+              final tb = b['cas_prijeti'];
+              if (ta == null && tb == null) return 0;
+              if (ta == null) return 1;
+              if (tb == null) return -1;
+              return (tb as Timestamp).millisecondsSinceEpoch
+                  .compareTo((ta as Timestamp).millisecondsSinceEpoch);
+            });
+          final last = docs.first;
+          posledniZakazkaCislo = last['cislo_zakazky']?.toString() ?? '';
+          posledniZakazkaDatum = _formatTimestamp(last['cas_prijeti']);
+          posledniZakazkaStav = last['stav_zakazky']?.toString() ?? '';
+        }
+      } catch (_) {}
+    }
+
+    final stkM = vozidloData['stk_mesic']?.toString() ?? '';
+    final stkR = vozidloData['stk_rok']?.toString() ?? '';
+    final stk = (stkM.isNotEmpty && stkR.isNotEmpty) ? '$stkM/$stkR' : '';
+
     if (mounted) {
+      setState(() {
+        _nalezenoVozidloInfo = {
+          'znacka': vozidloData['znacka']?.toString() ?? '',
+          'model': vozidloData['model']?.toString() ?? '',
+          'rok_vyroby': vozidloData['rok_vyroby']?.toString() ?? '',
+          'spz': spz,
+          'tachometr': vozidloData['tachometr']?.toString() ?? '',
+          'stk': stk,
+          'posledni_navsteva': _formatTimestamp(vozidloData['posledni_navsteva']),
+          'zakaznik_jmeno': zakaznikJmeno,
+          'posledni_zakazka': posledniZakazkaCislo,
+          'posledni_zakazka_datum': posledniZakazkaDatum,
+          'posledni_zakazka_stav': posledniZakazkaStav,
+        };
+      });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Údaje o vozidle a zákazníkovi byly načteny.'),
           backgroundColor: Colors.green));
@@ -1395,7 +1461,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= kTabletBreakpoint) {
+        if (constraints.maxWidth >= kTabletBreakpoint &&
+            MediaQuery.orientationOf(context) == Orientation.landscape) {
           return _buildTabletLayout(isDark);
         }
         return _buildMobileLayout(isDark);
@@ -1533,6 +1600,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                             model: _modelController.text,
                             rokVyroby: _rokVyrobyController.text,
                             isDark: isDark,
+                            vehicleInfo: _nalezenoVozidloInfo,
                           ),
                         ),
                       ],

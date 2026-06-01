@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../core/design_tokens.dart';
 
 const double kTabletBreakpoint = 800.0;
@@ -35,30 +34,10 @@ class PrijemTabletSidebar extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(
                   TokSpace.lg, TokSpace.lg, TokSpace.lg, TokSpace.md),
-              child: Row(
-                children: [
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: TokColors.accent,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Text('T',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16)),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text('Torkis',
-                      style: TextStyle(
-                          color: TokColors.ink,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15)),
-                ],
+              child: Image.asset(
+                'assets/images/torkis-app-icon-256.png',
+                width: 36,
+                height: 36,
               ),
             ),
           ),
@@ -79,8 +58,6 @@ class PrijemTabletSidebar extends StatelessWidget {
               ),
             ),
           ),
-          Divider(
-              color: TokColors.line, height: 1, indent: 0, endIndent: 0),
           Padding(
             padding: const EdgeInsets.fromLTRB(
                 TokSpace.lg, TokSpace.md, TokSpace.lg, TokSpace.sm),
@@ -89,14 +66,7 @@ class PrijemTabletSidebar extends StatelessWidget {
               totalSteps: totalSteps,
             ),
           ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  TokSpace.lg, TokSpace.sm, TokSpace.lg, TokSpace.lg),
-              child: _UserInitialsChip(),
-            ),
-          ),
+          const SizedBox(height: TokSpace.md),
         ],
       ),
     );
@@ -206,40 +176,6 @@ class _StepBadge extends StatelessWidget {
   }
 }
 
-class _UserInitialsChip extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final initials = _initials(user);
-    return CircleAvatar(
-      radius: 14,
-      backgroundColor: TokColors.accent.withValues(alpha: 0.2),
-      child: Text(
-        initials,
-        style: const TextStyle(
-            color: TokColors.accent,
-            fontSize: 11,
-            fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  String _initials(User? user) {
-    if (user == null) return '?';
-    final name = user.displayName;
-    if (name != null && name.isNotEmpty) {
-      final parts = name.trim().split(' ');
-      if (parts.length >= 2) {
-        return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-      }
-      return name[0].toUpperCase();
-    }
-    final email = user.email;
-    if (email != null && email.isNotEmpty) return email[0].toUpperCase();
-    return '?';
-  }
-}
-
 class _SidebarProgress extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
@@ -308,6 +244,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
   final String model;
   final String rokVyroby;
   final bool isDark;
+  final Map<String, dynamic>? vehicleInfo;
 
   const PrijemVehiclePreviewPanel({
     super.key,
@@ -318,19 +255,12 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
     required this.model,
     required this.rokVyroby,
     required this.isDark,
+    this.vehicleInfo,
   });
 
   @override
   Widget build(BuildContext context) {
     final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
-    final vehicleTitle = [znacka, model]
-        .where((s) => s.isNotEmpty)
-        .join(' ');
-    final hasData = spz.isNotEmpty ||
-        vin.isNotEmpty ||
-        cisloZakazky.isNotEmpty ||
-        vehicleTitle.isNotEmpty;
-
     return Container(
       width: kPreviewPanelWidth,
       decoration: BoxDecoration(
@@ -339,116 +269,241 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(TokSpace.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: TokSpace.sm),
-            Text(
-              'NÁHLED VOZIDLA',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
-                color: tok.textSecondary,
-              ),
-            ),
-            const SizedBox(height: TokSpace.md),
-            // Car card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(TokSpace.md),
-              decoration: BoxDecoration(
-                color: tok.surface,
-                borderRadius: BorderRadius.circular(TokRadius.lg),
-                border: Border.all(color: tok.line),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: TokColors.accentSoft,
-                          borderRadius:
-                              BorderRadius.circular(TokRadius.sm),
-                        ),
-                        child: const Icon(Icons.directions_car_rounded,
-                            color: TokColors.accent, size: 16),
-                      ),
-                      const SizedBox(width: TokSpace.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              vehicleTitle.isEmpty
-                                  ? 'Vozidlo'
-                                  : vehicleTitle,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 13,
-                                color: tok.textPrimary,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (rokVyroby.isNotEmpty)
-                              Text(
-                                rokVyroby,
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: tok.textSecondary),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (hasData) ...[
-                    const SizedBox(height: TokSpace.md),
-                    Divider(color: tok.line, height: 1),
-                    const SizedBox(height: TokSpace.md),
-                    if (spz.isNotEmpty)
-                      _PreviewRow(label: 'SPZ', value: spz, tok: tok),
-                    if (vin.isNotEmpty)
-                      _PreviewRow(label: 'VIN', value: vin, tok: tok),
-                    if (cisloZakazky.isNotEmpty)
-                      _PreviewRow(
-                          label: 'Zakázka',
-                          value: cisloZakazky,
-                          tok: tok),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: TokSpace.md),
-            // Info note
-            Container(
-              padding: const EdgeInsets.all(TokSpace.md),
-              decoration: BoxDecoration(
-                color: TokColors.accentSoft,
-                borderRadius: BorderRadius.circular(TokRadius.md),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.info_outline_rounded,
-                      size: 13, color: TokColors.accent),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Údaje se plní průběžně při vyplňování formuláře.',
-                      style: const TextStyle(
-                          fontSize: 11, color: TokColors.accent),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+        child: vehicleInfo != null
+            ? _buildHistoryView(tok)
+            : _buildLiveView(tok),
       ),
+    );
+  }
+
+  // Zobrazí historická data načteného vozidla
+  Widget _buildHistoryView(TorkisTokens tok) {
+    final info = vehicleInfo!;
+    final title = [info['znacka'] ?? '', info['model'] ?? '']
+        .where((s) => (s as String).isNotEmpty)
+        .join(' ');
+    final rok = info['rok_vyroby'] as String? ?? '';
+    final spzVal = info['spz'] as String? ?? '';
+    final tach = info['tachometr'] as String? ?? '';
+    final stk = info['stk'] as String? ?? '';
+    final navsteva = info['posledni_navsteva'] as String? ?? '';
+    final zakaznik = info['zakaznik_jmeno'] as String? ?? '';
+    final zakazkaCislo = info['posledni_zakazka'] as String? ?? '';
+    final zakazkaDatum = info['posledni_zakazka_datum'] as String? ?? '';
+    final zakazkaStav = info['posledni_zakazka_stav'] as String? ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: TokSpace.sm),
+        Text(
+          'POSLEDNÍ NÁVŠTĚVA',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: tok.textSecondary,
+          ),
+        ),
+        const SizedBox(height: TokSpace.md),
+
+        // Karta vozidla
+        _InfoCard(tok: tok, children: [
+          _CardHeader(
+            icon: Icons.directions_car_rounded,
+            title: title.isEmpty ? 'Vozidlo' : title,
+            subtitle: rok,
+            tok: tok,
+          ),
+          if (spzVal.isNotEmpty || tach.isNotEmpty || stk.isNotEmpty) ...[
+            const SizedBox(height: TokSpace.md),
+            Divider(color: tok.line, height: 1),
+            const SizedBox(height: TokSpace.md),
+            if (spzVal.isNotEmpty)
+              _PreviewRow(label: 'SPZ', value: spzVal, tok: tok),
+            if (tach.isNotEmpty)
+              _PreviewRow(label: 'Tachometr', value: '$tach km', tok: tok),
+            if (stk.isNotEmpty)
+              _PreviewRow(label: 'STK', value: stk, tok: tok),
+            if (navsteva.isNotEmpty)
+              _PreviewRow(label: 'Naposledy', value: navsteva, tok: tok),
+          ],
+        ]),
+
+        // Karta zákazníka
+        if (zakaznik.isNotEmpty) ...[
+          const SizedBox(height: TokSpace.sm),
+          _InfoCard(tok: tok, children: [
+            _CardHeader(
+              icon: Icons.person_outline_rounded,
+              title: zakaznik,
+              tok: tok,
+            ),
+          ]),
+        ],
+
+        // Karta poslední zakázky
+        if (zakazkaCislo.isNotEmpty) ...[
+          const SizedBox(height: TokSpace.sm),
+          _InfoCard(tok: tok, children: [
+            _CardHeader(
+              icon: Icons.assignment_outlined,
+              title: zakazkaCislo,
+              subtitle: zakazkaDatum,
+              tok: tok,
+            ),
+            if (zakazkaStav.isNotEmpty) ...[
+              const SizedBox(height: TokSpace.md),
+              Divider(color: tok.line, height: 1),
+              const SizedBox(height: TokSpace.md),
+              _PreviewRow(label: 'Stav', value: zakazkaStav, tok: tok),
+            ],
+          ]),
+        ],
+      ],
+    );
+  }
+
+  // Původní live náhled při zadávání nového vozidla
+  Widget _buildLiveView(TorkisTokens tok) {
+    final vehicleTitle = [znacka, model].where((s) => s.isNotEmpty).join(' ');
+    final hasData = spz.isNotEmpty ||
+        vin.isNotEmpty ||
+        cisloZakazky.isNotEmpty ||
+        vehicleTitle.isNotEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: TokSpace.sm),
+        Text(
+          'NÁHLED VOZIDLA',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: tok.textSecondary,
+          ),
+        ),
+        const SizedBox(height: TokSpace.md),
+        _InfoCard(tok: tok, children: [
+          _CardHeader(
+            icon: Icons.directions_car_rounded,
+            title: vehicleTitle.isEmpty ? 'Vozidlo' : vehicleTitle,
+            subtitle: rokVyroby,
+            tok: tok,
+          ),
+          if (hasData) ...[
+            const SizedBox(height: TokSpace.md),
+            Divider(color: tok.line, height: 1),
+            const SizedBox(height: TokSpace.md),
+            if (spz.isNotEmpty)
+              _PreviewRow(label: 'SPZ', value: spz, tok: tok),
+            if (vin.isNotEmpty)
+              _PreviewRow(label: 'VIN', value: vin, tok: tok),
+            if (cisloZakazky.isNotEmpty)
+              _PreviewRow(label: 'Zakázka', value: cisloZakazky, tok: tok),
+          ],
+        ]),
+        const SizedBox(height: TokSpace.md),
+        Container(
+          padding: const EdgeInsets.all(TokSpace.md),
+          decoration: BoxDecoration(
+            color: TokColors.accentSoft,
+            borderRadius: BorderRadius.circular(TokRadius.md),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline_rounded,
+                  size: 13, color: TokColors.accent),
+              const SizedBox(width: 6),
+              const Expanded(
+                child: Text(
+                  'Údaje se plní průběžně při vyplňování formuláře.',
+                  style: TextStyle(fontSize: 11, color: TokColors.accent),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final TorkisTokens tok;
+  final List<Widget> children;
+
+  const _InfoCard({required this.tok, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(TokSpace.md),
+      decoration: BoxDecoration(
+        color: tok.surface,
+        borderRadius: BorderRadius.circular(TokRadius.lg),
+        border: Border.all(color: tok.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+}
+
+class _CardHeader extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final TorkisTokens tok;
+
+  const _CardHeader({
+    required this.icon,
+    required this.title,
+    required this.tok,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: TokColors.accentSoft,
+            borderRadius: BorderRadius.circular(TokRadius.sm),
+          ),
+          child: Icon(icon, color: TokColors.accent, size: 16),
+        ),
+        const SizedBox(width: TokSpace.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: tok.textPrimary,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (subtitle != null && subtitle!.isNotEmpty)
+                Text(
+                  subtitle!,
+                  style: TextStyle(fontSize: 11, color: tok.textSecondary),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

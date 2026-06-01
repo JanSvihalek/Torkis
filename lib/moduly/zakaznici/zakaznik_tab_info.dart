@@ -53,7 +53,8 @@ class ZakaznikInfoTab extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxWidth >= kTabletBreakpoint) {
+        if (constraints.maxWidth >= kTabletBreakpoint &&
+            MediaQuery.orientationOf(context) == Orientation.landscape) {
           return _buildTabletLayout(context, tok, jmeno, jeFirma,
               telefon, email, adresa, contactRows);
         }

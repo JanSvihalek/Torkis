@@ -169,7 +169,8 @@ class _MainScreenState extends State<MainScreen> {
           }).toList();
 
           return LayoutBuilder(builder: (context, constraints) {
-            final isTablet = constraints.maxWidth >= kTabletBreakpoint;
+            final isTablet = constraints.maxWidth >= kTabletBreakpoint &&
+                MediaQuery.orientationOf(context) == Orientation.landscape;
 
             if (isTablet) {
               return Scaffold(
