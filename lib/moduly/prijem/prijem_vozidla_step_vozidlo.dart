@@ -158,6 +158,13 @@ class StepVozidlo extends StatelessWidget {
           Text('Naskenujte VIN nebo SPZ, nebo údaje doplňte ručně.',
               style: TextStyle(fontSize: 13, color: tok.textSecondary)),
           const SizedBox(height: TokSpace.lg),
+          TorkisActionTile(
+            icon: Icons.qr_code_scanner_rounded,
+            title: 'Skenovat VIN/SPZ',
+            subtitle: 'Automaticky rozpozná typ kódu',
+            onTap: onScanVinOrSpz,
+          ),
+          const SizedBox(height: TokSpace.lg),
           buildDropdown(
             'Typ záznamu',
             Icons.label_outline,
@@ -165,13 +172,6 @@ class StepVozidlo extends StatelessWidget {
             typyZaznamu,
             (v) { if (v != null) onTypZaznamuChanged(v); },
             isDark,
-          ),
-          const SizedBox(height: TokSpace.lg),
-          TorkisActionTile(
-            icon: Icons.qr_code_scanner_rounded,
-            title: 'Skenovat VIN/SPZ',
-            subtitle: 'Automaticky rozpozná typ kódu',
-            onTap: onScanVinOrSpz,
           ),
           const SizedBox(height: TokSpace.lg),
           buildInput(
