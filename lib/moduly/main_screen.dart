@@ -20,6 +20,7 @@ import 'nastaveni.dart';
 import 'zamestnanci.dart';
 import 'welcome_screen.dart';
 import 'predplatne_page.dart';
+import 'prijem/prijem_vozidla_tablet_layout.dart' show kTabletBreakpoint;
 
 // GLOBÁLNÍ NOTIFIER PRO POŘADÍ SPODNÍ LIŠTY
 final ValueNotifier<List<String>> navOrderNotifier =
@@ -167,90 +168,132 @@ class _MainScreenState extends State<MainScreen> {
             );
           }).toList();
 
-          return Scaffold(
-            backgroundColor: context.tok.bg,
-            appBar: AppBar(
-              titleSpacing: 0,
-              backgroundColor: context.tok.bg,
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
-              title: Padding(
-                padding: const EdgeInsets.only(left: TokSpace.xl),
-                child: Row(
+          return LayoutBuilder(builder: (context, constraints) {
+            final isTablet = constraints.maxWidth >= kTabletBreakpoint;
+
+            if (isTablet) {
+              return Scaffold(
+                backgroundColor: context.tok.bg,
+                body: Row(
                   children: [
-                    TorkisMark(size: 26, color: context.tok.ink),
-                    const SizedBox(width: 9),
-                    Text(
-                      'TORKIS',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.1,
-                        color: context.tok.textPrimary,
+                    _MainTabletSidebar(
+                      navItems: filteredNavOrder
+                          .map((id) => (id: id, data: _allNavItems[id]!))
+                          .toList(),
+                      currentTabId: _currentTabId,
+                      isDark: isDark,
+                      onTabSelected: (id) =>
+                          setState(() => _currentTabId = id),
+                      onToggleTheme: () async {
+                        final newIsDark = !isDark;
+                        themeNotifier.value = newIsDark
+                            ? ThemeMode.dark
+                            : ThemeMode.light;
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('tmavy_rezim', newIsDark);
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user != null) {
+                          await FirebaseFirestore.instance
+                              .collection('uzivatele')
+                              .doc(user.uid)
+                              .set({'tmavy_rezim': newIsDark},
+                                  SetOptions(merge: true));
+                        }
+                      },
+                    ),
+                    Expanded(
+                      child: IndexedStack(
+                        index: currentIndex,
+                        children: currentPages,
                       ),
                     ),
                   ],
                 ),
-              ),
-              centerTitle: false,
-              actions: [
-                _AppBarIconButton(
-                  icon: isDark
-                      ? Icons.light_mode_rounded
-                      : Icons.dark_mode_rounded,
-                  onPressed: () async {
-                    final newIsDark = !isDark;
-                    themeNotifier.value =
-                        newIsDark ? ThemeMode.dark : ThemeMode.light;
+              );
+            }
 
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('tmavy_rezim', newIsDark);
-
-                    final user = FirebaseAuth.instance.currentUser;
-                    if (user != null) {
-                      try {
-                        await FirebaseFirestore.instance
-                            .collection('uzivatele')
-                            .doc(user.uid)
-                            .set({
-                          'tmavy_rezim': newIsDark,
-                        }, SetOptions(merge: true));
-                      } catch (e) {
-                        debugPrint('Chyba při ukládání motivu: $e');
-                      }
-                    }
-                  },
-                ),
-                const SizedBox(width: TokSpace.lg),
-              ],
-            ),
-            body: IndexedStack(
-              index: currentIndex,
-              children: currentPages,
-            ),
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                color: context.tok.surface,
-                border: Border(
-                  top: BorderSide(color: context.tok.line, width: 1),
-                ),
-              ),
-              child: NavigationBar(
-                selectedIndex: currentIndex,
-                onDestinationSelected: (index) {
-                  setState(() {
-                    _currentTabId = filteredNavOrder[index];
-                  });
-                },
-                backgroundColor: Colors.transparent,
+            return Scaffold(
+              backgroundColor: context.tok.bg,
+              appBar: AppBar(
+                titleSpacing: 0,
+                backgroundColor: context.tok.bg,
                 surfaceTintColor: Colors.transparent,
-                indicatorColor: TokColors.accentSoft,
-                labelBehavior:
-                    NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: currentDestinations,
+                elevation: 0,
+                title: Padding(
+                  padding: const EdgeInsets.only(left: TokSpace.xl),
+                  child: Row(
+                    children: [
+                      TorkisMark(size: 26, color: context.tok.ink),
+                      const SizedBox(width: 9),
+                      Text(
+                        'TORKIS',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.1,
+                          color: context.tok.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                centerTitle: false,
+                actions: [
+                  _AppBarIconButton(
+                    icon: isDark
+                        ? Icons.light_mode_rounded
+                        : Icons.dark_mode_rounded,
+                    onPressed: () async {
+                      final newIsDark = !isDark;
+                      themeNotifier.value =
+                          newIsDark ? ThemeMode.dark : ThemeMode.light;
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('tmavy_rezim', newIsDark);
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        try {
+                          await FirebaseFirestore.instance
+                              .collection('uzivatele')
+                              .doc(user.uid)
+                              .set({'tmavy_rezim': newIsDark},
+                                  SetOptions(merge: true));
+                        } catch (e) {
+                          debugPrint('Chyba při ukládání motivu: $e');
+                        }
+                      }
+                    },
+                  ),
+                  const SizedBox(width: TokSpace.lg),
+                ],
               ),
-            ),
-          );
+              body: IndexedStack(
+                index: currentIndex,
+                children: currentPages,
+              ),
+              bottomNavigationBar: Container(
+                decoration: BoxDecoration(
+                  color: context.tok.surface,
+                  border: Border(
+                    top: BorderSide(color: context.tok.line, width: 1),
+                  ),
+                ),
+                child: NavigationBar(
+                  selectedIndex: currentIndex,
+                  onDestinationSelected: (index) {
+                    setState(() {
+                      _currentTabId = filteredNavOrder[index];
+                    });
+                  },
+                  backgroundColor: Colors.transparent,
+                  surfaceTintColor: Colors.transparent,
+                  indicatorColor: TokColors.accentSoft,
+                  labelBehavior:
+                      NavigationDestinationLabelBehavior.alwaysShow,
+                  destinations: currentDestinations,
+                ),
+              ),
+            );
+          });
         });
   }
 }
@@ -534,6 +577,172 @@ class _ContactCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Tablet sidebar navigace ───────────────────────────────────────────────────
+
+class _MainTabletSidebar extends StatelessWidget {
+  final List<({String id, _NavData data})> navItems;
+  final String currentTabId;
+  final bool isDark;
+  final ValueChanged<String> onTabSelected;
+  final VoidCallback onToggleTheme;
+
+  const _MainTabletSidebar({
+    required this.navItems,
+    required this.currentTabId,
+    required this.isDark,
+    required this.onTabSelected,
+    required this.onToggleTheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 76,
+      color: TokColors.ink,
+      child: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: TokSpace.lg),
+              child: TorkisMark(size: 26, color: TokColors.accent),
+            ),
+          ),
+          const Divider(color: TokColors.darkLine, height: 1),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: TokSpace.md),
+              children: navItems
+                  .map((e) => _SidebarNavItem(
+                        icon: e.data.icon,
+                        activeIcon: e.data.activeIcon,
+                        label: e.data.label,
+                        isActive: currentTabId == e.id,
+                        onTap: () => onTabSelected(e.id),
+                      ))
+                  .toList(),
+            ),
+          ),
+          const Divider(color: TokColors.darkLine, height: 1),
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: TokSpace.md),
+              child: Column(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isDark
+                          ? Icons.light_mode_rounded
+                          : Icons.dark_mode_rounded,
+                      color: TokColors.steelSoft,
+                      size: 20,
+                    ),
+                    onPressed: onToggleTheme,
+                    tooltip: isDark ? 'Světlý režim' : 'Tmavý režim',
+                  ),
+                  const SizedBox(height: TokSpace.sm),
+                  _SidebarUserChip(),
+                  const SizedBox(height: TokSpace.sm),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SidebarNavItem extends StatelessWidget {
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _SidebarNavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      child: Material(
+        color: isActive
+            ? TokColors.accent.withValues(alpha: 0.15)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(TokRadius.md),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isActive ? activeIcon : icon,
+                  color: isActive ? TokColors.accent : TokColors.steelSoft,
+                  size: 22,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color:
+                        isActive ? TokColors.accent : TokColors.steelSoft,
+                    fontSize: 10,
+                    fontWeight:
+                        isActive ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SidebarUserChip extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    String initials = '?';
+    final name = user?.displayName;
+    if (name != null && name.isNotEmpty) {
+      final parts = name.trim().split(' ');
+      initials = parts.length >= 2
+          ? '${parts.first[0]}${parts.last[0]}'.toUpperCase()
+          : name[0].toUpperCase();
+    } else if (user?.email != null) {
+      initials = user!.email![0].toUpperCase();
+    }
+    return CircleAvatar(
+      radius: 14,
+      backgroundColor: TokColors.accent.withValues(alpha: 0.2),
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: TokColors.accent,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
