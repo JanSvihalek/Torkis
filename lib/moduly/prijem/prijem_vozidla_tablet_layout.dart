@@ -25,24 +25,10 @@ class PrijemTabletSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: kSidebarWidth,
-      color: TokColors.paper,
+      color: context.tok.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  TokSpace.lg, TokSpace.lg, TokSpace.lg, TokSpace.md),
-              child: Image.asset(
-                'assets/images/torkis-app-icon-256.png',
-                width: 36,
-                height: 36,
-              ),
-            ),
-          ),
-          Divider(
-              color: TokColors.line, height: 1, indent: 0, endIndent: 0),
           const SizedBox(height: TokSpace.md),
           Expanded(
             child: ListView.builder(
@@ -116,7 +102,7 @@ class _SidebarStepTile extends StatelessWidget {
                     style: TextStyle(
                       color: isActive
                           ? TokColors.accent
-                          : TokColors.steel,
+                          : context.tok.textSecondary,
                       fontSize: 13,
                       fontWeight: isActive
                           ? FontWeight.w600
@@ -154,7 +140,7 @@ class _StepBadge extends StatelessWidget {
     } else if (isCompleted) {
       bg = TokColors.success;
     } else {
-      bg = TokColors.line;
+      bg = context.tok.line;
     }
     return Container(
       width: 22,
@@ -167,7 +153,7 @@ class _StepBadge extends StatelessWidget {
             : Text(
                 '${index + 1}',
                 style: TextStyle(
-                    color: isActive ? Colors.white : TokColors.steel,
+                    color: isActive ? Colors.white : context.tok.textSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.bold),
               ),
@@ -193,22 +179,22 @@ class _SidebarProgress extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text(
+            Text(
               'POSTUP',
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.1,
-                color: TokColors.steel,
+                color: context.tok.textSecondary,
               ),
             ),
             const Spacer(),
             Text(
               '${currentStep + 1} / $totalSteps',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w600,
-                color: TokColors.steel,
+                color: context.tok.textSecondary,
               ),
             ),
           ],
@@ -222,7 +208,7 @@ class _SidebarProgress extends StatelessWidget {
                 margin: EdgeInsets.only(right: i < totalSteps - 1 ? 3 : 0),
                 height: 3,
                 decoration: BoxDecoration(
-                  color: done ? TokColors.accent : TokColors.line,
+                  color: done ? TokColors.accent : context.tok.line,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

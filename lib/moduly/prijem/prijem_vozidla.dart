@@ -64,6 +64,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   bool _odeslatEmail = true;
   bool _defaultOdeslatEmail = true;
+  bool _podpisPovolen = true;
 
   String? _vybranyZakaznikId;
   List<Map<String, dynamic>> _nalezenaVozidla = [];
@@ -297,6 +298,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
           if (mounted) {
             setState(() {
               _autoCisloZakazky = generovat;
+              _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
               if (data.containsKey('default_odesilat_emaily')) {
                 _defaultOdeslatEmail = data['default_odesilat_emaily'] as bool;
                 _odeslatEmail = _defaultOdeslatEmail;
@@ -1606,7 +1608,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                       ],
                     ),
                   ),
-                  _buildBottomPanel(isDark),
+                  _buildBottomPanel(isDark, isTablet: true),
                 ],
               ),
             ),
@@ -1786,10 +1788,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
         onOdeslatEmailChanged: (val) =>
             setState(() => _odeslatEmail = val ?? true),
         signatureController: _signatureController,
+        podpisPovolen: _podpisPovolen,
       );
 
   // â”€â”€ SpodnĂ­ navigaÄŤnĂ­ panel (ZpÄ›t / DalĹˇĂ­ / DokonÄŤit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  Widget _buildBottomPanel(bool isDark) {
+  Widget _buildBottomPanel(bool isDark, {bool isTablet = false}) {
     final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
     final isBusy =
         _isCheckingZakazka || _isUploading || _isGeneratingCislo;
@@ -1824,13 +1827,26 @@ class _MainWizardPageState extends State<MainWizardPage> {
               ),
               const SizedBox(width: 10),
             ],
-            Expanded(
-              child: TorkisPrimaryButton(
-                label: isLast ? 'Dokončit a odeslat' : 'Pokračovat',
-                loading: isBusy,
-                onPressed: isBusy ? null : _moveNext,
+            if (isTablet) const Spacer(),
+            if (isTablet)
+              SizedBox(
+                width: 220,
+                height: 52,
+                child: TorkisPrimaryButton(
+                  label: isLast ? 'Dokončit a odeslat' : 'Pokračovat',
+                  loading: isBusy,
+                  onPressed: isBusy ? null : _moveNext,
+                  trailingIcon: Icons.arrow_forward_rounded,
+                ),
+              )
+            else
+              Expanded(
+                child: TorkisPrimaryButton(
+                  label: isLast ? 'Dokončit a odeslat' : 'Pokračovat',
+                  loading: isBusy,
+                  onPressed: isBusy ? null : _moveNext,
+                ),
               ),
-            ),
           ],
         ),
       ),

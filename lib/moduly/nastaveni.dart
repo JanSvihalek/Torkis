@@ -34,6 +34,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _defaultEmail = true;
   bool _autoCisloZakazky = true;
+  bool _podpisPovolen = true;
   List<String> _sablonyZprav = [];
   List<String> _typyZaznamu = ['Servis', 'Výkup'];
   String _defaultTypZaznamu = 'Servis';
@@ -108,6 +109,7 @@ class _SettingsPageState extends State<SettingsPage> {
             _registraceCtrl.text = data['registrace_servisu'] ?? '';
             _defaultEmail = data['default_odesilat_emaily'] ?? true;
             _autoCisloZakazky = data['auto_cislo_zakazky'] ?? true;
+            _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
             _sablonyZprav = List<String>.from(data['sablony_zprav'] ?? []);
             _typyZaznamu = List<String>.from(
                 data['typy_zaznamu'] ?? ['Servis', 'Výkup']);
@@ -149,6 +151,7 @@ class _SettingsPageState extends State<SettingsPage> {
             'registrace_servisu': _registraceCtrl.text.trim(),
             'default_odesilat_emaily': _defaultEmail,
             'auto_cislo_zakazky': _autoCisloZakazky,
+            'podpis_povolen': _podpisPovolen,
             'zmeneno': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
@@ -679,6 +682,25 @@ class _SettingsPageState extends State<SettingsPage> {
                         activeColor: Colors.blue,
                         onChanged: (v) =>
                             setState(() => _autoCisloZakazky = v),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: isDark
+                              ? TokColors.darkSurface
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10)),
+                      child: SwitchListTile(
+                        title: const Text('Vyžadovat podpis zákazníka',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: const Text(
+                            'Při vypnutí se krok s podpisem v příjmu zobrazí bez podpisového plátna.',
+                            style: TextStyle(fontSize: 12)),
+                        value: _podpisPovolen,
+                        activeColor: Colors.blue,
+                        onChanged: (v) =>
+                            setState(() => _podpisPovolen = v),
                       ),
                     ),
                   ],

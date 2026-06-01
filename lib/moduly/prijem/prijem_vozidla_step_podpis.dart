@@ -21,6 +21,7 @@ class StepPodpis extends StatelessWidget {
   final ValueChanged<bool?> onOdeslatEmailChanged;
 
   final SignatureController signatureController;
+  final bool podpisPovolen;
 
   const StepPodpis({
     super.key,
@@ -36,6 +37,7 @@ class StepPodpis extends StatelessWidget {
     required this.odeslatEmail,
     required this.onOdeslatEmailChanged,
     required this.signatureController,
+    this.podpisPovolen = true,
   });
 
   @override
@@ -140,32 +142,52 @@ class StepPodpis extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
-          const Text(
-              'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.',
-              style: TextStyle(color: Colors.grey, fontSize: 14)),
-          const SizedBox(height: 20),
-          // Podpisové plátno
-          Container(
-            decoration: BoxDecoration(
-                border:
-                    Border.all(color: Colors.blue, width: 2),
-                borderRadius: BorderRadius.circular(15),
-                color: Colors.white),
-            child: ClipRRect(
-                borderRadius: BorderRadius.circular(13),
-                child: Signature(
-                    controller: signatureController,
-                    height: 250,
-                    backgroundColor: Colors.white)),
-          ),
-          const SizedBox(height: 10),
-          Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                  onPressed: () => signatureController.clear(),
-                  icon: const Icon(Icons.clear, color: Colors.red),
-                  label: const Text('Smazat podpis',
-                      style: TextStyle(color: Colors.red)))),
+          if (podpisPovolen) ...[
+            const Text(
+                'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.',
+                style: TextStyle(color: Colors.grey, fontSize: 14)),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.blue, width: 2),
+                  borderRadius: BorderRadius.circular(15),
+                  color: Colors.white),
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(13),
+                  child: Signature(
+                      controller: signatureController,
+                      height: 250,
+                      backgroundColor: Colors.white)),
+            ),
+            const SizedBox(height: 10),
+            Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                    onPressed: () => signatureController.clear(),
+                    icon: const Icon(Icons.clear, color: Colors.red),
+                    label: const Text('Smazat podpis',
+                        style: TextStyle(color: Colors.red)))),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.2))),
+              child: const Row(
+                children: [
+                  Icon(Icons.draw_outlined, color: Colors.grey, size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Podpis zákazníka je v nastavení servisu vypnut.',
+                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
           ),
         ),

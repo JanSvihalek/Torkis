@@ -612,7 +612,11 @@ class _MainTabletSidebar extends StatelessWidget {
             bottom: false,
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: TokSpace.lg),
-              child: TorkisMark(size: 26, color: TokColors.accent),
+              child: Image.asset(
+                'assets/images/torkis-app-icon-256.png',
+                width: 36,
+                height: 36,
+              ),
             ),
           ),
           const Divider(color: TokColors.darkLine, height: 1),
