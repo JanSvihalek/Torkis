@@ -62,8 +62,11 @@ class StepZakaznik extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Údaje o zákazníkovi',
               style:
@@ -240,6 +243,8 @@ class StepZakaznik extends StatelessWidget {
           buildInput(
               'E-mail', Icons.email, emailController, isDark),
         ],
+          ),
+        ),
       ),
     );
   }

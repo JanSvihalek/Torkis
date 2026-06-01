@@ -25,6 +25,7 @@ import 'car_blueprint_widget.dart';
 import 'prijem_vozidla_step_photo.dart';
 import 'prijem_vozidla_step_prace.dart';
 import 'prijem_vozidla_step_podpis.dart';
+import 'prijem_vozidla_tablet_layout.dart';
 
 // Formulář příjmu vozidla — 6stránkový průvodce (PageView).
 // Stránky: 1) Vozidlo, 2) Zákazník, 3) Fotodokumentace, 4) Stav při příjmu,
@@ -1350,18 +1351,59 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
+  static const _stepLabels = [
+    'Identifikace vozu',
+    'Zákazník',
+    'Fotodokumentace',
+    'Stav vozu',
+    'Úkony a práce',
+    'Souhrn a podpis',
+  ];
+
+  List<Widget> _buildStepPages(bool isDark) => [
+        _buildVozidloStep(isDark),
+        _buildZakaznikStep(isDark),
+        _buildPhotoStep(isDark),
+        _buildCheckStep(isDark),
+        _buildPraceStep(isDark),
+        _buildPodpisStep(isDark),
+      ];
+
+  Widget _uploadingOverlay() => Container(
+        color: Colors.black54,
+        child: const Center(
+          child: Card(
+            elevation: 10,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text('Odesílám zakázku a protokol...',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const stepLabels = [
-      'Identifikace vozu',
-      'Zákazník',
-      'Fotodokumentace',
-      'Stav vozu',
-      'Práce',
-      'Podpis',
-    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= kTabletBreakpoint) {
+          return _buildTabletLayout(isDark);
+        }
+        return _buildMobileLayout(isDark);
+      },
+    );
+  }
 
+  Widget _buildMobileLayout(bool isDark) {
     return Stack(
       children: [
         Column(
@@ -1372,48 +1414,137 @@ class _MainWizardPageState extends State<MainWizardPage> {
               child: TorkisStepProgress(
                 currentStep: _currentPage + 1,
                 totalSteps: _totalPages,
-                stepLabel: stepLabels[_currentPage.clamp(0, _totalPages - 1)],
+                stepLabel:
+                    _stepLabels[_currentPage.clamp(0, _totalPages - 1)],
               ),
             ),
             Expanded(
               child: PageView(
                 controller: _pageController,
-                onPageChanged: (idx) => setState(() => _currentPage = idx),
+                onPageChanged: (idx) =>
+                    setState(() => _currentPage = idx),
                 physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildVozidloStep(isDark),
-                  _buildZakaznikStep(isDark),
-                  _buildPhotoStep(isDark),
-                  _buildCheckStep(isDark),
-                  _buildPraceStep(isDark),
-                  _buildPodpisStep(isDark),
-                ],
+                children: _buildStepPages(isDark),
               ),
             ),
             _buildBottomPanel(isDark),
           ],
         ),
-        if (_isUploading)
-          Container(
-            color: Colors.black54,
-            child: const Center(
-              child: Card(
-                elevation: 10,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 20),
-                      Text('Odesílám zakázku a protokol...',
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                    ],
+        if (_isUploading) _uploadingOverlay(),
+      ],
+    );
+  }
+
+  Widget _buildTabletLayout(bool isDark) {
+    final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
+    return Stack(
+      children: [
+        Row(
+          children: [
+            // ── Sidebar ──────────────────────────────────
+            PrijemTabletSidebar(
+              currentStep: _currentPage,
+              totalSteps: _totalPages,
+              stepLabels: _stepLabels,
+              onStepTap: (i) {
+                _pageController.jumpToPage(i);
+                setState(() => _currentPage = i);
+              },
+            ),
+            // ── Hlavní obsah ─────────────────────────────
+            Expanded(
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(
+                        TokSpace.xl, TokSpace.md, TokSpace.xl, TokSpace.md),
+                    decoration: BoxDecoration(
+                      color: tok.surface,
+                      border: Border(bottom: BorderSide(color: tok.line)),
+                    ),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Row(
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'PŘÍJEM VOZIDLA',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
+                                  color: TokColors.accent,
+                                ),
+                              ),
+                              Text(
+                                'Nová zakázka',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: tok.textPrimary,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Krok ${_currentPage + 1} z $_totalPages',
+                            style: TextStyle(
+                                fontSize: 13, color: tok.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                  // Obsah + pravý panel
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: PageView(
+                            controller: _pageController,
+                            onPageChanged: (idx) =>
+                                setState(() => _currentPage = idx),
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: _buildStepPages(isDark),
+                          ),
+                        ),
+                        // Náhled vozidla
+                        ListenableBuilder(
+                          listenable: Listenable.merge([
+                            _spzController,
+                            _vinController,
+                            _zakazkaController,
+                            _znackaController,
+                            _modelController,
+                            _rokVyrobyController,
+                          ]),
+                          builder: (ctx, _) => PrijemVehiclePreviewPanel(
+                            spz: _spzController.text,
+                            vin: _vinController.text,
+                            cisloZakazky: _zakazkaController.text,
+                            znacka: _znackaController.text,
+                            model: _modelController.text,
+                            rokVyroby: _rokVyrobyController.text,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _buildBottomPanel(isDark),
+                ],
               ),
             ),
-          ),
+          ],
+        ),
+        if (_isUploading) _uploadingOverlay(),
       ],
     );
   }

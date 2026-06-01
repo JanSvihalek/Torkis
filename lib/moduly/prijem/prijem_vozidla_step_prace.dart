@@ -29,8 +29,11 @@ class StepPrace extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Požadované práce',
               style:
@@ -102,6 +105,8 @@ class StepPrace extends StatelessWidget {
                   style: TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16))),
         ],
+          ),
+        ),
       ),
     );
   }

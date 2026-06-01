@@ -11,11 +11,13 @@ const List<String> kPlanEntitlements = ['basic', 'standard', 'pro'];
 
 class SubscriptionService {
   static Future<void> init() async {
+    if (kIsWeb) return;
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return;
     await Purchases.configure(PurchasesConfiguration(kRevenueCatApiKey));
   }
 
   static Future<void> identifyUser(String userId) async {
+    if (kIsWeb) return;
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return;
     try {
       await Purchases.logIn(userId);
@@ -25,6 +27,7 @@ class SubscriptionService {
   }
 
   static Future<void> logOut() async {
+    if (kIsWeb) return;
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return;
     try {
       await Purchases.logOut();
@@ -35,6 +38,7 @@ class SubscriptionService {
 
   /// Vrátí true pokud je aktivní jakýkoliv plán (basic / standard / pro).
   static Future<bool> isEntitlementActive() async {
+    if (kIsWeb) return true;
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return false;
     try {
       final info = await Purchases.getCustomerInfo();
@@ -49,6 +53,7 @@ class SubscriptionService {
 
   /// Vrátí aktivní typ plánu ('pro' > 'standard' > 'basic') nebo null.
   static Future<String?> getActivePlanTyp() async {
+    if (kIsWeb) return 'pro';
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return null;
     try {
       final info = await Purchases.getCustomerInfo();
@@ -63,6 +68,7 @@ class SubscriptionService {
   }
 
   static Future<List<Package>> getPackages() async {
+    if (kIsWeb) return [];
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return [];
     try {
       final offerings = await Purchases.getOfferings();
@@ -74,6 +80,7 @@ class SubscriptionService {
   }
 
   static Future<bool> purchasePackage(Package package) async {
+    if (kIsWeb) return false;
     try {
       final info = await Purchases.purchasePackage(package);
       return kPlanEntitlements.any(
@@ -86,6 +93,7 @@ class SubscriptionService {
   }
 
   static Future<bool> restorePurchases() async {
+    if (kIsWeb) return false;
     try {
       final info = await Purchases.restorePurchases();
       return kPlanEntitlements.any(

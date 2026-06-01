@@ -143,8 +143,11 @@ class StepVozidlo extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
           TokSpace.xl, TokSpace.lg, TokSpace.xl, TokSpace.xxxl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Příjem vozidla',
               style: TextStyle(
@@ -655,6 +658,8 @@ class StepVozidlo extends StatelessWidget {
           buildDropdown('Typ karosérie', Icons.directions_car_outlined,
               typKaroserie, moznostiKaroserie, onKaroserieChanged, isDark),
         ],
+          ),
+        ),
       ),
     );
   }

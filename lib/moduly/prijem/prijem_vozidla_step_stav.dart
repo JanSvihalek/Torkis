@@ -60,8 +60,11 @@ class StepCheck extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Stav vozidla',
               style:
@@ -376,6 +379,8 @@ class StepCheck extends StatelessWidget {
             ],
           ),
         ],
+          ),
+        ),
       ),
     );
   }

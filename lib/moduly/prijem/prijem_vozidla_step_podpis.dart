@@ -46,8 +46,11 @@ class StepPodpis extends StatelessWidget {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Shrnutí a podpis',
               style:
@@ -164,6 +167,8 @@ class StepPodpis extends StatelessWidget {
                   label: const Text('Smazat podpis',
                       style: TextStyle(color: Colors.red)))),
         ],
+          ),
+        ),
       ),
     );
   }
