@@ -537,27 +537,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
         return;
       }
       final data = json.decode(response.body) as Map<String, dynamic>;
-      debugPrint('=== VINCARIO RESPONSE ===\n${response.body}\n=========================');
-      if (mounted) {
-        await showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Vincario raw response'),
-            content: SingleChildScrollView(
-              child: SelectableText(
-                response.body,
-                style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Zavřít'),
-              ),
-            ],
-          ),
-        );
-      }
       if (mounted) _aplikovatVincarioData(data);
     } catch (e) {
       if (mounted) {
@@ -601,26 +580,45 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final znacka = v('Make');
     final model  = v('Model');
     final rok    = v('Model Year');
-    final palivo = v('Fuel Type - Primary');
+    final palivoRaw = v('Fuel Type - Primary');
     final prevod = v('Transmission');
     final karos  = v('Body');
 
-    // Motorizace: "1598 ccm, 110 kW"
+    // Motorizace: "1199 ccm, 74 kW"
     final ccm   = v('Engine Displacement (ccm)');
     final kw    = v('Engine Power (kW)');
     final motor = v('Engine (full)').isNotEmpty
         ? v('Engine (full)')
         : [if (ccm.isNotEmpty) '$ccm ccm', if (kw.isNotEmpty) '$kw kW'].join(', ');
 
+    // Překlad paliva EN → CZ
+    final palivoPreklad = {
+      'gasoline': 'Benzín', 'petrol': 'Benzín',
+      'diesel': 'Nafta',
+      'electric': 'Elektro',
+      'hybrid': 'Hybrid',
+      'plug-in hybrid': 'Plug-in hybrid',
+      'lpg': 'LPG', 'cng': 'CNG',
+    };
+    final palivoKlic = palivoRaw.toLowerCase();
+    final palivo = palivoPreklad.entries
+        .where((e) => palivoKlic.contains(e.key))
+        .map((e) => e.value)
+        .firstOrNull ?? palivoRaw;
+
     setState(() {
-      if (znacka.isNotEmpty) _znackaController.text = znacka;
+      if (znacka.isNotEmpty) {
+        _znackaController.text = znacka;
+        _aktualizujModely(znacka);
+      }
       if (model.isNotEmpty)  _modelController.text = model;
       if (rok.isNotEmpty)    _rokVyrobyController.text = rok;
       if (motor.isNotEmpty)  _motorizaceController.text = motor;
 
       if (palivo.isNotEmpty) {
         final match = _moznostiPaliva.where(
-            (p) => p.toLowerCase().contains(palivo.toLowerCase()) ||
+            (p) => p.toLowerCase() == palivo.toLowerCase() ||
+                   p.toLowerCase().contains(palivo.toLowerCase()) ||
                    palivo.toLowerCase().contains(p.toLowerCase()));
         if (match.isNotEmpty) _vybranePalivo = match.first;
       }
