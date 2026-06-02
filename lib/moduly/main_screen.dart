@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
         page: const MainWizardPage(),
         icon: Icons.add_circle_outline_rounded,
         activeIcon: Icons.add_circle_rounded,
-        label: 'Příjem'),
+        label: 'Nový'),
     'menu': _NavData(
         page: const MenuPage(),
         icon: Icons.grid_view,

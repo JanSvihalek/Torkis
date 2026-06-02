@@ -306,7 +306,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
               _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
               _spzPovinne = data['spz_povinne'] as bool? ?? true;
               _vincarioApiKey = data['vincario_api_key']?.toString() ?? '';
-              _vincarioSecretKey = data['vincario_secret_key']?.toString() ?? '';
+              _vincarioSecretKey =
+                  data['vincario_secret_key']?.toString() ?? '';
               if (data.containsKey('default_odesilat_emaily')) {
                 _defaultOdeslatEmail = data['default_odesilat_emaily'] as bool;
                 _odeslatEmail = _defaultOdeslatEmail;
@@ -511,7 +512,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
   /// URL: https://api.vincario.com/3.2/{API_KEY}/{CONTROL_SUM}/decode/{VIN}.json
   /// Control sum: prvních 10 znaků SHA1 z "{VIN}|decode|{API_KEY}|{SECRET_KEY}"
   Future<void> _dekovatVinVincario() async {
-    final vin = _vinController.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    final vin =
+        _vinController.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
     if (vin.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Zadejte VIN kód pro dekódování.'),
@@ -570,8 +572,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         if (val.isNotEmpty) return val;
       } else if (decode is List) {
         for (final item in decode) {
-          if (item is Map &&
-              item['label']?.toString() == key) {
+          if (item is Map && item['label']?.toString() == key) {
             return item['value']?.toString() ?? '';
           }
         }
@@ -580,56 +581,60 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
 
     final znacka = v('Make');
-    final model  = v('Model');
-    final rok    = v('Model Year');
+    final model = v('Model');
+    final rok = v('Model Year');
     final palivoRaw = v('Fuel Type - Primary');
     final prevod = v('Transmission');
-    final karos  = v('Body');
+    final karos = v('Body');
 
     // Motorizace: "1199 ccm, 74 kW"
-    final ccm   = v('Engine Displacement (ccm)');
-    final kw    = v('Engine Power (kW)');
+    final ccm = v('Engine Displacement (ccm)');
+    final kw = v('Engine Power (kW)');
     final motor = v('Engine (full)').isNotEmpty
         ? v('Engine (full)')
-        : [if (ccm.isNotEmpty) '$ccm ccm', if (kw.isNotEmpty) '$kw kW'].join(', ');
+        : [if (ccm.isNotEmpty) '$ccm ccm', if (kw.isNotEmpty) '$kw kW']
+            .join(', ');
 
     // Překlad paliva EN → CZ
     final palivoPreklad = {
-      'gasoline': 'Benzín', 'petrol': 'Benzín',
+      'gasoline': 'Benzín',
+      'petrol': 'Benzín',
       'diesel': 'Nafta',
       'electric': 'Elektro',
       'hybrid': 'Hybrid',
       'plug-in hybrid': 'Plug-in hybrid',
-      'lpg': 'LPG', 'cng': 'CNG',
+      'lpg': 'LPG',
+      'cng': 'CNG',
     };
     final palivoKlic = palivoRaw.toLowerCase();
     final palivo = palivoPreklad.entries
-        .where((e) => palivoKlic.contains(e.key))
-        .map((e) => e.value)
-        .firstOrNull ?? palivoRaw;
+            .where((e) => palivoKlic.contains(e.key))
+            .map((e) => e.value)
+            .firstOrNull ??
+        palivoRaw;
 
     setState(() {
       if (znacka.isNotEmpty) {
         _znackaController.text = znacka;
         _aktualizujModely(znacka);
       }
-      if (model.isNotEmpty)  _modelController.text = model;
-      if (rok.isNotEmpty)    _rokVyrobyController.text = rok;
-      if (motor.isNotEmpty)  _motorizaceController.text = motor;
+      if (model.isNotEmpty) _modelController.text = model;
+      if (rok.isNotEmpty) _rokVyrobyController.text = rok;
+      if (motor.isNotEmpty) _motorizaceController.text = motor;
 
       if (palivo.isNotEmpty) {
-        final match = _moznostiPaliva.where(
-            (p) => p.toLowerCase() == palivo.toLowerCase() ||
-                   p.toLowerCase().contains(palivo.toLowerCase()) ||
-                   palivo.toLowerCase().contains(p.toLowerCase()));
+        final match = _moznostiPaliva.where((p) =>
+            p.toLowerCase() == palivo.toLowerCase() ||
+            p.toLowerCase().contains(palivo.toLowerCase()) ||
+            palivo.toLowerCase().contains(p.toLowerCase()));
         if (match.isNotEmpty) _vybranePalivo = match.first;
       }
 
       if (prevod.isNotEmpty) {
         final isManual = prevod.toLowerCase().contains('manual');
-        final isAuto   = prevod.toLowerCase().contains('auto') ||
-                         prevod.toLowerCase().contains('cvt') ||
-                         prevod.toLowerCase().contains('dsg');
+        final isAuto = prevod.toLowerCase().contains('auto') ||
+            prevod.toLowerCase().contains('cvt') ||
+            prevod.toLowerCase().contains('dsg');
         if (isManual && _moznostiPrevodovky.contains('Manuální')) {
           _vybranaPrevodovka = 'Manuální';
         } else if (isAuto && _moznostiPrevodovky.contains('Automatická')) {
@@ -638,9 +643,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
 
       if (karos.isNotEmpty) {
-        final match = kTypyKaroserie.where(
-            (k) => k.toLowerCase().contains(karos.toLowerCase()) ||
-                   karos.toLowerCase().contains(k.toLowerCase()));
+        final match = kTypyKaroserie.where((k) =>
+            k.toLowerCase().contains(karos.toLowerCase()) ||
+            karos.toLowerCase().contains(k.toLowerCase()));
         if (match.isNotEmpty) _typKaroserie = match.first;
       }
     });
@@ -740,7 +745,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
               if (ta == null && tb == null) return 0;
               if (ta == null) return 1;
               if (tb == null) return -1;
-              return (tb as Timestamp).millisecondsSinceEpoch
+              return (tb as Timestamp)
+                  .millisecondsSinceEpoch
                   .compareTo((ta as Timestamp).millisecondsSinceEpoch);
             });
           final last = docs.first;
@@ -760,8 +766,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     final stavStkM = stavVozidlaData['stk_mesic']?.toString() ?? '';
     final stavStkR = stavVozidlaData['stk_rok']?.toString() ?? '';
-    final stavStk =
-        (stavStkM.isNotEmpty && stavStkR.isNotEmpty) ? '$stavStkM/$stavStkR' : '';
+    final stavStk = (stavStkM.isNotEmpty && stavStkR.isNotEmpty)
+        ? '$stavStkM/$stavStkR'
+        : '';
 
     if (mounted) {
       setState(() {
@@ -772,7 +779,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
           'spz': spz,
           'tachometr': vozidloData['tachometr']?.toString() ?? '',
           'stk': stk,
-          'posledni_navsteva': _formatTimestamp(vozidloData['posledni_navsteva']),
+          'posledni_navsteva':
+              _formatTimestamp(vozidloData['posledni_navsteva']),
           'zakaznik_jmeno': zakaznikJmeno,
           'posledni_zakazka': posledniZakazkaCislo,
           'posledni_zakazka_datum': posledniZakazkaDatum,
@@ -983,7 +991,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
             _vybranyZakaznikId = zakaznik['id_zakaznika'];
             _jmenoController.text = zakaznik['jmeno'] ?? '';
             _icoController.text = zakaznik['ico'] ?? '';
-            _pravniForma = zakaznik['pravni_forma']?.toString() ?? 'Fyzická osoba';
+            _pravniForma =
+                zakaznik['pravni_forma']?.toString() ?? 'Fyzická osoba';
             _uliceController.text = zakaznik['ulice']?.toString() ??
                 (zakaznik['adresa']?.toString() ?? '');
             _mestoController.text = zakaznik['mesto']?.toString() ?? '';
@@ -1160,8 +1169,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     String? schemaUrl;
     if (_schemaKresba != null) {
-      final Reference ref = FirebaseStorage.instance.ref().child(
-          'servisy/$_sId/zakazky/$zakazkaId/schema_poskozeni.png');
+      final Reference ref = FirebaseStorage.instance
+          .ref()
+          .child('servisy/$_sId/zakazky/$zakazkaId/schema_poskozeni.png');
       await ref.putData(_schemaKresba!);
       schemaUrl = await ref.getDownloadURL();
     }
@@ -1472,7 +1482,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-  Future<String?> _openOcrCamera(String label, {bool numbersOnly = false}) async {
+  Future<String?> _openOcrCamera(String label,
+      {bool numbersOnly = false}) async {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
@@ -1535,14 +1546,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
     String vinCandidate = clean;
     bool wasNormalized = false;
     if (clean.length == 17 && RegExp(r'[IOQ]').hasMatch(clean)) {
-      vinCandidate = clean
-          .replaceAll('O', '0')
-          .replaceAll('I', '1')
-          .replaceAll('Q', '0');
+      vinCandidate =
+          clean.replaceAll('O', '0').replaceAll('I', '1').replaceAll('Q', '0');
       wasNormalized = true;
     }
-    final isVin =
-        RegExp(r'^[A-HJ-NPR-Z0-9]{17}$').hasMatch(vinCandidate);
+    final isVin = RegExp(r'^[A-HJ-NPR-Z0-9]{17}$').hasMatch(vinCandidate);
 
     if (isVin) {
       setState(() => _vinController.text = vinCandidate);
@@ -1599,7 +1607,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     'Fotodokumentace',
     'Stav vozu',
     'Úkony a práce',
-    'Souhrn a podpis',
+    'Souhrn',
   ];
 
   List<Widget> _buildStepPages(bool isDark) => [
@@ -1657,15 +1665,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
               child: TorkisStepProgress(
                 currentStep: _currentPage + 1,
                 totalSteps: _totalPages,
-                stepLabel:
-                    _stepLabels[_currentPage.clamp(0, _totalPages - 1)],
+                stepLabel: _stepLabels[_currentPage.clamp(0, _totalPages - 1)],
               ),
             ),
             Expanded(
               child: PageView(
                 controller: _pageController,
-                onPageChanged: (idx) =>
-                    setState(() => _currentPage = idx),
+                onPageChanged: (idx) => setState(() => _currentPage = idx),
                 physics: const NeverScrollableScrollPhysics(),
                 children: _buildStepPages(isDark),
               ),
@@ -1715,7 +1721,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'PŘÍJEM VOZIDLA',
+                                'ZÁZNAM VOZIDLA',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
@@ -1724,7 +1730,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                                 ),
                               ),
                               Text(
-                                'Nová zakázka',
+                                'Nový záznam',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -1905,8 +1911,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         onPridatVlastniPoskozeni: _pridatVlastniPoskozeni,
         typKaroserie: _typKaroserie,
         drawing: _schemaKresba,
-        onDrawingChanged: (bytes) =>
-            setState(() => _schemaKresba = bytes),
+        onDrawingChanged: (bytes) => setState(() => _schemaKresba = bytes),
       );
 
   // ── STRANA 3: Fotodokumentace ─────────────────────
@@ -1961,8 +1966,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   // â”€â”€ SpodnĂ­ navigaÄŤnĂ­ panel (ZpÄ›t / DalĹˇĂ­ / DokonÄŤit) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   Widget _buildBottomPanel(bool isDark, {bool isTablet = false}) {
     final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
-    final isBusy =
-        _isCheckingZakazka || _isUploading || _isGeneratingCislo;
+    final isBusy = _isCheckingZakazka || _isUploading || _isGeneratingCislo;
     final isLast = _currentPage == _totalPages - 1;
     return Container(
       padding: const EdgeInsets.fromLTRB(
