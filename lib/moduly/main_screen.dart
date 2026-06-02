@@ -15,6 +15,7 @@ import 'historie_prijmu/historie_prijmu_page.dart';
 import 'zakaznici/zakaznici_page.dart';
 import 'vozidla/vozidla_page.dart';
 import 'ukony.dart';
+import 'vin_dekoder.dart';
 import 'statistiky.dart';
 import 'nastaveni.dart';
 import 'zamestnanci.dart';
@@ -374,6 +375,9 @@ class MenuPage extends StatelessWidget {
         _ModuleEntry('Úkony', Icons.playlist_add_check_rounded,
             const UkonyPage(),
             subtitle: 'Ceník prací a služeb', countKey: 'ukony'),
+      _ModuleEntry('VIN dekodér', Icons.travel_explore_rounded,
+          const VinDekoderPage(),
+          subtitle: 'Údaje o vozidle z VIN'),
       if (maPristup('zamestnanci'))
         _ModuleEntry('Tým', Icons.badge_outlined, const ZamestnanciPage(),
             subtitle: 'Technici a oprávnění', countKey: 'uzivatele'),
