@@ -29,16 +29,32 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
   XFile? _capturedPhoto;
 
   // Frame bounds jako zlomky rozměrů preview widgetu (0..1)
-  double _frameL = 0.09;
-  double _frameT = 0.365;
-  double _frameR = 0.91;
-  double _frameB = 0.545;
+  double _frameL = 0.12;
+  double _frameT = 0.38;
+  double _frameR = 0.88;
+  double _frameB = 0.54;
   Size _previewSize = Size.zero;
+  bool _frameInitialized = false;
 
   static const _minFrameW = 0.15;
   static const _minFrameH = 0.06;
   static const _handleTouchSize = 48.0;
   static const _handleVisualSize = 14.0;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_frameInitialized) {
+      _frameInitialized = true;
+      final isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+      if (isTablet) {
+        _frameL = 0.25;
+        _frameT = 0.42;
+        _frameR = 0.75;
+        _frameB = 0.56;
+      }
+    }
+  }
 
   @override
   void initState() {
