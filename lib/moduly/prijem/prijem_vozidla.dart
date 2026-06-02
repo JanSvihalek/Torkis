@@ -538,6 +538,26 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
       final data = json.decode(response.body) as Map<String, dynamic>;
       debugPrint('=== VINCARIO RESPONSE ===\n${response.body}\n=========================');
+      if (mounted) {
+        await showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Vincario raw response'),
+            content: SingleChildScrollView(
+              child: SelectableText(
+                response.body,
+                style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Zavřít'),
+              ),
+            ],
+          ),
+        );
+      }
       if (mounted) _aplikovatVincarioData(data);
     } catch (e) {
       if (mounted) {
