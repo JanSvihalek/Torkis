@@ -571,6 +571,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
     String posledniZakazkaCislo = '';
     String posledniZakazkaDatum = '';
     String posledniZakazkaStav = '';
+    Map<String, dynamic> stavVozidlaData = {};
     if (spz.isNotEmpty) {
       try {
         final zakazkySnap = await FirebaseFirestore.instance
@@ -593,6 +594,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
           posledniZakazkaCislo = last['cislo_zakazky']?.toString() ?? '';
           posledniZakazkaDatum = _formatTimestamp(last['cas_prijeti']);
           posledniZakazkaStav = last['stav_zakazky']?.toString() ?? '';
+          final stavVozidla =
+              last['stav_vozidla'] as Map<String, dynamic>? ?? {};
+          stavVozidlaData = stavVozidla;
         }
       } catch (_) {}
     }
@@ -600,6 +604,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final stkM = vozidloData['stk_mesic']?.toString() ?? '';
     final stkR = vozidloData['stk_rok']?.toString() ?? '';
     final stk = (stkM.isNotEmpty && stkR.isNotEmpty) ? '$stkM/$stkR' : '';
+
+    final stavStkM = stavVozidlaData['stk_mesic']?.toString() ?? '';
+    final stavStkR = stavVozidlaData['stk_rok']?.toString() ?? '';
+    final stavStk =
+        (stavStkM.isNotEmpty && stavStkR.isNotEmpty) ? '$stavStkM/$stavStkR' : '';
 
     if (mounted) {
       setState(() {
@@ -615,6 +624,12 @@ class _MainWizardPageState extends State<MainWizardPage> {
           'posledni_zakazka': posledniZakazkaCislo,
           'posledni_zakazka_datum': posledniZakazkaDatum,
           'posledni_zakazka_stav': posledniZakazkaStav,
+          // Stav vozidla při poslední návštěvě
+          'stav_tachometr': stavVozidlaData['tachometr']?.toString() ?? '',
+          'stav_stk': stavStk,
+          'stav_poskozeni':
+              List<String>.from(stavVozidlaData['poskozeni'] ?? []),
+          'stav_schema_url': stavVozidlaData['schema_url']?.toString() ?? '',
         };
       });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

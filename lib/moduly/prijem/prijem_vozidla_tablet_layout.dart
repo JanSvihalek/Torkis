@@ -277,6 +277,14 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
     final zakazkaCislo = info['posledni_zakazka'] as String? ?? '';
     final zakazkaDatum = info['posledni_zakazka_datum'] as String? ?? '';
     final zakazkaStav = info['posledni_zakazka_stav'] as String? ?? '';
+    final stavTach = info['stav_tachometr'] as String? ?? '';
+    final stavStk = info['stav_stk'] as String? ?? '';
+    final stavPoskozeni = (info['stav_poskozeni'] as List?)
+            ?.map((e) => e.toString())
+            .where((s) => s.isNotEmpty && s != 'Neuvedeno')
+            .toList() ??
+        [];
+    final schemaUrl = info['stav_schema_url'] as String? ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -343,6 +351,63 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
               Divider(color: tok.line, height: 1),
               const SizedBox(height: TokSpace.md),
               _PreviewRow(label: 'Stav', value: zakazkaStav, tok: tok),
+            ],
+          ]),
+        ],
+
+        // Karta stavu vozidla při příjmu
+        if (stavTach.isNotEmpty ||
+            stavStk.isNotEmpty ||
+            stavPoskozeni.isNotEmpty ||
+            schemaUrl.isNotEmpty) ...[
+          const SizedBox(height: TokSpace.sm),
+          _InfoCard(tok: tok, children: [
+            _CardHeader(
+              icon: Icons.car_crash_outlined,
+              title: 'Stav při příjmu',
+              tok: tok,
+            ),
+            const SizedBox(height: TokSpace.md),
+            Divider(color: tok.line, height: 1),
+            const SizedBox(height: TokSpace.md),
+            if (stavTach.isNotEmpty)
+              _PreviewRow(label: 'Tachometr', value: '$stavTach km', tok: tok),
+            if (stavStk.isNotEmpty)
+              _PreviewRow(label: 'STK', value: stavStk, tok: tok),
+            if (stavPoskozeni.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: TokSpace.sm),
+                child: Text('Poškození',
+                    style: TextStyle(fontSize: 11, color: tok.textSecondary)),
+              ),
+              ...stavPoskozeni.map((p) => Padding(
+                    padding: const EdgeInsets.only(bottom: 3),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('• ',
+                            style: TextStyle(
+                                fontSize: 11, color: TokColors.accent)),
+                        Expanded(
+                          child: Text(p,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: tok.textPrimary)),
+                        ),
+                      ],
+                    ),
+                  )),
+            ],
+            if (schemaUrl.isNotEmpty) ...[
+              const SizedBox(height: TokSpace.sm),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(TokRadius.sm),
+                child: Image.network(
+                  schemaUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox(),
+                ),
+              ),
             ],
           ]),
         ],
