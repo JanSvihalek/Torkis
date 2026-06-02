@@ -129,16 +129,12 @@ class _MultiShotCameraPageState extends State<MultiShotCameraPage> {
                       ),
                     )
                   : _isInitialized
-                      ? ClipRect(
-                          child: SizedBox.expand(
-                            child: FittedBox(
-                              fit: BoxFit.cover,
-                              child: SizedBox(
-                                width: _controller!.value.previewSize!.height,
-                                height: _controller!.value.previewSize!.width,
-                                child: CameraPreview(_controller!),
-                              ),
-                            ),
+                      ? Center(
+                          child: AspectRatio(
+                            aspectRatio:
+                                _controller!.value.previewSize!.height /
+                                _controller!.value.previewSize!.width,
+                            child: CameraPreview(_controller!),
                           ),
                         )
                       : const Center(
