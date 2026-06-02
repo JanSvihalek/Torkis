@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:signature/signature.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -65,6 +66,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _odeslatEmail = true;
   bool _defaultOdeslatEmail = true;
   bool _podpisPovolen = true;
+  String _vincarioApiKey = '';
+  String _vincarioSecretKey = '';
+  bool _isLoadingVincario = false;
 
   String? _vybranyZakaznikId;
   List<Map<String, dynamic>> _nalezenaVozidla = [];
@@ -299,6 +303,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
             setState(() {
               _autoCisloZakazky = generovat;
               _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
+              _vincarioApiKey = data['vincario_api_key']?.toString() ?? '';
+              _vincarioSecretKey = data['vincario_secret_key']?.toString() ?? '';
               if (data.containsKey('default_odesilat_emaily')) {
                 _defaultOdeslatEmail = data['default_odesilat_emaily'] as bool;
                 _odeslatEmail = _defaultOdeslatEmail;
@@ -496,6 +502,133 @@ class _MainWizardPageState extends State<MainWizardPage> {
           backgroundColor: Colors.red));
     } finally {
       if (mounted) setState(() => _isLoadingSpz = false);
+    }
+  }
+
+  /// Vincario API 3.2
+  /// URL: https://api.vincario.com/3.2/{API_KEY}/{CONTROL_SUM}/decode/{VIN}.json
+  /// Control sum: prvních 10 znaků SHA1 z "{VIN}|decode|{API_KEY}|{SECRET_KEY}"
+  Future<void> _dekovatVinVincario() async {
+    final vin = _vinController.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    if (vin.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Zadejte VIN kód pro dekódování.'),
+          backgroundColor: Colors.orange));
+      return;
+    }
+    if (_vincarioApiKey.isEmpty || _vincarioSecretKey.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Vincario API klíče nejsou nakonfigurovány.'),
+          backgroundColor: Colors.orange));
+      return;
+    }
+    setState(() => _isLoadingVincario = true);
+    try {
+      final controlSum = _vincarioControlSum(vin, 'decode');
+      final uri = Uri.parse(
+          'https://api.vincario.com/3.2/$_vincarioApiKey/$controlSum/decode/$vin.json');
+      final response = await http.get(uri);
+      if (response.statusCode != 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Vincario API chyba ${response.statusCode}.'),
+              backgroundColor: Colors.red));
+        }
+        return;
+      }
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      debugPrint('=== VINCARIO RESPONSE ===\n${response.body}\n=========================');
+      if (mounted) _aplikovatVincarioData(data);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Chyba dekódování VIN: $e'),
+            backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingVincario = false);
+    }
+  }
+
+  /// SHA1("{VIN}|{ID}|{API_KEY}|{SECRET_KEY}").substring(0, 10)
+  String _vincarioControlSum(String vin, String id) {
+    final input = '$vin|$id|$_vincarioApiKey|$_vincarioSecretKey';
+    final hash = sha1.convert(utf8.encode(input));
+    return hash.toString().substring(0, 10);
+  }
+
+  void _aplikovatVincarioData(Map<String, dynamic> data) {
+    // Vincario 3.2 — zvládá tři možné formáty odpovědi:
+    // A) decode je Map: {"Make": "Volkswagen", ...}
+    // B) decode je List objektů: [{"label": "Make", "value": "Volkswagen"}, ...]
+    // C) hodnoty jsou na root úrovni JSONu
+    String v(String key) {
+      final decode = data['decode'];
+      if (decode is Map) {
+        final val = decode[key]?.toString() ?? '';
+        if (val.isNotEmpty) return val;
+      } else if (decode is List) {
+        for (final item in decode) {
+          if (item is Map &&
+              item['label']?.toString() == key) {
+            return item['value']?.toString() ?? '';
+          }
+        }
+      }
+      return data[key]?.toString() ?? '';
+    }
+
+    final znacka = v('Make');
+    final model  = v('Model');
+    final rok    = v('Model Year');
+    final palivo = v('Fuel Type - Primary');
+    final prevod = v('Transmission');
+    final karos  = v('Body');
+
+    // Motorizace: "1598 ccm, 110 kW"
+    final ccm   = v('Engine Displacement (ccm)');
+    final kw    = v('Engine Power (kW)');
+    final motor = v('Engine (full)').isNotEmpty
+        ? v('Engine (full)')
+        : [if (ccm.isNotEmpty) '$ccm ccm', if (kw.isNotEmpty) '$kw kW'].join(', ');
+
+    setState(() {
+      if (znacka.isNotEmpty) _znackaController.text = znacka;
+      if (model.isNotEmpty)  _modelController.text = model;
+      if (rok.isNotEmpty)    _rokVyrobyController.text = rok;
+      if (motor.isNotEmpty)  _motorizaceController.text = motor;
+
+      if (palivo.isNotEmpty) {
+        final match = _moznostiPaliva.where(
+            (p) => p.toLowerCase().contains(palivo.toLowerCase()) ||
+                   palivo.toLowerCase().contains(p.toLowerCase()));
+        if (match.isNotEmpty) _vybranePalivo = match.first;
+      }
+
+      if (prevod.isNotEmpty) {
+        final isManual = prevod.toLowerCase().contains('manual');
+        final isAuto   = prevod.toLowerCase().contains('auto') ||
+                         prevod.toLowerCase().contains('cvt') ||
+                         prevod.toLowerCase().contains('dsg');
+        if (isManual && _moznostiPrevodovky.contains('Manuální')) {
+          _vybranaPrevodovka = 'Manuální';
+        } else if (isAuto && _moznostiPrevodovky.contains('Automatická')) {
+          _vybranaPrevodovka = 'Automatická';
+        }
+      }
+
+      if (karos.isNotEmpty) {
+        final match = kTypyKaroserie.where(
+            (k) => k.toLowerCase().contains(karos.toLowerCase()) ||
+                   karos.toLowerCase().contains(k.toLowerCase()));
+        if (match.isNotEmpty) _typKaroserie = match.first;
+      }
+    });
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Údaje vozidla doplněny z Vincario.'),
+          backgroundColor: Colors.green));
     }
   }
 
@@ -889,7 +1022,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
       }
     }
     if (_currentPage == _totalPages - 1) {
-      if (_signatureController.isEmpty) {
+      if (_podpisPovolen && _signatureController.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Zákazník musí připojit podpis před odesláním.'),
             backgroundColor: Colors.red,
@@ -1669,6 +1802,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
         typZaznamu: _typZaznamu,
         typyZaznamu: _typyZaznamu,
         onTypZaznamuChanged: (v) => setState(() => _typZaznamu = v),
+        isLoadingVincario: _isLoadingVincario,
+        onDekovatVin: _vincarioApiKey.isNotEmpty ? _dekovatVinVincario : null,
       );
 
   // ── STRANA 2: Zákazník ────────────────────────────────

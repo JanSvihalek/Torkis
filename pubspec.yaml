@@ -2,7 +2,7 @@ name: torkis
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 4.6.0
+version: 4.6.1
 
 environment:
   sdk: '>=3.5.3 <4.0.0'
@@ -35,6 +35,7 @@ dependencies:
   google_fonts: ^6.2.1
   firebase_crashlytics: ^4.3.10
   purchases_flutter: ^8.0.0
+  crypto: ^3.0.3
   flutter_localizations:
     sdk: flutter
 

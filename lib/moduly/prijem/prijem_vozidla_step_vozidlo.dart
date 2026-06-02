@@ -91,6 +91,10 @@ class StepVozidlo extends StatelessWidget {
   final List<String> typyZaznamu;
   final ValueChanged<String> onTypZaznamuChanged;
 
+  // Vincario VIN dekodér
+  final bool isLoadingVincario;
+  final VoidCallback? onDekovatVin;
+
   const StepVozidlo({
     super.key,
     required this.isDark,
@@ -135,6 +139,8 @@ class StepVozidlo extends StatelessWidget {
     required this.typZaznamu,
     required this.typyZaznamu,
     required this.onTypZaznamuChanged,
+    this.isLoadingVincario = false,
+    this.onDekovatVin,
   });
 
   @override
@@ -407,6 +413,21 @@ class StepVozidlo extends StatelessWidget {
                         onPressed: onHledatVin,
                         tooltip: 'Vyhledat vozidlo a majitele z historie',
                       ),
+                if (onDekovatVin != null)
+                  isLoadingVincario
+                      ? const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.indigo)))
+                      : IconButton(
+                          icon: const Icon(Icons.bolt_rounded,
+                              size: 18, color: Colors.indigo),
+                          onPressed: onDekovatVin,
+                          tooltip: 'Dekódovat VIN přes Vincario',
+                        ),
               ],
             ),
           ),
