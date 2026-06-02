@@ -360,70 +360,119 @@ class MenuPage extends StatelessWidget {
     final items = <_ModuleEntry>[
       if (maPristup('vozidla'))
         _ModuleEntry('Vozidla', Icons.directions_car_outlined,
-            const VozidlaPage()),
+            const VozidlaPage(),
+            subtitle: 'Evidence vozů v servisu', countKey: 'vozidla'),
       if (maPristup('zakaznici'))
         _ModuleEntry('Zákazníci', Icons.people_alt_outlined,
-            const ZakazniciPage()),
+            const ZakazniciPage(),
+            subtitle: 'Kontakty a vozový park', countKey: 'zakaznici'),
       if (maPristup('historie_prijmu'))
         _ModuleEntry('Historie příjmů', Icons.history_rounded,
-            const HistoriePrijmuPage()),
+            const HistoriePrijmuPage(),
+            subtitle: 'Archiv zakázek', countKey: 'zakazky'),
       if (maPristup('ukony'))
         _ModuleEntry('Úkony', Icons.playlist_add_check_rounded,
-            const UkonyPage()),
+            const UkonyPage(),
+            subtitle: 'Ceník prací a služeb', countKey: 'ukony'),
       if (maPristup('zamestnanci'))
-        _ModuleEntry('Tým', Icons.badge_outlined, const ZamestnanciPage()),
+        _ModuleEntry('Tým', Icons.badge_outlined, const ZamestnanciPage(),
+            subtitle: 'Technici a oprávnění', countKey: 'uzivatele'),
       if (maPristup('statistiky'))
         _ModuleEntry(
-            'Statistiky', Icons.bar_chart_rounded, const StatisticsPage()),
+            'Statistiky', Icons.bar_chart_rounded, const StatisticsPage(),
+            subtitle: 'Přehledy a tržby'),
       if (maPristup('nastaveni'))
         _ModuleEntry(
-            'Nastavení', Icons.settings_outlined, const SettingsPage()),
+            'Nastavení', Icons.settings_outlined, const SettingsPage(),
+            subtitle: 'Servis, faktury, integrace'),
       if (globalUserRole == 'admin')
         _ModuleEntry('Předplatné', Icons.workspace_premium_outlined,
-            const PredplatnePage()),
+            const PredplatnePage(),
+            subtitle: 'Plán a platby'),
       if (globalUserRole == 'admin')
-        _ModuleEntry('Web', Icons.public_rounded, const LandingPage()),
+        _ModuleEntry('Web', Icons.public_rounded, const LandingPage(),
+            subtitle: 'Veřejná stránka'),
     ];
 
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isTabletLandscape = constraints.maxWidth >= kTabletBreakpoint &&
+            MediaQuery.orientationOf(context) == Orientation.landscape;
+        if (isTabletLandscape) {
+          final cols = (constraints.maxWidth / 300).floor().clamp(2, 4);
+          return _buildTabletLayout(context, tok, role, items, cols);
+        }
+        return _buildMobileLayout(context, tok, role, items);
+      },
+    );
+  }
+
+  void _openModule(BuildContext context, _ModuleEntry e) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: context.tok.bg,
+          appBar: AppBar(
+            title: Text(e.label),
+            backgroundColor: context.tok.bg,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+          ),
+          body: e.page,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(TorkisTokens tok, String role) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(
+              horizontal: TokSpace.xs, vertical: 4),
+          child: Text(
+            'Moduly',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
+              color: tok.textPrimary,
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(
+              left: TokSpace.xs, top: 4, bottom: TokSpace.lg),
+          child: Row(
+            children: [
+              TorkisRolePill(role: role),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'Přihlášen v servisu',
+                  style: TextStyle(fontSize: 13, color: tok.textSecondary),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Mobil (na výšku) — ponecháno beze změny ───────────────────────────────
+  Widget _buildMobileLayout(BuildContext context, TorkisTokens tok,
+      String role, List<_ModuleEntry> items) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
           TokSpace.lg, TokSpace.sm, TokSpace.lg, TokSpace.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: TokSpace.xs, vertical: 4),
-            child: Text(
-              'Moduly',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.4,
-                color: tok.textPrimary,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(
-                left: TokSpace.xs, top: 4, bottom: TokSpace.lg),
-            child: Row(
-              children: [
-                TorkisRolePill(role: role),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    'Přihlášen v servisu',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: tok.textSecondary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          _buildHeader(tok, role),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -435,64 +484,121 @@ class MenuPage extends StatelessWidget {
                 .map((e) => TorkisModuleCard(
                       icon: e.icon,
                       label: e.label,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => Scaffold(
-                            backgroundColor: context.tok.bg,
-                            appBar: AppBar(
-                              title: Text(e.label),
-                              backgroundColor: context.tok.bg,
-                              surfaceTintColor: Colors.transparent,
-                              elevation: 0,
-                            ),
-                            body: e.page,
-                          ),
-                        ),
-                      ),
+                      onTap: () => _openModule(context, e),
                     ))
                 .toList(),
           ),
           const SizedBox(height: TokSpace.xxl),
           _ContactCard(tok: tok),
           const SizedBox(height: TokSpace.md),
-          TorkisSecondaryButton(
-            label: 'Odhlásit se',
-            leadingIcon: Icons.logout_rounded,
-            onPressed: () async {
-              final potvrdit = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Odhlášení'),
-                  content: const Text('Opravdu se chcete odhlásit?'),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Zrušit')),
-                    TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text(
-                          'Odhlásit',
-                          style: TextStyle(color: TokColors.danger),
-                        )),
-                  ],
-                ),
+          _buildLogoutButton(context),
+        ],
+      ),
+    );
+  }
+
+  // ── iPad (na šířku) — mřížka karet se živými počty ────────────────────────
+  Widget _buildTabletLayout(BuildContext context, TorkisTokens tok,
+      String role, List<_ModuleEntry> items, int cols) {
+    final sId = globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
+    final collections =
+        items.map((e) => e.countKey).whereType<String>().toSet();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(
+          TokSpace.xl, TokSpace.lg, TokSpace.xl, TokSpace.xxl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(tok, role),
+          FutureBuilder<Map<String, int>>(
+            future: _fetchCounts(sId, collections),
+            builder: (context, snap) {
+              final counts = snap.data ?? const <String, int>{};
+              return GridView.count(
+                crossAxisCount: cols,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: TokSpace.lg,
+                crossAxisSpacing: TokSpace.lg,
+                childAspectRatio: 1.7,
+                children: items
+                    .map((e) => _ModuleGridCard(
+                          entry: e,
+                          count:
+                              e.countKey != null ? counts[e.countKey] : null,
+                          onTap: () => _openModule(context, e),
+                        ))
+                    .toList(),
               );
-              if (potvrdit == true) {
-                await FirebaseAuth.instance.signOut();
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const AuthScreen()),
-                    (route) => false,
-                  );
-                }
-              }
             },
+          ),
+          const SizedBox(height: TokSpace.xxl),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: Column(
+              children: [
+                _ContactCard(tok: tok),
+                const SizedBox(height: TokSpace.md),
+                _buildLogoutButton(context),
+              ],
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Future<Map<String, int>> _fetchCounts(
+      String? sId, Set<String> collections) async {
+    final result = <String, int>{};
+    if (sId == null) return result;
+    await Future.wait(collections.map((c) async {
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection(c)
+            .where('servis_id', isEqualTo: sId)
+            .count()
+            .get();
+        result[c] = snap.count ?? 0;
+      } catch (_) {}
+    }));
+    return result;
+  }
+
+  Widget _buildLogoutButton(BuildContext context) {
+    return TorkisSecondaryButton(
+      label: 'Odhlásit se',
+      leadingIcon: Icons.logout_rounded,
+      onPressed: () async {
+        final potvrdit = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Odhlášení'),
+            content: const Text('Opravdu se chcete odhlásit?'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Zrušit')),
+              TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text(
+                    'Odhlásit',
+                    style: TextStyle(color: TokColors.danger),
+                  )),
+            ],
+          ),
+        );
+        if (potvrdit == true) {
+          await FirebaseAuth.instance.signOut();
+          if (context.mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const AuthScreen()),
+              (route) => false,
+            );
+          }
+        }
+      },
     );
   }
 }
@@ -501,7 +607,102 @@ class _ModuleEntry {
   final String label;
   final IconData icon;
   final Widget page;
-  const _ModuleEntry(this.label, this.icon, this.page);
+  final String? subtitle;
+  // Kolekce ve Firestore pro živý počet (filtr servis_id). null = bez počtu.
+  final String? countKey;
+  const _ModuleEntry(this.label, this.icon, this.page,
+      {this.subtitle, this.countKey});
+}
+
+/// Bohatá karta modulu pro iPad na šířku — ikona, živý počet, název, popis.
+class _ModuleGridCard extends StatelessWidget {
+  final _ModuleEntry entry;
+  final int? count;
+  final VoidCallback onTap;
+  const _ModuleGridCard(
+      {required this.entry, required this.count, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tok = context.tok;
+    final iconBg = tok.isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : const Color(0xFFEFF1F4);
+    return Material(
+      color: tok.surface,
+      borderRadius: BorderRadius.circular(TokRadius.xl),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(TokRadius.xl),
+        child: Container(
+          padding: const EdgeInsets.all(TokSpace.lg),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TokRadius.xl),
+            border: Border.all(color: tok.line),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(TokRadius.md),
+                    ),
+                    child: Icon(entry.icon, size: 22, color: tok.textPrimary),
+                  ),
+                  const Spacer(),
+                  if (count != null)
+                    Text(
+                      _formatPocet(count!),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: tok.textPrimary,
+                      ),
+                    )
+                  else
+                    Icon(Icons.arrow_forward_ios_rounded,
+                        size: 14, color: tok.textSecondary),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                entry.label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: tok.textPrimary,
+                ),
+              ),
+              if (entry.subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  entry.subtitle!,
+                  style: TextStyle(fontSize: 12, color: tok.textSecondary),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _formatPocet(int n) {
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
+    buf.write(s[i]);
+  }
+  return buf.toString();
 }
 
 class _ContactCard extends StatelessWidget {

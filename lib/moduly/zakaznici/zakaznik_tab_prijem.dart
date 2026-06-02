@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../historie_prijmu/prijem_detail.dart';
 import '../../core/shared_widgets.dart';
+import '../../core/design_tokens.dart';
 
 class ZakaznikPrijemTab extends StatelessWidget {
   final bool isDark;
@@ -144,12 +145,12 @@ class ZakaznikPrijemTab extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(Icons.speed,
-                                size: 14, color: Colors.teal),
+                                size: 14, color: TokColors.accent),
                             const SizedBox(width: 4),
                             Text('$tacho km',
                                 style: const TextStyle(
                                     fontSize: 13,
-                                    color: Colors.teal)),
+                                    color: TokColors.accent)),
                           ],
                         ),
                       ],

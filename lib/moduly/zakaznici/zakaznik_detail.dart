@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth_gate.dart';
+import '../../core/design_tokens.dart';
 import 'zakaznici_constants.dart';
 import 'zakaznik_tab_info.dart';
 import 'zakaznik_tab_prijem.dart';
@@ -226,7 +227,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: TokColors.accent,
                         foregroundColor: Colors.white,
                         padding:
                             const EdgeInsets.symmetric(vertical: 15),
@@ -312,12 +313,10 @@ class ZakaznikDetailScreen extends StatelessWidget {
     String docId,
     String servisId,
   ) {
+    final tok = context.tok;
     final zakaznikId = aktualniData['id_zakaznika'] ?? '';
-
-    const tabs = <Tab>[
-      Tab(icon: Icon(Icons.person), text: 'Info & Vozidla'),
-      Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
-    ];
+    final jmeno = aktualniData['jmeno']?.toString() ?? '';
+    final titleText = jmeno.isNotEmpty ? jmeno : 'Karta zákazníka';
 
     final views = <Widget>[
       ZakaznikInfoTab(
@@ -326,40 +325,188 @@ class ZakaznikDetailScreen extends StatelessWidget {
         zakaznikId: zakaznikId,
         servisId: servisId,
       ),
-      ZakaznikPrijemTab(isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
+      ZakaznikPrijemTab(
+          isDark: isDark, zakaznikId: zakaznikId, servisId: servisId),
     ];
 
     return DefaultTabController(
-      length: tabs.length,
+      length: 2,
       child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        appBar: AppBar(
-          title: Text(
-            aktualniData['jmeno'] ?? 'Karta zákazníka',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor:
-              isDark ? const Color(0xFF1E3A5F) : Colors.white,
-          elevation: 0,
-          actions: [
-            if (docId != "UNKNOWN")
-              IconButton(
-                icon: const Icon(Icons.edit, color: Colors.blue),
-                tooltip: 'Upravit údaje',
-                onPressed: () =>
-                    _otevritEditaci(context, docId, aktualniData),
-              ),
-          ],
-          bottom: TabBar(
-            labelColor: Colors.blue,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.blue,
-            indicatorWeight: 3,
-            tabs: tabs,
+        backgroundColor: tok.bg,
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context, tok, titleText, docId, aktualniData),
+              Expanded(child: TabBarView(children: views)),
+            ],
           ),
         ),
-        body: TabBarView(children: views),
       ),
     );
+  }
+
+  // ── Hlavička karty zákazníka ───────────────────────────────────────────────
+  Widget _buildHeader(BuildContext context, TorkisTokens tok, String title,
+      String docId, Map<String, dynamic> data) {
+    return Container(
+      decoration: BoxDecoration(
+        color: tok.surface,
+        border: Border(bottom: BorderSide(color: tok.line)),
+      ),
+      padding:
+          const EdgeInsets.fromLTRB(TokSpace.lg, TokSpace.md, TokSpace.lg, 0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _roundIconButton(tok, Icons.arrow_back_ios_new_rounded,
+                  onTap: () => Navigator.pop(context)),
+              const SizedBox(width: TokSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('ZÁKAZNÍK',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          color: TokColors.accent,
+                        )),
+                    Text(title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: tok.textPrimary,
+                          height: 1.1,
+                        )),
+                  ],
+                ),
+              ),
+              if (docId != 'UNKNOWN') ...[
+                _roundIconButton(tok, Icons.edit_outlined,
+                    onTap: () => _otevritEditaci(context, docId, data)),
+                const SizedBox(width: TokSpace.sm),
+                _buildMenuButton(context, tok, docId),
+              ],
+            ],
+          ),
+          const SizedBox(height: TokSpace.sm),
+          TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            labelColor: TokColors.accent,
+            unselectedLabelColor: tok.textSecondary,
+            indicatorColor: TokColors.accent,
+            indicatorWeight: 2.5,
+            indicatorSize: TabBarIndicatorSize.label,
+            labelStyle:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            unselectedLabelStyle:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            tabs: const [
+              Tab(text: 'Info'),
+              Tab(text: 'Záznamy'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundIconButton(TorkisTokens tok, IconData icon,
+      {required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        child: Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TokRadius.md),
+            border: Border.all(color: tok.line),
+          ),
+          child: Icon(icon, size: 18, color: tok.textPrimary),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuButton(BuildContext context, TorkisTokens tok, String docId) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        border: Border.all(color: tok.line),
+      ),
+      child: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert, size: 18, color: tok.textPrimary),
+        padding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TokRadius.md)),
+        onSelected: (v) {
+          if (v == 'smazat') _smazatZakaznika(context, docId);
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(
+            value: 'smazat',
+            child: Row(children: [
+              Icon(Icons.delete_outline_rounded,
+                  size: 18, color: Colors.redAccent),
+              SizedBox(width: 10),
+              Text('Smazat zákazníka',
+                  style: TextStyle(color: Colors.redAccent)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _smazatZakaznika(BuildContext context, String docId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Smazat zákazníka?'),
+        content: const Text(
+            'Zákazník bude odebrán z adresáře. Jeho vozidla a historie zakázek zůstanou zachovány.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Zrušit')),
+          TextButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Smazat',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('zakaznici')
+          .doc(docId)
+          .delete();
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Zákazník byl smazán.'),
+            backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Chyba při mazání: $e'),
+            backgroundColor: Colors.red));
+      }
+    }
   }
 }
