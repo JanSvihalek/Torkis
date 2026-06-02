@@ -415,6 +415,46 @@ class _MainWizardPageState extends State<MainWizardPage> {
   /// Při jediném výsledku přednaplní formulář okamžitě, při více zobrazí výběrový dialog.
   bool _isLoadingVin = false;
 
+  /// Sjednotí znaky, které OCR běžně zaměňuje (O↔0, I↔1, Q↔0), a odstraní
+  /// mezery. Slouží k tolerantnímu porovnání SPZ/VIN při vyhledávání, aby
+  /// drobná chyba rozpoznávání nezabránila nalezení vozidla.
+  String _normProHledani(String s) => s
+      .toUpperCase()
+      .replaceAll(RegExp(r'\s+'), '')
+      .replaceAll('O', '0')
+      .replaceAll('I', '1')
+      .replaceAll('Q', '0');
+
+  /// Načte vozidla servisu a vyfiltruje je podle VIN (substring) nebo SPZ
+  /// (prefix). Porovnává přes [_normProHledani], takže OCR záměny (0/O, 1/I,
+  /// Q/0) hledání nerozbijí. Při zadaném VIN má VIN přednost před SPZ.
+  Future<List<Map<String, dynamic>>> _najdiVozidla(
+      {String? spz, String? vin}) async {
+    if (_sId == null) return [];
+    final snap = await FirebaseFirestore.instance
+        .collection('vozidla')
+        .where('servis_id', isEqualTo: _sId)
+        .get();
+    final vsechna = snap.docs.map((d) => d.data()).toList();
+
+    final vinNorm = vin == null ? '' : _normProHledani(vin);
+    if (vinNorm.isNotEmpty) {
+      return vsechna.where((v) {
+        final u = _normProHledani((v['vin'] ?? '').toString());
+        return u.isNotEmpty && u.contains(vinNorm);
+      }).toList();
+    }
+
+    final spzNorm = spz == null ? '' : _normProHledani(spz);
+    if (spzNorm.isNotEmpty) {
+      return vsechna.where((v) {
+        final u = _normProHledani((v['spz'] ?? '').toString());
+        return u.isNotEmpty && u.startsWith(spzNorm);
+      }).toList();
+    }
+    return [];
+  }
+
   /// Vyhledá vozidlo podle VIN a načte vozidlo i navázaného zákazníka.
   /// Logika je stejná jako `_hledatPodleSpz`, jen filtrujeme přes pole VIN.
   Future<void> _hledatPodleVin() async {
@@ -434,14 +474,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
             backgroundColor: Colors.red));
         return;
       }
-      final vozidlaQuery = await FirebaseFirestore.instance
-          .collection('vozidla')
-          .where('servis_id', isEqualTo: _sId)
-          .get();
-      final nalezenaVozidla = vozidlaQuery.docs.map((d) => d.data()).where((v) {
-        final ulozenoVin = (v['vin'] ?? '').toString().toUpperCase();
-        return ulozenoVin.isNotEmpty && ulozenoVin.contains(vin);
-      }).toList();
+      final nalezenaVozidla = await _najdiVozidla(vin: vin);
 
       if (nalezenaVozidla.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -479,14 +512,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
             backgroundColor: Colors.red));
         return;
       }
-      final vozidlaQuery = await FirebaseFirestore.instance
-          .collection('vozidla')
-          .where('servis_id', isEqualTo: _sId)
-          .get();
-      final nalezenaVozidla = vozidlaQuery.docs.map((d) => d.data()).where((v) {
-        final ulozenoSpz = (v['spz'] ?? '').toString().toUpperCase();
-        return ulozenoSpz.startsWith(spz);
-      }).toList();
+      final nalezenaVozidla = await _najdiVozidla(spz: spz);
 
       if (nalezenaVozidla.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -1532,72 +1558,84 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-  /// Naskenuje řetězec a automaticky určí, zda jde o VIN (17 znaků, povolené znaky)
-  /// nebo SPZ. Pokud nelze rozhodnout, nechá uživatele vybrat.
+  /// Naskenuje řetězec, odhadne zda jde o VIN nebo SPZ, vyplní příslušné pole
+  /// a rovnou se pokusí dotáhnout vozidlo i zákazníka z databáze servisu.
+  ///
+  /// Odhad: VIN má 17 znaků (bez I/O/Q), SPZ je vždy kratší — proto řetězce
+  /// o délce ≥ 9 bereme jako VIN. Aby drobná chyba odhadu nevadila, při
+  /// neúspěšném hledání zkusíme i druhý typ (křížový fallback).
   Future<void> _scanVinOrSpz() async {
     final raw = await _openOcrCamera('VIN nebo SPZ');
     if (raw == null || raw.isEmpty || !mounted) return;
 
     final clean = raw.replaceAll(RegExp(r'\s+'), '').toUpperCase();
 
-    // VIN: přesně 17 znaků, povoleno [A-Z0-9] kromě I, O, Q.
-    // OCR často plete 0↔O, 1↔I, Q↔0 — pokud má řetězec 17 znaků,
-    // nahradíme tyto OCR záměny (ve VIN se I/O/Q nikdy nevyskytují).
-    String vinCandidate = clean;
-    bool wasNormalized = false;
+    // U 17znakového kódu opravíme typické OCR záměny — ve VIN se I/O/Q nevyskytují.
+    String vin = clean;
+    bool opraveno = false;
     if (clean.length == 17 && RegExp(r'[IOQ]').hasMatch(clean)) {
-      vinCandidate =
-          clean.replaceAll('O', '0').replaceAll('I', '1').replaceAll('Q', '0');
-      wasNormalized = true;
+      vin = clean.replaceAll('O', '0').replaceAll('I', '1').replaceAll('Q', '0');
+      opraveno = true;
     }
-    final isVin = RegExp(r'^[A-HJ-NPR-Z0-9]{17}$').hasMatch(vinCandidate);
+    final vypadaJakoVin = clean.length >= 9;
 
-    if (isVin) {
-      setState(() => _vinController.text = vinCandidate);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(wasNormalized
-              ? 'Naskenován VIN kód (OCR záměna O/I/Q opravena).'
-              : 'Naskenován VIN kód.'),
-        ),
-      );
-      // Automaticky dotáhneme vozidlo a zákazníka z historie.
-      await _hledatPodleVin();
-      return;
-    }
+    setState(() {
+      if (vypadaJakoVin) {
+        _vinController.text = vin;
+        _isLoadingVin = true;
+      } else {
+        _spzController.text = clean;
+        _isLoadingSpz = true;
+      }
+    });
 
-    // Krátký řetězec (typická SPZ) → bez dialogu.
-    if (clean.length >= 5 && clean.length <= 8) {
-      setState(() => _spzController.text = clean);
-      await _hledatPodleSpz();
-      return;
-    }
+    try {
+      // Primárně hledáme podle odhadnutého typu, při neúspěchu zkusíme i druhý.
+      var nalezena = vypadaJakoVin
+          ? await _najdiVozidla(vin: vin)
+          : await _najdiVozidla(spz: clean);
+      if (nalezena.isEmpty) {
+        nalezena = vypadaJakoVin
+            ? await _najdiVozidla(spz: clean)
+            : await _najdiVozidla(vin: vin);
+        // Druhý pokus uspěl → doplníme i odpovídající pole.
+        if (nalezena.isNotEmpty && mounted) {
+          setState(() {
+            if (vypadaJakoVin) {
+              _spzController.text = clean;
+            } else {
+              _vinController.text = vin;
+            }
+          });
+        }
+      }
 
-    // Nejasné — necháme uživatele rozhodnout.
-    if (!mounted) return;
-    final volba = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Co bylo naskenováno?'),
-        content: Text('Naskenováno: $clean'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'spz'),
-            child: const Text('SPZ'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, 'vin'),
-            child: const Text('VIN'),
-          ),
-        ],
-      ),
-    );
-    if (volba == 'vin') {
-      setState(() => _vinController.text = clean);
-      await _hledatPodleVin();
-    } else if (volba == 'spz') {
-      setState(() => _spzController.text = clean);
-      await _hledatPodleSpz();
+      if (!mounted) return;
+      if (nalezena.isEmpty) {
+        final co = vypadaJakoVin ? vin : clean;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(opraveno
+                ? 'Naskenováno „$co" (OCR oprava O/I/Q). V databázi nenalezeno — údaje doplňte ručně.'
+                : 'Naskenováno „$co". V databázi nenalezeno — údaje doplňte ručně.'),
+            backgroundColor: Colors.blueGrey));
+      } else if (nalezena.length == 1) {
+        await _aplikovatVybraneVozidlo(nalezena.first);
+      } else {
+        _otevritVyberNalezenychVozidel(nalezena);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Chyba při vyhledávání: $e'),
+            backgroundColor: Colors.red));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingVin = false;
+          _isLoadingSpz = false;
+        });
+      }
     }
   }
 
