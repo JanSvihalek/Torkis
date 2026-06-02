@@ -151,6 +151,82 @@ class _StepVozidloState extends State<StepVozidlo> {
   // null = automatické dle šířky obrazovky (tablet → mřížka, mobil → pod sebou)
   bool? _useGrid;
 
+  /// Akční dlaždice ve stylu „Skenovat VIN/SPZ" — pro hledání v databázi a
+  /// dekódování VIN. Podporuje stav načítání (spinner místo ikony) a deaktivaci.
+  Widget _buildActionTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool loading,
+    required VoidCallback? onTap,
+  }) {
+    final tok = context.tok;
+    final disabled = loading || onTap == null;
+    return Material(
+      color: tok.surface,
+      borderRadius: BorderRadius.circular(TokRadius.lg),
+      child: InkWell(
+        onTap: disabled ? null : onTap,
+        borderRadius: BorderRadius.circular(TokRadius.lg),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TokRadius.lg),
+            border: Border.all(
+              color: widget.isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : tok.line,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: TokColors.accent.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(TokRadius.sm),
+                ),
+                child: loading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: TokColors.accent))
+                    : Icon(icon, color: TokColors.accent, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: tok.textPrimary,
+                        )),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: tok.textSecondary,
+                        )),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios_rounded,
+                  size: 14, color: tok.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSpzSection(BuildContext context) {
     final tok = context.tok;
     return Column(
@@ -235,27 +311,14 @@ class _StepVozidloState extends State<StepVozidlo> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: widget.isLoadingSpz ? null : widget.onHledatSpz,
-          icon: widget.isLoadingSpz
-              ? const SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: TokColors.accent))
-              : const Icon(Icons.history_rounded, size: 16),
-          label: const Text('Hledat v databázi servisu'),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: TokColors.accent,
-            side: const BorderSide(color: TokColors.accent),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            textStyle:
-                const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(TokRadius.md)),
-          ),
+        const SizedBox(height: 10),
+        _buildActionTile(
+          context,
+          icon: Icons.search_rounded,
+          title: 'Hledat v databázi',
+          subtitle: 'Najít dříve uložené vozidlo podle SPZ',
+          loading: widget.isLoadingSpz,
+          onTap: widget.onHledatSpz,
         ),
       ],
     );
@@ -272,57 +335,26 @@ class _StepVozidloState extends State<StepVozidlo> {
           widget.isDark,
           caps: true,
         ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            OutlinedButton.icon(
-              onPressed: widget.isLoadingVin ? null : widget.onHledatVin,
-              icon: widget.isLoadingVin
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: TokColors.accent))
-                  : const Icon(Icons.history_rounded, size: 16),
-              label: const Text('Hledat v databázi'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: TokColors.accent,
-                side: const BorderSide(color: TokColors.accent),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 10),
-                textStyle: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(TokRadius.md)),
-              ),
-            ),
-            if (widget.onDekovatVin != null)
-              OutlinedButton.icon(
-                onPressed:
-                    widget.isLoadingVincario ? null : widget.onDekovatVin,
-                icon: widget.isLoadingVincario
-                    ? const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.indigo))
-                    : const Icon(Icons.drive_eta_rounded, size: 16),
-                label: const Text('Dekódovat VIN'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.indigo,
-                  side: const BorderSide(color: Colors.indigo),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
-                  textStyle: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w500),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(TokRadius.md)),
-                ),
-              ),
-          ],
+        const SizedBox(height: 10),
+        _buildActionTile(
+          context,
+          icon: Icons.search_rounded,
+          title: 'Hledat v databázi',
+          subtitle: 'Najít dříve uložené vozidlo podle VIN',
+          loading: widget.isLoadingVin,
+          onTap: widget.onHledatVin,
         ),
+        if (widget.onDekovatVin != null) ...[
+          const SizedBox(height: 8),
+          _buildActionTile(
+            context,
+            icon: Icons.cloud_download_rounded,
+            title: 'Dekódovat VIN online',
+            subtitle: 'Doplnit značku, model a motorizaci',
+            loading: widget.isLoadingVincario,
+            onTap: widget.onDekovatVin,
+          ),
+        ],
       ],
     );
   }
