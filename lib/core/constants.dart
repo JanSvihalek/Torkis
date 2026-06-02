@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '4.7.0';
+const String kAppVerze = '4.7.1';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
 
 // Globální ThemeNotifier pro přepínání světlého a tmavého režimu
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
+// Osobní nastavení uživatele — klíč v SharedPreferences pro režim pro leváky
+// (spoušť fotoaparátu na levé straně, když je zařízení na šířku).
+const String kPrefKameraSpoustVlevo = 'kamera_spoust_vlevo';
 
 // Seznam dostupných stavů zakázky
 const List<String> stavyZakazky = [

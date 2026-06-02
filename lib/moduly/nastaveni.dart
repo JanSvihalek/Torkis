@@ -44,6 +44,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _tmavyRezim = false;
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
+  bool _spoustVlevo = false;
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -77,15 +78,19 @@ class _SettingsPageState extends State<SettingsPage> {
           .collection('uzivatele')
           .doc(user.uid)
           .get();
+      final prefs = await SharedPreferences.getInstance();
       if (userDoc.exists) {
+        final vlevo = userDoc.data()!['kamera_spoust_vlevo'] as bool? ?? false;
         setState(() {
           _tmavyRezim = userDoc.data()!['tmavy_rezim'] ?? false;
+          _spoustVlevo = vlevo;
         });
+        // Zrcadlíme do SharedPreferences — odtud čte fotoaparát.
+        await prefs.setBool(kPrefKameraSpoustVlevo, vlevo);
       }
 
       final auth = LocalAuthentication();
       final canBio = await auth.canCheckBiometrics;
-      final prefs = await SharedPreferences.getInstance();
       setState(() {
         _biometricAvailable = canBio;
         _biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
@@ -194,6 +199,21 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('biometric_enabled', value);
     setState(() => _biometricEnabled = value);
+  }
+
+  /// Přepne osobní režim pro leváky — spoušť fotoaparátu na levé straně při
+  /// orientaci na šířku. Ukládá lokálně (čte fotoaparát) i do účtu uživatele.
+  Future<void> _toggleSpoustVlevo(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(kPrefKameraSpoustVlevo, value);
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await FirebaseFirestore.instance
+          .collection('uzivatele')
+          .doc(user.uid)
+          .set({'kamera_spoust_vlevo': value}, SetOptions(merge: true));
+    }
+    if (mounted) setState(() => _spoustVlevo = value);
   }
 
   Future<void> _ulozitSablony() async {
@@ -981,6 +1001,27 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? TokColors.darkSurface : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                    ),
+                    child: SwitchListTile(
+                      secondary:
+                          const Icon(Icons.pan_tool_alt, color: Colors.blue),
+                      title: const Text('Režim pro leváky',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: const Text(
+                          'Spoušť fotoaparátu vlevo, když je zařízení na šířku.',
+                          style: TextStyle(fontSize: 11)),
+                      value: _spoustVlevo,
+                      activeColor: Colors.blue,
+                      onChanged: _toggleSpoustVlevo,
+                    ),
+                  ),
                 ],
               ),
 

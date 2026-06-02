@@ -50,6 +50,12 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   String _currentTabId = 'prijem';
 
+  // Stabilní klíč pro IndexedStack se stránkami. Mobilní a tabletový layout
+  // mají odlišnou strukturu stromu — díky společnému GlobalKey Flutter element
+  // při změně orientace přesune místo zničení, takže stav rozpracovaných stránek
+  // (např. formuláře příjmu) zůstane zachován.
+  final GlobalKey _pagesKey = GlobalKey();
+
   final Map<String, _NavData> _allNavItems = {
     'prijem': _NavData(
         page: const MainWizardPage(),
@@ -206,6 +212,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                     Expanded(
                       child: IndexedStack(
+                        key: _pagesKey,
                         index: currentIndex,
                         children: currentPages,
                       ),
@@ -271,6 +278,7 @@ class _MainScreenState extends State<MainScreen> {
                 ],
               ),
               body: IndexedStack(
+                key: _pagesKey,
                 index: currentIndex,
                 children: currentPages,
               ),
