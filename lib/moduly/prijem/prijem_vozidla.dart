@@ -1022,9 +1022,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
       final spzChybi = _spzPovinne && _spzController.text.trim().isEmpty;
       if (zadaneCislo.isEmpty || spzChybi) {
         final zprava = zadaneCislo.isEmpty && spzChybi
-            ? 'Číslo zakázky a SPZ jsou povinné údaje!'
+            ? 'Číslo záznamu a SPZ jsou povinné údaje!'
             : zadaneCislo.isEmpty
-                ? 'Číslo zakázky je povinný údaj!'
+                ? 'Číslo záznamu je povinný údaj!'
                 : 'SPZ vozidla je povinný údaj!';
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(zprava),
@@ -1043,7 +1043,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
           if (docSnap.docs.isNotEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text(
-                    'Toto číslo zakázky již v databázi existuje! Zadejte prosím jiné.'),
+                    'Toto číslo záznamu již v databázi existuje! Zadejte prosím jiné.'),
                 backgroundColor: Colors.red,
                 duration: Duration(seconds: 4)));
             setState(() => _isCheckingZakazka = false);
