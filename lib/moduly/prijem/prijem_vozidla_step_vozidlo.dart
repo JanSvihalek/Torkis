@@ -315,7 +315,7 @@ class _StepVozidloState extends State<StepVozidlo> {
         _buildActionTile(
           context,
           icon: Icons.search_rounded,
-          title: 'Hledat v databázi',
+          title: 'Hledat SPZ v databázi',
           subtitle: 'Najít dříve uložené vozidlo podle SPZ',
           loading: widget.isLoadingSpz,
           onTap: widget.onHledatSpz,
@@ -339,7 +339,7 @@ class _StepVozidloState extends State<StepVozidlo> {
         _buildActionTile(
           context,
           icon: Icons.search_rounded,
-          title: 'Hledat v databázi',
+          title: 'Hledat VIN v databázi',
           subtitle: 'Najít dříve uložené vozidlo podle VIN',
           loading: widget.isLoadingVin,
           onTap: widget.onHledatVin,
