@@ -175,7 +175,9 @@ class _MainScreenState extends State<MainScreen> {
             if (isTablet) {
               return Scaffold(
                 backgroundColor: context.tok.bg,
-                body: Row(
+                body: SafeArea(
+                  bottom: false,
+                  child: Row(
                   children: [
                     _MainTabletSidebar(
                       navItems: filteredNavOrder
@@ -209,6 +211,7 @@ class _MainScreenState extends State<MainScreen> {
                       ),
                     ),
                   ],
+                ),
                 ),
               );
             }
