@@ -192,12 +192,6 @@ class StepVozidlo extends StatelessWidget {
             customSuffix: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(
-                  icon: const Icon(Icons.qr_code_scanner_rounded,
-                      size: 18, color: TokColors.steel),
-                  onPressed: () => onScan(zakazkaController, false),
-                  tooltip: 'Naskenovat číslo zakázky',
-                ),
                 if (autoGenerateCislo)
                   isGeneratingCislo
                       ? const Padding(
@@ -355,12 +349,6 @@ class StepVozidlo extends StatelessWidget {
                       spzController,
                       isDark,
                       caps: true,
-                      customSuffix: IconButton(
-                        icon: const Icon(Icons.qr_code_scanner_rounded,
-                            size: 18, color: TokColors.steel),
-                        onPressed: () => onScan(spzController, false),
-                        tooltip: 'Naskenovat SPZ fotoaparátem',
-                      ),
                     ),
                   ),
                 ],
@@ -397,12 +385,6 @@ class StepVozidlo extends StatelessWidget {
                 vinController,
                 isDark,
                 caps: true,
-                customSuffix: IconButton(
-                  icon: const Icon(Icons.qr_code_scanner_rounded,
-                      size: 18, color: TokColors.steel),
-                  onPressed: () => onScan(vinController, false),
-                  tooltip: 'Naskenovat VIN fotoaparátem',
-                ),
               ),
               const SizedBox(height: 8),
               Row(
@@ -493,13 +475,7 @@ class StepVozidlo extends StatelessWidget {
                     decoration: InputDecoration(
                       prefixIcon: const Icon(Icons.directions_car_outlined,
                           color: TokColors.accent, size: 18),
-                      suffixIcon: onScanZnacka != null
-                          ? IconButton(
-                              icon: const Icon(Icons.qr_code_scanner_rounded,
-                                  size: 18, color: TokColors.steel),
-                              onPressed: onScanZnacka,
-                              tooltip: 'Naskenovat značku fotoaparátem')
-                          : null,
+                      suffixIcon: null,
                       filled: true,
                       fillColor: isDark
                           ? Colors.white.withValues(alpha: 0.06)
@@ -616,13 +592,7 @@ class StepVozidlo extends StatelessWidget {
                           Icons.directions_car_filled_outlined,
                           color: TokColors.accent,
                           size: 18),
-                      suffixIcon: onScanModel != null
-                          ? IconButton(
-                              icon: const Icon(Icons.qr_code_scanner_rounded,
-                                  size: 18, color: TokColors.steel),
-                              onPressed: onScanModel,
-                              tooltip: 'Naskenovat model fotoaparátem')
-                          : null,
+                      suffixIcon: null,
                       filled: true,
                       fillColor: isDark
                           ? Colors.white.withValues(alpha: 0.06)
