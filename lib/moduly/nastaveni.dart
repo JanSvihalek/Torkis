@@ -35,6 +35,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _defaultEmail = true;
   bool _autoCisloZakazky = true;
   bool _podpisPovolen = true;
+  bool _spzPovinne = true;
   List<String> _sablonyZprav = [];
   List<String> _typyZaznamu = ['Servis', 'Výkup'];
   String _defaultTypZaznamu = 'Servis';
@@ -110,6 +111,7 @@ class _SettingsPageState extends State<SettingsPage> {
             _defaultEmail = data['default_odesilat_emaily'] ?? true;
             _autoCisloZakazky = data['auto_cislo_zakazky'] ?? true;
             _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
+            _spzPovinne = data['spz_povinne'] as bool? ?? true;
             _sablonyZprav = List<String>.from(data['sablony_zprav'] ?? []);
             _typyZaznamu = List<String>.from(
                 data['typy_zaznamu'] ?? ['Servis', 'Výkup']);
@@ -152,6 +154,7 @@ class _SettingsPageState extends State<SettingsPage> {
             'default_odesilat_emaily': _defaultEmail,
             'auto_cislo_zakazky': _autoCisloZakazky,
             'podpis_povolen': _podpisPovolen,
+            'spz_povinne': _spzPovinne,
             'zmeneno': FieldValue.serverTimestamp(),
           }, SetOptions(merge: true));
         }
@@ -701,6 +704,25 @@ class _SettingsPageState extends State<SettingsPage> {
                         activeColor: Colors.blue,
                         onChanged: (v) =>
                             setState(() => _podpisPovolen = v),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: isDark
+                              ? TokColors.darkSurface
+                              : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(10)),
+                      child: SwitchListTile(
+                        title: const Text('Povinná SPZ vozidla',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: const Text(
+                            'Při vypnutí lze příjem odeslat i bez vyplněné SPZ (např. vozidla bez registrace).',
+                            style: TextStyle(fontSize: 12)),
+                        value: _spzPovinne,
+                        activeColor: Colors.blue,
+                        onChanged: (v) =>
+                            setState(() => _spzPovinne = v),
                       ),
                     ),
                   ],

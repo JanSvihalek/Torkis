@@ -66,6 +66,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _odeslatEmail = true;
   bool _defaultOdeslatEmail = true;
   bool _podpisPovolen = true;
+  bool _spzPovinne = true;
   String _vincarioApiKey = '';
   String _vincarioSecretKey = '';
   bool _isLoadingVincario = false;
@@ -303,6 +304,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
             setState(() {
               _autoCisloZakazky = generovat;
               _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
+              _spzPovinne = data['spz_povinne'] as bool? ?? true;
               _vincarioApiKey = data['vincario_api_key']?.toString() ?? '';
               _vincarioSecretKey = data['vincario_secret_key']?.toString() ?? '';
               if (data.containsKey('default_odesilat_emaily')) {
@@ -1008,11 +1010,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
     FocusScope.of(context).unfocus();
     if (_currentPage == 0) {
       final zadaneCislo = _zakazkaController.text.trim();
-      if (zadaneCislo.isEmpty || _spzController.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Číslo zakázky a SPZ jsou povinné údaje!'),
+      final spzChybi = _spzPovinne && _spzController.text.trim().isEmpty;
+      if (zadaneCislo.isEmpty || spzChybi) {
+        final zprava = zadaneCislo.isEmpty && spzChybi
+            ? 'Číslo zakázky a SPZ jsou povinné údaje!'
+            : zadaneCislo.isEmpty
+                ? 'Číslo zakázky je povinný údaj!'
+                : 'SPZ vozidla je povinný údaj!';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(zprava),
             backgroundColor: Colors.red,
-            duration: Duration(seconds: 3)));
+            duration: const Duration(seconds: 3)));
         return;
       }
       setState(() => _isCheckingZakazka = true);

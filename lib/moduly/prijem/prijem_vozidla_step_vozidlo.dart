@@ -278,158 +278,177 @@ class StepVozidlo extends StatelessWidget {
             const SizedBox(height: TokSpace.xl),
           ],
           // ── Země + SPZ ───────────────────────────────────
-          Row(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 88,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 6, left: 2),
-                      child: Text('Země',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: tok.textSecondary,
-                              letterSpacing: 0.2)),
-                    ),
-                    Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.06)
-                            : TokColors.paper,
-                        borderRadius: BorderRadius.circular(TokRadius.md),
-                        border: Border.all(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : tok.line,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 88,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6, left: 2),
+                          child: Text('Země',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: tok.textSecondary,
+                                  letterSpacing: 0.2)),
                         ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: zemeRegistrace,
-                          isExpanded: true,
-                          icon: const SizedBox.shrink(),
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          selectedItemBuilder: (_) =>
-                              _kVsechnyZeme.keys.map((k) => Center(
-                                    child: Text(
-                                      '${_kVsechnyZeme[k]!.split(' ').first} $k',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? Colors.white
-                                            : TokColors.ink,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  )).toList(),
-                          items: _kVsechnyZeme.entries
-                              .map((e) => DropdownMenuItem(
-                                    value: e.key,
-                                    child: Text(e.value,
-                                        style: const TextStyle(fontSize: 14)),
-                                  ))
-                              .toList(),
-                          onChanged: (v) {
-                            if (v != null) onZemeChanged(v);
-                          },
+                        Container(
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : TokColors.paper,
+                            borderRadius: BorderRadius.circular(TokRadius.md),
+                            border: Border.all(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : tok.line,
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: zemeRegistrace,
+                              isExpanded: true,
+                              icon: const SizedBox.shrink(),
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              selectedItemBuilder: (_) =>
+                                  _kVsechnyZeme.keys.map((k) => Center(
+                                        child: Text(
+                                          '${_kVsechnyZeme[k]!.split(' ').first} $k',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? Colors.white
+                                                : TokColors.ink,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      )).toList(),
+                              items: _kVsechnyZeme.entries
+                                  .map((e) => DropdownMenuItem(
+                                        value: e.key,
+                                        child: Text(e.value,
+                                            style: const TextStyle(fontSize: 14)),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) {
+                                if (v != null) onZemeChanged(v);
+                              },
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: buildInput(
-                  'SPZ vozidla',
-                  Icons.confirmation_number_outlined,
-                  spzController,
-                  isDark,
-                  caps: true,
-                  customSuffix: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: buildInput(
+                      'SPZ vozidla',
+                      Icons.confirmation_number_outlined,
+                      spzController,
+                      isDark,
+                      caps: true,
+                      customSuffix: IconButton(
                         icon: const Icon(Icons.qr_code_scanner_rounded,
                             size: 18, color: TokColors.steel),
                         onPressed: () => onScan(spzController, false),
                         tooltip: 'Naskenovat SPZ fotoaparátem',
                       ),
-                      isLoadingSpz
-                          ? const Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: TokColors.accent)))
-                          : IconButton(
-                              icon: const Icon(Icons.search_rounded,
-                                  size: 18, color: TokColors.accent),
-                              onPressed: onHledatSpz,
-                              tooltip:
-                                  'Vyhledat vozidlo a majitele z historie',
-                            ),
-                    ],
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: isLoadingSpz ? null : onHledatSpz,
+                icon: isLoadingSpz
+                    ? const SizedBox(
+                        width: 14, height: 14,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: TokColors.accent))
+                    : const Icon(Icons.history_rounded, size: 16),
+                label: const Text('Hledat v databázi servisu'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: TokColors.accent,
+                  side: const BorderSide(color: TokColors.accent),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TokRadius.md)),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          buildInput(
-            'VIN kód',
-            Icons.tag_outlined,
-            vinController,
-            isDark,
-            caps: true,
-            customSuffix: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
+          // ── VIN kód ──────────────────────────────────────
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              buildInput(
+                'VIN kód',
+                Icons.tag_outlined,
+                vinController,
+                isDark,
+                caps: true,
+                customSuffix: IconButton(
                   icon: const Icon(Icons.qr_code_scanner_rounded,
                       size: 18, color: TokColors.steel),
                   onPressed: () => onScan(vinController, false),
                   tooltip: 'Naskenovat VIN fotoaparátem',
                 ),
-                isLoadingVin
-                    ? const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: SizedBox(
-                            width: 18,
-                            height: 18,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: isLoadingVin ? null : onHledatVin,
+                    icon: isLoadingVin
+                        ? const SizedBox(
+                            width: 14, height: 14,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: TokColors.accent)))
-                    : IconButton(
-                        icon: const Icon(Icons.search_rounded,
-                            size: 18, color: TokColors.accent),
-                        onPressed: onHledatVin,
-                        tooltip: 'Vyhledat vozidlo a majitele z historie',
-                      ),
-                if (onDekovatVin != null)
-                  isLoadingVincario
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: SizedBox(
-                              width: 18,
-                              height: 18,
+                                strokeWidth: 2, color: TokColors.accent))
+                        : const Icon(Icons.history_rounded, size: 16),
+                    label: const Text('Hledat v databázi'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: TokColors.accent,
+                      side: const BorderSide(color: TokColors.accent),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(TokRadius.md)),
+                    ),
+                  ),
+                  if (onDekovatVin != null) ...[
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: isLoadingVincario ? null : onDekovatVin,
+                      icon: isLoadingVincario
+                          ? const SizedBox(
+                              width: 14, height: 14,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.indigo)))
-                      : IconButton(
-                          icon: const Icon(Icons.bolt_rounded,
-                              size: 18, color: Colors.indigo),
-                          onPressed: onDekovatVin,
-                          tooltip: 'Dekódovat VIN přes Vincario',
-                        ),
-              ],
-            ),
+                                  strokeWidth: 2, color: Colors.indigo))
+                          : const Icon(Icons.drive_eta_rounded, size: 16),
+                      label: const Text('Dekódovat VIN'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.indigo,
+                        side: const BorderSide(color: Colors.indigo),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(TokRadius.md)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: 20),
           // Značka autocomplete
