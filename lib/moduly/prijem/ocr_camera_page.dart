@@ -4,7 +4,9 @@ import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart
 import 'package:permission_handler/permission_handler.dart'
     show openAppSettings;
 import 'package:image/image.dart' as img;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import '../../core/constants.dart';
 
 class OcrCameraPage extends StatefulWidget {
   final String label;
@@ -41,6 +43,10 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
   static const _handleTouchSize = 48.0;
   static const _handleVisualSize = 14.0;
 
+  // Strana spouště v režimu na šířku. false = vpravo (praváci),
+  // true = vlevo (osobní režim pro leváky, čte se ze SharedPreferences).
+  bool _captureOnLeft = false;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -60,6 +66,16 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
   void initState() {
     super.initState();
     _initCamera();
+    _nactiStranuSpouste();
+  }
+
+  /// Načte osobní předvolbu uživatele (režim pro leváky) ze SharedPreferences.
+  Future<void> _nactiStranuSpouste() async {
+    final prefs = await SharedPreferences.getInstance();
+    final vlevo = prefs.getBool(kPrefKameraSpoustVlevo) ?? false;
+    if (mounted && vlevo != _captureOnLeft) {
+      setState(() => _captureOnLeft = vlevo);
+    }
   }
 
   Future<void> _initCamera() async {
@@ -207,12 +223,33 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(),
-            Expanded(child: _buildMainContent()),
-            _buildBottomControls(),
-          ],
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            if (orientation == Orientation.landscape) {
+              final sidebar = _buildScanBar(vertical: true);
+              return Row(
+                children: [
+                  if (_captureOnLeft) sidebar,
+                  Expanded(
+                    child: Column(
+                      children: [
+                        _buildTopBar(),
+                        Expanded(child: _buildMainContent()),
+                      ],
+                    ),
+                  ),
+                  if (!_captureOnLeft) sidebar,
+                ],
+              );
+            }
+            return Column(
+              children: [
+                _buildTopBar(),
+                Expanded(child: _buildMainContent()),
+                _buildScanBar(vertical: false),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -447,32 +484,45 @@ class _OcrCameraPageState extends State<OcrCameraPage> {
     );
   }
 
-  Widget _buildBottomControls() {
-    if (_result != null) return const SizedBox.shrink();
+  /// Spoušť skenování. Na výšku pruh dole, na šířku svislý panel po straně
+  /// (palec uživatele) — viz [_captureOnLeft]. Při zobrazeném výsledku se
+  /// skrývá (uživatel volí Znovu / Potvrdit).
+  Widget _buildScanBar({required bool vertical}) {
+    if (_result != null) {
+      return vertical ? const SizedBox(width: 110) : const SizedBox.shrink();
+    }
+    final button = GestureDetector(
+      onTap: _isProcessing ? null : _scan,
+      child: Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 4),
+          color: _isProcessing
+              ? Colors.grey.withValues(alpha: 0.5)
+              : Colors.blue.withValues(alpha: 0.85),
+        ),
+        child: _isProcessing
+            ? const Padding(
+                padding: EdgeInsets.all(22),
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Colors.white),
+              )
+            : const Icon(Icons.document_scanner,
+                color: Colors.white, size: 32),
+      ),
+    );
+
+    if (vertical) {
+      return SizedBox(
+        width: 110,
+        child: Center(child: button),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
-      child: GestureDetector(
-        onTap: _isProcessing ? null : _scan,
-        child: Container(
-          width: 72,
-          height: 72,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 4),
-            color: _isProcessing
-                ? Colors.grey.withValues(alpha: 0.5)
-                : Colors.blue.withValues(alpha: 0.85),
-          ),
-          child: _isProcessing
-              ? const Padding(
-                  padding: EdgeInsets.all(22),
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
-                )
-              : const Icon(Icons.document_scanner,
-                  color: Colors.white, size: 32),
-        ),
-      ),
+      child: Center(child: button),
     );
   }
 }

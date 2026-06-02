@@ -1274,16 +1274,29 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
 
     String spz = _spzController.text.trim().toUpperCase();
-    if (spz.isNotEmpty) {
+    String vinKod = _vinController.text.trim().toUpperCase();
+    // Vozidlo uložíme i bez SPZ (SPZ může být v nastavení nepovinná).
+    // Klíč dokumentu: primárně SPZ (dedup podle značky), jinak VIN, jinak
+    // generované ID. Ukládáme jen pokud máme aspoň nějaká data o vozidle.
+    final maVozidloData = spz.isNotEmpty ||
+        vinKod.isNotEmpty ||
+        _znackaController.text.trim().isNotEmpty ||
+        _modelController.text.trim().isNotEmpty;
+    if (maVozidloData) {
+      final vozidloKey = spz.isNotEmpty
+          ? spz
+          : (vinKod.isNotEmpty
+              ? 'VIN_$vinKod'
+              : 'VOZ_${DateTime.now().millisecondsSinceEpoch}');
       await FirebaseFirestore.instance
           .collection('vozidla')
-          .doc('${_sId}_$spz')
+          .doc('${_sId}_$vozidloKey')
           .set({
         'servis_id': _sId,
         'zakaznik_id': zakaznikId,
         'spz': spz,
         'zeme_registrace': _zemeRegistrace,
-        'vin': _vinController.text.trim().toUpperCase(),
+        'vin': vinKod,
         'znacka': _znackaController.text.trim(),
         'model': _modelController.text.trim(),
         'rok_vyroby': _rokVyrobyController.text.trim(),
