@@ -1584,17 +1584,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
                             children: _buildStepPages(isDark),
                           ),
                         ),
-                        // Náhled vozidla
-                        ListenableBuilder(
-                          listenable: Listenable.merge([
-                            _spzController,
-                            _vinController,
-                            _zakazkaController,
-                            _znackaController,
-                            _modelController,
-                            _rokVyrobyController,
-                          ]),
-                          builder: (ctx, _) => PrijemVehiclePreviewPanel(
+                        // Náhled vozidla — zobrazí se jen po načtení vozidla
+                        if (_nalezenoVozidloInfo != null)
+                          PrijemVehiclePreviewPanel(
                             spz: _spzController.text,
                             vin: _vinController.text,
                             cisloZakazky: _zakazkaController.text,
@@ -1604,7 +1596,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
                             isDark: isDark,
                             vehicleInfo: _nalezenoVozidloInfo,
                           ),
-                        ),
                       ],
                     ),
                   ),

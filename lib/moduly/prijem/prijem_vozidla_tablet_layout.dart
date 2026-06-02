@@ -29,7 +29,7 @@ class PrijemTabletSidebar extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: TokSpace.md),
+          const SafeArea(bottom: false, child: SizedBox(height: TokSpace.lg)),
           Expanded(
             child: ListView.builder(
               padding:
