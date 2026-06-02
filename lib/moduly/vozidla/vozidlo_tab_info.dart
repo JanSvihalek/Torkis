@@ -192,16 +192,71 @@ class VozidloInfoTab extends StatelessWidget {
   Widget _buildMobileLayout(
       BuildContext context, TorkisTokens tok, int prijmuCount, String? logo) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(TokSpace.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildMobileHeader(prijmuCount, logo),
+          Padding(
+            padding: const EdgeInsets.all(TokSpace.xl),
+            child: Column(
+              children: [
+                _techCard(tok),
+                if (zakaznikId.isNotEmpty) ...[
+                  const SizedBox(height: TokSpace.lg),
+                  _ownerCard(context, tok),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Mobilní hlavička — gradient přes celou šířku (full-bleed), jako původně.
+  /// Obsahuje ale nově logo značky, ošetřenou prázdnou SPZ a formátované km.
+  Widget _buildMobileHeader(int prijmuCount, String? logo) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+          TokSpace.xl, TokSpace.xl, TokSpace.xl, TokSpace.xl),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [TokColors.ink, TokColors.inkSoft],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
       child: Column(
         children: [
-          _vehicleCard(prijmuCount, logo),
+          _logoBadge(logo),
           const SizedBox(height: TokSpace.lg),
-          _techCard(tok),
-          if (zakaznikId.isNotEmpty) ...[
-            const SizedBox(height: TokSpace.lg),
-            _ownerCard(context, tok),
+          if (spz.isNotEmpty) ...[
+            _buildSpzPlate(),
+            const SizedBox(height: TokSpace.md),
           ],
+          if (_vehicleTitle.isNotEmpty)
+            Text(
+              _vehicleTitle,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center,
+            ),
+          if (_vehicleSubtitle.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              _vehicleSubtitle,
+              style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.55), fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          const SizedBox(height: TokSpace.xl),
+          _buildStatsRow(prijmuCount),
+          const SizedBox(height: TokSpace.lg),
+          _buildStkBanner(),
         ],
       ),
     );
