@@ -122,11 +122,11 @@ class VozidloPrijemTab extends StatelessWidget {
                         Row(
                           children: [
                             const Icon(Icons.speed,
-                                size: 14, color: Colors.teal),
+                                size: 14, color: TokColors.accent),
                             const SizedBox(width: 4),
                             Text('$tacho km',
                                 style: const TextStyle(
-                                    fontSize: 13, color: Colors.teal)),
+                                    fontSize: 13, color: TokColors.accent)),
                           ],
                         ),
                       ],

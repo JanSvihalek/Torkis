@@ -36,6 +36,22 @@ class VozidloInfoTab extends StatelessWidget {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
+  static const _flags = {
+    'CZ': '🇨🇿',
+    'SK': '🇸🇰',
+    'DE': '🇩🇪',
+    'AT': '🇦🇹',
+    'PL': '🇵🇱',
+    'HU': '🇭🇺',
+    'FR': '🇫🇷',
+    'IT': '🇮🇹',
+    'GB': '🇬🇧',
+    'NL': '🇳🇱',
+    'UA': '🇺🇦',
+  };
+
+  String get _zeme => (autoData['zeme_registrace']?.toString() ?? 'CZ').toUpperCase();
+
   String get _vehicleTitle =>
       '${autoData['znacka'] ?? ''} ${autoData['model'] ?? ''}'.trim();
 
@@ -50,6 +66,28 @@ class VozidloInfoTab extends StatelessWidget {
     return parts.join(' · ');
   }
 
+  /// Naformátuje km s mezerami po tisících (320000 → "320 000").
+  String _formatKm(String raw) {
+    final n = int.tryParse(raw.replaceAll(RegExp(r'\D'), ''));
+    if (n == null) return raw;
+    final s = n.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+
+  /// Zformátuje SPZ pro zobrazení (CZ 7znaková: "8H3 8179").
+  String _formatPlate() {
+    final s = spz.toUpperCase().replaceAll(' ', '');
+    if (_zeme == 'CZ' && s.length == 7) {
+      return '${s.substring(0, 3)} ${s.substring(3)}';
+    }
+    return s;
+  }
+
   int _stkRemainingMonths() {
     final m = int.tryParse(stkM) ?? 0;
     final y = int.tryParse(stkR) ?? 0;
@@ -58,148 +96,197 @@ class VozidloInfoTab extends StatelessWidget {
     return (y - now.year) * 12 + (m - now.month);
   }
 
+  String get _stkValue => (stkM.isNotEmpty && stkR.isNotEmpty)
+      ? '${stkM.padLeft(2, '0')} / $stkR'
+      : '—';
+
+  /// Načte počet příjmů a URL loga značky jedním průchodem.
+  Future<({int prijmu, String? logo})> _fetchHeaderData() async {
+    int count = 0;
+    String? logo;
+    if (spz.isNotEmpty) {
+      try {
+        final snap = await FirebaseFirestore.instance
+            .collection('zakazky')
+            .where('servis_id', isEqualTo: user.uid)
+            .where('spz', isEqualTo: spz)
+            .get();
+        count = snap.docs.length;
+      } catch (_) {}
+    }
+    if (znackaNazev.isNotEmpty) {
+      try {
+        final q = await FirebaseFirestore.instance
+            .collection('znacka')
+            .where('nazev', isEqualTo: znackaNazev)
+            .limit(1)
+            .get();
+        if (q.docs.isNotEmpty) {
+          logo = q.docs.first.data()['logo']?.toString();
+        }
+      } catch (_) {}
+    }
+    return (prijmu: count, logo: (logo?.isNotEmpty ?? false) ? logo : null);
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
-    return FutureBuilder<int>(
-      future: _fetchPrijmuCount(),
-      builder: (context, prijmuSnap) {
-        final prijmuCount = prijmuSnap.data ?? 0;
+    return FutureBuilder<({int prijmu, String? logo})>(
+      future: _fetchHeaderData(),
+      builder: (context, headerSnap) {
+        final prijmuCount = headerSnap.data?.prijmu ?? 0;
+        final logoUrl = headerSnap.data?.logo;
         return LayoutBuilder(
           builder: (context, constraints) {
             if (constraints.maxWidth >= kTabletBreakpoint &&
                 MediaQuery.orientationOf(context) == Orientation.landscape) {
-              return _buildTabletLayout(context, tok, prijmuCount);
+              return _buildTabletLayout(context, tok, prijmuCount, logoUrl);
             }
-            return _buildMobileLayout(context, tok, prijmuCount);
+            return _buildMobileLayout(context, tok, prijmuCount, logoUrl);
           },
         );
       },
     );
   }
 
-  Future<int> _fetchPrijmuCount() async {
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('zakazky')
-          .where('servis_id', isEqualTo: user.uid)
-          .where('spz', isEqualTo: spz)
-          .get();
-      return snap.docs.length;
-    } catch (_) {
-      return 0;
-    }
-  }
-
   // ── Tablet layout ──────────────────────────────────────────────────────────
 
   Widget _buildTabletLayout(
-      BuildContext context, TorkisTokens tok, int prijmuCount) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Levý tmavý panel
-        _buildLeftPanel(prijmuCount),
-        // Střed: technické údaje
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(TokSpace.xl),
-            child: Column(
-              children: [
-                _techCard(tok),
-                const SizedBox(height: TokSpace.xl),
-              ],
+      BuildContext context, TorkisTokens tok, int prijmuCount, String? logo) {
+    return Padding(
+      padding: const EdgeInsets.all(TokSpace.xl),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 320,
+            child: _vehicleCard(prijmuCount, logo),
+          ),
+          const SizedBox(width: TokSpace.lg),
+          Expanded(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: _techCard(tok),
             ),
           ),
-        ),
-        // Pravý panel: majitel
-        if (zakaznikId.isNotEmpty)
-          SizedBox(
-            width: 300,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(TokSpace.xl),
-              child: Column(
-                children: [
-                  _ownerCard(context, tok),
-                  const SizedBox(height: TokSpace.xl),
-                ],
+          if (zakaznikId.isNotEmpty) ...[
+            const SizedBox(width: TokSpace.lg),
+            SizedBox(
+              width: 320,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: _ownerCard(context, tok),
               ),
             ),
-          ),
-      ],
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildLeftPanel(int prijmuCount) {
+  // ── Mobile layout ──────────────────────────────────────────────────────────
+
+  Widget _buildMobileLayout(
+      BuildContext context, TorkisTokens tok, int prijmuCount, String? logo) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(TokSpace.xl),
+      child: Column(
+        children: [
+          _vehicleCard(prijmuCount, logo),
+          const SizedBox(height: TokSpace.lg),
+          _techCard(tok),
+          if (zakaznikId.isNotEmpty) ...[
+            const SizedBox(height: TokSpace.lg),
+            _ownerCard(context, tok),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Levá / horní karta vozidla ───────────────────────────────────────────
+
+  Widget _vehicleCard(int prijmuCount, String? logo) {
     return Container(
-      width: 280,
-      height: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           colors: [TokColors.ink, TokColors.inkSoft],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border(right: BorderSide(color: TokColors.darkLine)),
+        borderRadius: BorderRadius.circular(TokRadius.xl),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(TokSpace.xl),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: TokSpace.lg),
-            // Ikona auta
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.directions_car_rounded,
-                  size: 36, color: TokColors.steelSoft),
-            ),
-            const SizedBox(height: TokSpace.lg),
-            // SPZ
+      padding: const EdgeInsets.all(TokSpace.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: TokSpace.sm),
+          _logoBadge(logo),
+          const SizedBox(height: TokSpace.lg),
+          if (spz.isNotEmpty) ...[
             _buildSpzPlate(),
             const SizedBox(height: TokSpace.lg),
-            // Název
-            if (_vehicleTitle.isNotEmpty)
-              Text(
-                _vehicleTitle,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            if (_vehicleSubtitle.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                _vehicleSubtitle,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.55),
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: TokSpace.xl),
-            // Stats
-            _buildStatsRow(prijmuCount),
-            const SizedBox(height: TokSpace.lg),
-            // STK banner
-            _buildStkBanner(),
           ],
-        ),
+          if (_vehicleTitle.isNotEmpty)
+            Text(
+              _vehicleTitle,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          if (_vehicleSubtitle.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              _vehicleSubtitle,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.55),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          const SizedBox(height: TokSpace.xl),
+          _buildStatsRow(prijmuCount),
+          const SizedBox(height: TokSpace.lg),
+          _buildStkBanner(),
+        ],
       ),
     );
   }
 
+  Widget _logoBadge(String? logo) {
+    return Container(
+      width: 72,
+      height: 72,
+      padding: const EdgeInsets.all(12),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(TokRadius.lg),
+      ),
+      child: logo != null
+          ? Image.network(
+              logo,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                  Icons.directions_car_rounded,
+                  size: 32,
+                  color: TokColors.ink),
+            )
+          : const Icon(Icons.directions_car_rounded,
+              size: 32, color: TokColors.ink),
+    );
+  }
+
   Widget _buildSpzPlate() {
+    final flag = _flags[_zeme];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -217,12 +304,13 @@ class VozidloInfoTab extends StatelessWidget {
               color: TokColors.accent2,
               borderRadius: BorderRadius.circular(3),
             ),
-            child: const Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('🇨🇿', style: TextStyle(fontSize: 9)),
-                Text('CZ',
-                    style: TextStyle(
+                if (flag != null)
+                  Text(flag, style: const TextStyle(fontSize: 9)),
+                Text(_zeme,
+                    style: const TextStyle(
                         color: Colors.white,
                         fontSize: 7,
                         fontWeight: FontWeight.bold)),
@@ -230,7 +318,7 @@ class VozidloInfoTab extends StatelessWidget {
             ),
           ),
           Text(
-            spz.toUpperCase(),
+            _formatPlate(),
             style: const TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 26,
@@ -249,13 +337,13 @@ class VozidloInfoTab extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(TokRadius.md),
       ),
-      padding: const EdgeInsets.symmetric(vertical: TokSpace.md),
+      padding: const EdgeInsets.symmetric(
+          vertical: TokSpace.md, horizontal: TokSpace.sm),
       child: Row(
         children: [
-          _statItem('TACHOMETR', tacho.isNotEmpty ? '$tacho km' : '—'),
+          _statItem('TACHOMETR', tacho.isNotEmpty ? '${_formatKm(tacho)} km' : '—'),
           _statDivider(),
-          _statItem('STK DO',
-              stkM.isNotEmpty && stkR.isNotEmpty ? '$stkM / $stkR' : '—'),
+          _statItem('STK DO', _stkValue),
           _statDivider(),
           _statItem('PŘÍJMŮ', '$prijmuCount'),
         ],
@@ -274,15 +362,19 @@ class VozidloInfoTab extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.8,
                 color: Colors.white.withValues(alpha: 0.45)),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: Colors.white),
-            textAlign: TextAlign.center,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
@@ -338,84 +430,7 @@ class VozidloInfoTab extends StatelessWidget {
     );
   }
 
-  // ── Mobile layout ──────────────────────────────────────────────────────────
-
-  Widget _buildMobileLayout(
-      BuildContext context, TorkisTokens tok, int prijmuCount) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMobileHeader(prijmuCount),
-          Padding(
-            padding: const EdgeInsets.all(TokSpace.xl),
-            child: Column(
-              children: [
-                _techCard(tok),
-                if (zakaznikId.isNotEmpty) ...[
-                  const SizedBox(height: TokSpace.lg),
-                  _ownerCard(context, tok),
-                ],
-                const SizedBox(height: TokSpace.xl),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMobileHeader(int prijmuCount) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(
-          TokSpace.xl, TokSpace.xxl, TokSpace.xl, TokSpace.xl),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [TokColors.ink, TokColors.inkSoft],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.directions_car_rounded,
-                size: 30, color: TokColors.steelSoft),
-          ),
-          const SizedBox(height: TokSpace.lg),
-          _buildSpzPlate(),
-          if (_vehicleTitle.isNotEmpty) ...[
-            const SizedBox(height: TokSpace.md),
-            Text(_vehicleTitle,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700)),
-          ],
-          if (_vehicleSubtitle.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(_vehicleSubtitle,
-                style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.55),
-                    fontSize: 12)),
-          ],
-          const SizedBox(height: TokSpace.xl),
-          _buildStatsRow(prijmuCount),
-          const SizedBox(height: TokSpace.lg),
-          _buildStkBanner(),
-        ],
-      ),
-    );
-  }
-
-  // ── Cards ──────────────────────────────────────────────────────────────────
+  // ── Karty ────────────────────────────────────────────────────────────────
 
   Widget _techCard(TorkisTokens tok) {
     return _sectionCard(
@@ -429,7 +444,8 @@ class VozidloInfoTab extends StatelessWidget {
         _infoRow(tok, 'Rok výroby', autoData['rok_vyroby']),
         _infoRow(tok, 'Palivo', autoData['palivo']),
         _infoRow(tok, 'Převodovka', autoData['prevodovka']),
-        _infoRow(tok, 'Tachometr', tacho.isNotEmpty ? '$tacho km' : null),
+        _infoRow(tok, 'Tachometr',
+            tacho.isNotEmpty ? '${_formatKm(tacho)} km' : null),
       ],
     );
   }
@@ -472,37 +488,24 @@ class VozidloInfoTab extends StatelessWidget {
                 children: [
                   if (telefon.isNotEmpty)
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () =>
-                            launchUrl(Uri.parse('tel:$telefon')),
-                        icon: const Icon(Icons.phone_outlined, size: 16),
-                        label: const Text('Volat'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: tok.accent,
-                          side: BorderSide(color: tok.line),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(TokRadius.md)),
-                        ),
+                      child: _ownerAction(
+                        tok,
+                        icon: Icons.phone_outlined,
+                        label: 'Volat',
+                        filled: true,
+                        onTap: () => launchUrl(Uri.parse('tel:$telefon')),
                       ),
                     ),
                   if (telefon.isNotEmpty && email.isNotEmpty)
                     const SizedBox(width: TokSpace.sm),
                   if (email.isNotEmpty)
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () =>
-                            launchUrl(Uri.parse('mailto:$email')),
-                        icon: const Icon(Icons.mail_outline_rounded,
-                            size: 16),
-                        label: const Text('E-mail'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: tok.accent,
-                          side: BorderSide(color: tok.line),
-                          shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(TokRadius.md)),
-                        ),
+                      child: _ownerAction(
+                        tok,
+                        icon: Icons.mail_outline_rounded,
+                        label: 'E-mail',
+                        filled: false,
+                        onTap: () => launchUrl(Uri.parse('mailto:$email')),
                       ),
                     ),
                 ],
@@ -511,6 +514,43 @@ class VozidloInfoTab extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _ownerAction(
+    TorkisTokens tok, {
+    required IconData icon,
+    required String label,
+    required bool filled,
+    required VoidCallback onTap,
+  }) {
+    final primary = tok.isDark ? TokColors.accent : TokColors.ink;
+    if (filled) {
+      return ElevatedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, size: 16),
+        label: Text(label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(TokRadius.md)),
+        ),
+      );
+    }
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 16),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: tok.textPrimary,
+        side: BorderSide(color: tok.line),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TokRadius.md)),
+      ),
     );
   }
 
@@ -534,7 +574,14 @@ class VozidloInfoTab extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: tok.accent, size: 20),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: TokColors.accentSoft,
+                  borderRadius: BorderRadius.circular(TokRadius.sm),
+                ),
+                child: Icon(icon, color: TokColors.accent, size: 18),
+              ),
               const SizedBox(width: TokSpace.sm),
               Expanded(
                 child: Text(title,
@@ -565,19 +612,18 @@ class VozidloInfoTab extends StatelessWidget {
     final val = value?.toString() ?? '';
     if (val.isEmpty) return const SizedBox();
     return Padding(
-      padding: const EdgeInsets.only(bottom: TokSpace.sm),
+      padding: const EdgeInsets.symmetric(vertical: 7),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 130,
-            child: Text(label,
-                style: TextStyle(color: tok.textSecondary, fontSize: 13)),
-          ),
+          Text(label,
+              style: TextStyle(color: tok.textSecondary, fontSize: 13)),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(val,
+                textAlign: TextAlign.right,
                 style: TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 13,
                     color: tok.textPrimary)),
           ),

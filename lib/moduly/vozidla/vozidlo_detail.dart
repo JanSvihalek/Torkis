@@ -202,7 +202,7 @@ class VozidloDetailScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
+                            backgroundColor: TokColors.accent,
                             foregroundColor: Colors.white,
                             padding:
                                 const EdgeInsets.symmetric(vertical: 15),
@@ -349,7 +349,8 @@ class VozidloDetailScreen extends StatelessWidget {
           );
         }
 
-        final spz = autoData['spz']?.toString() ?? 'Neznámá SPZ';
+        final tok = context.tok;
+        final spz = autoData['spz']?.toString() ?? '';
         final zakaznikId = autoData['zakaznik_id']?.toString() ?? '';
         final znackaNazev = (autoData['znacka']?.toString() ?? '').trim();
         final palivo = autoData['palivo']?.toString() ?? '';
@@ -358,10 +359,11 @@ class VozidloDetailScreen extends StatelessWidget {
         final stkM = autoData['stk_mesic']?.toString() ?? '';
         final stkR = autoData['stk_rok']?.toString() ?? '';
 
-        const tabs = <Tab>[
-          Tab(icon: Icon(Icons.info_outline), text: 'Info'),
-          Tab(icon: Icon(Icons.assignment_turned_in_outlined), text: 'Příjem'),
-        ];
+        final vehicleTitle =
+            '${autoData['znacka'] ?? ''} ${autoData['model'] ?? ''}'.trim();
+        final titleText = spz.isNotEmpty
+            ? spz
+            : (vehicleTitle.isNotEmpty ? vehicleTitle : 'Vozidlo bez SPZ');
 
         final views = <Widget>[
           VozidloInfoTab(
@@ -381,35 +383,184 @@ class VozidloDetailScreen extends StatelessWidget {
         ];
 
         return DefaultTabController(
-          length: tabs.length,
+          length: 2,
           child: Scaffold(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            appBar: AppBar(
-              title: Text(spz,
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              backgroundColor:
-                  isDark ? TokColors.darkSurface : Colors.white,
-              elevation: 0,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.teal),
-                  tooltip: 'Upravit údaje',
-                  onPressed: () =>
-                      _otevritEditaci(context, vozidloDocId, autoData),
-                ),
-              ],
-              bottom: TabBar(
-                labelColor: Colors.teal,
-                unselectedLabelColor: Colors.grey,
-                indicatorColor: Colors.teal,
-                indicatorWeight: 3,
-                tabs: tabs,
+            backgroundColor: tok.bg,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(context, tok, titleText, autoData),
+                  Expanded(child: TabBarView(children: views)),
+                ],
               ),
             ),
-            body: TabBarView(children: views),
           ),
         );
       },
     );
+  }
+
+  // ── Hlavička karty vozidla ─────────────────────────────────────────────────
+  Widget _buildHeader(BuildContext context, TorkisTokens tok, String title,
+      Map<String, dynamic> autoData) {
+    return Container(
+      decoration: BoxDecoration(
+        color: tok.surface,
+        border: Border(bottom: BorderSide(color: tok.line)),
+      ),
+      padding:
+          const EdgeInsets.fromLTRB(TokSpace.lg, TokSpace.md, TokSpace.lg, 0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _roundIconButton(tok, Icons.arrow_back_ios_new_rounded,
+                  onTap: () => Navigator.pop(context)),
+              const SizedBox(width: TokSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('VOZIDLO',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                          color: TokColors.accent,
+                        )),
+                    Text(title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: tok.textPrimary,
+                          height: 1.1,
+                        )),
+                  ],
+                ),
+              ),
+              _roundIconButton(tok, Icons.edit_outlined,
+                  onTap: () =>
+                      _otevritEditaci(context, vozidloDocId, autoData)),
+              const SizedBox(width: TokSpace.sm),
+              _buildMenuButton(context, tok),
+            ],
+          ),
+          const SizedBox(height: TokSpace.sm),
+          TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            labelColor: TokColors.accent,
+            unselectedLabelColor: tok.textSecondary,
+            indicatorColor: TokColors.accent,
+            indicatorWeight: 2.5,
+            indicatorSize: TabBarIndicatorSize.label,
+            labelStyle:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            unselectedLabelStyle:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            tabs: const [
+              Tab(text: 'Info'),
+              Tab(text: 'Záznamy'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _roundIconButton(TorkisTokens tok, IconData icon,
+      {required VoidCallback onTap}) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        child: Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(TokRadius.md),
+            border: Border.all(color: tok.line),
+          ),
+          child: Icon(icon, size: 18, color: tok.textPrimary),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMenuButton(BuildContext context, TorkisTokens tok) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        border: Border.all(color: tok.line),
+      ),
+      child: PopupMenuButton<String>(
+        icon: Icon(Icons.more_vert, size: 18, color: tok.textPrimary),
+        padding: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TokRadius.md)),
+        onSelected: (v) {
+          if (v == 'smazat') _smazatVozidlo(context);
+        },
+        itemBuilder: (_) => const [
+          PopupMenuItem(
+            value: 'smazat',
+            child: Row(children: [
+              Icon(Icons.delete_outline_rounded,
+                  size: 18, color: Colors.redAccent),
+              SizedBox(width: 10),
+              Text('Smazat vozidlo',
+                  style: TextStyle(color: Colors.redAccent)),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _smazatVozidlo(BuildContext context) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Smazat vozidlo?'),
+        content: const Text(
+            'Vozidlo bude odebráno z adresáře. Historie zakázek zůstane zachována.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: const Text('Zrušit')),
+          TextButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: const Text('Smazat',
+                style: TextStyle(color: Colors.redAccent)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('vozidla')
+          .doc(vozidloDocId)
+          .delete();
+      if (context.mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Vozidlo bylo smazáno.'),
+            backgroundColor: Colors.green));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Chyba při mazání: $e'),
+            backgroundColor: Colors.red));
+      }
+    }
   }
 }
