@@ -36,12 +36,25 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   String? _dekovanyVin;
   String? _logoUrl;
 
+  // Stream uložený jako pole — nevytváří se znovu při každém setState
+  Stream<QuerySnapshot>? _historieStream;
+
   bool get _maKlice => _apiKey.isNotEmpty && _secretKey.isNotEmpty;
 
   @override
   void initState() {
     super.initState();
     _nactiKlice();
+  }
+
+  void _initHistorieStream() {
+    if (_historieStream != null || _sId == null) return;
+    _historieStream = FirebaseFirestore.instance
+        .collection('vin_skeny')
+        .where('servis_id', isEqualTo: _sId)
+        .orderBy('cas', descending: true)
+        .limit(30)
+        .snapshots();
   }
 
   @override
@@ -64,7 +77,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       }
     } catch (_) {
     } finally {
-      if (mounted) setState(() => _loadingKeys = false);
+      if (mounted) {
+        _initHistorieStream();
+        setState(() => _loadingKeys = false);
+      }
     }
   }
 
@@ -687,28 +703,22 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                 ],
               ),
             ),
-            // Tlačítko Nový sken — vždy viditelné, absolutně vpravo nahoře
             Positioned(
               top: TokSpace.sm,
               right: TokSpace.sm,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _reset,
-                  borderRadius: BorderRadius.circular(TokRadius.md),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: tok.isDark
-                          ? Colors.white.withValues(alpha: 0.07)
-                          : const Color(0xFFEFF1F4),
-                      borderRadius: BorderRadius.circular(TokRadius.md),
-                    ),
-                    child: Icon(Icons.refresh_rounded,
-                        size: 18, color: tok.textSecondary),
-                  ),
+              child: FilledButton.icon(
+                onPressed: _reset,
+                icon: const Icon(Icons.qr_code_scanner_rounded, size: 15),
+                label: const Text('Nový sken'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: TokColors.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  textStyle: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TokRadius.md)),
                 ),
               ),
             ),
@@ -865,15 +875,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildHistorieSidebar(BuildContext context) {
     final tok = context.tok;
-    if (_sId == null) return const SizedBox.shrink();
+    if (_historieStream == null) return const SizedBox.shrink();
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('vin_skeny')
-          .where('servis_id', isEqualTo: _sId)
-          .orderBy('cas', descending: true)
-          .limit(30)
-          .snapshots(),
+      stream: _historieStream,
       builder: (context, snap) {
         final docs = snap.data?.docs ?? [];
         final now = DateTime.now();
