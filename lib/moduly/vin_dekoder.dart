@@ -1002,16 +1002,18 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     final rows = <Widget>[];
     for (int i = 0; i < sekce.length; i += 2) {
       if (rows.isNotEmpty) rows.add(const SizedBox(height: TokSpace.md));
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: _buildSekceKarta(tok, sekce[i])),
-          if (i + 1 < sekce.length) ...[
-            const SizedBox(width: TokSpace.md),
-            Expanded(child: _buildSekceKarta(tok, sekce[i + 1])),
-          ] else
-            const Expanded(child: SizedBox.shrink()),
-        ],
+      rows.add(IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: _buildSekceKarta(tok, sekce[i])),
+            if (i + 1 < sekce.length) ...[
+              const SizedBox(width: TokSpace.md),
+              Expanded(child: _buildSekceKarta(tok, sekce[i + 1])),
+            ] else
+              const Expanded(child: SizedBox.shrink()),
+          ],
+        ),
       ));
     }
     return Column(children: rows);
