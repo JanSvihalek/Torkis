@@ -8,11 +8,25 @@ service cloud.firestore {
           && request.auth.token.firebase.sign_in_provider == 'anonymous';
     }
 
+    // Přihlášený ne-anonymní uživatel (mechanik, majitel)
+    function signedIn() {
+      return request.auth != null && !isAnonymous();
+    }
+
     // ── Přihlášení uživatelé (mechanici, majitelé) ────────────────────────
-    // Catch-all: plný přístup ke všemu pro ne-anonymní přihlášené uživatele.
-    // Toto odpovídá stávajícímu chování před přidáním portálu.
-    match /{document=**} {
-      allow read, write: if request.auth != null && !isAnonymous();
+    // Čtení všeho; zápis všude KROMĚ server-only kolekcí.
+    // {col} = název kořenové kolekce, {document=**} = zbytek cesty (vč. podkolekcí).
+    //
+    // Server-only kolekce (zápis pouze přes Cloud Functions — Admin SDK obchází
+    // pravidla): vynucení limitů by šlo obejít, kdyby si klient mohl sám
+    // přepsat počítadlo nebo nasypat do cache. Proto:
+    //   • pouziti      — měsíční počítadlo VIN/value (zdroj pravdy pro limity)
+    //   • vin_cache    — cache VIN dekódování
+    //   • value_cache  — cache tržní hodnoty
+    match /{col}/{document=**} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+                   && !(col in ['pouziti', 'vin_cache', 'value_cache']);
     }
 
     // ── Zákaznický portál (anonymní přihlášení) ───────────────────────────

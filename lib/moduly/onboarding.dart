@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'trial_welcome_screen.dart';
@@ -50,17 +52,37 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   bool _isSaving = false;
   bool _isLoadingAres = false;
 
-  // KROK 1: Základní údaje servisu
+  // Počet kroků průvodce (firma → provoz → úkony).
+  static const int _pocetKroku = 3;
+
+  // KROK 1: Základní údaje servisu + sídlo a kontakt
   final _nazevController = TextEditingController();
   final _icoController = TextEditingController();
+  final _dicController = TextEditingController();
   final _registraceController = TextEditingController();
+  final _adresaController = TextEditingController();
+  final _mestoController = TextEditingController();
+  final _pscController = TextEditingController();
+  final _telefonController = TextEditingController();
   final _emailServisuController = TextEditingController();
   final _jmenoMajiteleController = TextEditingController();
 
   bool _defaultOdeslatEmaily = true;
   bool _tmavyRezim = false;
 
-  // KROK 2: Předpřipravené úkony
+  // KROK 2: Provoz a automatizace
+  bool _autoCisloZakazky = true;
+  bool _podpisPovolen = true;
+  bool _spzPovinne = true;
+  final List<String> _typyZaznamu = ['Servis', 'Výkup'];
+  String _defaultTypZaznamu = 'Servis';
+
+  // KROK 2: Osobní nastavení
+  bool _biometricEnabled = false;
+  bool _biometricAvailable = false;
+  bool _spoustVlevo = false;
+
+  // KROK 3: Předpřipravené úkony
   final List<_UkonData> _ukony = [];
 
   static const List<String> _kategorieUkonu = [
@@ -88,13 +110,30 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     for (final nazev in _vychoziUkony) {
       _ukony.add(_UkonData(nazevText: nazev));
     }
+    _zjistitBiometrii();
+  }
+
+  /// Zjistí, zda zařízení podporuje biometrii — podle toho se v kroku 2
+  /// zobrazí (nebo skryje) přepínač biometrického přihlášení.
+  Future<void> _zjistitBiometrii() async {
+    try {
+      final canBio = await LocalAuthentication().canCheckBiometrics;
+      if (mounted) setState(() => _biometricAvailable = canBio);
+    } catch (_) {
+      // Biometrie není dostupná — přepínač zůstane skrytý.
+    }
   }
 
   @override
   void dispose() {
     _nazevController.dispose();
     _icoController.dispose();
+    _dicController.dispose();
     _registraceController.dispose();
+    _adresaController.dispose();
+    _mestoController.dispose();
+    _pscController.dispose();
+    _telefonController.dispose();
     _emailServisuController.dispose();
     _jmenoMajiteleController.dispose();
     for (final u in _ukony) {
@@ -151,6 +190,73 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     });
   }
 
+  /// Přepne biometrické přihlášení. Při zapnutí vyžádá ověření, aby se
+  /// předešlo zapnutí cizí osobou.
+  Future<void> _toggleBiometric(bool value) async {
+    if (value) {
+      try {
+        final ok = await LocalAuthentication().authenticate(
+          localizedReason:
+              'Potvrďte svou totožnost pro zapnutí biometrického přihlášení',
+          options: const AuthenticationOptions(stickyAuth: true),
+        );
+        if (!ok) return;
+      } catch (_) {
+        return;
+      }
+    }
+    setState(() => _biometricEnabled = value);
+  }
+
+  void _otevritDialogTypuZaznamu({String? initialText, int? editIndex}) {
+    final ctrl = TextEditingController(text: initialText ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        title: Text(editIndex != null ? 'Upravit typ' : 'Nový typ záznamu'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'Název typu (např. Servis, Výkup...)',
+            filled: true,
+            fillColor:
+                isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Zrušit'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                if (editIndex != null) {
+                  if (_defaultTypZaznamu == _typyZaznamu[editIndex]) {
+                    _defaultTypZaznamu = text;
+                  }
+                  _typyZaznamu[editIndex] = text;
+                } else {
+                  _typyZaznamu.add(text);
+                }
+              });
+              Navigator.pop(ctx);
+            },
+            child: const Text('Uložit'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _dokoncitNastaveni() async {
     setState(() => _isSaving = true);
 
@@ -172,9 +278,19 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             {
               'nazev_servisu': _nazevController.text.trim(),
               'ico_servisu': _icoController.text.trim(),
+              'dic_servisu': _dicController.text.trim(),
               'registrace_servisu': _registraceController.text.trim(),
+              'adresa_servisu': _adresaController.text.trim(),
+              'mesto_servisu': _mestoController.text.trim(),
+              'psc_servisu': _pscController.text.trim(),
+              'telefon_servisu': _telefonController.text.trim(),
               'email_servisu': _emailServisuController.text.trim(),
               'default_odesilat_emaily': _defaultOdeslatEmaily,
+              'auto_cislo_zakazky': _autoCisloZakazky,
+              'podpis_povolen': _podpisPovolen,
+              'spz_povinne': _spzPovinne,
+              'typy_zaznamu': _typyZaznamu,
+              'default_typ_zaznamu': _defaultTypZaznamu,
               'tmavy_rezim': _tmavyRezim,
               'prvni_spusteni_dokonceno': true,
               'vytvoreno': FieldValue.serverTimestamp(),
@@ -196,6 +312,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             'zamestnanci': true,
             'nastaveni': true,
           },
+          // Osobní nastavení — Nastavení je čte z dokumentu uživatele.
+          'tmavy_rezim': _tmavyRezim,
+          'kamera_spoust_vlevo': _spoustVlevo,
           'vytvoreno': FieldValue.serverTimestamp(),
         });
 
@@ -230,6 +349,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         // SPUŠTĚNÍ DÁVKOVÉHO ZÁPISU
         await batch.commit();
 
+        // Lokální nastavení (čtená přímo ze zařízení, ne z Firestore)
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('biometric_enabled', _biometricEnabled);
+        await prefs.setBool(kPrefKameraSpoustVlevo, _spoustVlevo);
+        await prefs.setBool('tmavy_rezim', _tmavyRezim);
+
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -255,7 +380,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       return;
     }
 
-    if (_currentPage == 1) {
+    if (_currentPage == _pocetKroku - 1) {
       _dokoncitNastaveni();
     } else {
       FocusScope.of(context).unfocus();
@@ -283,23 +408,19 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
               child: Row(
                 children: [
-                  Expanded(
-                      child: Container(
-                          height: 6,
-                          decoration: BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.circular(3)))),
-                  const SizedBox(width: 10),
-                  Expanded(
-                      child: Container(
-                          height: 6,
-                          decoration: BoxDecoration(
-                              color: _currentPage == 1
-                                  ? Colors.blue
-                                  : (isDark
-                                      ? Colors.grey[800]
-                                      : Colors.grey[300]),
-                              borderRadius: BorderRadius.circular(3)))),
+                  for (int i = 0; i < _pocetKroku; i++) ...[
+                    if (i > 0) const SizedBox(width: 10),
+                    Expanded(
+                        child: Container(
+                            height: 6,
+                            decoration: BoxDecoration(
+                                color: _currentPage >= i
+                                    ? Colors.blue
+                                    : (isDark
+                                        ? Colors.grey[800]
+                                        : Colors.grey[300]),
+                                borderRadius: BorderRadius.circular(3)))),
+                  ],
                 ],
               ),
             ),
@@ -310,6 +431,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 onPageChanged: (index) => setState(() => _currentPage = index),
                 children: [
                   _buildStep1(isDark),
+                  _buildStep2(isDark),
                   _buildStep3(isDark),
                 ],
               ),
@@ -354,7 +476,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2))
                           : Text(
-                              _currentPage == 1
+                              _currentPage == _pocetKroku - 1
                                   ? 'DOKONČIT NASTAVENÍ'
                                   : 'POKRAČOVAT',
                               style: const TextStyle(
@@ -370,9 +492,79 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     );
   }
 
+  // Jednotná dekorace polí v průvodci (sjednocený vzhled napříč kroky).
+  InputDecoration _onbInput(bool isDark,
+      {String? hint, IconData? icon, Color iconColor = Colors.blue}) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: icon != null ? Icon(icon, color: iconColor) : null,
+      filled: true,
+      fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+      border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(
+              color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
+      enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide(
+              color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+    );
+  }
+
+  // Pojmenované textové pole (popisek nad polem) ve stylu průvodce.
+  Widget _onbField(bool isDark,
+      {required String label,
+      required TextEditingController ctrl,
+      String? hint,
+      IconData? icon,
+      Color iconColor = Colors.blue,
+      TextInputType? keyboard}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style:
+                const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: ctrl,
+          keyboardType: keyboard,
+          decoration:
+              _onbInput(isDark, hint: hint, icon: icon, iconColor: iconColor),
+        ),
+      ],
+    );
+  }
+
+  // Přepínací karta (SwitchListTile) ve stylu průvodce.
+  Widget _onbSwitch(bool isDark,
+      {required String title,
+      required String subtitle,
+      required bool value,
+      required ValueChanged<bool> onChanged,
+      IconData? icon}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(
+              color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
+      child: SwitchListTile(
+        secondary: icon != null ? Icon(icon, color: Colors.blue) : null,
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+        value: value,
+        activeColor: Colors.blue,
+        onChanged: onChanged,
+      ),
+    );
+  }
+
   // ── KROK 1: Základní informace ──────────────────────────────────────────
-  // IČO (ARES lookup), název servisu, zápis v rejstříku, e-mail, přepínač e-mailů,
-  // tmavý režim, jméno majitele (vytvoří se jako admin účet v kolekci 'uzivatele').
+  // IČO (ARES lookup), název servisu, DIČ, zápis v rejstříku, sídlo a kontakt,
+  // e-mail, přepínač e-mailů, tmavý režim, jméno majitele (admin účet).
   Widget _buildStep1(bool isDark) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
@@ -390,7 +582,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
           const Text(
-              'Nejprve vyplníme základní informace o vašem servisu. Ty se pak budou automaticky propisovat do faktur a protokolů.',
+              'Nejprve vyplníme základní informace o vás nebo o vaší společnosti.',
               style: TextStyle(fontSize: 14, color: Colors.grey)),
           const SizedBox(height: 40),
           const Text('IČO (ARES vyhledávání)',
@@ -450,27 +642,64 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text('Zápis v rejstříku (nepovinné)',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _registraceController,
-            decoration: InputDecoration(
-              hintText: 'Např. zapsán v ŽR u MÚ...',
-              prefixIcon: const Icon(Icons.gavel, color: Colors.blueGrey),
-              filled: true,
-              fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[400]!)),
-              enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                  borderSide: BorderSide(
-                      color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
-            ),
+          _onbField(isDark,
+              label: 'DIČ (nepovinné)',
+              ctrl: _dicController,
+              hint: 'Např. CZ12345678',
+              icon: Icons.badge,
+              iconColor: Colors.blueGrey),
+          const SizedBox(height: 20),
+          _onbField(isDark,
+              label: 'Zápis v rejstříku (nepovinné)',
+              ctrl: _registraceController,
+              hint: 'Např. zapsán v ŽR u MÚ...',
+              icon: Icons.gavel,
+              iconColor: Colors.blueGrey),
+          const SizedBox(height: 30),
+          const Divider(),
+          const SizedBox(height: 20),
+          const Text('Sídlo a kontakt',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          const Text('Údaje se použijí na nabídkách, fakturách a v komunikaci.',
+              style: TextStyle(fontSize: 13, color: Colors.grey)),
+          const SizedBox(height: 16),
+          _onbField(isDark,
+              label: 'Ulice a č.p.',
+              ctrl: _adresaController,
+              hint: 'Např. Hlavní 123',
+              icon: Icons.map),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: _onbField(isDark,
+                    label: 'Město',
+                    ctrl: _mestoController,
+                    hint: 'Např. Brno',
+                    icon: Icons.location_city),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 1,
+                child: _onbField(isDark,
+                    label: 'PSČ',
+                    ctrl: _pscController,
+                    hint: '60200',
+                    icon: Icons.markunread_mailbox,
+                    keyboard: TextInputType.number),
+              ),
+            ],
           ),
+          const SizedBox(height: 16),
+          _onbField(isDark,
+              label: 'Telefon servisu',
+              ctrl: _telefonController,
+              hint: 'Např. +420 777 123 456',
+              icon: Icons.phone,
+              keyboard: TextInputType.phone),
           const SizedBox(height: 30),
           const Divider(),
           const SizedBox(height: 20),
@@ -572,6 +801,150 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // ── KROK 2: Provoz a automatizace ───────────────────────────────────────
+  // Automatizace zakázek (číslo, podpis, SPZ), typy záznamu a osobní přepínače
+  // (biometrie, režim pro leváky). Uloží se do nastaveni_servisu / uzivatele.
+  Widget _buildStep2(bool isDark) {
+    return ListView(
+      padding: const EdgeInsets.all(30),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+              color: Colors.purple.withOpacity(0.1), shape: BoxShape.circle),
+          child: const Icon(Icons.settings_suggest,
+              color: Colors.purple, size: 40),
+        ),
+        const SizedBox(height: 20),
+        const Text('Provoz a automatizace',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        const Text(
+            'Nastavte chování příjmu vozidla. Vše lze později kdykoliv změnit v Nastavení.',
+            style: TextStyle(fontSize: 14, color: Colors.grey)),
+        const SizedBox(height: 30),
+        _onbSwitch(isDark,
+            title: 'Automaticky generovat číslo zakázky',
+            subtitle:
+                'Při příjmu vozidla se číslo zakázky předvyplní automaticky. Vypnutím umožníte ruční zadání.',
+            value: _autoCisloZakazky,
+            onChanged: (v) => setState(() => _autoCisloZakazky = v)),
+        _onbSwitch(isDark,
+            title: 'Vyžadovat podpis zákazníka',
+            subtitle:
+                'Při vypnutí se krok s podpisem v příjmu zobrazí bez podpisového plátna.',
+            value: _podpisPovolen,
+            onChanged: (v) => setState(() => _podpisPovolen = v)),
+        _onbSwitch(isDark,
+            title: 'Povinná SPZ vozidla',
+            subtitle:
+                'Při vypnutí lze příjem odeslat i bez vyplněné SPZ (např. vozidla bez registrace).',
+            value: _spzPovinne,
+            onChanged: (v) => setState(() => _spzPovinne = v)),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 20),
+        const Text('Typy záznamu',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        const Text(
+            'Slouží k rozlišení příjmu vozidla (např. Servis, Výkup). První typ je výchozí.',
+            style: TextStyle(fontSize: 13, color: Colors.grey)),
+        const SizedBox(height: 16),
+        for (int i = 0; i < _typyZaznamu.length; i++)
+          Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E3A5F) : Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                  color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+            ),
+            child: ListTile(
+              dense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+              title: Text(_typyZaznamu[i],
+                  style: const TextStyle(fontSize: 14)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_defaultTypZaznamu == _typyZaznamu[i])
+                    const Padding(
+                      padding: EdgeInsets.only(right: 4),
+                      child: Chip(
+                        label: Text('výchozí',
+                            style: TextStyle(fontSize: 11)),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                      ),
+                    ),
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined,
+                        size: 18, color: Colors.blue),
+                    onPressed: () => _otevritDialogTypuZaznamu(
+                        initialText: _typyZaznamu[i], editIndex: i),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline,
+                        size: 18, color: Colors.redAccent),
+                    onPressed: _typyZaznamu.length <= 1
+                        ? null
+                        : () => setState(() {
+                              final deleted = _typyZaznamu[i];
+                              _typyZaznamu.removeAt(i);
+                              if (_defaultTypZaznamu == deleted) {
+                                _defaultTypZaznamu = _typyZaznamu.first;
+                              }
+                            }),
+                  ),
+                ],
+              ),
+              onLongPress: () =>
+                  setState(() => _defaultTypZaznamu = _typyZaznamu[i]),
+            ),
+          ),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _otevritDialogTypuZaznamu(),
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text('Přidat typ'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.indigo,
+              side: const BorderSide(color: Colors.indigo),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text('Dlouhý stisk = nastavit jako výchozí.',
+            style: TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 20),
+        const Text('Osobní nastavení',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        if (_biometricAvailable)
+          _onbSwitch(isDark,
+              icon: Icons.fingerprint,
+              title: 'Biometrické přihlášení',
+              subtitle: 'Face ID / otisk prstu při každém spuštění.',
+              value: _biometricEnabled,
+              onChanged: _toggleBiometric),
+        _onbSwitch(isDark,
+            icon: Icons.pan_tool_alt,
+            title: 'Režim pro leváky',
+            subtitle:
+                'Spoušť fotoaparátu vlevo, když je zařízení na šířku.',
+            value: _spoustVlevo,
+            onChanged: (v) => setState(() => _spoustVlevo = v)),
+      ],
     );
   }
 

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:http/http.dart' as http;
 
 /// Výsledek dekódování VINu přes Vincario API 3.2.
@@ -81,16 +81,38 @@ class VincarioException implements Exception {
   String toString() => message;
 }
 
-/// Volání Vincario API 3.2 /decode. Sdílí příjem vozidla i modul VIN dekodér.
+/// Volání Vincario API přes Cloud Functions. Tajný sdílený klíč je pouze na
+/// serveru; klient jen volá callable funkce, které vynucují měsíční limity.
+/// Sdílí příjem vozidla i modul VIN dekodér.
 class VincarioService {
-  /// Kontrolní součet: prvních 10 znaků SHA1 z "{VIN}|{id}|{API_KEY}|{SECRET}".
-  static String _controlSum(
-      String vin, String id, String apiKey, String secret) {
-    final input = '$vin|$id|$apiKey|$secret';
-    return sha1.convert(utf8.encode(input)).toString().substring(0, 10);
+  // Region musí odpovídat nasazení funkcí (functions/index.js → REGION).
+  static final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'europe-west3');
+
+  /// Rekurzivně převede odpověď callable funkce (Map<Object?,Object?>) na
+  /// správně typované Map<String,dynamic> / List — jinak by selhaly přetypování
+  /// jako `whereType<Map<String, dynamic>>()` u tržních dat.
+  static dynamic _deepConvert(dynamic value) {
+    if (value is Map) {
+      return value.map(
+          (k, v) => MapEntry(k.toString(), _deepConvert(v)));
+    }
+    if (value is List) {
+      return value.map(_deepConvert).toList();
+    }
+    return value;
   }
 
-  /// Načte aktuální kurz EUR → CZK z ČNB API.
+  /// Přemapuje výjimky z Cloud Functions na čitelnou hlášku (vč. vyčerpaného
+  /// limitu — kód 'resource-exhausted').
+  static VincarioException _mapError(Object e) {
+    if (e is FirebaseFunctionsException) {
+      return VincarioException(e.message ?? 'Chyba serveru (${e.code}).');
+    }
+    return VincarioException(e.toString());
+  }
+
+  /// Načte aktuální kurz EUR → CZK z ČNB API (veřejné, bez klíče).
   static Future<double> kurzEurCzk() async {
     final resp = await http.get(
         Uri.parse('https://api.cnb.cz/cnbapi/exrates/daily?lang=EN'));
@@ -109,39 +131,39 @@ class VincarioService {
     throw const VincarioException('Kurz EUR/CZK nebyl nalezen.');
   }
 
-  static Future<VincarioMarketValue> marketValue({
+  /// Tržní hodnota vozidla. `fromCache` = true → nepočítalo se do limitu.
+  static Future<({VincarioMarketValue result, bool fromCache})> marketValue({
     required String vin,
-    required String apiKey,
-    required String secretKey,
   }) async {
-    final cs = _controlSum(vin, 'vehicle-market-value', apiKey, secretKey);
-    final uri = Uri.parse(
-        'https://api.vincario.com/3.2/$apiKey/$cs/vehicle-market-value/$vin.json');
-    final resp = await http.get(uri);
-    if (resp.statusCode != 200) {
-      throw VincarioException('Vincario API chyba ${resp.statusCode}.');
+    try {
+      final resp =
+          await _functions.httpsCallable('marketValueVin').call({'vin': vin});
+      final data = Map<String, dynamic>.from(resp.data as Map);
+      final raw = _deepConvert(data['raw']) as Map<String, dynamic>;
+      return (
+        result: VincarioMarketValue(raw),
+        fromCache: data['fromCache'] == true,
+      );
+    } catch (e) {
+      throw _mapError(e);
     }
-    final data = json.decode(resp.body) as Map<String, dynamic>;
-    if (data['market_price'] == null) {
-      throw const VincarioException(
-          'Pro toto vozidlo nejsou dostupná tržní data (min. 10 vzorků).');
-    }
-    return VincarioMarketValue(data);
   }
 
-  static Future<VincarioResult> decode({
+  /// Dekódování VINu. `fromCache` = true → nepočítalo se do limitu.
+  static Future<({VincarioResult result, bool fromCache})> decode({
     required String vin,
-    required String apiKey,
-    required String secretKey,
   }) async {
-    final cs = _controlSum(vin, 'decode', apiKey, secretKey);
-    final uri = Uri.parse(
-        'https://api.vincario.com/3.2/$apiKey/$cs/decode/$vin.json');
-    final resp = await http.get(uri);
-    if (resp.statusCode != 200) {
-      throw VincarioException('Vincario API chyba ${resp.statusCode}.');
+    try {
+      final resp =
+          await _functions.httpsCallable('decodeVin').call({'vin': vin});
+      final data = Map<String, dynamic>.from(resp.data as Map);
+      final raw = _deepConvert(data['raw']) as Map<String, dynamic>;
+      return (
+        result: VincarioResult(raw),
+        fromCache: data['fromCache'] == true,
+      );
+    } catch (e) {
+      throw _mapError(e);
     }
-    final data = json.decode(resp.body) as Map<String, dynamic>;
-    return VincarioResult(data);
   }
 }

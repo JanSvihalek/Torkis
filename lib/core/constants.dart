@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.1.1';
+const String kAppVerze = '5.1.2';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -101,7 +101,9 @@ const Map<String, int?> kPlanPrijemLimit = {
   'basic': 50,
   'standard': 150,
   'pro': null,
-  'trial': null,
+  // Trial: štědrý strop jako pojistka proti scriptování / e-mailovému spamu.
+  // Genuinní zákazník to za 30 dní nevyčerpá.
+  'trial': 150,
   'custom': null,
 };
 

@@ -100,6 +100,21 @@ class TrialWelcomeScreen extends StatelessWidget {
                   _BenefitRow(
                     icon: Icons.check_circle_outline_rounded,
                     text:
+                        'Neomezený počet záznamů vozidel a zákazníků',
+                  ),
+                  _BenefitRow(
+                    icon: Icons.check_circle_outline_rounded,
+                    text:
+                        '10 dekodovaných VINů',
+                  ),
+                                    _BenefitRow(
+                    icon: Icons.check_circle_outline_rounded,
+                    text:
+                        '5 zjištěných tržních hodnot vozidel podle VIN',
+                  ),
+                  _BenefitRow(
+                    icon: Icons.check_circle_outline_rounded,
+                    text:
                         'Plný přístup ke všem funkcím aplikace.',
                   ),
                   const SizedBox(height: 14),

@@ -98,8 +98,6 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   String? get _sId => globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
 
   bool _loadingKeys = true;
-  String _apiKey = '';
-  String _secretKey = '';
 
   bool _loading = false;
   String? _error;
@@ -138,7 +136,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   bool get _valueLimitDosazen =>
       _valueLimit != null && _pocetValueTentoMesic >= _valueLimit!;
 
-  bool get _maKlice => _apiKey.isNotEmpty && _secretKey.isNotEmpty;
+  // Sdílený klíč žije na serveru (Cloud Functions), modul je vždy dostupný.
+  bool get _maKlice => true;
 
   @override
   void initState() {
@@ -199,26 +198,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     super.dispose();
   }
 
+  /// Inicializace modulu — historie a měsíční počítadla. Vincario klíče už se
+  /// nenačítají (žijí na serveru), volání jde přes Cloud Functions.
   Future<void> _nactiKlice() async {
-    try {
-      if (_sId != null) {
-        final doc = await FirebaseFirestore.instance
-            .collection('nastaveni_servisu')
-            .doc(_sId)
-            .get();
-        if (doc.exists) {
-          _apiKey = doc.data()?['vincario_api_key']?.toString() ?? '';
-          _secretKey = doc.data()?['vincario_secret_key']?.toString() ?? '';
-        }
-      }
-    } catch (_) {
-    } finally {
-      if (mounted) {
-        _initHistorieStream();
-        _nactiPocetTentoMesic();
-        _nactiPocetValueTentoMesic();
-        setState(() => _loadingKeys = false);
-      }
+    if (mounted) {
+      _initHistorieStream();
+      _nactiPocetTentoMesic();
+      _nactiPocetValueTentoMesic();
+      setState(() => _loadingKeys = false);
     }
   }
 
@@ -250,35 +237,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       _logoUrl = null;
     });
     try {
-      // 1. Zkusit globální cache
-      final cacheDoc = await FirebaseFirestore.instance
-          .collection('vin_cache')
-          .doc(vin)
-          .get();
-
-      VincarioResult res;
-      bool zCache;
-
-      if (cacheDoc.exists) {
-        final raw = Map<String, dynamic>.from(
-            cacheDoc.data()!['raw'] as Map<dynamic, dynamic>);
-        res = VincarioResult(raw);
-        zCache = true;
-      } else {
-        // 2. Cache miss → volat API a uložit výsledek
-        res = await VincarioService.decode(
-            vin: vin, apiKey: _apiKey, secretKey: _secretKey);
-        zCache = false;
-        _ulozitDoCache(vin, res);
-        if (mounted) setState(() => _pocetTentoMesic++);
-      }
-
+      // Cache i počítadlo řeší Cloud Function; vrací zda šlo o cache zásah.
+      final res = await VincarioService.decode(vin: vin);
       if (mounted) {
         setState(() {
-          _result = res;
+          _result = res.result;
+          if (!res.fromCache) _pocetTentoMesic++;
         });
-        _ulozitDoHistorie(vin, res, zCache: zCache);
-        _nactiLogo(_f(res, ['Make']));
+        _ulozitDoHistorie(vin, res.result, zCache: res.fromCache);
+        _nactiLogo(_f(res.result, ['Make']));
       }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -301,16 +268,6 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         'prevodovka': _f(r, ['Transmission']),
         'z_cache': zCache,
         'cas': FieldValue.serverTimestamp(),
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _ulozitDoCache(String vin, VincarioResult r) async {
-    try {
-      await FirebaseFirestore.instance.collection('vin_cache').doc(vin).set({
-        'vin': vin,
-        'raw': r.raw,
-        'dekodovano': FieldValue.serverTimestamp(),
       });
     } catch (_) {}
   }
@@ -551,18 +508,6 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     } catch (_) {}
   }
 
-  Future<void> _ulozitValueDoCache(String vin, VincarioMarketValue r) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('value_cache')
-          .doc(vin)
-          .set({
-        'vin': vin,
-        'raw': r.raw,
-        'dekodovano': FieldValue.serverTimestamp(),
-      });
-    } catch (_) {}
-  }
 
   Future<void> _nacistTrzniHodnotu() async {
     final vin = _vinCtrl.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
@@ -589,28 +534,16 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       _logoUrl = null;
     });
     try {
-      // Zkusit value_cache
-      final cacheDoc = await FirebaseFirestore.instance
-          .collection('value_cache')
-          .doc(vin)
-          .get();
-      VincarioMarketValue res;
-      bool zCache;
-      if (cacheDoc.exists) {
-        final raw = Map<String, dynamic>.from(
-            cacheDoc.data()!['raw'] as Map<dynamic, dynamic>);
-        res = VincarioMarketValue(raw);
-        zCache = true;
-      } else {
-        res = await VincarioService.marketValue(
-            vin: vin, apiKey: _apiKey, secretKey: _secretKey);
-        zCache = false;
-        _ulozitValueDoCache(vin, res);
-        if (mounted) setState(() => _pocetValueTentoMesic++);
+      // Cache i počítadlo řeší Cloud Function; vrací zda šlo o cache zásah.
+      final res = await VincarioService.marketValue(vin: vin);
+      if (mounted) {
+        setState(() {
+          _trzniHodnota = res.result;
+          if (!res.fromCache) _pocetValueTentoMesic++;
+        });
+        _ulozitValueDoHistorie(vin, res.result, zCache: res.fromCache);
+        _nactiLogo(res.result.make);
       }
-      if (mounted) setState(() => _trzniHodnota = res);
-      _ulozitValueDoHistorie(vin, res, zCache: zCache);
-      _nactiLogo(res.make);
     } catch (e) {
       if (mounted) setState(() => _trzniError = e.toString());
     } finally {
@@ -737,7 +670,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           ),
           const SizedBox(height: TokSpace.lg),
           Text(
-            _rezimValue ? 'Tržní hodnota' : 'Skener VIN',
+            _rezimValue ? 'Tržní hodnota' : 'Dekodér VIN',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -821,8 +754,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                 const SizedBox(height: 2),
                 Text(
                   _rezimValue
-                      ? 'Zjistí odhad tržní ceny vozidla z dat evropského trhu'
-                      : 'Automaticky načte specifikace vozu z VIN — ze štítku, rámu dveří nebo čelního skla',
+                      ? 'Zjistí odhad tržní ceny vozu podle naskenovaného nebo zadaného VIN z dat evropského trhu'
+                      : 'Automaticky načte specifikace vozu podle naskenovaného nebo zadaného VIN',
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.50),
                       fontSize: 12),
@@ -866,7 +799,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       },
       decoration: InputDecoration(
         hintText: _rezimValue
-            ? 'Zadat VIN pro tržní hodnotu…'
+            ? 'Zadat VIN ručně (např. TMBJJ7NE5K…)'
             : 'Zadat VIN ručně (např. TMBJJ7NE5K…)',
         hintStyle: TextStyle(
             fontSize: 13,

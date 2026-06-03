@@ -5,7 +5,6 @@ import 'package:camera/camera.dart';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:signature/signature.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +14,7 @@ import '../../core/constants.dart';
 import '../../core/design_tokens.dart';
 import '../../core/torkis_ui.dart';
 import '../../core/pdf_generator.dart';
+import '../../core/vincario_service.dart';
 import '../auth_gate.dart';
 import 'prijem_vozidla_vyber_zakaznika.dart';
 import 'prijem_vozidla_kamera.dart';
@@ -67,8 +67,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _defaultOdeslatEmail = true;
   bool _podpisPovolen = true;
   bool _spzPovinne = true;
-  String _vincarioApiKey = '';
-  String _vincarioSecretKey = '';
   bool _isLoadingVincario = false;
 
   String? _vybranyZakaznikId;
@@ -305,9 +303,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
               _autoCisloZakazky = generovat;
               _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
               _spzPovinne = data['spz_povinne'] as bool? ?? true;
-              _vincarioApiKey = data['vincario_api_key']?.toString() ?? '';
-              _vincarioSecretKey =
-                  data['vincario_secret_key']?.toString() ?? '';
               if (data.containsKey('default_odesilat_emaily')) {
                 _defaultOdeslatEmail = data['default_odesilat_emaily'] as bool;
                 _odeslatEmail = _defaultOdeslatEmail;
@@ -534,9 +529,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-  /// Vincario API 3.2
-  /// URL: https://api.vincario.com/3.2/{API_KEY}/{CONTROL_SUM}/decode/{VIN}.json
-  /// Control sum: prvních 10 znaků SHA1 z "{VIN}|decode|{API_KEY}|{SECRET_KEY}"
+  /// Dekódování VINu přes Cloud Function (sdílený klíč na serveru, vynucení
+  /// měsíčního limitu). Limit / chyba serveru dorazí jako výjimka s hláškou.
   Future<void> _dekovatVinVincario() async {
     final vin =
         _vinController.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
@@ -546,28 +540,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
           backgroundColor: Colors.orange));
       return;
     }
-    if (_vincarioApiKey.isEmpty || _vincarioSecretKey.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Vincario API klíče nejsou nakonfigurovány.'),
-          backgroundColor: Colors.orange));
-      return;
-    }
     setState(() => _isLoadingVincario = true);
     try {
-      final controlSum = _vincarioControlSum(vin, 'decode');
-      final uri = Uri.parse(
-          'https://api.vincario.com/3.2/$_vincarioApiKey/$controlSum/decode/$vin.json');
-      final response = await http.get(uri);
-      if (response.statusCode != 200) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Vincario API chyba ${response.statusCode}.'),
-              backgroundColor: Colors.red));
-        }
-        return;
-      }
-      final data = json.decode(response.body) as Map<String, dynamic>;
-      if (mounted) _aplikovatVincarioData(data);
+      final res = await VincarioService.decode(vin: vin);
+      if (mounted) _aplikovatVincarioData(res.result.raw);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -577,13 +553,6 @@ class _MainWizardPageState extends State<MainWizardPage> {
     } finally {
       if (mounted) setState(() => _isLoadingVincario = false);
     }
-  }
-
-  /// SHA1("{VIN}|{ID}|{API_KEY}|{SECRET_KEY}").substring(0, 10)
-  String _vincarioControlSum(String vin, String id) {
-    final input = '$vin|$id|$_vincarioApiKey|$_vincarioSecretKey';
-    final hash = sha1.convert(utf8.encode(input));
-    return hash.toString().substring(0, 10);
   }
 
   void _aplikovatVincarioData(Map<String, dynamic> data) {
@@ -1886,7 +1855,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
         typyZaznamu: _typyZaznamu,
         onTypZaznamuChanged: (v) => setState(() => _typZaznamu = v),
         isLoadingVincario: _isLoadingVincario,
-        onDekovatVin: _vincarioApiKey.isNotEmpty ? _dekovatVinVincario : null,
+        onDekovatVin: _dekovatVinVincario,
       );
 
   // ── STRANA 2: Zákazník ────────────────────────────────
