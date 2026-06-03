@@ -400,6 +400,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               style: TextStyle(fontSize: 13, color: tok.textSecondary)),
           const SizedBox(height: TokSpace.lg),
           _buildScanTile(tok),
+          const SizedBox(height: TokSpace.md),
+          _buildManualInput(tok),
           if (!_maKlice) ...[
             const SizedBox(height: TokSpace.md),
             _buildKeysBanner(tok),
@@ -478,6 +480,51 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             child: const Text('Spustit sken →'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildManualInput(TorkisTokens tok) {
+    return TextField(
+      controller: _vinCtrl,
+      textCapitalization: TextCapitalization.characters,
+      style: TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+        color: tok.textPrimary,
+        letterSpacing: 0.5,
+      ),
+      cursorColor: TokColors.accent,
+      onSubmitted: (_) => _maKlice ? _dekodovat() : null,
+      decoration: InputDecoration(
+        hintText: 'Zadat VIN ručně (např. TMBJJ7NE5K…)',
+        hintStyle: TextStyle(
+            fontSize: 13,
+            color: tok.textSecondary,
+            fontWeight: FontWeight.w400),
+        prefixIcon: const Icon(Icons.tag_outlined,
+            color: TokColors.accent, size: 18),
+        suffixIcon: _maKlice
+            ? IconButton(
+                icon: const Icon(Icons.search_rounded,
+                    color: TokColors.accent, size: 20),
+                onPressed: _dekodovat,
+                tooltip: 'Dekódovat',
+              )
+            : null,
+        filled: true,
+        fillColor: tok.isDark
+            ? Colors.white.withValues(alpha: 0.06)
+            : TokColors.paper,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TokRadius.lg),
+          borderSide: BorderSide(color: tok.line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TokRadius.lg),
+          borderSide:
+              const BorderSide(color: TokColors.accent, width: 1.5),
+        ),
       ),
     );
   }
