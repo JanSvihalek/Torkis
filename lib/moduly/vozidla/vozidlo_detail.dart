@@ -33,274 +33,295 @@ class VozidloDetailScreen extends StatelessWidget {
         TextEditingController(text: data['stk_rok']?.toString() ?? '');
 
     String vybranaZnacka = znackaCtrl.text;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Future se vytváří jednou před otevřením sheetu — není uvnitř builderu,
+    // takže setModalState ho neobnoví a nezpůsobí blikání.
+    final brandsFuture =
+        FirebaseFirestore.instance.collection('znacka').get();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return FutureBuilder<QuerySnapshot>(
-              future: FirebaseFirestore.instance.collection('znacka').get(),
-              builder: (context, snapshot) {
-                Map<String, List<String>> databazeZnacek = {};
-                if (snapshot.hasData) {
-                  for (var doc in snapshot.data!.docs) {
-                    final docData = doc.data() as Map<String, dynamic>;
-                    final nazev = docData['nazev']?.toString() ?? doc.id;
-                    final modely = List<String>.from(docData['model'] ?? []);
-                    databazeZnacek[nazev] = modely;
-                  }
-                }
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return FutureBuilder<QuerySnapshot>(
+          future: brandsFuture,
+          builder: (sheetCtx, snapshot) {
+            Map<String, List<String>> databazeZnacek = {};
+            if (snapshot.hasData) {
+              for (var doc in snapshot.data!.docs) {
+                final docData = doc.data() as Map<String, dynamic>;
+                final nazev = docData['nazev']?.toString() ?? doc.id;
+                final modely = List<String>.from(docData['model'] ?? []);
+                databazeZnacek[nazev] = modely;
+              }
+            }
+            final dostupneZnacky = databazeZnacek.keys.toList()..sort();
 
-                List<String> dostupneZnacky = databazeZnacek.keys.toList()
-                  ..sort();
-                List<String> dostupneModely = [];
-                if (vybranaZnacka.isNotEmpty &&
-                    databazeZnacek.containsKey(vybranaZnacka)) {
-                  dostupneModely = databazeZnacek[vybranaZnacka]!..sort();
-                }
+            return StatefulBuilder(
+              builder: (sheetCtx, setModalState) {
+                final dostupneModely =
+                    (vybranaZnacka.isNotEmpty &&
+                            databazeZnacek.containsKey(vybranaZnacka))
+                        ? (List<String>.from(
+                            databazeZnacek[vybranaZnacka]!)
+                          ..sort())
+                        : <String>[];
 
-                return SingleChildScrollView(
+                return Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? TokColors.darkSurface : Colors.white,
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(25)),
+                  ),
                   padding: EdgeInsets.only(
                     left: 20,
                     right: 20,
                     top: 20,
-                    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                    bottom:
+                        MediaQuery.of(sheetCtx).viewInsets.bottom + 20,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        alignment: Alignment.center,
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[300],
-                            borderRadius: BorderRadius.circular(10),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-                      const Text('Úprava vozidla',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 20),
-                      TextField(
-                        controller: spzCtrl,
-                        decoration: const InputDecoration(
-                            labelText: 'SPZ',
-                            border: OutlineInputBorder()),
-                        textCapitalization: TextCapitalization.characters,
-                      ),
-                      const SizedBox(height: 15),
-                      LayoutBuilder(
-                        builder: (context, constraints) => DropdownMenu<String>(
-                          width: constraints.maxWidth,
-                          controller: znackaCtrl,
-                          enableFilter: true,
-                          enableSearch: true,
-                          label: const Text('Značka'),
-                          inputDecorationTheme: const InputDecorationTheme(
+                        const SizedBox(height: 20),
+                        const Text('Úprava vozidla',
+                            style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 20),
+                        TextField(
+                          controller: spzCtrl,
+                          decoration: const InputDecoration(
+                              labelText: 'SPZ',
                               border: OutlineInputBorder()),
-                          dropdownMenuEntries: dostupneZnacky
-                              .map((z) =>
-                                  DropdownMenuEntry(value: z, label: z))
-                              .toList(),
-                          onSelected: (val) => setState(() {
-                            vybranaZnacka = val ?? znackaCtrl.text;
-                            modelCtrl.clear();
-                          }),
+                          textCapitalization:
+                              TextCapitalization.characters,
                         ),
-                      ),
-                      const SizedBox(height: 15),
-                      LayoutBuilder(
-                        builder: (context, constraints) => DropdownMenu<String>(
-                          width: constraints.maxWidth,
-                          controller: modelCtrl,
-                          enableFilter: true,
-                          enableSearch: true,
-                          label: const Text('Model'),
-                          inputDecorationTheme: const InputDecorationTheme(
+                        const SizedBox(height: 15),
+                        LayoutBuilder(
+                          builder: (ctx, constraints) =>
+                              DropdownMenu<String>(
+                            width: constraints.maxWidth,
+                            controller: znackaCtrl,
+                            enableFilter: true,
+                            enableSearch: true,
+                            label: const Text('Značka'),
+                            inputDecorationTheme:
+                                const InputDecorationTheme(
+                                    border: OutlineInputBorder()),
+                            dropdownMenuEntries: dostupneZnacky
+                                .map((z) =>
+                                    DropdownMenuEntry(value: z, label: z))
+                                .toList(),
+                            onSelected: (val) => setModalState(() {
+                              vybranaZnacka = val ?? znackaCtrl.text;
+                              modelCtrl.clear();
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        LayoutBuilder(
+                          builder: (ctx, constraints) =>
+                              DropdownMenu<String>(
+                            width: constraints.maxWidth,
+                            controller: modelCtrl,
+                            enableFilter: true,
+                            enableSearch: true,
+                            label: const Text('Model'),
+                            inputDecorationTheme:
+                                const InputDecorationTheme(
+                                    border: OutlineInputBorder()),
+                            dropdownMenuEntries: dostupneModely
+                                .map((m) =>
+                                    DropdownMenuEntry(value: m, label: m))
+                                .toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        TextField(
+                          controller: vinCtrl,
+                          decoration: const InputDecoration(
+                              labelText: 'VIN',
                               border: OutlineInputBorder()),
-                          dropdownMenuEntries: dostupneModely
-                              .map((m) =>
-                                  DropdownMenuEntry(value: m, label: m))
-                              .toList(),
+                          textCapitalization:
+                              TextCapitalization.characters,
                         ),
-                      ),
-                      const SizedBox(height: 15),
-                      TextField(
-                        controller: vinCtrl,
-                        decoration: const InputDecoration(
-                            labelText: 'VIN', border: OutlineInputBorder()),
-                        textCapitalization: TextCapitalization.characters,
-                      ),
-                      const SizedBox(height: 15),
-                      Row(children: [
-                        Expanded(
-                          child: TextField(
-                            controller: rokCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                                labelText: 'Rok výroby',
-                                border: OutlineInputBorder()),
+                        const SizedBox(height: 15),
+                        Row(children: [
+                          Expanded(
+                            child: TextField(
+                              controller: rokCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                  labelText: 'Rok výroby',
+                                  border: OutlineInputBorder()),
+                            ),
                           ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: TextField(
+                              controller: motorCtrl,
+                              decoration: const InputDecoration(
+                                  labelText: 'Motorizace',
+                                  border: OutlineInputBorder()),
+                            ),
+                          ),
+                        ]),
+                        const SizedBox(height: 15),
+                        TextField(
+                          controller: tachoCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                              labelText: 'Tachometr (km)',
+                              border: OutlineInputBorder()),
                         ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: TextField(
-                            controller: motorCtrl,
-                            decoration: const InputDecoration(
-                                labelText: 'Motorizace',
-                                border: OutlineInputBorder()),
+                        const SizedBox(height: 15),
+                        const Text('Platnost STK',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey)),
+                        const SizedBox(height: 5),
+                        Row(children: [
+                          Expanded(
+                            child: TextField(
+                              controller: stkMCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                  labelText: 'Měsíc (MM)',
+                                  border: OutlineInputBorder()),
+                            ),
                           ),
-                        ),
-                      ]),
-                      const SizedBox(height: 15),
-                      TextField(
-                        controller: tachoCtrl,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                            labelText: 'Tachometr (km)',
-                            border: OutlineInputBorder()),
-                      ),
-                      const SizedBox(height: 15),
-                      const Text('Platnost STK',
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey)),
-                      const SizedBox(height: 5),
-                      Row(children: [
-                        Expanded(
-                          child: TextField(
-                            controller: stkMCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                                labelText: 'Měsíc (MM)',
-                                border: OutlineInputBorder()),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: TextField(
+                              controller: stkRCtrl,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                  labelText: 'Rok (YYYY)',
+                                  border: OutlineInputBorder()),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 15),
-                        Expanded(
-                          child: TextField(
-                            controller: stkRCtrl,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                                labelText: 'Rok (YYYY)',
-                                border: OutlineInputBorder()),
-                          ),
-                        ),
-                      ]),
-                      const SizedBox(height: 25),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: TokColors.accent,
-                            foregroundColor: Colors.white,
-                            padding:
-                                const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                          onPressed: () async {
-                            final user =
-                                FirebaseAuth.instance.currentUser;
-                            if (user == null) return;
+                        ]),
+                        const SizedBox(height: 25),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TokColors.accent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(10)),
+                            ),
+                            onPressed: () async {
+                              final user =
+                                  FirebaseAuth.instance.currentUser;
+                              if (user == null) return;
 
-                            final oldSpz =
-                                data['spz'].toString().toUpperCase();
-                            final newSpz =
-                                spzCtrl.text.trim().toUpperCase();
+                              final oldSpz =
+                                  data['spz'].toString().toUpperCase();
+                              final newSpz =
+                                  spzCtrl.text.trim().toUpperCase();
 
-                            final updatedData = {
-                              'spz': newSpz,
-                              'znacka': znackaCtrl.text.trim(),
-                              'model': modelCtrl.text.trim(),
-                              'vin': vinCtrl.text.trim().toUpperCase(),
-                              'rok_vyroby': rokCtrl.text.trim(),
-                              'motorizace': motorCtrl.text.trim(),
-                              'tachometr': tachoCtrl.text.trim(),
-                              'stk_mesic': stkMCtrl.text.trim(),
-                              'stk_rok': stkRCtrl.text.trim(),
-                            };
+                              final updatedData = {
+                                'spz': newSpz,
+                                'znacka': znackaCtrl.text.trim(),
+                                'model': modelCtrl.text.trim(),
+                                'vin': vinCtrl.text.trim().toUpperCase(),
+                                'rok_vyroby': rokCtrl.text.trim(),
+                                'motorizace': motorCtrl.text.trim(),
+                                'tachometr': tachoCtrl.text.trim(),
+                                'stk_mesic': stkMCtrl.text.trim(),
+                                'stk_rok': stkRCtrl.text.trim(),
+                              };
 
-                            if (oldSpz != newSpz) {
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (c) => const Center(
-                                    child: CircularProgressIndicator()),
-                              );
-                              try {
-                                final newDocId = '${user.uid}_$newSpz';
-                                final check =
-                                    await FirebaseFirestore.instance
-                                        .collection('vozidla')
-                                        .doc(newDocId)
-                                        .get();
-                                if (check.exists) {
-                                  if (context.mounted) {
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(const SnackBar(
+                              if (oldSpz != newSpz) {
+                                showDialog(
+                                  context: sheetCtx,
+                                  barrierDismissible: false,
+                                  builder: (c) => const Center(
+                                      child: CircularProgressIndicator()),
+                                );
+                                try {
+                                  final newDocId =
+                                      '${user.uid}_$newSpz';
+                                  final check = await FirebaseFirestore
+                                      .instance
+                                      .collection('vozidla')
+                                      .doc(newDocId)
+                                      .get();
+                                  if (check.exists) {
+                                    if (sheetCtx.mounted) {
+                                      Navigator.pop(sheetCtx);
+                                      ScaffoldMessenger.of(sheetCtx)
+                                          .showSnackBar(const SnackBar(
+                                        content: Text(
+                                            'Vozidlo s touto SPZ již existuje!'),
+                                        backgroundColor: Colors.red,
+                                      ));
+                                    }
+                                    return;
+                                  }
+                                  await FirebaseFirestore.instance
+                                      .collection('vozidla')
+                                      .doc(newDocId)
+                                      .set({...data, ...updatedData});
+                                  await FirebaseFirestore.instance
+                                      .collection('vozidla')
+                                      .doc(docId)
+                                      .delete();
+                                  if (sheetCtx.mounted) {
+                                    Navigator.pop(sheetCtx);
+                                    Navigator.pop(sheetCtx);
+                                    Navigator.pop(sheetCtx);
+                                    ScaffoldMessenger.of(sheetCtx)
+                                        .showSnackBar(SnackBar(
                                       content: Text(
-                                          'Vozidlo s touto SPZ již existuje!'),
-                                      backgroundColor: Colors.red,
+                                          'Vozidlo přejmenováno na $newSpz. Historie byla zachována.'),
+                                      backgroundColor: Colors.green,
                                     ));
                                   }
-                                  return;
+                                } catch (e) {
+                                  if (sheetCtx.mounted) {
+                                    Navigator.pop(sheetCtx);
+                                    ScaffoldMessenger.of(sheetCtx)
+                                        .showSnackBar(SnackBar(
+                                            content: Text(
+                                                'Chyba při migraci: $e')));
+                                  }
                                 }
-                                await FirebaseFirestore.instance
-                                    .collection('vozidla')
-                                    .doc(newDocId)
-                                    .set({...data, ...updatedData});
-
+                              } else {
                                 await FirebaseFirestore.instance
                                     .collection('vozidla')
                                     .doc(docId)
-                                    .delete();
-
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  Navigator.pop(context);
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(SnackBar(
-                                    content: Text(
-                                        'Vozidlo přejmenováno na $newSpz. Historie byla zachována.'),
-                                    backgroundColor: Colors.green,
-                                  ));
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(SnackBar(
-                                          content: Text(
-                                              'Chyba při migraci: $e')));
+                                    .update(updatedData);
+                                if (sheetCtx.mounted) {
+                                  Navigator.pop(sheetCtx);
                                 }
                               }
-                            } else {
-                              await FirebaseFirestore.instance
-                                  .collection('vozidla')
-                                  .doc(docId)
-                                  .update(updatedData);
-                              if (context.mounted) Navigator.pop(context);
-                            }
-                          },
-                          child: const Text('ULOŽIT ZMĚNY',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold)),
+                            },
+                            child: const Text('ULOŽIT ZMĚNY',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold)),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 );
               },

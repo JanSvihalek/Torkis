@@ -103,6 +103,11 @@ class _MainScreenState extends State<MainScreen> {
         icon: Icons.assignment_add,
         activeIcon: Icons.assignment_add,
         label: 'Příjmy'),
+    'vin_dekoder': _NavData(
+        page: const VinDekoderPage(),
+        icon: Icons.travel_explore_outlined,
+        activeIcon: Icons.travel_explore_rounded,
+        label: 'VIN'),
   };
 
   @override

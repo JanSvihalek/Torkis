@@ -373,6 +373,7 @@ class _SettingsPageState extends State<SettingsPage> {
       'zamestnanci': {'nazev': 'Tým a práva', 'ikona': Icons.badge_outlined},
       'statistiky': {'nazev': 'Statistiky', 'ikona': Icons.bar_chart_outlined},
       'nastaveni': {'nazev': 'Nastavení', 'ikona': Icons.settings_outlined},
+      'vin_dekoder': {'nazev': 'VIN dekodér', 'ikona': Icons.travel_explore_outlined},
     };
 
     showModalBottomSheet(
