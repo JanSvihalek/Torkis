@@ -6,6 +6,7 @@ import '../core/design_tokens.dart';
 import '../core/constants.dart';
 import '../core/vincario_service.dart';
 import 'auth_gate.dart';
+import 'predplatne_page.dart';
 import 'prijem/ocr_camera_page.dart';
 
 /// Překlad anglických Vincario labelů do češtiny pro sekci OSTATNÍ INFORMACE.
@@ -135,6 +136,9 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   int? get _valueLimit => kPlanValueLimit[globalPlanTyp];
   bool get _valueLimitDosazen =>
       _valueLimit != null && _pocetValueTentoMesic >= _valueLimit!;
+
+  // Tržní hodnota není součástí plánu (typicky Trial má limit 0).
+  bool get _valueNeniVPlanu => _valueLimit == 0;
 
   // Sdílený klíč žije na serveru (Cloud Functions), modul je vždy dostupný.
   bool get _maKlice => true;
@@ -517,6 +521,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       return;
     }
     if (!_maKlice) return;
+    if (_valueNeniVPlanu) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text(
+            'Zjištění tržní hodnoty není součástí zkušební verze — odemknete ho v některém z placených plánů.'),
+        backgroundColor: TokColors.accent,
+        duration: Duration(seconds: 4),
+      ));
+      return;
+    }
     if (_valueLimitDosazen) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(
@@ -690,7 +703,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           _buildScanTile(tok),
           const SizedBox(height: TokSpace.md),
           _buildManualInput(tok),
-          if (_rezimValue
+          if (_rezimValue && _valueNeniVPlanu) ...[
+            const SizedBox(height: TokSpace.md),
+            _buildValueUpsell(tok),
+          ] else if (_rezimValue
               ? (!_loadingPocetValue && _valueLimit != null)
               : (!_loadingPocet && _limit != null)) ...[
             const SizedBox(height: TokSpace.md),
@@ -829,6 +845,51 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           borderSide:
               const BorderSide(color: TokColors.accent, width: 1.5),
         ),
+      ),
+    );
+  }
+
+  // Upsell pro Trial — tržní hodnota není ve zkušební verzi, vede na plány.
+  Widget _buildValueUpsell(TorkisTokens tok) {
+    return Container(
+      padding: const EdgeInsets.all(TokSpace.md),
+      decoration: BoxDecoration(
+        color: TokColors.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(TokRadius.lg),
+        border: Border.all(color: TokColors.accent.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.workspace_premium_outlined,
+              color: TokColors.accent, size: 22),
+          const SizedBox(width: TokSpace.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Tržní hodnota je v placených plánech',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: tok.textPrimary)),
+                const SizedBox(height: 2),
+                Text(
+                    'Ve zkušební verzi není dostupná. Odemknete ji už v plánu Basic.',
+                    style:
+                        TextStyle(fontSize: 11, color: tok.textSecondary)),
+              ],
+            ),
+          ),
+          const SizedBox(width: TokSpace.sm),
+          TextButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PredplatnePage()),
+            ),
+            style: TextButton.styleFrom(foregroundColor: TokColors.accent),
+            child: const Text('Plány'),
+          ),
+        ],
       ),
     );
   }
