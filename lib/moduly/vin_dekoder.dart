@@ -8,6 +8,76 @@ import '../core/vincario_service.dart';
 import 'auth_gate.dart';
 import 'prijem/ocr_camera_page.dart';
 
+/// Překlad anglických Vincario labelů do češtiny pro sekci OSTATNÍ INFORMACE.
+const Map<String, String> _kPreloz = {
+  // Identifikace
+  'WMI': 'WMI',
+  'VDS': 'VDS',
+  'VIS': 'VIS',
+  'Check Digit': 'Kontrolní číslice',
+  'Sequential Number': 'Sériové číslo',
+  'Vehicle Type': 'Typ vozidla',
+  'Vehicle Class': 'Třída vozidla',
+  'Model Range': 'Modelová řada',
+  'Version': 'Verze',
+  'Country of Origin': 'Země původu',
+  // Motor
+  'Engine Code': 'Kód motoru',
+  'Number of Cylinders': 'Počet válců',
+  'Valves Per Cylinder': 'Ventily na válec',
+  'Bore (mm)': 'Vrtání (mm)',
+  'Stroke (mm)': 'Zdvih (mm)',
+  'Compression Ratio': 'Kompresní poměr',
+  'Valve Train': 'Rozvod ventilů',
+  'Fuel System': 'Palivový systém',
+  'Turbo': 'Turbodmychadlo',
+  'Supercharger': 'Přeplňování',
+  'Cooling': 'Chlazení',
+  'Engine Position': 'Umístění motoru',
+  'Max Torque (Nm)': 'Max. točivý moment (Nm)',
+  'Max Torque RPM': 'Otáčky max. momentu',
+  'Max Power RPM': 'Otáčky max. výkonu',
+  // Výkon a jízdní vlastnosti
+  'Max Speed (km/h)': 'Max. rychlost (km/h)',
+  '0-100 (s)': '0–100 km/h (s)',
+  // Podvozek
+  'Front Brakes': 'Přední brzdy',
+  'Rear Brakes': 'Zadní brzdy',
+  'Steering': 'Řízení',
+  'Front Suspension': 'Přední odpružení',
+  'Rear Suspension': 'Zadní odpružení',
+  'Front Track (mm)': 'Rozchod přední nápravy (mm)',
+  'Rear Track (mm)': 'Rozchod zadní nápravy (mm)',
+  'Number of Axles': 'Počet náprav',
+  'Tires': 'Pneumatiky',
+  'Rims': 'Ráfky',
+  // Rozměry a hmotnosti
+  'Wheelbase (mm)': 'Rozvor náprav (mm)',
+  'Length (mm)': 'Délka (mm)',
+  'Width (mm)': 'Šířka (mm)',
+  'Height (mm)': 'Výška (mm)',
+  'Fuel Tank Capacity (L)': 'Objem nádrže (L)',
+  'Payload (kg)': 'Užitečná hmotnost (kg)',
+  'Towing Capacity (kg)': 'Tažná hmotnost (kg)',
+  // Emise a spotřeba
+  'CO2 Emission City (g/km)': 'Emise CO₂ ve městě (g/km)',
+  'CO2 Emission Highway (g/km)': 'Emise CO₂ mimo město (g/km)',
+  'Fuel Consumption City (l/100km)': 'Spotřeba ve městě (l/100 km)',
+  'Fuel Consumption Highway (l/100km)': 'Spotřeba mimo město (l/100 km)',
+  'Electric Range (km)': 'Elektrický dojezd (km)',
+  'Battery Capacity (kWh)': 'Kapacita baterie (kWh)',
+  'Charge Time (h)': 'Doba nabíjení (h)',
+  // Bezpečnost a výbava
+  'ABS': 'ABS',
+  'ASR': 'ASR (protiskluz)',
+  'ESP': 'ESP',
+  'Airbag System': 'Airbagový systém',
+  'Power Steering': 'Posilovač řízení',
+  'Air Conditioning': 'Klimatizace',
+  'Electric Windows': 'Elektrická okna',
+  'ISOFIX': 'ISOFIX',
+};
+
 class _Sekce {
   final String nazev;
   final IconData icon;
@@ -86,11 +156,12 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   void _initHistorieStream() {
     if (_historieStream != null || _sId == null) return;
+    // Bez orderBy — nepotřebujeme composite index.
+    // Třídíme client-side v _buildHistorieSidebar.
     _historieStream = FirebaseFirestore.instance
         .collection('vin_skeny')
         .where('servis_id', isEqualTo: _sId)
-        .orderBy('cas', descending: true)
-        .limit(30)
+        .limit(50)
         .snapshots();
   }
 
@@ -321,15 +392,33 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       ('Místo výroby', mfAddr),
     ]);
 
+    final torque = _f(r, ['Max Torque (Nm)']);
+    final speed = _f(r, ['Max Speed (km/h)']);
+    final cylinders = _f(r, ['Number of Cylinders']);
+    final engineCode = _f(r, ['Engine Code']);
+    final spotrMesto = _f(r, ['Fuel Consumption City (l/100km)']);
+    final spotrDalnice = _f(r, ['Fuel Consumption Highway (l/100km)']);
+    final elektDojezd = _f(r, ['Electric Range (km)']);
+    final rozvor = _f(r, ['Wheelbase (mm)']);
+    final delka = _f(r, ['Length (mm)']);
+    final sirka = _f(r, ['Width (mm)']);
+    final vyska = _f(r, ['Height (mm)']);
+    final nadrz = _f(r, ['Fuel Tank Capacity (L)']);
+    final tazna = _f(r, ['Towing Capacity (kg)']);
+
     final motor = filtr([
       ('Motorizace', _f(r, ['Engine'])),
-      ('Zdvihový objem', objemStr),
-      ('Výkon', vykon),
       ('Typ motoru', _f(r, ['Engine Type'])),
+      ('Kód motoru', engineCode),
+      ('Zdvihový objem', objemStr),
+      ('Počet válců', cylinders),
+      ('Výkon', vykon),
+      ('Max. točivý moment', torque.isNotEmpty ? '$torque Nm' : ''),
       ('Palivo', _f(r, ['Fuel Type'])),
       ('Převodovka', _f(r, ['Transmission'])),
       ('Počet převodů', _f(r, ['Number of Gears', 'Gears'])),
       ('Pohon', _f(r, ['Drive'])),
+      ('Max. rychlost', speed.isNotEmpty ? '$speed km/h' : ''),
     ]);
 
     final karoserie = filtr([
@@ -338,6 +427,12 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       ('Počet míst', _f(r, ['Number of Seats'])),
       ('Provozní hmotnost', curb.isNotEmpty ? '$curb kg' : ''),
       ('Max. hmotnost', gvw.isNotEmpty ? '${_formatCislo(gvw)} kg' : ''),
+      ('Tažná hmotnost', tazna.isNotEmpty ? '$tazna kg' : ''),
+      ('Rozvor náprav', rozvor.isNotEmpty ? '$rozvor mm' : ''),
+      ('Délka', delka.isNotEmpty ? '$delka mm' : ''),
+      ('Šířka', sirka.isNotEmpty ? '$sirka mm' : ''),
+      ('Výška', vyska.isNotEmpty ? '$vyska mm' : ''),
+      ('Objem nádrže', nadrz.isNotEmpty ? '$nadrz L' : ''),
     ]);
 
     final registrace = filtr([
@@ -345,47 +440,40 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       ('Emisní norma', _f(r, ['Emission Standard'])),
       ('Emise CO₂', co2.isNotEmpty ? '$co2 g/km' : ''),
       ('Spotřeba (komb.)', spotr.isNotEmpty ? '$spotr l/100 km' : ''),
+      ('Spotřeba ve městě',
+          spotrMesto.isNotEmpty ? '$spotrMesto l/100 km' : ''),
+      ('Spotřeba mimo město',
+          spotrDalnice.isNotEmpty ? '$spotrDalnice l/100 km' : ''),
+      ('Elektrický dojezd',
+          elektDojezd.isNotEmpty ? '$elektDojezd km' : ''),
     ]);
 
-    // Pole, která jsou již pokryta výše (původní anglické labely z API).
+    // Pole pokrytá výše — filtrují se ze sekce OSTATNÍ.
     const mapovane = {
-      'Make',
-      'Model',
-      'Commercial Name',
-      'Model Year',
-      'Body Type',
-      'Body',
-      'Trim',
-      'Series',
-      'Manufacturer Address',
-      'Plant City',
-      'Plant Country',
-      'Engine',
-      'Engine Type',
+      'Make', 'Model', 'Commercial Name', 'Model Year',
+      'Body Type', 'Body', 'Trim', 'Series',
+      'Manufacturer Address', 'Plant City', 'Plant Country',
+      'Engine', 'Engine Type', 'Engine Code',
       'Engine Displacement (ccm)',
-      'Engine Power (kW)',
-      'Engine Power (HP)',
-      'Fuel Type',
-      'Transmission',
-      'Number of Gears',
-      'Gears',
-      'Drive',
-      'Number of Doors',
-      'Number of Seats',
-      'Curb Weight (kg)',
-      'Gross Vehicle Weight (kg)',
-      'Month of First Registration',
-      'Year of First Registration',
-      'Emission Standard',
-      'CO2 Emission (g/km)',
-      'Fuel Consumption Combined (l/100km)',
-      'Fuel Consumption (l/100km)',
+      'Engine Power (kW)', 'Engine Power (HP)',
+      'Number of Cylinders', 'Max Torque (Nm)',
+      'Fuel Type', 'Transmission', 'Number of Gears', 'Gears', 'Drive',
+      'Max Speed (km/h)',
+      'Number of Doors', 'Number of Seats',
+      'Curb Weight (kg)', 'Gross Vehicle Weight (kg)', 'Towing Capacity (kg)',
+      'Wheelbase (mm)', 'Length (mm)', 'Width (mm)', 'Height (mm)',
+      'Fuel Tank Capacity (L)',
+      'Month of First Registration', 'Year of First Registration',
+      'Emission Standard', 'CO2 Emission (g/km)',
+      'Fuel Consumption Combined (l/100km)', 'Fuel Consumption (l/100km)',
+      'Fuel Consumption City (l/100km)', 'Fuel Consumption Highway (l/100km)',
+      'Electric Range (km)',
     };
 
-    // Všechna zbývající pole vrácená API, která nejsou v předchozích sekcích.
+    // Zbývající pole — labely přeloženy do češtiny přes _kPreloz.
     final ostatni = r.vsechnyUdaje
         .where((p) => !mapovane.contains(p.label))
-        .map((p) => (p.label, p.value))
+        .map((p) => (_kPreloz[p.label] ?? p.label, p.value))
         .toList();
 
     return [
@@ -999,12 +1087,48 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     final tok = context.tok;
     if (_historieStream == null) return const SizedBox.shrink();
 
+    final isFiltered = _dekovanyVin != null;
+
     return StreamBuilder<QuerySnapshot>(
       stream: _historieStream,
       builder: (context, snap) {
-        final docs = snap.data?.docs ?? [];
+        if (snap.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(TokSpace.xl),
+              child: Text('Nepodařilo se načíst historii.',
+                  style:
+                      TextStyle(fontSize: 12, color: tok.textSecondary),
+                  textAlign: TextAlign.center),
+            ),
+          );
+        }
+
+        // Client-side třídění podle cas desc (bez composite indexu)
+        final vsechny = (snap.data?.docs ?? []).toList()
+          ..sort((a, b) {
+            final ta =
+                ((a.data() as Map)['cas'] as Timestamp?)
+                    ?.millisecondsSinceEpoch ??
+                    0;
+            final tb =
+                ((b.data() as Map)['cas'] as Timestamp?)
+                    ?.millisecondsSinceEpoch ??
+                    0;
+            return tb.compareTo(ta);
+          });
+
+        // Po dekódování zobrazíme jen záznamy pro aktuální VIN
+        final zobrazit = isFiltered
+            ? vsechny
+                .where((d) =>
+                    (d.data() as Map)['vin']?.toString() ==
+                    _dekovanyVin)
+                .toList()
+            : vsechny;
+
         final now = DateTime.now();
-        final dnes = docs.where((d) {
+        final dnes = vsechny.where((d) {
           final ts = (d.data() as Map)['cas'];
           if (ts is Timestamp) {
             final dt = ts.toDate();
@@ -1014,6 +1138,26 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           }
           return false;
         }).length;
+
+        // Titulek a podtitulek sidebaru
+        final String headerTitle;
+        final String headerSub;
+        if (isFiltered) {
+          final vin = _dekovanyVin!;
+          headerTitle = vin.length > 13
+              ? '${vin.substring(0, 7)}…${vin.substring(vin.length - 4)}'
+              : vin;
+          headerSub = zobrazit.isEmpty
+              ? 'Nové vozidlo'
+              : zobrazit.length == 1
+                  ? 'Poprvé dekódováno'
+                  : 'Dekódováno ${zobrazit.length}×';
+        } else {
+          headerTitle = 'Historie skenů';
+          headerSub = dnes > 0
+              ? 'Dnes · $dnes dekódovaných VIN'
+              : 'Poslední skeny';
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1026,49 +1170,76 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.history_rounded,
-                          size: 16, color: TokColors.accent),
+                      Icon(
+                        isFiltered
+                            ? Icons.manage_search_rounded
+                            : Icons.history_rounded,
+                        size: 16,
+                        color: TokColors.accent,
+                      ),
                       const SizedBox(width: 6),
-                      Text('Historie skenů',
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: tok.textPrimary)),
+                      Expanded(
+                        child: Text(headerTitle,
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: tok.textPrimary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ),
+                      if (isFiltered)
+                        GestureDetector(
+                          onTap: () =>
+                              setState(() => _dekovanyVin = null),
+                          child: const Text('Vše',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: TokColors.accent,
+                                  fontWeight: FontWeight.w600)),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    dnes > 0
-                        ? 'Dnes · $dnes dekódovaných VIN'
-                        : 'Poslední skeny',
-                    style: TextStyle(fontSize: 11, color: tok.textSecondary),
-                  ),
+                  Text(headerSub,
+                      style: TextStyle(
+                          fontSize: 11, color: tok.textSecondary)),
                 ],
               ),
             ),
             Divider(height: 1, thickness: 1, color: tok.line),
             Expanded(
-              child: docs.isEmpty
+              child: zobrazit.isEmpty
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.all(TokSpace.xl),
-                        child: Text('Zatím žádné skeny',
-                            style: TextStyle(
-                                fontSize: 13, color: tok.textSecondary),
-                            textAlign: TextAlign.center),
+                        child: Text(
+                          snap.connectionState ==
+                                  ConnectionState.waiting
+                              ? 'Načítání…'
+                              : isFiltered
+                                  ? 'Toto vozidlo nebylo dříve dekódováno.'
+                                  : 'Zatím žádné skeny.',
+                          style: TextStyle(
+                              fontSize: 13, color: tok.textSecondary),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     )
                   : ListView.builder(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: TokSpace.xs),
-                      itemCount: docs.length,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: TokSpace.xs),
+                      itemCount: zobrazit.length,
                       itemBuilder: (context, i) {
-                        final data = docs[i].data() as Map<String, dynamic>;
+                        final data = zobrazit[i].data()
+                            as Map<String, dynamic>;
                         final vin = data['vin']?.toString() ?? '';
-                        final znacka = data['znacka']?.toString() ?? '';
-                        final model = data['model']?.toString() ?? '';
+                        final znacka =
+                            data['znacka']?.toString() ?? '';
+                        final model =
+                            data['model']?.toString() ?? '';
                         final rok = data['rok']?.toString() ?? '';
-                        final motorizace = data['motorizace']?.toString() ?? '';
+                        final motorizace =
+                            data['motorizace']?.toString() ?? '';
                         final nazev = [znacka, model]
                             .where((s) => s.isNotEmpty)
                             .join(' ');
@@ -1077,10 +1248,11 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                             .join(' · ');
                         final ts = data['cas'] as Timestamp?;
                         final cas = ts?.toDate();
-                        final isActive = vin == _dekovanyVin;
                         final vinTrunc = vin.length > 11
                             ? '${vin.substring(0, 7)}…${vin.substring(vin.length - 4)}'
                             : vin;
+                        // V histori zobrazujeme poslední záznam jako aktivní
+                        final isActive = isFiltered && i == 0;
 
                         return _buildHistoriePolozka(
                           tok,
@@ -1089,10 +1261,11 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                           vinTrunc: vinTrunc,
                           cas: cas,
                           isActive: isActive,
-                          onTap: isActive
+                          onTap: isFiltered
                               ? null
                               : () {
-                                  setState(() => _vinCtrl.text = vin);
+                                  setState(
+                                      () => _vinCtrl.text = vin);
                                   _dekodovat();
                                 },
                         );
