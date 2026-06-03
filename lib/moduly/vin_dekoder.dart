@@ -11,9 +11,7 @@ class _Sekce {
   final String nazev;
   final IconData icon;
   final List<(String, String)> pole;
-  // true → pole se renderují jako Wrap chipů místo label/value řádků
-  final bool wrapLayout;
-  const _Sekce(this.nazev, this.icon, this.pole, {this.wrapLayout = false});
+  const _Sekce(this.nazev, this.icon, this.pole);
 }
 
 class VinDekoderPage extends StatefulWidget {
@@ -38,6 +36,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   String? _dekovanyVin;
   double? _apiCas;
   String? _logoUrl;
+  bool _zCache = false;
 
   bool get _maKlice => _apiKey.isNotEmpty && _secretKey.isNotEmpty;
 
@@ -104,19 +103,41 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       _result = null;
       _dekovanyVin = vin;
       _apiCas = null;
+      _logoUrl = null;
+      _zCache = false;
     });
     final start = DateTime.now();
     try {
-      final res = await VincarioService.decode(
-          vin: vin, apiKey: _apiKey, secretKey: _secretKey);
+      // 1. Zkusit globální cache
+      final cacheDoc = await FirebaseFirestore.instance
+          .collection('vin_cache')
+          .doc(vin)
+          .get();
+
+      VincarioResult res;
+      bool zCache;
+
+      if (cacheDoc.exists) {
+        final raw = Map<String, dynamic>.from(
+            cacheDoc.data()!['raw'] as Map<dynamic, dynamic>);
+        res = VincarioResult(raw);
+        zCache = true;
+      } else {
+        // 2. Cache miss → volat API a uložit výsledek
+        res = await VincarioService.decode(
+            vin: vin, apiKey: _apiKey, secretKey: _secretKey);
+        zCache = false;
+        _ulozitDoCache(vin, res);
+      }
+
       final elapsed = DateTime.now().difference(start).inMilliseconds / 1000.0;
       if (mounted) {
         setState(() {
           _result = res;
           _apiCas = elapsed;
-          _logoUrl = null;
+          _zCache = zCache;
         });
-        _ulozitDoHistorie(vin, res);
+        _ulozitDoHistorie(vin, res, zCache: zCache);
         _nactiLogo(_f(res, ['Make']));
       }
     } catch (e) {
@@ -126,7 +147,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     }
   }
 
-  Future<void> _ulozitDoHistorie(String vin, VincarioResult r) async {
+  Future<void> _ulozitDoHistorie(String vin, VincarioResult r,
+      {bool zCache = false}) async {
     if (_sId == null) return;
     try {
       await FirebaseFirestore.instance.collection('vin_skeny').add({
@@ -137,7 +159,18 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         'rok': _f(r, ['Model Year']),
         'motorizace': _f(r, ['Engine']),
         'prevodovka': _f(r, ['Transmission']),
+        'z_cache': zCache,
         'cas': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _ulozitDoCache(String vin, VincarioResult r) async {
+    try {
+      await FirebaseFirestore.instance.collection('vin_cache').doc(vin).set({
+        'vin': vin,
+        'raw': r.raw,
+        'dekodovano': FieldValue.serverTimestamp(),
       });
     } catch (_) {}
   }
@@ -233,9 +266,9 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
     final motor = filtr([
       ('Motorizace', _f(r, ['Engine'])),
-      ('Typ motoru', _f(r, ['Engine Type'])),
       ('Zdvihový objem', objemStr),
       ('Výkon', vykon),
+      ('Typ motoru', _f(r, ['Engine Type'])),
       ('Palivo', _f(r, ['Fuel Type'])),
       ('Převodovka', _f(r, ['Transmission'])),
       ('Počet převodů', _f(r, ['Number of Gears', 'Gears'])),
@@ -259,17 +292,37 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
     // Pole, která jsou již pokryta výše (původní anglické labely z API).
     const mapovane = {
-      'Make', 'Model', 'Commercial Name', 'Model Year',
-      'Body Type', 'Body', 'Trim', 'Series',
-      'Manufacturer Address', 'Plant City', 'Plant Country',
-      'Engine', 'Engine Type', 'Engine Displacement (ccm)',
-      'Engine Power (kW)', 'Engine Power (HP)',
-      'Fuel Type', 'Transmission', 'Number of Gears', 'Gears', 'Drive',
-      'Number of Doors', 'Number of Seats',
-      'Curb Weight (kg)', 'Gross Vehicle Weight (kg)',
-      'Month of First Registration', 'Year of First Registration',
-      'Emission Standard', 'CO2 Emission (g/km)',
-      'Fuel Consumption Combined (l/100km)', 'Fuel Consumption (l/100km)',
+      'Make',
+      'Model',
+      'Commercial Name',
+      'Model Year',
+      'Body Type',
+      'Body',
+      'Trim',
+      'Series',
+      'Manufacturer Address',
+      'Plant City',
+      'Plant Country',
+      'Engine',
+      'Engine Type',
+      'Engine Displacement (ccm)',
+      'Engine Power (kW)',
+      'Engine Power (HP)',
+      'Fuel Type',
+      'Transmission',
+      'Number of Gears',
+      'Gears',
+      'Drive',
+      'Number of Doors',
+      'Number of Seats',
+      'Curb Weight (kg)',
+      'Gross Vehicle Weight (kg)',
+      'Month of First Registration',
+      'Year of First Registration',
+      'Emission Standard',
+      'CO2 Emission (g/km)',
+      'Fuel Consumption Combined (l/100km)',
+      'Fuel Consumption (l/100km)',
     };
 
     // Všechna zbývající pole vrácená API, která nejsou v předchozích sekcích.
@@ -288,8 +341,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       if (registrace.isNotEmpty)
         _Sekce('PALIVO A EMISE', Icons.cloud_outlined, registrace),
       if (ostatni.isNotEmpty)
-        _Sekce('OSTATNÍ INFORMACE', Icons.data_object_rounded, ostatni,
-            wrapLayout: true),
+        _Sekce('OSTATNÍ INFORMACE', Icons.data_object_rounded, ostatni),
     ];
   }
 
@@ -299,6 +351,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         _dekovanyVin = null;
         _apiCas = null;
         _logoUrl = null;
+        _zCache = false;
         _vinCtrl.clear();
       });
 
@@ -550,8 +603,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                             color: TokColors.ink, size: 26),
                   ),
                   const SizedBox(width: TokSpace.md),
-                  // Název — Flexible aby se nerozbil layout s tlačítkem
-                  Flexible(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -607,33 +659,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                   ),
                   if (_apiCas != null) ...[
                     const SizedBox(width: TokSpace.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF22C55E).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(TokRadius.round),
-                        border: Border.all(
-                            color: const Color(0xFF22C55E)
-                                .withValues(alpha: 0.30)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.check_rounded,
-                              size: 11, color: Color(0xFF22C55E)),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Dekódováno přes API · ${_apiCas!.toStringAsFixed(1)} s',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF22C55E),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildBadge(),
                   ],
                 ],
               ),
@@ -667,7 +693,36 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           _buildSekceGridWide(tok, sekce)
         else
           _buildSekceGridNarrow(tok, sekce),
+
+        const SizedBox(height: TokSpace.xl),
       ],
+    );
+  }
+
+  Widget _buildBadge() {
+    if (_apiCas == null) return const SizedBox.shrink();
+    final color = _zCache ? const Color(0xFF3B82F6) : const Color(0xFF22C55E);
+    final icon = _zCache ? Icons.bolt_rounded : Icons.check_rounded;
+    final text = _zCache
+        ? 'Načteno z cache · ${_apiCas!.toStringAsFixed(2)} s'
+        : 'Dekódováno přes API · ${_apiCas!.toStringAsFixed(1)} s';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(TokRadius.round),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(text,
+              style: TextStyle(
+                  fontSize: 11, color: color, fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 
@@ -758,50 +813,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             ],
           ),
           const SizedBox(height: TokSpace.sm),
-          if (sekce.wrapLayout)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: sekce.pole
-                  .map((p) => _buildOstatniChip(tok, p.$1, p.$2))
-                  .toList(),
-            )
-          else
-            ...sekce.pole.map((p) => _buildRadek(tok, p.$1, p.$2)),
+          ...sekce.pole.map((p) => _buildRadek(tok, p.$1, p.$2)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildOstatniChip(TorkisTokens tok, String label, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: tok.isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : const Color(0xFFF4F5F7),
-        borderRadius: BorderRadius.circular(TokRadius.md),
-        border: Border.all(color: tok.line),
-      ),
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: '$label  ',
-              style: TextStyle(
-                  fontSize: 11,
-                  color: tok.textSecondary,
-                  fontWeight: FontWeight.w500),
-            ),
-            TextSpan(
-              text: value,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: tok.textPrimary),
-            ),
-          ],
-        ),
       ),
     );
   }
