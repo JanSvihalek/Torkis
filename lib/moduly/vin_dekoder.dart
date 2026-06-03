@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../core/design_tokens.dart';
+import '../core/constants.dart';
 import '../core/vincario_service.dart';
 import 'auth_gate.dart';
 import 'prijem/ocr_camera_page.dart';
@@ -39,12 +40,48 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   // Stream uložený jako pole — nevytváří se znovu při každém setState
   Stream<QuerySnapshot>? _historieStream;
 
+  // Počet skutečných API volání (z_cache==false) v aktuálním měsíci
+  int _pocetTentoMesic = 0;
+  bool _loadingPocet = true;
+
+  int? get _limit => kPlanVinLimit[globalPlanTyp];
+  bool get _limitDosazen =>
+      _limit != null && _pocetTentoMesic >= _limit!;
+
   bool get _maKlice => _apiKey.isNotEmpty && _secretKey.isNotEmpty;
 
   @override
   void initState() {
     super.initState();
     _nactiKlice();
+  }
+
+  Future<void> _nactiPocetTentoMesic() async {
+    if (_sId == null) {
+      if (mounted) setState(() => _loadingPocet = false);
+      return;
+    }
+    try {
+      final zacatekMesice = DateTime(
+          DateTime.now().year, DateTime.now().month, 1);
+      final snap = await FirebaseFirestore.instance
+          .collection('vin_skeny')
+          .where('servis_id', isEqualTo: _sId)
+          .where('z_cache', isEqualTo: false)
+          .where('cas',
+              isGreaterThanOrEqualTo:
+                  Timestamp.fromDate(zacatekMesice))
+          .count()
+          .get();
+      if (mounted) {
+        setState(() {
+          _pocetTentoMesic = snap.count ?? 0;
+          _loadingPocet = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingPocet = false);
+    }
   }
 
   void _initHistorieStream() {
@@ -79,6 +116,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     } finally {
       if (mounted) {
         _initHistorieStream();
+        _nactiPocetTentoMesic();
         setState(() => _loadingKeys = false);
       }
     }
@@ -111,6 +149,16 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       return;
     }
     if (!_maKlice) return;
+    if (_limitDosazen) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+            'Dosáhli jste měsíčního limitu $_pocetTentoMesic / $_limit dekódování. '
+            'Upgradujte plán pro pokračování.'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ));
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
@@ -139,6 +187,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             vin: vin, apiKey: _apiKey, secretKey: _secretKey);
         zCache = false;
         _ulozitDoCache(vin, res);
+        if (mounted) setState(() => _pocetTentoMesic++);
       }
 
       if (mounted) {
@@ -418,6 +467,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           _buildScanTile(tok),
           const SizedBox(height: TokSpace.md),
           _buildManualInput(tok),
+          if (!_loadingPocet && _limit != null) ...[
+            const SizedBox(height: TokSpace.md),
+            _buildUsageIndicator(tok),
+          ],
           if (!_maKlice) ...[
             const SizedBox(height: TokSpace.md),
             _buildKeysBanner(tok),
@@ -541,6 +594,75 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           borderSide:
               const BorderSide(color: TokColors.accent, width: 1.5),
         ),
+      ),
+    );
+  }
+
+  Widget _buildUsageIndicator(TorkisTokens tok) {
+    final limit = _limit!;
+    final pct = (_pocetTentoMesic / limit).clamp(0.0, 1.0);
+    final Color barColor;
+    if (pct >= 1.0) {
+      barColor = Colors.red;
+    } else if (pct >= 0.85) {
+      barColor = Colors.orange;
+    } else {
+      barColor = TokColors.accent;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: TokSpace.md, vertical: TokSpace.sm),
+      decoration: BoxDecoration(
+        color: tok.surface,
+        borderRadius: BorderRadius.circular(TokRadius.lg),
+        border: Border.all(color: tok.line),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.bar_chart_rounded, size: 14, color: tok.textSecondary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text('Dekódování VIN tento měsíc',
+                    style: TextStyle(
+                        fontSize: 12, color: tok.textSecondary)),
+              ),
+              Text(
+                '$_pocetTentoMesic / $limit',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: barColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: pct,
+              minHeight: 5,
+              backgroundColor: tok.isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : const Color(0xFFE5E7EB),
+              valueColor: AlwaysStoppedAnimation(barColor),
+            ),
+          ),
+          if (_limitDosazen) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Měsíční limit vyčerpán. Upgradujte plán pro další dekódování.',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.red,
+                  fontWeight: FontWeight.w500),
+            ),
+          ],
+        ],
       ),
     );
   }

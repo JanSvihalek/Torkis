@@ -68,8 +68,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
   }
 
   Future<void> _kontaktovatCustom() async {
-    final subject =
-        Uri.encodeComponent('Poptávka individuálního plánu Torkis');
+    final subject = Uri.encodeComponent('Poptávka individuálního plánu Torkis');
     final body = Uri.encodeComponent(
       'Dobrý den,\n\n'
       'Mám zájem o individuální nabídku plánu Custom pro svůj autoservis.\n\n'
@@ -79,8 +78,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
       'Prosím o zaslání nabídky.\n\n'
       's pozdravem',
     );
-    final uri =
-        Uri.parse('mailto:$kKontaktEmail?subject=$subject&body=$body');
+    final uri = Uri.parse('mailto:$kKontaktEmail?subject=$subject&body=$body');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else if (mounted) {
@@ -126,8 +124,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
                   icon: jeTrial
                       ? Icons.access_time_rounded
                       : Icons.workspace_premium_outlined,
-                  accentColor:
-                      jeTrial ? TokColors.warning : TokColors.success,
+                  accentColor: jeTrial ? TokColors.warning : TokColors.success,
                   title: jeTrial
                       ? 'Aktivní zkušební doba'
                       : 'Aktivní plán: ${aktualniPlan.toUpperCase()}',
@@ -164,6 +161,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
                         features: const [
                           '50 záznamů/měsíc',
                           '3 uživatelé max.',
+                          '30 dekodovaných VIN měsíčně',
                           'Fotodokumentace',
                           'Evidence zákazníků a vozidel',
                           'Historie záznamů',
@@ -183,6 +181,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
                         features: const [
                           '150 záznamů/měsíc',
                           '10 uživatelů max.',
+                          '150 dekodovaných VIN měsíčně',
                           'Vše z Basic',
                           'Reporty a statistiky',
                           'Chat se zákazníkem',
@@ -202,6 +201,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
                           'Neomezené záznamy',
                           'Neomezený počet uživatelů',
                           'Vše ze Standard',
+                          '500 dekodovaných VIN měsíčně',
                           'Prioritní podpora',
                           'Pokročilé statistiky',
                           'Vícenásobná pracoviště',
@@ -218,7 +218,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
                             'Individuální úprava pro speciální požadavky a integrace.',
                         features: const [
                           'Napojení na vaše ERP/DMS',
-                          'API dekodér VIN pro automatické rozpoznání vozidel',
+                          'Neomezený počet dekodovaných VIN měsíčně',
                           'Prioritní podpora s SLA',
                         ],
                         package: null,

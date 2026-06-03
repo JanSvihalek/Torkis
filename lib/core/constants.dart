@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.0.2';
+const String kAppVerze = '5.0.3';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -102,6 +102,16 @@ const Map<String, int?> kPlanPrijemLimit = {
   'standard': 150,
   'pro': null,
   'trial': null,
+  'custom': null,
+};
+
+/// Maximální počet dekódování VIN za měsíc dle plánu (null = neomezeno).
+/// Počítají se pouze skutečná API volání (z_cache == false).
+const Map<String, int?> kPlanVinLimit = {
+  'basic': 50,
+  'standard': 150,
+  'pro': 500,
+  'trial': 10,
   'custom': null,
 };
 
