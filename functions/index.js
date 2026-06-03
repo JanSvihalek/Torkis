@@ -224,11 +224,15 @@ exports.marketValueVin = onCall(
 // REVENUECAT WEBHOOK — synchronizace plánu do Firestore (zdroj pravdy pro limity)
 // ─────────────────────────────────────────────────────────────────────────
 
-/** Z entitlement_ids vybere nejvyšší plán dle priority (nebo null). */
+/**
+ * Z entitlement_ids vybere nejvyšší plán dle priority (nebo null).
+ * Porovnává malými písmeny — RevenueCat může mít 'Basic' apod.
+ */
 function planFromEntitlements(ids) {
   if (!Array.isArray(ids)) return null;
+  const lower = ids.map((s) => String(s).toLowerCase());
   for (const p of PLAN_PRIORITY) {
-    if (ids.includes(p)) return p;
+    if (lower.includes(p)) return p;
   }
   return null;
 }

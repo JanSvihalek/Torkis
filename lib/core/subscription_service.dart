@@ -36,15 +36,19 @@ class SubscriptionService {
     }
   }
 
+  /// Aktivní entitlementy zmenšené na malá písmena — RevenueCat je
+  /// case-sensitive (může mít 'Basic'), kód všude používá malá písmena.
+  static Set<String> _activeEntitlementsLower(CustomerInfo info) =>
+      info.entitlements.active.keys.map((k) => k.toLowerCase()).toSet();
+
   /// Vrátí true pokud je aktivní jakýkoliv plán (basic / standard / pro).
   static Future<bool> isEntitlementActive() async {
     if (kIsWeb) return true;
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return false;
     try {
       final info = await Purchases.getCustomerInfo();
-      return kPlanEntitlements.any(
-        (e) => info.entitlements.active.containsKey(e),
-      );
+      final active = _activeEntitlementsLower(info);
+      return kPlanEntitlements.any(active.contains);
     } catch (e) {
       debugPrint('RevenueCat getCustomerInfo error: $e');
       return false;
@@ -57,8 +61,9 @@ class SubscriptionService {
     if (kRevenueCatApiKey == 'PLACEHOLDER_REVENUECAT_API_KEY') return null;
     try {
       final info = await Purchases.getCustomerInfo();
+      final active = _activeEntitlementsLower(info);
       for (final plan in ['pro', 'standard', 'basic']) {
-        if (info.entitlements.active.containsKey(plan)) return plan;
+        if (active.contains(plan)) return plan;
       }
       return null;
     } catch (e) {
@@ -83,9 +88,8 @@ class SubscriptionService {
     if (kIsWeb) return false;
     try {
       final info = await Purchases.purchasePackage(package);
-      return kPlanEntitlements.any(
-        (e) => info.entitlements.active.containsKey(e),
-      );
+      final active = _activeEntitlementsLower(info);
+      return kPlanEntitlements.any(active.contains);
     } on PurchasesErrorCode catch (e) {
       if (e == PurchasesErrorCode.purchaseCancelledError) return false;
       rethrow;
@@ -96,9 +100,8 @@ class SubscriptionService {
     if (kIsWeb) return false;
     try {
       final info = await Purchases.restorePurchases();
-      return kPlanEntitlements.any(
-        (e) => info.entitlements.active.containsKey(e),
-      );
+      final active = _activeEntitlementsLower(info);
+      return kPlanEntitlements.any(active.contains);
     } catch (e) {
       debugPrint('RevenueCat restorePurchases error: $e');
       return false;
