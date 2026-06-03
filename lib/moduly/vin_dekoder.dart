@@ -11,7 +11,9 @@ class _Sekce {
   final String nazev;
   final IconData icon;
   final List<(String, String)> pole;
-  const _Sekce(this.nazev, this.icon, this.pole);
+  // true → pole se renderují jako Wrap chipů místo label/value řádků
+  final bool wrapLayout;
+  const _Sekce(this.nazev, this.icon, this.pole, {this.wrapLayout = false});
 }
 
 class VinDekoderPage extends StatefulWidget {
@@ -35,6 +37,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   VincarioResult? _result;
   String? _dekovanyVin;
   double? _apiCas;
+  String? _logoUrl;
 
   bool get _maKlice => _apiKey.isNotEmpty && _secretKey.isNotEmpty;
 
@@ -106,14 +109,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     try {
       final res = await VincarioService.decode(
           vin: vin, apiKey: _apiKey, secretKey: _secretKey);
-      final elapsed =
-          DateTime.now().difference(start).inMilliseconds / 1000.0;
+      final elapsed = DateTime.now().difference(start).inMilliseconds / 1000.0;
       if (mounted) {
         setState(() {
           _result = res;
           _apiCas = elapsed;
+          _logoUrl = null;
         });
         _ulozitDoHistorie(vin, res);
+        _nactiLogo(_f(res, ['Make']));
       }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
@@ -135,6 +139,21 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         'prevodovka': _f(r, ['Transmission']),
         'cas': FieldValue.serverTimestamp(),
       });
+    } catch (_) {}
+  }
+
+  Future<void> _nactiLogo(String znacka) async {
+    if (znacka.isEmpty) return;
+    try {
+      final q = await FirebaseFirestore.instance
+          .collection('znacka')
+          .where('nazev', isEqualTo: znacka)
+          .limit(1)
+          .get();
+      if (q.docs.isNotEmpty && mounted) {
+        final url = q.docs.first.data()['logo']?.toString() ?? '';
+        if (url.isNotEmpty) setState(() => _logoUrl = url);
+      }
     } catch (_) {}
   }
 
@@ -189,11 +208,17 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     final curb = _f(r, ['Curb Weight (kg)']);
     final gvw = _f(r, ['Gross Vehicle Weight (kg)']);
     final co2 = _f(r, ['CO2 Emission (g/km)']);
-    final spotr = _f(
-        r, ['Fuel Consumption Combined (l/100km)', 'Fuel Consumption (l/100km)']);
+    final spotr = _f(r,
+        ['Fuel Consumption Combined (l/100km)', 'Fuel Consumption (l/100km)']);
 
     List<(String, String)> filtr(List<(String, String)> lst) =>
         lst.where((p) => p.$2.isNotEmpty).toList();
+
+    final mfAddr = [
+      _f(r, ['Manufacturer Address']),
+      _f(r, ['Plant City']),
+      _f(r, ['Plant Country']),
+    ].where((s) => s.isNotEmpty).join(', ');
 
     final identifikace = filtr([
       ('Značka', _f(r, ['Make'])),
@@ -201,15 +226,19 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       ('Obchodní označení', _f(r, ['Commercial Name'])),
       ('Rok výroby', _f(r, ['Model Year'])),
       ('Karosérie', _f(r, ['Body Type'])),
+      ('Body', _f(r, ['Body'])),
       ('Typ / varianta', _f(r, ['Trim', 'Series'])),
+      ('Místo výroby', mfAddr),
     ]);
 
     final motor = filtr([
       ('Motorizace', _f(r, ['Engine'])),
+      ('Typ motoru', _f(r, ['Engine Type'])),
       ('Zdvihový objem', objemStr),
       ('Výkon', vykon),
       ('Palivo', _f(r, ['Fuel Type'])),
       ('Převodovka', _f(r, ['Transmission'])),
+      ('Počet převodů', _f(r, ['Number of Gears', 'Gears'])),
       ('Pohon', _f(r, ['Drive'])),
     ]);
 
@@ -230,11 +259,12 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
     // Pole, která jsou již pokryta výše (původní anglické labely z API).
     const mapovane = {
-      'Make', 'Model', 'Commercial Name', 'Model Year', 'Body Type',
-      'Trim', 'Series',
-      'Engine', 'Engine Displacement (ccm)',
+      'Make', 'Model', 'Commercial Name', 'Model Year',
+      'Body Type', 'Body', 'Trim', 'Series',
+      'Manufacturer Address', 'Plant City', 'Plant Country',
+      'Engine', 'Engine Type', 'Engine Displacement (ccm)',
       'Engine Power (kW)', 'Engine Power (HP)',
-      'Fuel Type', 'Transmission', 'Drive',
+      'Fuel Type', 'Transmission', 'Number of Gears', 'Gears', 'Drive',
       'Number of Doors', 'Number of Seats',
       'Curb Weight (kg)', 'Gross Vehicle Weight (kg)',
       'Month of First Registration', 'Year of First Registration',
@@ -256,9 +286,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       if (karoserie.isNotEmpty)
         _Sekce('KAROSERIE A ROZMĚRY', Icons.directions_car_outlined, karoserie),
       if (registrace.isNotEmpty)
-        _Sekce('REGISTRACE A EMISE', Icons.cloud_outlined, registrace),
+        _Sekce('PALIVO A EMISE', Icons.cloud_outlined, registrace),
       if (ostatni.isNotEmpty)
-        _Sekce('OSTATNÍ INFORMACE', Icons.data_object_rounded, ostatni),
+        _Sekce('OSTATNÍ INFORMACE', Icons.data_object_rounded, ostatni,
+            wrapLayout: true),
     ];
   }
 
@@ -267,6 +298,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         _error = null;
         _dekovanyVin = null;
         _apiCas = null;
+        _logoUrl = null;
         _vinCtrl.clear();
       });
 
@@ -290,8 +322,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                   child: _buildMainColumn(context, wide: true),
                 ),
               ),
-              VerticalDivider(
-                  width: 1, thickness: 1, color: context.tok.line),
+              VerticalDivider(width: 1, thickness: 1, color: context.tok.line),
               SizedBox(
                 width: 280,
                 child: _buildHistorieSidebar(context),
@@ -395,12 +426,11 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             style: FilledButton.styleFrom(
               backgroundColor: TokColors.accent,
               foregroundColor: Colors.white,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(TokRadius.md)),
-              textStyle: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600),
+              textStyle:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             child: const Text('Spustit sken →'),
           ),
@@ -471,8 +501,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         ? '${mesic1.padLeft(2, '0')} / $rok1'
         : rok1;
 
-    final nadpis =
-        [znacka, model].where((s) => s.isNotEmpty).join(' ');
+    final nadpis = [znacka, model].where((s) => s.isNotEmpty).join(' ');
     final podnadpis =
         [karoserie, motor, rok].where((s) => s.isNotEmpty).join(' · ');
 
@@ -493,27 +522,44 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // Logo značky, nebo fallback ikona
                   Container(
                     width: 48,
                     height: 48,
+                    padding: _logoUrl != null
+                        ? const EdgeInsets.all(8)
+                        : EdgeInsets.zero,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: TokColors.ink,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(TokRadius.md),
+                      border: Border.all(color: tok.line),
                     ),
-                    child: const Icon(Icons.directions_car_rounded,
-                        color: Colors.white, size: 24),
+                    child: _logoUrl != null
+                        ? Image.network(
+                            _logoUrl!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Icon(
+                                Icons.directions_car_rounded,
+                                color: TokColors.ink,
+                                size: 26),
+                          )
+                        : Icon(Icons.directions_car_rounded,
+                            color: TokColors.ink, size: 26),
                   ),
                   const SizedBox(width: TokSpace.md),
-                  Expanded(
+                  // Název — Flexible aby se nerozbil layout s tlačítkem
+                  Flexible(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         if (nadpis.isNotEmpty)
                           Text(nadpis,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w700,
@@ -522,6 +568,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                               )),
                         if (podnadpis.isNotEmpty)
                           Text(podnadpis,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   fontSize: 13, color: tok.textSecondary)),
                       ],
@@ -564,8 +612,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: const Color(0xFF22C55E).withValues(alpha: 0.12),
-                        borderRadius:
-                            BorderRadius.circular(TokRadius.round),
+                        borderRadius: BorderRadius.circular(TokRadius.round),
                         border: Border.all(
                             color: const Color(0xFF22C55E)
                                 .withValues(alpha: 0.30)),
@@ -600,20 +647,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           Row(
             children: [
               if (reg1.isNotEmpty)
-                Expanded(
-                    child:
-                        _buildStatPill(tok, '1. registrace', reg1)),
+                Expanded(child: _buildStatPill(tok, '1. registrace', reg1)),
               if (motor.isNotEmpty) ...[
                 if (reg1.isNotEmpty) const SizedBox(width: TokSpace.sm),
-                Expanded(
-                    child: _buildStatPill(tok, 'Motorizace', motor)),
+                Expanded(child: _buildStatPill(tok, 'Motorizace', motor)),
               ],
               if (prevodovka.isNotEmpty) ...[
                 if (reg1.isNotEmpty || motor.isNotEmpty)
                   const SizedBox(width: TokSpace.sm),
-                Expanded(
-                    child: _buildStatPill(
-                        tok, 'Převodovka', prevodovka)),
+                Expanded(child: _buildStatPill(tok, 'Převodovka', prevodovka)),
               ],
             ],
           ),
@@ -716,8 +758,50 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             ],
           ),
           const SizedBox(height: TokSpace.sm),
-          ...sekce.pole.map((p) => _buildRadek(tok, p.$1, p.$2)),
+          if (sekce.wrapLayout)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: sekce.pole
+                  .map((p) => _buildOstatniChip(tok, p.$1, p.$2))
+                  .toList(),
+            )
+          else
+            ...sekce.pole.map((p) => _buildRadek(tok, p.$1, p.$2)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOstatniChip(TorkisTokens tok, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: tok.isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : const Color(0xFFF4F5F7),
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        border: Border.all(color: tok.line),
+      ),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$label  ',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: tok.textSecondary,
+                  fontWeight: FontWeight.w500),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: tok.textPrimary),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -728,8 +812,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: TextStyle(fontSize: 13, color: tok.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 13, color: tok.textSecondary)),
           const SizedBox(width: 12),
           Expanded(
             child: Text(value,
@@ -797,8 +880,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                     dnes > 0
                         ? 'Dnes · $dnes dekódovaných VIN'
                         : 'Poslední skeny',
-                    style:
-                        TextStyle(fontSize: 11, color: tok.textSecondary),
+                    style: TextStyle(fontSize: 11, color: tok.textSecondary),
                   ),
                 ],
               ),
@@ -820,14 +902,12 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                           const EdgeInsets.symmetric(vertical: TokSpace.xs),
                       itemCount: docs.length,
                       itemBuilder: (context, i) {
-                        final data =
-                            docs[i].data() as Map<String, dynamic>;
+                        final data = docs[i].data() as Map<String, dynamic>;
                         final vin = data['vin']?.toString() ?? '';
                         final znacka = data['znacka']?.toString() ?? '';
                         final model = data['model']?.toString() ?? '';
                         final rok = data['rok']?.toString() ?? '';
-                        final motorizace =
-                            data['motorizace']?.toString() ?? '';
+                        final motorizace = data['motorizace']?.toString() ?? '';
                         final nazev = [znacka, model]
                             .where((s) => s.isNotEmpty)
                             .join(' ');
@@ -903,8 +983,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                 ),
                 child: Icon(Icons.directions_car_rounded,
                     size: 16,
-                    color:
-                        isActive ? TokColors.accent : tok.textSecondary),
+                    color: isActive ? TokColors.accent : tok.textSecondary),
               ),
               const SizedBox(width: TokSpace.sm),
               Expanded(
@@ -916,32 +995,28 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: isActive
-                            ? TokColors.accent
-                            : tok.textPrimary,
+                        color: isActive ? TokColors.accent : tok.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (detail.isNotEmpty)
                       Text(detail,
-                          style: TextStyle(
-                              fontSize: 11, color: tok.textSecondary),
+                          style:
+                              TextStyle(fontSize: 11, color: tok.textSecondary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                     Text(vinTrunc,
                         style: TextStyle(
                             fontSize: 10,
-                            color:
-                                tok.textSecondary.withValues(alpha: 0.6),
+                            color: tok.textSecondary.withValues(alpha: 0.6),
                             letterSpacing: 0.3)),
                   ],
                 ),
               ),
               if (cas != null)
                 Text(_formatCas(cas),
-                    style: TextStyle(
-                        fontSize: 10, color: tok.textSecondary)),
+                    style: TextStyle(fontSize: 10, color: tok.textSecondary)),
             ],
           ),
         ),
