@@ -564,52 +564,57 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Vehicle header card
-        Container(
-          decoration: BoxDecoration(
-            color: tok.surface,
-            borderRadius: BorderRadius.circular(TokRadius.xl),
-            border: Border.all(color: tok.line),
-          ),
-          padding: const EdgeInsets.all(TokSpace.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+        Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: tok.surface,
+                borderRadius: BorderRadius.circular(TokRadius.xl),
+                border: Border.all(color: tok.line),
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                  TokSpace.lg, TokSpace.lg, 52, TokSpace.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Logo značky, nebo fallback ikona
-                  Container(
-                    width: 48,
-                    height: 48,
-                    padding: _logoUrl != null
-                        ? const EdgeInsets.all(8)
-                        : EdgeInsets.zero,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(TokRadius.md),
-                      border: Border.all(color: tok.line),
-                    ),
-                    child: _logoUrl != null
-                        ? Image.network(
-                            _logoUrl!,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Icon(
-                                Icons.directions_car_rounded,
-                                color: TokColors.ink,
-                                size: 26),
-                          )
-                        : Icon(Icons.directions_car_rounded,
-                            color: TokColors.ink, size: 26),
-                  ),
-                  const SizedBox(width: TokSpace.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (nadpis.isNotEmpty)
-                          Text(nadpis,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Logo značky, nebo fallback ikona
+                      Container(
+                        width: 48,
+                        height: 48,
+                        padding: _logoUrl != null
+                            ? const EdgeInsets.all(8)
+                            : EdgeInsets.zero,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(TokRadius.md),
+                          border: Border.all(color: tok.line),
+                        ),
+                        child: _logoUrl != null
+                            ? Image.network(
+                                _logoUrl!,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.directions_car_rounded,
+                                        color: TokColors.ink, size: 26),
+                              )
+                            : const Icon(Icons.directions_car_rounded,
+                                color: TokColors.ink, size: 26),
+                      ),
+                      const SizedBox(width: TokSpace.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              nadpis.isNotEmpty
+                                  ? nadpis
+                                  : (_dekovanyVin ?? ''),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -617,54 +622,67 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                                 fontWeight: FontWeight.w700,
                                 color: tok.textPrimary,
                                 height: 1.1,
-                              )),
-                        if (podnadpis.isNotEmpty)
-                          Text(podnadpis,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  fontSize: 13, color: tok.textSecondary)),
-                      ],
-                    ),
+                              ),
+                            ),
+                            if (podnadpis.isNotEmpty)
+                              Text(podnadpis,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: tok.textSecondary)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: TokSpace.sm),
-                  OutlinedButton.icon(
-                    onPressed: _reset,
-                    icon: const Icon(Icons.refresh_rounded, size: 14),
-                    label: const Text('Nový sken'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: tok.textPrimary,
-                      side: BorderSide(color: tok.line),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      textStyle: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w500),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(TokRadius.md)),
-                    ),
+                  const SizedBox(height: TokSpace.md),
+                  Wrap(
+                    spacing: TokSpace.sm,
+                    runSpacing: TokSpace.xs,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        _dekovanyVin ?? '',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: tok.textPrimary,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      if (_apiCas != null) _buildBadge(),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: TokSpace.md),
-              Row(
-                children: [
-                  Text(
-                    _dekovanyVin ?? '',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: tok.textPrimary,
-                      letterSpacing: 0.8,
+            ),
+            // Tlačítko Nový sken — vždy viditelné, absolutně vpravo nahoře
+            Positioned(
+              top: TokSpace.sm,
+              right: TokSpace.sm,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _reset,
+                  borderRadius: BorderRadius.circular(TokRadius.md),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: tok.isDark
+                          ? Colors.white.withValues(alpha: 0.07)
+                          : const Color(0xFFEFF1F4),
+                      borderRadius: BorderRadius.circular(TokRadius.md),
                     ),
+                    child: Icon(Icons.refresh_rounded,
+                        size: 18, color: tok.textSecondary),
                   ),
-                  if (_apiCas != null) ...[
-                    const SizedBox(width: TokSpace.sm),
-                    _buildBadge(),
-                  ],
-                ],
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
 
         // Stat pills (1. registrace, Motorizace, Převodovka)
