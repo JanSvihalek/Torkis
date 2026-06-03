@@ -111,6 +111,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   bool _loadingTrzni = false;
   String? _trzniError;
 
+  String _mena = 'EUR';
+  double? _kurz;
+  bool _nacitaKurz = false;
+
   // Mód: false = VIN dekódování, true = tržní hodnota
   bool _rezimValue = false;
 
@@ -614,6 +618,19 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     }
   }
 
+  Future<void> _nacistKurz() async {
+    if (_kurz != null || _nacitaKurz) return;
+    setState(() => _nacitaKurz = true);
+    try {
+      final rate = await VincarioService.kurzEurCzk();
+      if (mounted) setState(() => _kurz = rate);
+    } catch (_) {
+      if (mounted) setState(() => _mena = 'EUR');
+    } finally {
+      if (mounted) setState(() => _nacitaKurz = false);
+    }
+  }
+
   void _reset() => setState(() {
         _result = null;
         _error = null;
@@ -943,7 +960,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           ),
           if (_rezimValue ? _valueLimitDosazen : _limitDosazen) ...[
             const SizedBox(height: 6),
-            Text(
+            const Text(
               'Měsíční limit vyčerpán. Upgradujte plán pro pokračování.',
               style: TextStyle(
                   fontSize: 11,
@@ -1288,6 +1305,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                         color: tok.textSecondary,
                         letterSpacing: 0.8,
                       )),
+                  const Spacer(),
+                  _buildMenaToggle(tok),
                 ],
               ),
               const SizedBox(height: TokSpace.md),
@@ -1300,7 +1319,45 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
+  Widget _buildMenaToggle(TorkisTokens tok) {
+    if (_nacitaKurz) {
+      return const SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(strokeWidth: 1.5),
+      );
+    }
+    return SegmentedButton<String>(
+      segments: const [
+        ButtonSegment(value: 'EUR', label: Text('EUR')),
+        ButtonSegment(value: 'CZK', label: Text('Kč')),
+      ],
+      selected: {_mena},
+      onSelectionChanged: (v) {
+        final nova = v.first;
+        if (nova == 'CZK') _nacistKurz();
+        setState(() => _mena = nova);
+      },
+      style: const ButtonStyle(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        textStyle: WidgetStatePropertyAll(
+          TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+        ),
+        padding: WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTrzniData(TorkisTokens tok, VincarioMarketValue data) {
+    if (_mena == 'CZK' && _kurz == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: TokSpace.md),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
     final eu = data.europePrice;
     final odo = data.europeOdometer;
     if (eu == null) {
@@ -1308,11 +1365,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           style: TextStyle(fontSize: 13, color: tok.textSecondary));
     }
 
-    final median = eu['price_median'] as num?;
-    final below = eu['price_below'] as num?;
-    final above = eu['price_above'] as num?;
-    final avg = eu['price_avg'] as num?;
-    final currency = eu['price_currency']?.toString() ?? 'EUR';
+    final faktor = _mena == 'CZK' ? _kurz! : 1.0;
+    num? conv(num? v) => v == null ? null : v * faktor;
+
+    final median = conv(eu['price_median'] as num?);
+    final below = conv(eu['price_below'] as num?);
+    final above = conv(eu['price_above'] as num?);
+    final avg = conv(eu['price_avg'] as num?);
+    final currency = _mena == 'CZK' ? 'Kč' : (eu['price_currency']?.toString() ?? 'EUR');
     final count = eu['price_count'] as num?;
 
     final odomAvg = odo?['odometer_avg'] as num?;

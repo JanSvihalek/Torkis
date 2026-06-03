@@ -90,6 +90,25 @@ class VincarioService {
     return sha1.convert(utf8.encode(input)).toString().substring(0, 10);
   }
 
+  /// Načte aktuální kurz EUR → CZK z ČNB API.
+  static Future<double> kurzEurCzk() async {
+    final resp = await http.get(
+        Uri.parse('https://api.cnb.cz/cnbapi/exrates/daily?lang=EN'));
+    if (resp.statusCode != 200) {
+      throw VincarioException('ČNB API chyba ${resp.statusCode}.');
+    }
+    final data = json.decode(resp.body) as Map<String, dynamic>;
+    final rates = (data['rates'] as List?)?.whereType<Map>() ?? [];
+    for (final r in rates) {
+      if (r['currencyCode'] == 'EUR') {
+        final amount = (r['amount'] as num?)?.toDouble() ?? 1.0;
+        final rate = (r['rate'] as num?)?.toDouble();
+        if (rate != null) return rate / amount;
+      }
+    }
+    throw const VincarioException('Kurz EUR/CZK nebyl nalezen.');
+  }
+
   static Future<VincarioMarketValue> marketValue({
     required String vin,
     required String apiKey,
