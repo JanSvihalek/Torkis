@@ -107,16 +107,32 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   String? _dekovanyVin;
   String? _logoUrl;
 
-  // Stream uložený jako pole — nevytváří se znovu při každém setState
-  Stream<QuerySnapshot>? _historieStream;
+  VincarioMarketValue? _trzniHodnota;
+  bool _loadingTrzni = false;
+  String? _trzniError;
 
-  // Počet skutečných API volání (z_cache==false) v aktuálním měsíci
+  // Mód: false = VIN dekódování, true = tržní hodnota
+  bool _rezimValue = false;
+
+  // Streamy uložené jako pole — nevytváří se znovu při každém setState
+  Stream<QuerySnapshot>? _historieStream;
+  Stream<QuerySnapshot>? _valueStream;
+
+  // Počítadlo VIN dekódování (z_cache==false) v aktuálním měsíci
   int _pocetTentoMesic = 0;
   bool _loadingPocet = true;
 
   int? get _limit => kPlanVinLimit[globalPlanTyp];
   bool get _limitDosazen =>
       _limit != null && _pocetTentoMesic >= _limit!;
+
+  // Počítadlo market value lookupů (z_cache==false) v aktuálním měsíci
+  int _pocetValueTentoMesic = 0;
+  bool _loadingPocetValue = true;
+
+  int? get _valueLimit => kPlanValueLimit[globalPlanTyp];
+  bool get _valueLimitDosazen =>
+      _valueLimit != null && _pocetValueTentoMesic >= _valueLimit!;
 
   bool get _maKlice => _apiKey.isNotEmpty && _secretKey.isNotEmpty;
 
@@ -160,11 +176,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   }
 
   void _initHistorieStream() {
-    if (_historieStream != null || _sId == null) return;
-    // Bez orderBy — nepotřebujeme composite index.
-    // Třídíme client-side v _buildHistorieSidebar.
-    _historieStream = FirebaseFirestore.instance
+    if (_sId == null) return;
+    _historieStream ??= FirebaseFirestore.instance
         .collection('vin_skeny')
+        .where('servis_id', isEqualTo: _sId)
+        .limit(50)
+        .snapshots();
+    _valueStream ??= FirebaseFirestore.instance
+        .collection('value_skeny')
         .where('servis_id', isEqualTo: _sId)
         .limit(50)
         .snapshots();
@@ -193,28 +212,12 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       if (mounted) {
         _initHistorieStream();
         _nactiPocetTentoMesic();
+        _nactiPocetValueTentoMesic();
         setState(() => _loadingKeys = false);
       }
     }
   }
 
-  Future<void> _scanVin() async {
-    if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Skenování funguje pouze v nainstalované aplikaci (APK/iOS).'),
-          backgroundColor: Colors.orange));
-      return;
-    }
-    final result = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const OcrCameraPage(label: 'VIN')),
-    );
-    if (result != null && result.isNotEmpty && mounted) {
-      setState(() => _vinCtrl.text = result.toUpperCase());
-      _dekodovat();
-    }
-  }
 
   Future<void> _dekodovat() async {
     final vin =
@@ -495,13 +498,150 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     ];
   }
 
+  Future<void> _nactiPocetValueTentoMesic() async {
+    if (_sId == null) {
+      if (mounted) setState(() => _loadingPocetValue = false);
+      return;
+    }
+    try {
+      final now = DateTime.now();
+      final zacatek = DateTime(now.year, now.month, 1);
+      final snap = await FirebaseFirestore.instance
+          .collection('value_skeny')
+          .where('servis_id', isEqualTo: _sId)
+          .get();
+      final pocet = snap.docs.where((d) {
+        final data = d.data();
+        if (data['z_cache'] == true) return false;
+        final ts = data['cas'] as Timestamp?;
+        if (ts == null) return false;
+        return ts.toDate().isAfter(
+            zacatek.subtract(const Duration(seconds: 1)));
+      }).length;
+      if (mounted) {
+        setState(() {
+          _pocetValueTentoMesic = pocet;
+          _loadingPocetValue = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _loadingPocetValue = false);
+    }
+  }
+
+  Future<void> _ulozitValueDoHistorie(String vin, VincarioMarketValue r,
+      {bool zCache = false}) async {
+    if (_sId == null) return;
+    try {
+      final eu = r.europePrice;
+      await FirebaseFirestore.instance.collection('value_skeny').add({
+        'servis_id': _sId,
+        'vin': vin,
+        'znacka': r.make,
+        'model': r.model,
+        'rok': r.modelYear?.toString() ?? '',
+        'median_eur': eu?['price_median'],
+        'z_cache': zCache,
+        'cas': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _ulozitValueDoCache(String vin, VincarioMarketValue r) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('value_cache')
+          .doc(vin)
+          .set({
+        'vin': vin,
+        'raw': r.raw,
+        'dekodovano': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _nacistTrzniHodnotu() async {
+    final vin = _vinCtrl.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    if (vin.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Zadejte VIN kód.'), backgroundColor: Colors.orange));
+      return;
+    }
+    if (!_maKlice) return;
+    if (_valueLimitDosazen) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(
+            'Dosáhli jste měsíčního limitu $_pocetValueTentoMesic / $_valueLimit zjištění.'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ));
+      return;
+    }
+    setState(() {
+      _loadingTrzni = true;
+      _trzniError = null;
+      _trzniHodnota = null;
+      _dekovanyVin = vin;
+      _logoUrl = null;
+    });
+    try {
+      // Zkusit value_cache
+      final cacheDoc = await FirebaseFirestore.instance
+          .collection('value_cache')
+          .doc(vin)
+          .get();
+      VincarioMarketValue res;
+      bool zCache;
+      if (cacheDoc.exists) {
+        final raw = Map<String, dynamic>.from(
+            cacheDoc.data()!['raw'] as Map<dynamic, dynamic>);
+        res = VincarioMarketValue(raw);
+        zCache = true;
+      } else {
+        res = await VincarioService.marketValue(
+            vin: vin, apiKey: _apiKey, secretKey: _secretKey);
+        zCache = false;
+        _ulozitValueDoCache(vin, res);
+        if (mounted) setState(() => _pocetValueTentoMesic++);
+      }
+      if (mounted) setState(() => _trzniHodnota = res);
+      _ulozitValueDoHistorie(vin, res, zCache: zCache);
+      _nactiLogo(res.make);
+    } catch (e) {
+      if (mounted) setState(() => _trzniError = e.toString());
+    } finally {
+      if (mounted) setState(() => _loadingTrzni = false);
+    }
+  }
+
   void _reset() => setState(() {
         _result = null;
         _error = null;
         _dekovanyVin = null;
         _logoUrl = null;
+        _trzniHodnota = null;
+        _trzniError = null;
+        _loadingTrzni = false;
         _vinCtrl.clear();
       });
+
+  Future<void> _scanVinAkce() async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              'Skenování funguje pouze v nainstalované aplikaci (APK/iOS).'),
+          backgroundColor: Colors.orange));
+      return;
+    }
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const OcrCameraPage(label: 'VIN')),
+    );
+    if (result != null && result.isNotEmpty && mounted) {
+      setState(() => _vinCtrl.text = result.toUpperCase());
+      _rezimValue ? _nacistTrzniHodnotu() : _dekodovat();
+    }
+  }
 
   // ── Build ────────────────────────────────────────────────────────────────────
 
@@ -541,26 +681,68 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildMainColumn(BuildContext context, {required bool wide}) {
     final tok = context.tok;
+    final jeVysledek = _rezimValue
+        ? (_trzniHodnota != null && !_loadingTrzni)
+        : (_result != null && !_loading);
+    final jeNacitani = _rezimValue ? _loadingTrzni : _loading;
+    final jeChyba = _rezimValue
+        ? (_trzniError != null && !_loadingTrzni)
+        : (_error != null && !_loading);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_result == null && !_loading) ...[
-          Text('Skener VIN',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.4,
-                color: tok.textPrimary,
-                height: 1.1,
-              )),
+        if (!jeVysledek && !jeNacitani) ...[
+          // Přepínač módu
+          SegmentedButton<bool>(
+            segments: const [
+              ButtonSegment(
+                value: false,
+                icon: Icon(Icons.manage_search_rounded, size: 16),
+                label: Text('Dekódování VIN'),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: Icon(Icons.bar_chart_rounded, size: 16),
+                label: Text('Tržní hodnota'),
+              ),
+            ],
+            selected: {_rezimValue},
+            onSelectionChanged: (v) => setState(() {
+              _rezimValue = v.first;
+              _result = null;
+              _error = null;
+              _trzniHodnota = null;
+              _trzniError = null;
+              _dekovanyVin = null;
+              _logoUrl = null;
+            }),
+          ),
+          const SizedBox(height: TokSpace.lg),
+          Text(
+            _rezimValue ? 'Tržní hodnota' : 'Skener VIN',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.4,
+              color: tok.textPrimary,
+              height: 1.1,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Rychlé vyhledání specifikace vozu z VIN kódu',
-              style: TextStyle(fontSize: 13, color: tok.textSecondary)),
+          Text(
+            _rezimValue
+                ? 'Odhad tržní ceny vozidla z dat evropského trhu'
+                : 'Rychlé vyhledání specifikace vozu z VIN kódu',
+            style: TextStyle(fontSize: 13, color: tok.textSecondary),
+          ),
           const SizedBox(height: TokSpace.lg),
           _buildScanTile(tok),
           const SizedBox(height: TokSpace.md),
           _buildManualInput(tok),
-          if (!_loadingPocet && _limit != null) ...[
+          if (_rezimValue
+              ? (!_loadingPocetValue && _valueLimit != null)
+              : (!_loadingPocet && _limit != null)) ...[
             const SizedBox(height: TokSpace.md),
             _buildUsageIndicator(tok),
           ],
@@ -568,19 +750,20 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             const SizedBox(height: TokSpace.md),
             _buildKeysBanner(tok),
           ],
+          if (jeChyba) ...[
+            const SizedBox(height: TokSpace.md),
+            _buildErrorCard(tok, _rezimValue ? _trzniError! : _error!),
+          ],
         ],
-        if (_loading)
+        if (jeNacitani)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 60),
             child: Center(child: CircularProgressIndicator()),
           ),
-        if (_error != null && !_loading) ...[
-          _buildErrorCard(tok, _error!),
-          const SizedBox(height: TokSpace.lg),
-          _buildScanTile(tok),
-        ],
-        if (_result != null && !_loading)
-          _buildVehicleResult(context, tok, _result!, wide: wide),
+        if (jeVysledek)
+          _rezimValue
+              ? _buildValueResult(context, tok, _trzniHodnota!)
+              : _buildVehicleResult(context, tok, _result!, wide: wide),
       ],
     );
   }
@@ -612,14 +795,17 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Skenovat VIN kód',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  _rezimValue ? 'Skenovat VIN pro tržní hodnotu' : 'Skenovat VIN kód',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(
-                  'Automaticky načte specifikace vozu z VIN — ze štítku, rámu dveří nebo čelního skla',
+                  _rezimValue
+                      ? 'Zjistí odhad tržní ceny vozidla z dat evropského trhu'
+                      : 'Automaticky načte specifikace vozu z VIN — ze štítku, rámu dveří nebo čelního skla',
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.50),
                       fontSize: 12),
@@ -629,7 +815,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           ),
           const SizedBox(width: TokSpace.md),
           FilledButton(
-            onPressed: _scanVin,
+            onPressed: _scanVinAkce,
             style: FilledButton.styleFrom(
               backgroundColor: TokColors.accent,
               foregroundColor: Colors.white,
@@ -657,9 +843,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         letterSpacing: 0.5,
       ),
       cursorColor: TokColors.accent,
-      onSubmitted: (_) => _maKlice ? _dekodovat() : null,
+      onSubmitted: (_) {
+        if (!_maKlice) return;
+        _rezimValue ? _nacistTrzniHodnotu() : _dekodovat();
+      },
       decoration: InputDecoration(
-        hintText: 'Zadat VIN ručně (např. TMBJJ7NE5K…)',
+        hintText: _rezimValue
+            ? 'Zadat VIN pro tržní hodnotu…'
+            : 'Zadat VIN ručně (např. TMBJJ7NE5K…)',
         hintStyle: TextStyle(
             fontSize: 13,
             color: tok.textSecondary,
@@ -670,8 +861,9 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             ? IconButton(
                 icon: const Icon(Icons.search_rounded,
                     color: TokColors.accent, size: 20),
-                onPressed: _dekodovat,
-                tooltip: 'Dekódovat',
+                onPressed:
+                    _rezimValue ? _nacistTrzniHodnotu : _dekodovat,
+                tooltip: _rezimValue ? 'Zjistit hodnotu' : 'Dekódovat',
               )
             : null,
         filled: true,
@@ -692,8 +884,9 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   }
 
   Widget _buildUsageIndicator(TorkisTokens tok) {
-    final limit = _limit!;
-    final pct = (_pocetTentoMesic / limit).clamp(0.0, 1.0);
+    final limit = _rezimValue ? _valueLimit! : _limit!;
+    final pocet = _rezimValue ? _pocetValueTentoMesic : _pocetTentoMesic;
+    final pct = (pocet / limit).clamp(0.0, 1.0);
     final Color barColor;
     if (pct >= 1.0) {
       barColor = Colors.red;
@@ -719,12 +912,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               Icon(Icons.bar_chart_rounded, size: 14, color: tok.textSecondary),
               const SizedBox(width: 6),
               Expanded(
-                child: Text('Dekódování VIN tento měsíc',
+                child: Text(
+                    _rezimValue
+                        ? 'Tržní hodnota tento měsíc'
+                        : 'Dekódování VIN tento měsíc',
                     style: TextStyle(
                         fontSize: 12, color: tok.textSecondary)),
               ),
               Text(
-                '$_pocetTentoMesic / $limit',
+                '$pocet / $limit',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -745,10 +941,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               valueColor: AlwaysStoppedAnimation(barColor),
             ),
           ),
-          if (_limitDosazen) ...[
+          if (_rezimValue ? _valueLimitDosazen : _limitDosazen) ...[
             const SizedBox(height: 6),
             Text(
-              'Měsíční limit vyčerpán. Upgradujte plán pro další dekódování.',
+              'Měsíční limit vyčerpán. Upgradujte plán pro pokračování.',
               style: TextStyle(
                   fontSize: 11,
                   color: Colors.red,
@@ -972,6 +1168,296 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
+  Widget _buildValueResult(
+      BuildContext context, TorkisTokens tok, VincarioMarketValue data) {
+    final nadpis = [data.make, data.model]
+        .where((s) => s.isNotEmpty)
+        .join(' ');
+    final podnadpis = data.modelYear != null ? '${data.modelYear}' : '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header karta
+        Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: tok.surface,
+                borderRadius: BorderRadius.circular(TokRadius.xl),
+                border: Border.all(color: tok.line),
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                  TokSpace.lg, TokSpace.lg, 52, TokSpace.lg),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    padding: _logoUrl != null
+                        ? const EdgeInsets.all(8)
+                        : EdgeInsets.zero,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(TokRadius.md),
+                      border: Border.all(color: tok.line),
+                    ),
+                    child: _logoUrl != null
+                        ? Image.network(_logoUrl!,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                                Icons.directions_car_rounded,
+                                color: TokColors.ink,
+                                size: 26))
+                        : const Icon(Icons.directions_car_rounded,
+                            color: TokColors.ink, size: 26),
+                  ),
+                  const SizedBox(width: TokSpace.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          nadpis.isNotEmpty ? nadpis : (_dekovanyVin ?? ''),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: tok.textPrimary,
+                            height: 1.1,
+                          ),
+                        ),
+                        if (podnadpis.isNotEmpty)
+                          Text(podnadpis,
+                              style: TextStyle(
+                                  fontSize: 13, color: tok.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: TokSpace.sm,
+              right: TokSpace.sm,
+              child: FilledButton.icon(
+                onPressed: _reset,
+                icon: const Icon(Icons.qr_code_scanner_rounded, size: 15),
+                label: const Text('Nový sken'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: TokColors.accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 8),
+                  textStyle: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TokRadius.md)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: TokSpace.md),
+        // Tržní data
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: tok.surface,
+            borderRadius: BorderRadius.circular(TokRadius.xl),
+            border: Border.all(color: tok.line),
+          ),
+          padding: const EdgeInsets.all(TokSpace.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.bar_chart_rounded,
+                      size: 13, color: TokColors.accent),
+                  const SizedBox(width: 6),
+                  Text('TRŽNÍ HODNOTA',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: tok.textSecondary,
+                        letterSpacing: 0.8,
+                      )),
+                ],
+              ),
+              const SizedBox(height: TokSpace.md),
+              _buildTrzniData(tok, data),
+            ],
+          ),
+        ),
+        const SizedBox(height: TokSpace.xl),
+      ],
+    );
+  }
+
+  Widget _buildTrzniData(TorkisTokens tok, VincarioMarketValue data) {
+    final eu = data.europePrice;
+    final odo = data.europeOdometer;
+    if (eu == null) {
+      return Text('Evropská data nejsou k dispozici.',
+          style: TextStyle(fontSize: 13, color: tok.textSecondary));
+    }
+
+    final median = eu['price_median'] as num?;
+    final below = eu['price_below'] as num?;
+    final above = eu['price_above'] as num?;
+    final avg = eu['price_avg'] as num?;
+    final currency = eu['price_currency']?.toString() ?? 'EUR';
+    final count = eu['price_count'] as num?;
+
+    final odomAvg = odo?['odometer_avg'] as num?;
+    final odomUnit = odo?['odometer_unit']?.toString() ?? 'km';
+
+    String fmt(num? v) {
+      if (v == null) return '—';
+      final s = v.round().toString();
+      final buf = StringBuffer();
+      for (int i = 0; i < s.length; i++) {
+        if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
+        buf.write(s[i]);
+      }
+      return buf.toString();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Hlavní cena — medián
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${fmt(median)} $currency',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: tok.textPrimary,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(width: TokSpace.sm),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Text('medián',
+                  style: TextStyle(
+                      fontSize: 12, color: tok.textSecondary)),
+            ),
+          ],
+        ),
+        const SizedBox(height: TokSpace.md),
+
+        // Cenový rozsah — vizuální bar
+        if (below != null && median != null && above != null) ...[
+          _buildCenovyBar(tok, below, median, above, currency),
+          const SizedBox(height: TokSpace.md),
+        ],
+
+        // Detailní hodnoty
+        Divider(height: 1, color: tok.line),
+        const SizedBox(height: TokSpace.sm),
+        _buildTrzniRadek(tok, 'Průměrná cena',
+            avg != null ? '${fmt(avg)} $currency' : '—'),
+        if (odomAvg != null)
+          _buildTrzniRadek(tok, 'Průměrný nájezd',
+              '${fmt(odomAvg)} $odomUnit'),
+        if (count != null)
+          _buildTrzniRadek(tok, 'Počet vzorků', '$count inzerátů'),
+        if (data.periodFrom.isNotEmpty && data.periodTo.isNotEmpty)
+          _buildTrzniRadek(
+              tok, 'Období dat', '${data.periodFrom} – ${data.periodTo}'),
+
+        // Zdroj dat
+        const SizedBox(height: TokSpace.sm),
+        Text('Evropský trh · Vincario Market Value',
+            style: TextStyle(fontSize: 10, color: tok.textSecondary)),
+      ],
+    );
+  }
+
+  Widget _buildCenovyBar(TorkisTokens tok, num below, num median, num above,
+      String currency) {
+    final total = above - below;
+    if (total <= 0) return const SizedBox.shrink();
+    final leftRatio = ((median - below) / total).clamp(0.0, 1.0);
+    final rightRatio = 1.0 - leftRatio;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: Row(
+            children: [
+              Flexible(
+                flex: (leftRatio * 100).round(),
+                child: Container(height: 8,
+                    color: TokColors.accent.withValues(alpha: 0.35)),
+              ),
+              Container(width: 3, height: 12,
+                  color: TokColors.accent),
+              Flexible(
+                flex: (rightRatio * 100).round().clamp(1, 100),
+                child: Container(height: 8,
+                    color: TokColors.accent.withValues(alpha: 0.15)),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('od ${_fmtCena(below)} $currency',
+                style: TextStyle(fontSize: 10, color: tok.textSecondary)),
+            Text('do ${_fmtCena(above)} $currency',
+                style: TextStyle(fontSize: 10, color: tok.textSecondary)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _fmtCena(num v) {
+    final s = v.round().toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(' ');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+
+  Widget _buildTrzniRadek(TorkisTokens tok, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          Text(label,
+              style: TextStyle(fontSize: 13, color: tok.textSecondary)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(value,
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: tok.textPrimary)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatPill(TorkisTokens tok, String label, String value) {
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -1092,12 +1578,13 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildHistorieSidebar(BuildContext context) {
     final tok = context.tok;
-    if (_historieStream == null) return const SizedBox.shrink();
+    final stream = _rezimValue ? _valueStream : _historieStream;
+    if (stream == null) return const SizedBox.shrink();
 
     final isFiltered = _dekovanyVin != null;
 
     return StreamBuilder<QuerySnapshot>(
-      stream: _historieStream,
+      stream: stream,
       builder: (context, snap) {
         if (snap.hasError) {
           return Center(

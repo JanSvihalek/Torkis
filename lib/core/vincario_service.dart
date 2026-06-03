@@ -49,6 +49,31 @@ class VincarioResult {
   }
 }
 
+/// Výsledek Vehicle Market Value API.
+class VincarioMarketValue {
+  final Map<String, dynamic> raw;
+  const VincarioMarketValue(this.raw);
+
+  String get make => raw['vehicle']?['make']?.toString() ?? '';
+  String get model => raw['vehicle']?['model']?.toString() ?? '';
+  int? get modelYear => raw['vehicle']?['model_year'] as int?;
+  String get logoUrl => raw['vehicle']?['make_logo']?.toString() ?? '';
+
+  String get periodFrom => (raw['period'] as Map?)?['from']?.toString() ?? '';
+  String get periodTo => (raw['period'] as Map?)?['to']?.toString() ?? '';
+
+  Map<String, dynamic>? get europePrice =>
+      ((raw['market_price'] as Map?)?['europe']) as Map<String, dynamic>?;
+  Map<String, dynamic>? get europeOdometer =>
+      ((raw['market_odometer'] as Map?)?['europe']) as Map<String, dynamic>?;
+
+  List<Map<String, dynamic>> get records {
+    final list = raw['records'] as List?;
+    if (list == null) return [];
+    return list.whereType<Map<String, dynamic>>().toList();
+  }
+}
+
 class VincarioException implements Exception {
   final String message;
   const VincarioException(this.message);
@@ -63,6 +88,26 @@ class VincarioService {
       String vin, String id, String apiKey, String secret) {
     final input = '$vin|$id|$apiKey|$secret';
     return sha1.convert(utf8.encode(input)).toString().substring(0, 10);
+  }
+
+  static Future<VincarioMarketValue> marketValue({
+    required String vin,
+    required String apiKey,
+    required String secretKey,
+  }) async {
+    final cs = _controlSum(vin, 'vehicle-market-value', apiKey, secretKey);
+    final uri = Uri.parse(
+        'https://api.vincario.com/3.2/$apiKey/$cs/vehicle-market-value/$vin.json');
+    final resp = await http.get(uri);
+    if (resp.statusCode != 200) {
+      throw VincarioException('Vincario API chyba ${resp.statusCode}.');
+    }
+    final data = json.decode(resp.body) as Map<String, dynamic>;
+    if (data['market_price'] == null) {
+      throw const VincarioException(
+          'Pro toto vozidlo nejsou dostupná tržní data (min. 10 vzorků).');
+    }
+    return VincarioMarketValue(data);
   }
 
   static Future<VincarioResult> decode({

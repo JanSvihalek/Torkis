@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.0.7';
+const String kAppVerze = '5.1.0';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -112,6 +112,16 @@ const Map<String, int?> kPlanVinLimit = {
   'standard': 150,
   'pro': 500,
   'trial': 10,
+  'custom': null,
+};
+
+/// Maximální počet zjištění tržní hodnoty za měsíc dle plánu (null = neomezeno).
+/// Počítají se pouze skutečná API volání (z_cache == false).
+const Map<String, int?> kPlanValueLimit = {
+  'basic': 10,
+  'standard': 30,
+  'pro': 100,
+  'trial': 5,
   'custom': null,
 };
 
