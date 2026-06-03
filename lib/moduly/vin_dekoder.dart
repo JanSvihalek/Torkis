@@ -132,20 +132,25 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       return;
     }
     try {
-      final zacatekMesice = DateTime(
-          DateTime.now().year, DateTime.now().month, 1);
+      final now = DateTime.now();
+      final zacatekMesice = DateTime(now.year, now.month, 1);
+      // Jen jeden where filtr → nevyžaduje composite index.
+      // Měsíc a z_cache filtrujeme client-side.
       final snap = await FirebaseFirestore.instance
           .collection('vin_skeny')
           .where('servis_id', isEqualTo: _sId)
-          .where('z_cache', isEqualTo: false)
-          .where('cas',
-              isGreaterThanOrEqualTo:
-                  Timestamp.fromDate(zacatekMesice))
-          .count()
           .get();
+      final pocet = snap.docs.where((d) {
+        final data = d.data();
+        if (data['z_cache'] == true) return false;
+        final ts = data['cas'] as Timestamp?;
+        if (ts == null) return false;
+        return ts.toDate().isAfter(
+            zacatekMesice.subtract(const Duration(seconds: 1)));
+      }).length;
       if (mounted) {
         setState(() {
-          _pocetTentoMesic = snap.count ?? 0;
+          _pocetTentoMesic = pocet;
           _loadingPocet = false;
         });
       }
