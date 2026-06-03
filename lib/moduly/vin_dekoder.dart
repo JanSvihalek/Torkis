@@ -34,9 +34,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   String? _error;
   VincarioResult? _result;
   String? _dekovanyVin;
-  double? _apiCas;
   String? _logoUrl;
-  bool _zCache = false;
 
   bool get _maKlice => _apiKey.isNotEmpty && _secretKey.isNotEmpty;
 
@@ -102,11 +100,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       _error = null;
       _result = null;
       _dekovanyVin = vin;
-      _apiCas = null;
       _logoUrl = null;
-      _zCache = false;
     });
-    final start = DateTime.now();
     try {
       // 1. Zkusit globální cache
       final cacheDoc = await FirebaseFirestore.instance
@@ -130,12 +125,9 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         _ulozitDoCache(vin, res);
       }
 
-      final elapsed = DateTime.now().difference(start).inMilliseconds / 1000.0;
       if (mounted) {
         setState(() {
           _result = res;
-          _apiCas = elapsed;
-          _zCache = zCache;
         });
         _ulozitDoHistorie(vin, res, zCache: zCache);
         _nactiLogo(_f(res, ['Make']));
@@ -349,9 +341,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         _result = null;
         _error = null;
         _dekovanyVin = null;
-        _apiCas = null;
         _logoUrl = null;
-        _zCache = false;
         _vinCtrl.clear();
       });
 
@@ -637,23 +627,16 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                     ],
                   ),
                   const SizedBox(height: TokSpace.md),
-                  Wrap(
-                    spacing: TokSpace.sm,
-                    runSpacing: TokSpace.xs,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        _dekovanyVin ?? '',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: tok.textPrimary,
-                          letterSpacing: 0.8,
-                        ),
+                  if (_dekovanyVin != null)
+                    Text(
+                      _dekovanyVin!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: tok.textSecondary,
+                        letterSpacing: 0.8,
                       ),
-                      if (_apiCas != null) _buildBadge(),
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),
@@ -714,33 +697,6 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
         const SizedBox(height: TokSpace.xl),
       ],
-    );
-  }
-
-  Widget _buildBadge() {
-    if (_apiCas == null) return const SizedBox.shrink();
-    final color = _zCache ? const Color(0xFF3B82F6) : const Color(0xFF22C55E);
-    final icon = _zCache ? Icons.bolt_rounded : Icons.check_rounded;
-    final text = _zCache
-        ? 'Načteno z cache · ${_apiCas!.toStringAsFixed(2)} s'
-        : 'Dekódováno přes API · ${_apiCas!.toStringAsFixed(1)} s';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(TokRadius.round),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 11, color: color),
-          const SizedBox(width: 4),
-          Text(text,
-              style: TextStyle(
-                  fontSize: 11, color: color, fontWeight: FontWeight.w600)),
-        ],
-      ),
     );
   }
 
