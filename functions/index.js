@@ -16,10 +16,11 @@
  */
 
 const crypto = require("crypto");
-const {onCall, HttpsError} = require("firebase-functions/v2/https");
+const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
-const {getFirestore, FieldValue} = require("firebase-admin/firestore");
+const {getFirestore, FieldValue, Timestamp} =
+    require("firebase-admin/firestore");
 
 initializeApp();
 const db = getFirestore();
@@ -29,6 +30,14 @@ const db = getFirestore();
 //   firebase functions:secrets:set VINCARIO_SECRET
 const VINCARIO_API_KEY = defineSecret("VINCARIO_API_KEY");
 const VINCARIO_SECRET = defineSecret("VINCARIO_SECRET");
+
+// Sdílený token pro ověření RevenueCat webhooku (hodnota hlavičky Authorization
+// nastavená v RevenueCat → Integrations → Webhooks). Nastav přes:
+//   firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH
+const REVENUECAT_WEBHOOK_AUTH = defineSecret("REVENUECAT_WEBHOOK_AUTH");
+
+// Priorita plánů (nejvyšší vyhrává, když má zákazník víc entitlementů).
+const PLAN_PRIORITY = ["pro", "standard", "basic"];
 
 const REGION = "europe-west3";
 
@@ -66,10 +75,20 @@ async function resolveServisId(auth) {
   return servisId;
 }
 
-/** Zjistí typ plánu servisu (výchozí 'basic'). */
+/**
+ * Zjistí typ plánu servisu z důvěryhodného zdroje (predplatne zapisuje pouze
+ * server přes webhook / Admin SDK). Expirované předplatné = trial floor.
+ * Výchozí (chybějící doklad/plán) = trial — nejpřísnější, chrání náklady.
+ */
 async function resolvePlan(servisId) {
   const pred = await db.collection("predplatne").doc(servisId).get();
-  return (pred.exists && pred.get("plan_typ")) || "basic";
+  if (!pred.exists) return "trial";
+  const platnostDo = pred.get("platnost_do");
+  if (platnostDo && typeof platnostDo.toMillis === "function" &&
+      platnostDo.toMillis() < Date.now()) {
+    return "trial";
+  }
+  return pred.get("plan_typ") || "trial";
 }
 
 /**
@@ -199,4 +218,90 @@ exports.marketValueVin = onCall(
     (request) =>
       handleVincario(
           request, "vehicle-market-value", "value_cache", "value", VALUE_LIMITS),
+);
+
+// ─────────────────────────────────────────────────────────────────────────
+// REVENUECAT WEBHOOK — synchronizace plánu do Firestore (zdroj pravdy pro limity)
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Z entitlement_ids vybere nejvyšší plán dle priority (nebo null). */
+function planFromEntitlements(ids) {
+  if (!Array.isArray(ids)) return null;
+  for (const p of PLAN_PRIORITY) {
+    if (ids.includes(p)) return p;
+  }
+  return null;
+}
+
+/**
+ * RevenueCat posílá události o nákupu/obnově/expiraci. Endpoint zapíše
+ * důvěryhodný plán do predplatne/{servis_id} přes Admin SDK (obchází rules).
+ * Zabezpečení: hlavička Authorization musí odpovídat tajnému tokenu.
+ */
+exports.revenuecatWebhook = onRequest(
+    {region: REGION, secrets: [REVENUECAT_WEBHOOK_AUTH]},
+    async (req, res) => {
+      if (req.method !== "POST") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
+      if (req.get("Authorization") !== REVENUECAT_WEBHOOK_AUTH.value()) {
+        res.status(401).send("Unauthorized");
+        return;
+      }
+
+      const event = (req.body && req.body.event) || {};
+      const type = event.type;
+      const appUserId = event.app_user_id;
+      if (!appUserId) {
+        res.status(200).send("ignored: no app_user_id");
+        return;
+      }
+
+      // app_user_id = Firebase uid → najdeme servis_id (na který je vázáno predplatne).
+      let servisId = appUserId;
+      try {
+        const userDoc = await db.collection("uzivatele").doc(appUserId).get();
+        if (userDoc.exists && userDoc.get("servis_id")) {
+          servisId = userDoc.get("servis_id");
+        }
+      } catch (_) {
+        // fallback: appUserId
+      }
+
+      const predRef = db.collection("predplatne").doc(servisId);
+
+      // Expirace / ukončení přístupu → posuneme platnost do minulosti
+      // (resolvePlan pak spadne na trial floor; klient jde na paywall).
+      if (type === "EXPIRATION") {
+        await predRef.set({
+          platnost_do: Timestamp.fromMillis(
+              event.expiration_at_ms || Date.now()),
+          plan_zdroj: "revenuecat",
+          aktualizovano: FieldValue.serverTimestamp(),
+        }, {merge: true});
+        res.status(200).send("ok: expiration");
+        return;
+      }
+
+      // Aktivní událost (nákup, obnova, změna plánu, zrušení auto-obnovy…)
+      const plan = planFromEntitlements(event.entitlement_ids) ||
+          planFromEntitlements(
+              event.entitlement_id ? [event.entitlement_id] : []);
+      if (!plan) {
+        res.status(200).send("ignored: no known entitlement");
+        return;
+      }
+
+      await predRef.set({
+        servis_id: servisId,
+        plan_typ: plan,
+        platnost_do: event.expiration_at_ms ?
+            Timestamp.fromMillis(event.expiration_at_ms) : null,
+        plan_zdroj: "revenuecat",
+        aktualizovano: FieldValue.serverTimestamp(),
+      }, {merge: true});
+
+      res.status(200).send(`ok: ${plan}`);
+    },
 );

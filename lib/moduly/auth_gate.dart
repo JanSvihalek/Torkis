@@ -83,6 +83,22 @@ Future<_AuthData> _loadAuthData(String uid) async {
     }
   }
 
+  // 3. Ručně přidělený plán z Firestore (predplatne je zamčené pravidly —
+  //    zapíše jen vlastník v konzoli nebo RevenueCat webhook, tedy důvěryhodné).
+  //    Platí, když plán není trial a platnost_do je prázdná nebo v budoucnu.
+  if (!subscriptionActive && predDoc.exists) {
+    final data = predDoc.data() as Map<String, dynamic>;
+    final planTyp = data['plan_typ']?.toString();
+    final platnostDo = (data['platnost_do'] as Timestamp?)?.toDate();
+    final platnyPlan =
+        planTyp != null && planTyp.isNotEmpty && planTyp != 'trial';
+    final neexpirovano =
+        platnostDo == null || platnostDo.isAfter(DateTime.now());
+    if (platnyPlan && neexpirovano) {
+      subscriptionActive = true;
+    }
+  }
+
   return _AuthData(
     userDoc: userDoc,
     predDoc: predDoc,

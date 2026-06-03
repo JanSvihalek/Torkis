@@ -13,6 +13,12 @@ service cloud.firestore {
       return request.auth != null && !isAnonymous();
     }
 
+    // Vlastník aplikace (může ručně spravovat předplatné přes admin nástroj).
+    function isOwner() {
+      return request.auth != null
+          && request.auth.token.email == 'jan.svihalek00@gmail.com';
+    }
+
     // ── Přihlášení uživatelé (mechanici, majitelé) ────────────────────────
     // Čtení všeho; zápis všude KROMĚ server-only kolekcí.
     // {col} = název kořenové kolekce, {document=**} = zbytek cesty (vč. podkolekcí).
@@ -23,10 +29,25 @@ service cloud.firestore {
     //   • pouziti      — měsíční počítadlo VIN/value (zdroj pravdy pro limity)
     //   • vin_cache    — cache VIN dekódování
     //   • value_cache  — cache tržní hodnoty
+    //   • predplatne   — plán (zdroj pravdy pro limity) — viz pravidlo níže
     match /{col}/{document=**} {
       allow read: if signedIn();
       allow write: if signedIn()
-                   && !(col in ['pouziti', 'vin_cache', 'value_cache']);
+                   && !(col in ['pouziti', 'vin_cache', 'value_cache',
+                                'predplatne']);
+    }
+
+    // ── Předplatné ────────────────────────────────────────────────────────
+    // Plán určuje serverové limity drahých API, proto klient NESMÍ zapsat
+    // placený plán. Placené plány zapisuje jen RevenueCat webhook (Admin SDK
+    // obchází pravidla). Klient smí jen:
+    //   • založit/držet 'trial' (onboarding)
+    //   • vlastník aplikace ruční správa (admin nástroj)
+    match /predplatne/{servisId} {
+      allow read: if signedIn();
+      allow write: if isOwner()
+                   || (signedIn()
+                       && request.resource.data.plan_typ == 'trial');
     }
 
     // ── Zákaznický portál (anonymní přihlášení) ───────────────────────────
