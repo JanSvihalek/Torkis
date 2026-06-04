@@ -361,8 +361,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     if (_isLogin) ...[
                       const SizedBox(height: 12),
                       TorkisSecondaryButton(
-                        label: 'Přihlásit přes Face ID',
-                        leadingIcon: Icons.face_retouching_natural,
+                        label: 'Přihlásitse biometricky',
+                        leadingIcon: Icons.fingerprint_rounded,
                         dark: true,
                         onPressed:
                             _isLoading ? null : _loginWithBiometric,
@@ -373,12 +373,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     _buildDivider(),
                     const SizedBox(height: 20),
 
-                    TorkisSecondaryButton(
-                      label: 'Pokračovat přes Google',
-                      leadingIcon: Icons.g_mobiledata_rounded,
-                      dark: true,
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                    ),
+                    _buildGoogleButton(),
                     if (!kIsWeb && Platform.isIOS) ...[
                       const SizedBox(height: 12),
                       TorkisSecondaryButton(
@@ -448,6 +443,42 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         Expanded(child: Divider(color: line)),
       ],
+    );
+  }
+
+  // Google tlačítko — vzhledově shodné s TorkisSecondaryButton (dark varianta),
+  // ale s oficiálním logem z assetu místo ikony.
+  Widget _buildGoogleButton() {
+    return SizedBox(
+      height: 50,
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: _isLoading ? null : _signInWithGoogle,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white,
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.14)),
+          backgroundColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(TokRadius.lg),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/google_logo.png',
+              width: 18,
+              height: 18,
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'Pokračovat přes Google',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
