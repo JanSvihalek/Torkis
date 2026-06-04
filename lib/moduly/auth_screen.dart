@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -6,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/biometric_gate.dart';
 import '../core/design_tokens.dart';
+import '../core/social_auth_service.dart';
 import '../core/torkis_ui.dart';
 import 'auth_gate.dart';
 
@@ -155,6 +159,43 @@ class _AuthScreenState extends State<AuthScreen> {
       _showError('Neočekávaná chyba: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    if (_isLoading) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    final result = await SocialAuthService.signInWithGoogle();
+    _handleSocialResult(result);
+  }
+
+  Future<void> _signInWithApple() async {
+    if (_isLoading) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    final result = await SocialAuthService.signInWithApple();
+    _handleSocialResult(result);
+  }
+
+  void _handleSocialResult(SocialAuthResult result) {
+    if (!mounted) return;
+
+    if (result.user != null) {
+      // Profil (a případně onboarding) řeší AuthGate podle existence dokumentu.
+      BiometricGate.justLoggedIn = true;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthGate()),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = false);
+    if (result.errorMessage != null) {
+      _showError(result.errorMessage!);
     }
   }
 
@@ -327,6 +368,26 @@ class _AuthScreenState extends State<AuthScreen> {
                             _isLoading ? null : _loginWithBiometric,
                       ),
                     ],
+
+                    const SizedBox(height: 20),
+                    _buildDivider(),
+                    const SizedBox(height: 20),
+
+                    TorkisSecondaryButton(
+                      label: 'Pokračovat přes Google',
+                      leadingIcon: Icons.g_mobiledata_rounded,
+                      dark: true,
+                      onPressed: _isLoading ? null : _signInWithGoogle,
+                    ),
+                    if (!kIsWeb && Platform.isIOS) ...[
+                      const SizedBox(height: 12),
+                      TorkisSecondaryButton(
+                        label: 'Pokračovat přes Apple',
+                        leadingIcon: Icons.apple,
+                        dark: true,
+                        onPressed: _isLoading ? null : _signInWithApple,
+                      ),
+                    ],
                     const SizedBox(height: 40),
 
                     TextButton(
@@ -370,6 +431,23 @@ class _AuthScreenState extends State<AuthScreen> {
         ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDivider() {
+    final line = Colors.white.withValues(alpha: 0.12);
+    return Row(
+      children: [
+        Expanded(child: Divider(color: line)),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'nebo',
+            style: TextStyle(color: TokColors.steelSoft, fontSize: 12),
+          ),
+        ),
+        Expanded(child: Divider(color: line)),
+      ],
     );
   }
 

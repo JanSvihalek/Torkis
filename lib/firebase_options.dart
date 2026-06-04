@@ -59,20 +59,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAcp6tdHtDCNi6IUbJ4Unv1XMlr50bR9ic',
-    appId: '1:283147372379:ios:d1bbcabfc421d030e67c7e',
+    appId: '1:283147372379:ios:d9d9fd20731eed47e67c7e',
     messagingSenderId: '283147372379',
     projectId: 'visto-51cb7',
     storageBucket: 'visto-51cb7.firebasestorage.app',
-    iosBundleId: 'com.example.torkis',
+    iosBundleId: 'com.jansvihalek.torkis',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAcp6tdHtDCNi6IUbJ4Unv1XMlr50bR9ic',
-    appId: '1:283147372379:ios:d1bbcabfc421d030e67c7e',
+    appId: '1:283147372379:ios:d9d9fd20731eed47e67c7e',
     messagingSenderId: '283147372379',
     projectId: 'visto-51cb7',
     storageBucket: 'visto-51cb7.firebasestorage.app',
-    iosBundleId: 'com.example.torkis',
+    iosBundleId: 'com.jansvihalek.torkis',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

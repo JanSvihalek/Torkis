@@ -12,7 +12,12 @@
           "package_name": "com.example.fascheck"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "283147372379-9147u4iapbfc4nrndin57gatqvoqf524.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDR7MA7yYBIdlyxS_-lm9yTGjyd3tBY3VE"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "283147372379-9147u4iapbfc4nrndin57gatqvoqf524.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "283147372379-57gkra2gd0af20vrhtpp4l9qqpvcikcg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.torkis"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +48,20 @@
           "package_name": "com.example.torkis"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "283147372379-sijrcgvav3lri2aqfsnr7ehsra5ar60e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.torkis",
+            "certificate_hash": "8038a427d959c7b8d5dc34e69d6bb532028f14b4"
+          }
+        },
+        {
+          "client_id": "283147372379-9147u4iapbfc4nrndin57gatqvoqf524.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDR7MA7yYBIdlyxS_-lm9yTGjyd3tBY3VE"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "283147372379-9147u4iapbfc4nrndin57gatqvoqf524.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "283147372379-57gkra2gd0af20vrhtpp4l9qqpvcikcg.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.torkis"
+              }
+            }
+          ]
         }
       }
     }

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORKIS — Jak fungují předplatná</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
+<style>
+  :root { --ink:#0B1A2E; --blue:#2563EB; --line:#E5E7EB; --muted:#6B7280; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--ink); max-width: 960px; margin: 0 auto; padding: 32px 28px 64px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .diagram { border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 14px 0; background: #fff; }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin: 12px 0; }
+  .legend div { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .legend b { color: var(--blue); }
+  .note { background: #F0F6FF; border-left: 4px solid var(--blue); padding: 12px 16px; border-radius: 8px; margin: 14px 0; font-size: 14px; }
+  .key { background: #FFF7ED; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 8px; margin: 14px 0; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; }
+  th { background: #F8FAFC; }
+  code { background: #F3F4F6; padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 12px; }
+  @media print {
+    body { padding: 0 8px; }
+    h2 { page-break-after: avoid; }
+    .diagram { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>TORKIS — Jak fungují předplatná</h1>
+<p class="sub">Tok plateb a vynucení limitů: aplikace · Apple App Store · RevenueCat · Cloud Functions · Firestore</p>
+
+<h2>Aktéři</h2>
+<div class="legend">
+  <div><b>Aplikace (TORKIS)</b> — klient; zahajuje nákup, vykresluje paywall, volá API.</div>
+  <div><b>App Store (Apple)</b> — zpracuje platbu a obnovy/změny předplatného.</div>
+  <div><b>RevenueCat</b> — vrstva nad Apple; drží stav entitlementů a posílá webhooky.</div>
+  <div><b>Cloud Functions</b> — server: webhook (sync plánu) + volání Vincaria s tajným klíčem a limity.</div>
+  <div><b>Firestore</b> — DB; <code>predplatne</code> = zdroj pravdy o plánu, <code>pouziti</code> = počítadlo limitů.</div>
+  <div><b>Vincario</b> — externí placené API (VIN dekódování, tržní hodnota).</div>
+</div>
+
+<h2>1. Tok nákupu předplatného</h2>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+    actor U as Uživatel
+    participant A as Aplikace
+    participant AS as App Store (Apple)
+    participant RC as RevenueCat
+    participant CF as Cloud Function (webhook)
+    participant FS as Firestore
+
+    U->>A: Klikne „Koupit Basic"
+    A->>RC: purchasePackage(basic_monthly)
+    RC->>AS: Zahájí nákup
+    AS->>U: Potvrzení / platba (v sandboxu zdarma)
+    AS-->>RC: Transakce OK
+    RC-->>A: Entitlement „basic" je aktivní
+    A->>A: Pustí dovnitř jako plán Basic
+    Note over A,RC: Klient je aktivní okamžitě (čte stav z RevenueCatu)
+    RC->>CF: Webhook (INITIAL_PURCHASE, entitlement_ids=[basic])
+    CF->>FS: predplatne.plan_typ = basic
+    Note over CF,FS: Firestore = zdroj pravdy pro SERVEROVÉ limity
+</pre>
+</div>
+<div class="note">Klient pozná plán hned z RevenueCatu. Server (limity drahého API) čte plán z Firestore, kam ho zapíše webhook — proto je potřeba obojí.</div>
+
+<h2>2. Rozhodnutí o přístupu při startu</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    S([Spuštění aplikace]) --> RC{Aktivní entitlement<br/>v RevenueCatu?}
+    RC -- Ano --> OK[Přístup povolen<br/>plán dle RevenueCatu]
+    RC -- Ne --> TR{Běží 30denní<br/>trial?}
+    TR -- Ano --> OKT[Přístup povolen<br/>Trial]
+    TR -- Ne --> MAN{Ručně přidělený plán<br/>ve Firestore?<br/>ne-trial a platný}
+    MAN -- Ano --> OKM[Přístup povolen<br/>ručně přidělený plán]
+    MAN -- Ne --> PW[Paywall — výběr plánu]
+</pre>
+</div>
+<div class="note">Tři nezávislé zdroje přístupu: aktivní entitlement (RevenueCat), běžící trial, nebo ručně přidělený plán ve Firestore (viz část 4).</div>
+
+<h2>3. Vynucení limitů (VIN dekódování / tržní hodnota)</h2>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+    participant A as Aplikace
+    participant CF as Cloud Function (decodeVin)
+    participant FS as Firestore
+    participant V as Vincario
+
+    A->>CF: decodeVin(VIN)
+    CF->>FS: Plán (predplatne) + počítadlo (pouziti)
+    alt Limit vyčerpán
+        CF-->>A: Chyba „měsíční limit vyčerpán"
+    else VIN je v cache
+        CF->>FS: Najde VIN v cache
+        CF-->>A: Výsledek (nepočítá se do limitu)
+    else Nový dotaz
+        CF->>FS: Rezervuje slot v počítadle
+        CF->>V: Zavolá Vincario (TAJNÝ sdílený klíč)
+        V-->>CF: Data vozidla
+        CF->>FS: Uloží do cache + počítadlo
+        CF-->>A: Výsledek
+    end
+</pre>
+</div>
+<div class="key"><b>Proč přes server:</b> tajný Vincario klíč je jen v Cloud Function, nikdy ne v aplikaci. Limit i počítadlo jsou na serveru, takže je nelze obejít úpravou aplikace.</div>
+
+<h2>4. Ruční přidělení plánu (vlastník)</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    O([Vlastník]) --> C[Firebase Console<br/>Firestore]
+    C --> E[Uprav predplatne/servis_id<br/>plan_typ = pro<br/>platnost_do = budoucnost / prázdné]
+    E --> A[Aplikace při startu<br/>vidí platný plán]
+    A --> P[Plný přístup + limity plánu]
+</pre>
+</div>
+<div class="note">Konzole obchází bezpečnostní pravidla, takže vlastník může plán nastavit ručně. Zákazník to sám nemůže — zápis do <code>predplatne</code> je v pravidlech zamčený jen pro server a vlastníka.</div>
+
+<h2>5. Životní cyklus předplatného (upgrade / downgrade / vypršení)</h2>
+<p class="sub">Změny plánu řídí Apple. Server na ně reaguje webhookem a aktualizuje <code>predplatne</code>.</p>
+<div class="diagram">
+<pre class="mermaid">
+sequenceDiagram
+    participant AS as App Store (Apple)
+    participant RC as RevenueCat
+    participant CF as Cloud Function (webhook)
+    participant FS as Firestore
+
+    Note over AS,FS: UPGRADE (Basic → Standard) — OKAMŽITĚ
+    AS-->>RC: PRODUCT_CHANGE, standard hned aktivní (doúčtuje rozdíl)
+    RC->>CF: webhook entitlement_ids=[standard]
+    CF->>FS: plan_typ = standard
+
+    Note over AS,FS: DOWNGRADE (Standard → Basic) — AŽ NA KONCI OBDOBÍ
+    AS-->>RC: Změna naplánována, entitlement zůstává standard
+    RC->>CF: PRODUCT_CHANGE entitlement_ids=[standard]
+    CF->>FS: plan_typ = standard (beze změny)
+    Note over AS,RC: …dožije do konce zaplaceného období…
+    AS-->>RC: RENEWAL už na basic
+    RC->>CF: webhook entitlement_ids=[basic]
+    CF->>FS: plan_typ = basic
+
+    Note over AS,FS: VYPRŠENÍ / ZRUŠENÍ
+    AS-->>RC: Předplatné skončilo
+    RC->>CF: EXPIRATION
+    CF->>FS: platnost_do = minulost → při startu Paywall
+</pre>
+</div>
+<table>
+  <tr><th>Akce</th><th>Kdy se projeví</th><th>Co udělá server</th></tr>
+  <tr><td><b>Upgrade</b> (nahoru)</td><td>Okamžitě (Apple doúčtuje rozdíl)</td><td>Zapíše vyšší plán hned</td></tr>
+  <tr><td><b>Downgrade</b> (dolů)</td><td>Až při příští obnově</td><td>Do té doby drží původní plán, pak přepíše na nižší</td></tr>
+  <tr><td><b>Zrušení</b></td><td>Dožije do konce období</td><td>Po vypršení posune platnost do minulosti → Paywall</td></tr>
+</table>
+<div class="key"><b>Pozn. k počítadlu:</b> limity se počítají dle kalendářního měsíce, ale předplatné se obnovuje dle data nákupu. Když downgrade padne doprostřed kalendářního měsíce po vyšší spotřebě, může uživatel na nižší limit krátce „narazit" do konce měsíce; pak se počítadlo vynuluje.</div>
+
+<h2>Shrnutí — kdo je „zdroj pravdy"</h2>
+<div class="legend">
+  <div><b>Stav platby</b> — Apple → RevenueCat. Appka se ptá RevenueCatu „má tenhle uživatel aktivní plán?".</div>
+  <div><b>Plán pro limity</b> — Firestore <code>predplatne.plan_typ</code>, zapisuje webhook nebo vlastník v konzoli.</div>
+  <div><b>Počítání limitů</b> — Firestore <code>pouziti</code>, zapisuje výhradně server (Cloud Function).</div>
+  <div><b>Tajný API klíč</b> — pouze Cloud Functions (Secret Manager), nikdy v aplikaci.</div>
+</div>
+
+<footer>TORKIS · interní dokumentace · vygenerováno pro tisk do PDF (Tisk → Uložit jako PDF)</footer>
+
+</body>
+</html>
