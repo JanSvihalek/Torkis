@@ -271,20 +271,20 @@ class _AuthScreenState extends State<AuthScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     const Center(
                       child: TorkisMark(
-                        size: 76,
+                        size: 60,
                         color: TokColors.paper,
                         inner: TokColors.ink,
                       ),
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 16),
                     const Text(
                       'TORKIS',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 36,
+                        fontSize: 30,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.4,
                         color: TokColors.paper,
@@ -293,7 +293,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 8),
                     Text(
                       _isLogin
-                          ? 'Digitální příjem vozidel'
+                          ? 'Digitální evidence vozidel'
                           : 'Zaregistrujte svůj servis',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
@@ -302,7 +302,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 28),
 
                     _buildDarkField(
                       controller: _emailController,
@@ -348,8 +348,8 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       )
                     else
-                      const SizedBox(height: 18),
-                    const SizedBox(height: 18),
+                      const SizedBox(height: 12),
+                    const SizedBox(height: 10),
 
                     TorkisPrimaryButton(
                       label: _isLogin ? 'Přihlásit se' : 'Vytvořit účet',
@@ -361,7 +361,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     if (_isLogin) ...[
                       const SizedBox(height: 12),
                       TorkisSecondaryButton(
-                        label: 'Přihlásitse biometricky',
+                        label: 'Přihlásit se biometricky',
                         leadingIcon: Icons.fingerprint_rounded,
                         dark: true,
                         onPressed:
@@ -369,9 +369,9 @@ class _AuthScreenState extends State<AuthScreen> {
                       ),
                     ],
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                     _buildDivider(),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
 
                     _buildGoogleButton(),
                     if (!kIsWeb && Platform.isIOS) ...[
@@ -383,7 +383,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         onPressed: _isLoading ? null : _signInWithApple,
                       ),
                     ],
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
 
                     TextButton(
                       onPressed: () {
@@ -466,12 +466,19 @@ class _AuthScreenState extends State<AuthScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              'assets/images/google_logo.png',
-              width: 18,
-              height: 18,
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Image.asset(
+                'assets/images/google_logo.png',
+                width: 18,
+                height: 18,
+              ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             const Text(
               'Pokračovat přes Google',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
