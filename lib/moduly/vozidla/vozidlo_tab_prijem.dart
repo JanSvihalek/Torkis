@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../historie_prijmu/prijem_detail.dart';
 import '../../core/shared_widgets.dart';
 import '../../core/design_tokens.dart';
+import '../auth_gate.dart';
 
 class VozidloPrijemTab extends StatelessWidget {
   final bool isDark;
@@ -22,7 +23,7 @@ class VozidloPrijemTab extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('zakazky')
-          .where('servis_id', isEqualTo: user.uid)
+          .where('servis_id', isEqualTo: globalServisId ?? user.uid)
           .where('spz', isEqualTo: spz)
           .snapshots(),
       builder: (context, snap) {

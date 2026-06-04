@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'vozidlo_detail.dart';
 import '../../core/design_tokens.dart';
+import '../auth_gate.dart';
 
 class VozidlaPage extends StatefulWidget {
   const VozidlaPage({super.key});
@@ -169,7 +170,7 @@ class _VozidlaPageState extends State<VozidlaPage> {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('vozidla')
-                .where('servis_id', isEqualTo: user.uid)
+                .where('servis_id', isEqualTo: globalServisId)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {

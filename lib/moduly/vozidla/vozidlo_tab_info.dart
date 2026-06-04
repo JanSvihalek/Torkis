@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../zakaznici/zakaznik_detail.dart';
 import '../prijem/prijem_vozidla_tablet_layout.dart' show kTabletBreakpoint;
 import '../../core/design_tokens.dart';
+import '../auth_gate.dart';
 
 class VozidloInfoTab extends StatelessWidget {
   final bool isDark;
@@ -108,7 +109,7 @@ class VozidloInfoTab extends StatelessWidget {
       try {
         final snap = await FirebaseFirestore.instance
             .collection('zakazky')
-            .where('servis_id', isEqualTo: user.uid)
+            .where('servis_id', isEqualTo: globalServisId ?? user.uid)
             .where('spz', isEqualTo: spz)
             .get();
         count = snap.docs.length;
@@ -509,7 +510,7 @@ class VozidloInfoTab extends StatelessWidget {
     return FutureBuilder<QuerySnapshot>(
       future: FirebaseFirestore.instance
           .collection('zakaznici')
-          .where('servis_id', isEqualTo: user.uid)
+          .where('servis_id', isEqualTo: globalServisId ?? user.uid)
           .where('id_zakaznika', isEqualTo: zakaznikId)
           .limit(1)
           .get(),

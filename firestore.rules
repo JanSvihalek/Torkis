@@ -2,7 +2,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Pomocná funkce: anonymní přihlášení (zákaznický portál)
+    // ── Pomocné funkce ────────────────────────────────────────────────────
+
+    // Anonymní přihlášení (zákaznický portál)
     function isAnonymous() {
       return request.auth != null
           && request.auth.token.firebase.sign_in_provider == 'anonymous';
@@ -19,54 +21,138 @@ service cloud.firestore {
           && request.auth.token.email == 'jan.svihalek00@gmail.com';
     }
 
-    // ── Přihlášení uživatelé (mechanici, majitelé) ────────────────────────
-    // Čtení všeho; zápis všude KROMĚ server-only kolekcí.
-    // {col} = název kořenové kolekce, {document=**} = zbytek cesty (vč. podkolekcí).
-    //
-    // Server-only kolekce (zápis pouze přes Cloud Functions — Admin SDK obchází
-    // pravidla): vynucení limitů by šlo obejít, kdyby si klient mohl sám
-    // přepsat počítadlo nebo nasypat do cache. Proto:
-    //   • pouziti      — měsíční počítadlo VIN/value (zdroj pravdy pro limity)
-    //   • vin_cache    — cache VIN dekódování
-    //   • value_cache  — cache tržní hodnoty
-    //   • predplatne   — plán (zdroj pravdy pro limity) — viz pravidlo níže
-    match /{col}/{document=**} {
-      allow read: if signedIn();
-      allow write: if signedIn()
-                   && !(col in ['pouziti', 'vin_cache', 'value_cache',
-                                'predplatne']);
+    // servis_id přihlášeného uživatele (čteno z jeho profilu).
+    // get() v pravidlech obchází zabezpečení, takže nehrozí rekurze.
+    function myServisId() {
+      return get(/databases/$(database)/documents/uzivatele/$(request.auth.uid)).data.servis_id;
     }
 
-    // ── Předplatné ────────────────────────────────────────────────────────
+    // Patří daný servis_id přihlášenému uživateli?
+    // První větev (sid == uid) pokrývá BOOTSTRAP onboardingu — nový majitel
+    // zakládá svůj servis pod vlastním uid dřív, než vznikne dokument uzivatele
+    // (proto se na něj nedá spoléhat přes get()). Druhá větev pokrývá členy
+    // servisu (zaměstnance), jejichž servis_id ukazuje na uid majitele.
+    function ownsServis(sid) {
+      return signedIn() && (
+        sid == request.auth.uid
+        || (exists(/databases/$(database)/documents/uzivatele/$(request.auth.uid))
+            && myServisId() == sid)
+      );
+    }
+
+    // Smí přihlášený uživatel spravovat zaměstnance daného servisu?
+    // Jen člen servisu s právem 'zamestnanci' (zakladatel/admin ho má).
+    function canManageStaff(sid) {
+      return signedIn()
+          && exists(/databases/$(database)/documents/uzivatele/$(request.auth.uid))
+          && myServisId() == sid
+          && get(/databases/$(database)/documents/uzivatele/$(request.auth.uid))
+               .data.get('prava', {}).get('zamestnanci', false) == true;
+    }
+
+    // ── Tenantní data (dokumenty s polem servis_id) ───────────────────────
+    // Čtení i zápis jen pro členy příslušného servisu. Dotazy (list) musí být
+    // na klientu filtrované přes .where('servis_id', isEqualTo: ...), jinak je
+    // Firestore odmítne.
+    match /{col}/{docId} {
+      allow read: if col in ['vozidla', 'zakaznici', 'ukony', 'faktury',
+                             'vin_skeny', 'value_skeny']
+                  && ownsServis(resource.data.servis_id);
+      allow create: if col in ['vozidla', 'zakaznici', 'ukony', 'faktury',
+                              'vin_skeny', 'value_skeny']
+                    && ownsServis(request.resource.data.servis_id);
+      allow update, delete: if col in ['vozidla', 'zakaznici', 'ukony', 'faktury',
+                                      'vin_skeny', 'value_skeny']
+                            && ownsServis(resource.data.servis_id);
+    }
+
+    // ── Nastavení servisu (ID dokumentu == servis_id) ─────────────────────
+    match /nastaveni_servisu/{sid} {
+      allow read, write: if ownsServis(sid);
+    }
+
+    // ── Uživatelé (ID dokumentu == uid uživatele, pole servis_id) ─────────
+    match /uzivatele/{uid} {
+      // Svůj vlastní profil, nebo kolega ze stejného servisu.
+      allow get: if signedIn()
+                 && (request.auth.uid == uid || ownsServis(resource.data.servis_id));
+      // Výpis zaměstnanců — klient filtruje where('servis_id' == můj servis).
+      allow list: if signedIn() && ownsServis(resource.data.servis_id);
+      // Založení: buď self-bootstrap (onboarding majitele, servis_id == vlastní
+      // uid), nebo správce zaměstnanců přidává člena do svého servisu.
+      allow create: if signedIn() && (
+                      (request.auth.uid == uid
+                       && request.resource.data.servis_id == uid)
+                      || canManageStaff(request.resource.data.servis_id)
+                    );
+      // Vlastní profil smí uživatel měnit, ale NESMÍ si přepsat servis_id, roli
+      // ani práva (jinak by si povýšil oprávnění / přeskočil do cizího servisu).
+      // Cizí profily ve svém servisu mění jen správce zaměstnanců.
+      allow update: if signedIn() && (
+                      (request.auth.uid == uid
+                       && request.resource.data.servis_id == resource.data.servis_id
+                       && request.resource.data.role == resource.data.role
+                       && request.resource.data.prava == resource.data.prava)
+                      || (request.auth.uid != uid
+                          && canManageStaff(resource.data.servis_id))
+                    );
+      allow delete: if request.auth.uid != uid
+                    && canManageStaff(resource.data.servis_id);
+    }
+
+    // ── Předplatné (ID dokumentu == servis_id) ────────────────────────────
     // Plán určuje serverové limity drahých API, proto klient NESMÍ zapsat
     // placený plán. Placené plány zapisuje jen RevenueCat webhook (Admin SDK
-    // obchází pravidla). Klient smí jen:
-    //   • založit/držet 'trial' (onboarding)
-    //   • vlastník aplikace ruční správa (admin nástroj)
-    match /predplatne/{servisId} {
-      allow read: if signedIn();
+    // obchází pravidla). Klient smí jen založit/držet 'trial' (onboarding);
+    // vlastník aplikace má plnou správu přes admin nástroj.
+    match /predplatne/{sid} {
+      allow read: if ownsServis(sid) || isOwner();
       allow write: if isOwner()
                    || (signedIn()
-                       && request.resource.data.plan_typ == 'trial');
+                       && request.resource.data.plan_typ == 'trial'
+                       && sid == request.auth.uid);
     }
 
-    // ── Zákaznický portál (anonymní přihlášení) ───────────────────────────
-    // Anonymní uživatel smí číst POUZE:
-    //   • zakázku, která má vyplněný portal_token (tj. byla přijata po aktualizaci)
-    //   • zprávy zákazníka patřící k dané zakázce
-    // Žádná jiná kolekce (zákazníci, sklad, faktury, nastavení…) není přístupná.
+    // ── Loga značek — sdílená referenční data ─────────────────────────────
+    match /znacka/{doc=**} {
+      allow read: if signedIn();
+      allow write: if isOwner();
+    }
 
+    // ── Fronta e-mailů (Trigger Email extension) ──────────────────────────
+    // Klient pouze zakládá odchozí e-mail; číst/měnit smí jen Admin SDK.
+    match /maily/{doc} {
+      allow create: if signedIn();
+    }
+
+    // ── Chybové logy ──────────────────────────────────────────────────────
+    // Klient pouze zapisuje, čte jen vlastník aplikace.
+    match /chybove_logy/{doc} {
+      allow create: if signedIn();
+      allow read: if isOwner();
+    }
+
+    // ── Zakázky (tenantní + zákaznický portál) ────────────────────────────
     match /zakazky/{docId} {
-      allow read: if isAnonymous()
-                  && resource.data.portal_token != null;
+      // Členové servisu: plný přístup ke svým zakázkám.
+      allow read: if ownsServis(resource.data.servis_id)
+                  // Anonymní portál: jen zakázka s portal_tokenem.
+                  || (isAnonymous() && resource.data.portal_token != null);
+      allow create: if ownsServis(request.resource.data.servis_id);
+      allow update, delete: if ownsServis(resource.data.servis_id);
 
       match /zakaznik_zpravy/{msgId} {
+        // Členové servisu (ověřeno přes servis_id nadřazené zakázky).
+        allow read, write: if ownsServis(
+            get(/databases/$(database)/documents/zakazky/$(docId)).data.servis_id);
+
+        // Anonymní zákazník přes portál:
         allow read: if isAnonymous();
-        // Zákazník smí přidávat pouze vlastní zprávy (from_zakaznik musí být true)
+        // Smí přidávat pouze vlastní zprávy (from_zakaznik musí být true)
         allow create: if isAnonymous()
                       && request.resource.data.from_zakaznik == true
                       && request.resource.data.keys().hasAll(['text', 'cas', 'autor', 'from_zakaznik']);
-        // Zákazník smí pouze schválit nebo zamítnout nacenění
+        // Smí pouze schválit nebo zamítnout nacenění
         allow update: if isAnonymous()
                       && resource.data.typ == 'naceneni'
                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stav_schvaleni'])
@@ -74,5 +160,7 @@ service cloud.firestore {
       }
     }
 
+    // Vše ostatní (vč. server-only pouziti / vin_cache / value_cache, kam smí
+    // jen Cloud Functions přes Admin SDK) je ve výchozím stavu zamítnuto.
   }
 }

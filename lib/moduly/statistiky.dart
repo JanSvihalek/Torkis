@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'auth_gate.dart';
 
 class StatisticsPage extends StatelessWidget {
   const StatisticsPage({super.key});
@@ -36,7 +37,7 @@ class StatisticsPage extends StatelessWidget {
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('zakazky')
-                .where('servis_id', isEqualTo: user.uid)
+                .where('servis_id', isEqualTo: globalServisId)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
