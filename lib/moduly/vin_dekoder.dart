@@ -110,12 +110,16 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   bool _loadingTrzni = false;
   String? _trzniError;
 
+  StkResult? _stkResult;
+  bool _loadingStk = false;
+  String? _stkError;
+
   String _mena = 'EUR';
   double? _kurz;
   bool _nacitaKurz = false;
 
-  // Mód: false = VIN dekódování, true = tržní hodnota
-  bool _rezimValue = false;
+  // Mód: 0 = VIN dekódování, 1 = tržní hodnota, 2 = zjištění STK
+  int _rezimValue = 0;
 
   // Streamy uložené jako pole — nevytváří se znovu při každém setState
   Stream<QuerySnapshot>? _historieStream;
@@ -585,8 +589,37 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         _trzniHodnota = null;
         _trzniError = null;
         _loadingTrzni = false;
+        _stkResult = null;
+        _stkError = null;
+        _loadingStk = false;
         _vinCtrl.clear();
       });
+
+  Future<void> _nacistStk() async {
+    final vin =
+        _vinCtrl.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
+    if (vin.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Zadejte VIN kód.'), backgroundColor: Colors.orange));
+      return;
+    }
+    setState(() {
+      _loadingStk = true;
+      _stkError = null;
+      _stkResult = null;
+      _dekovanyVin = vin;
+    });
+    try {
+      final res = await VincarioService.stk(vin: vin);
+      if (mounted) {
+        setState(() => _stkResult = res.result);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _stkError = e.toString());
+    } finally {
+      if (mounted) setState(() => _loadingStk = false);
+    }
+  }
 
   Future<void> _scanVinAkce() async {
     if (kIsWeb) {
@@ -602,7 +635,13 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
     if (result != null && result.isNotEmpty && mounted) {
       setState(() => _vinCtrl.text = result.toUpperCase());
-      _rezimValue ? _nacistTrzniHodnotu() : _dekodovat();
+      if (_rezimValue == 1) {
+        _nacistTrzniHodnotu();
+      } else if (_rezimValue == 2) {
+        _nacistStk();
+      } else {
+        _dekodovat();
+      }
     }
   }
 
@@ -644,30 +683,43 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildMainColumn(BuildContext context, {required bool wide}) {
     final tok = context.tok;
-    final jeVysledek = _rezimValue
+    final jeVysledek = _rezimValue == 1
         ? (_trzniHodnota != null && !_loadingTrzni)
-        : (_result != null && !_loading);
-    final jeNacitani = _rezimValue ? _loadingTrzni : _loading;
-    final jeChyba = _rezimValue
+        : _rezimValue == 2
+            ? (_stkResult != null && !_loadingStk)
+            : (_result != null && !_loading);
+    final jeNacitani = _rezimValue == 1
+        ? _loadingTrzni
+        : _rezimValue == 2
+            ? _loadingStk
+            : _loading;
+    final jeChyba = _rezimValue == 1
         ? (_trzniError != null && !_loadingTrzni)
-        : (_error != null && !_loading);
+        : _rezimValue == 2
+            ? (_stkError != null && !_loadingStk)
+            : (_error != null && !_loading);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!jeVysledek && !jeNacitani) ...[
           // Přepínač módu
-          SegmentedButton<bool>(
+          SegmentedButton<int>(
             segments: const [
               ButtonSegment(
-                value: false,
+                value: 0,
                 icon: Icon(Icons.manage_search_rounded, size: 16),
                 label: Text('Dekódování VIN'),
               ),
               ButtonSegment(
-                value: true,
+                value: 1,
                 icon: Icon(Icons.bar_chart_rounded, size: 16),
                 label: Text('Tržní hodnota'),
+              ),
+              ButtonSegment(
+                value: 2,
+                icon: Icon(Icons.fact_check_outlined, size: 16),
+                label: Text('Zjištění STK'),
               ),
             ],
             selected: {_rezimValue},
@@ -677,13 +729,19 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               _error = null;
               _trzniHodnota = null;
               _trzniError = null;
+              _stkResult = null;
+              _stkError = null;
               _dekovanyVin = null;
               _logoUrl = null;
             }),
           ),
           const SizedBox(height: TokSpace.lg),
           Text(
-            _rezimValue ? 'Tržní hodnota' : 'Dekodér VIN',
+            _rezimValue == 1
+                ? 'Tržní hodnota'
+                : _rezimValue == 2
+                    ? 'Zjištění STK'
+                    : 'Dekodér VIN',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -694,21 +752,23 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _rezimValue
+            _rezimValue == 1
                 ? 'Odhad tržní ceny vozidla z dat evropského trhu'
-                : 'Rychlé vyhledání specifikace vozu z VIN kódu',
+                : _rezimValue == 2
+                    ? 'Přehled technických prohlídek vozidla z registru'
+                    : 'Rychlé vyhledání specifikace vozu z VIN kódu',
             style: TextStyle(fontSize: 13, color: tok.textSecondary),
           ),
           const SizedBox(height: TokSpace.lg),
           _buildScanTile(tok),
           const SizedBox(height: TokSpace.md),
           _buildManualInput(tok),
-          if (_rezimValue && _valueNeniVPlanu) ...[
+          if (_rezimValue == 1 && _valueNeniVPlanu) ...[
             const SizedBox(height: TokSpace.md),
             _buildValueUpsell(tok),
-          ] else if (_rezimValue
+          ] else if (_rezimValue == 1
               ? (!_loadingPocetValue && _valueLimit != null)
-              : (!_loadingPocet && _limit != null)) ...[
+              : (_rezimValue == 0 && !_loadingPocet && _limit != null)) ...[
             const SizedBox(height: TokSpace.md),
             _buildUsageIndicator(tok),
           ],
@@ -718,7 +778,11 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           ],
           if (jeChyba) ...[
             const SizedBox(height: TokSpace.md),
-            _buildErrorCard(tok, _rezimValue ? _trzniError! : _error!),
+            _buildErrorCard(tok, _rezimValue == 1
+                ? _trzniError!
+                : _rezimValue == 2
+                    ? _stkError!
+                    : _error!),
           ],
         ],
         if (jeNacitani)
@@ -727,9 +791,11 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             child: Center(child: CircularProgressIndicator()),
           ),
         if (jeVysledek)
-          _rezimValue
+          _rezimValue == 1
               ? _buildValueResult(context, tok, _trzniHodnota!)
-              : _buildVehicleResult(context, tok, _result!, wide: wide),
+              : _rezimValue == 2
+                  ? _buildStkResult(context, tok, _stkResult!)
+                  : _buildVehicleResult(context, tok, _result!, wide: wide),
       ],
     );
   }
@@ -762,16 +828,22 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _rezimValue ? 'Skenovat VIN pro tržní hodnotu' : 'Skenovat VIN kód',
+                  _rezimValue == 1
+                      ? 'Skenovat VIN pro tržní hodnotu'
+                      : _rezimValue == 2
+                          ? 'Skenovat VIN pro STK'
+                          : 'Skenovat VIN kód',
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(
-                  _rezimValue
+                  _rezimValue == 1
                       ? 'Zjistí odhad tržní ceny vozu podle naskenovaného nebo zadaného VIN z dat evropského trhu'
-                      : 'Automaticky načte specifikace vozu podle naskenovaného nebo zadaného VIN',
+                      : _rezimValue == 2
+                          ? 'Načte data o technických prohlídkách vozidla z registru'
+                          : 'Automaticky načte specifikace vozu podle naskenovaného nebo zadaného VIN',
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.50),
                       fontSize: 12),
@@ -811,12 +883,16 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       cursorColor: TokColors.accent,
       onSubmitted: (_) {
         if (!_maKlice) return;
-        _rezimValue ? _nacistTrzniHodnotu() : _dekodovat();
+        if (_rezimValue == 1) {
+          _nacistTrzniHodnotu();
+        } else if (_rezimValue == 2) {
+          _nacistStk();
+        } else {
+          _dekodovat();
+        }
       },
       decoration: InputDecoration(
-        hintText: _rezimValue
-            ? 'Zadat VIN ručně (např. TMBJJ7NE5K…)'
-            : 'Zadat VIN ručně (např. TMBJJ7NE5K…)',
+        hintText: 'Zadat VIN ručně (např. TMBJJ7NE5K…)',
         hintStyle: TextStyle(
             fontSize: 13,
             color: tok.textSecondary,
@@ -827,9 +903,16 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             ? IconButton(
                 icon: const Icon(Icons.search_rounded,
                     color: TokColors.accent, size: 20),
-                onPressed:
-                    _rezimValue ? _nacistTrzniHodnotu : _dekodovat,
-                tooltip: _rezimValue ? 'Zjistit hodnotu' : 'Dekódovat',
+                onPressed: _rezimValue == 1
+                    ? _nacistTrzniHodnotu
+                    : _rezimValue == 2
+                        ? _nacistStk
+                        : _dekodovat,
+                tooltip: _rezimValue == 1
+                    ? 'Zjistit hodnotu'
+                    : _rezimValue == 2
+                        ? 'Zjistit STK'
+                        : 'Dekódovat',
               )
             : null,
         filled: true,
@@ -895,8 +978,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   }
 
   Widget _buildUsageIndicator(TorkisTokens tok) {
-    final limit = _rezimValue ? _valueLimit! : _limit!;
-    final pocet = _rezimValue ? _pocetValueTentoMesic : _pocetTentoMesic;
+    final limit = _rezimValue == 1 ? _valueLimit! : _limit!;
+    final pocet = _rezimValue == 1 ? _pocetValueTentoMesic : _pocetTentoMesic;
     final pct = (pocet / limit).clamp(0.0, 1.0);
     final Color barColor;
     if (pct >= 1.0) {
@@ -924,7 +1007,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                    _rezimValue
+                    _rezimValue == 1
                         ? 'Tržní hodnota tento měsíc'
                         : 'Dekódování VIN tento měsíc',
                     style: TextStyle(
@@ -952,7 +1035,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               valueColor: AlwaysStoppedAnimation(barColor),
             ),
           ),
-          if (_rezimValue ? _valueLimitDosazen : _limitDosazen) ...[
+          if (_rezimValue == 1 ? _valueLimitDosazen : _limitDosazen) ...[
             const SizedBox(height: 6),
             const Text(
               'Měsíční limit vyčerpán. Upgradujte plán pro pokračování.',
@@ -1313,6 +1396,346 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
+  // ── STK result ───────────────────────────────────────────────────────────────
+
+  Widget _buildStkResult(
+      BuildContext context, TorkisTokens tok, StkResult data) {
+    final platnost = data.platnostDo;
+    final datum = data.datumPosledni;
+    final vysledek = data.vysledekPosledni;
+    final najezd = data.najezdPosledni;
+    final zavady = data.zavadyPosledni;
+    final kontroly = data.kontroly;
+
+    DateTime? platnostDate;
+    if (platnost.isNotEmpty) {
+      try {
+        platnostDate = DateTime.parse(platnost);
+      } catch (_) {}
+    }
+
+    final platna = platnostDate != null && platnostDate.isAfter(DateTime.now());
+    final dniZbyvaji = platnostDate?.difference(DateTime.now()).inDays;
+    final statusColor = platna ? Colors.green : Colors.red;
+    final statusText = platna ? 'STK platná' : 'STK neplatná';
+
+    String fmtDatum(String s) {
+      try {
+        final dt = DateTime.parse(s);
+        return '${dt.day}.${dt.month}.${dt.year}';
+      } catch (_) {
+        return s;
+      }
+    }
+
+    Color vysledekColor(String v) {
+      final l = v.toLowerCase();
+      if (l.contains('způsob') || l.contains('pass') || l.contains('ok')) {
+        return Colors.green;
+      }
+      if (l.contains('nezpůsob') || l.contains('fail') || l.contains('nevyhovel')) {
+        return Colors.red;
+      }
+      return tok.textPrimary;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header karta
+        Stack(
+          children: [
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: tok.surface,
+                borderRadius: BorderRadius.circular(TokRadius.xl),
+                border: Border.all(color: tok.line),
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                  TokSpace.lg, TokSpace.lg, 52, TokSpace.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(TokRadius.md),
+                          border: Border.all(
+                              color: statusColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Icon(
+                          platna
+                              ? Icons.verified_rounded
+                              : Icons.warning_rounded,
+                          color: statusColor,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: TokSpace.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              statusText,
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: statusColor,
+                                height: 1.1,
+                              ),
+                            ),
+                            if (dniZbyvaji != null)
+                              Text(
+                                platna
+                                    ? 'Platí ještě $dniZbyvaji dní'
+                                    : 'Prošlá o ${(-dniZbyvaji)} dní',
+                                style: TextStyle(
+                                    fontSize: 13, color: tok.textSecondary),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_dekovanyVin != null) ...[
+                    const SizedBox(height: TokSpace.md),
+                    Text(
+                      _dekovanyVin!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: tok.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Positioned(
+              top: TokSpace.sm,
+              right: TokSpace.sm,
+              child: FilledButton.icon(
+                onPressed: _reset,
+                icon: const Icon(Icons.qr_code_scanner_rounded, size: 15),
+                label: const Text('Nový sken'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: TokColors.accent,
+                  foregroundColor: Colors.white,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  textStyle: const TextStyle(
+                      fontSize: 12, fontWeight: FontWeight.w600),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(TokRadius.md)),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        // Detaily poslední STK
+        if (datum.isNotEmpty ||
+            platnost.isNotEmpty ||
+            vysledek.isNotEmpty ||
+            najezd != null) ...[
+          const SizedBox(height: TokSpace.md),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: tok.surface,
+              borderRadius: BorderRadius.circular(TokRadius.xl),
+              border: Border.all(color: tok.line),
+            ),
+            padding: const EdgeInsets.all(TokSpace.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.fact_check_outlined,
+                      size: 13, color: tok.textSecondary),
+                  const SizedBox(width: 6),
+                  Text('POSLEDNÍ TECHNICKÁ PROHLÍDKA',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: tok.textSecondary,
+                        letterSpacing: 0.8,
+                      )),
+                ]),
+                const SizedBox(height: TokSpace.sm),
+                if (datum.isNotEmpty)
+                  _buildTrzniRadek(tok, 'Datum STK', fmtDatum(datum)),
+                if (platnost.isNotEmpty)
+                  _buildTrzniRadek(tok, 'Platná do', fmtDatum(platnost)),
+                if (vysledek.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      children: [
+                        Text('Výsledek',
+                            style: TextStyle(
+                                fontSize: 13, color: tok.textSecondary)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(vysledek,
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: vysledekColor(vysledek),
+                              )),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (najezd != null)
+                  _buildTrzniRadek(tok, 'Stav tachometru',
+                      '${_formatCislo(najezd.toString())} km'),
+              ],
+            ),
+          ),
+        ],
+
+        // Závady
+        if (zavady.isNotEmpty) ...[
+          const SizedBox(height: TokSpace.md),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(TokRadius.xl),
+              border:
+                  Border.all(color: Colors.orange.withValues(alpha: 0.30)),
+            ),
+            padding: const EdgeInsets.all(TokSpace.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      size: 13, color: Colors.orange),
+                  const SizedBox(width: 6),
+                  Text('ZJIŠTĚNÉ ZÁVADY',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: tok.textSecondary,
+                        letterSpacing: 0.8,
+                      )),
+                ]),
+                const SizedBox(height: TokSpace.sm),
+                ...zavady.map((z) {
+                  final popis = z['description']?.toString() ??
+                      z['popis']?.toString() ??
+                      z['text']?.toString() ?? '';
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.only(top: 5),
+                          child: Icon(Icons.circle,
+                              size: 5, color: Colors.orange),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(popis.isNotEmpty ? popis : z.toString(),
+                              style: TextStyle(
+                                  fontSize: 13, color: tok.textPrimary)),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+
+        // Historie prohlídek
+        if (kontroly.length > 1) ...[
+          const SizedBox(height: TokSpace.md),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: tok.surface,
+              borderRadius: BorderRadius.circular(TokRadius.xl),
+              border: Border.all(color: tok.line),
+            ),
+            padding: const EdgeInsets.all(TokSpace.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.history_rounded,
+                      size: 13, color: tok.textSecondary),
+                  const SizedBox(width: 6),
+                  Text('HISTORIE TECHNICKÝCH PROHLÍDEK',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: tok.textSecondary,
+                        letterSpacing: 0.8,
+                      )),
+                ]),
+                const SizedBox(height: TokSpace.sm),
+                ...kontroly.skip(1).map((k) {
+                  final d = k['inspectionDate']?.toString() ??
+                      k['date']?.toString() ??
+                      k['datum']?.toString() ?? '';
+                  final v = k['inspectionResult']?.toString() ??
+                      k['result']?.toString() ??
+                      k['vysledek']?.toString() ?? '';
+                  final n = k['mileage'] ?? k['najezd'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5),
+                    child: Row(
+                      children: [
+                        Text(d.isNotEmpty ? fmtDatum(d) : '—',
+                            style: TextStyle(
+                                fontSize: 13, color: tok.textSecondary)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(v,
+                              textAlign: TextAlign.right,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: v.isNotEmpty
+                                    ? vysledekColor(v)
+                                    : tok.textSecondary,
+                              )),
+                        ),
+                        if (n != null) ...[
+                          const SizedBox(width: 8),
+                          Text('${_formatCislo(n.toString())} km',
+                              style: TextStyle(
+                                  fontSize: 12, color: tok.textSecondary)),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+
+        const SizedBox(height: TokSpace.xl),
+      ],
+    );
+  }
+
   Widget _buildMenaToggle(TorkisTokens tok) {
     if (_nacitaKurz) {
       return const SizedBox(
@@ -1632,7 +2055,11 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildHistorieSidebar(BuildContext context) {
     final tok = context.tok;
-    final stream = _rezimValue ? _valueStream : _historieStream;
+    final stream = _rezimValue == 1
+        ? _valueStream
+        : _rezimValue == 2
+            ? null
+            : _historieStream;
     if (stream == null) return const SizedBox.shrink();
 
     final isFiltered = _dekovanyVin != null;

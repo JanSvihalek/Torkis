@@ -36,6 +36,10 @@ const VINCARIO_SECRET = defineSecret("VINCARIO_SECRET");
 //   firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH
 const REVENUECAT_WEBHOOK_AUTH = defineSecret("REVENUECAT_WEBHOOK_AUTH");
 
+// API klíč pro dataovozidlech.cz (STK / technická data vozidel). Nastav přes:
+//   firebase functions:secrets:set DATAOVOZIDLECH_API_KEY
+const DATAOVOZIDLECH_API_KEY = defineSecret("DATAOVOZIDLECH_API_KEY");
+
 // Priorita plánů (nejvyšší vyhrává, když má zákazník víc entitlementů).
 const PLAN_PRIORITY = ["pro", "standard", "basic"];
 
@@ -218,6 +222,61 @@ exports.marketValueVin = onCall(
     (request) =>
       handleVincario(
           request, "vehicle-market-value", "value_cache", "value", VALUE_LIMITS),
+);
+
+/**
+ * Zjištění STK a technických dat vozidla z api.dataovozidlech.cz.
+ * Výsledky se cachují na 24 hodin (STK data se mění jen při nové prohlídce).
+ * Bez uživatelských limitů — jen ověření přihlášení.
+ */
+exports.stkVin = onCall(
+    {region: REGION, secrets: [DATAOVOZIDLECH_API_KEY]},
+    async (request) => {
+      const vin = sanitizeVin(request.data && request.data.vin);
+      await resolveServisId(request.auth);
+
+      // Cache na 24 hodin
+      const cacheRef = db.collection("stk_cache").doc(vin);
+      const cached = await cacheRef.get();
+      if (cached.exists) {
+        const cachedMs = cached.get("cachedAt")?.toMillis() ?? 0;
+        if (Date.now() - cachedMs < 24 * 60 * 60 * 1000) {
+          return {raw: cached.get("raw"), fromCache: true};
+        }
+      }
+
+      const apiKey = DATAOVOZIDLECH_API_KEY.value();
+      const url =
+          `https://api.dataovozidlech.cz/api/vehicletechnicaldata/v2?vin=${vin}`;
+      let raw;
+      try {
+        const resp = await fetch(url, {
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "Accept": "application/json",
+          },
+        });
+        if (!resp.ok) {
+          if (resp.status === 404) {
+            throw new HttpsError(
+                "not-found",
+                "Pro toto VIN nebyla nalezena data STK.",
+            );
+          }
+          throw new HttpsError(
+              "unavailable",
+              `Chyba API dataovozidlech.cz: ${resp.status}.`,
+          );
+        }
+        raw = await resp.json();
+      } catch (err) {
+        if (err instanceof HttpsError) throw err;
+        throw new HttpsError("internal", "Nepodařilo se kontaktovat databázi STK.");
+      }
+
+      await cacheRef.set({vin, raw, cachedAt: FieldValue.serverTimestamp()});
+      return {raw, fromCache: false};
+    },
 );
 
 // ─────────────────────────────────────────────────────────────────────────

@@ -81,6 +81,66 @@ class VincarioException implements Exception {
   String toString() => message;
 }
 
+/// Výsledek zjištění STK z api.dataovozidlech.cz.
+class StkResult {
+  final Map<String, dynamic> raw;
+  const StkResult(this.raw);
+
+  List<Map<String, dynamic>> get kontroly {
+    final list = raw['technicalInspections'] ?? raw['inspections'] ?? raw['kontroly'];
+    if (list is List) return list.whereType<Map<String, dynamic>>().toList();
+    return [];
+  }
+
+  Map<String, dynamic>? get posledniKontrola =>
+      kontroly.isNotEmpty ? kontroly.first : null;
+
+  String get platnostDo {
+    final k = posledniKontrola;
+    if (k == null) return '';
+    return k['validUntil']?.toString() ??
+        k['platnostDo']?.toString() ??
+        k['valid_until']?.toString() ?? '';
+  }
+
+  String get datumPosledni {
+    final k = posledniKontrola;
+    if (k == null) return '';
+    return k['inspectionDate']?.toString() ??
+        k['date']?.toString() ??
+        k['datum']?.toString() ?? '';
+  }
+
+  String get vysledekPosledni {
+    final k = posledniKontrola;
+    if (k == null) return '';
+    return k['inspectionResult']?.toString() ??
+        k['result']?.toString() ??
+        k['vysledek']?.toString() ?? '';
+  }
+
+  int? get najezdPosledni {
+    final k = posledniKontrola;
+    if (k == null) return null;
+    final v = k['mileage'] ?? k['najezd'] ?? k['odometer'];
+    if (v is num) return v.toInt();
+    return int.tryParse(v?.toString() ?? '');
+  }
+
+  List<Map<String, dynamic>> get zavadyPosledni {
+    final k = posledniKontrola;
+    if (k == null) return [];
+    final list = k['defects'] ?? k['zavady'] ?? k['errors'];
+    if (list is List) return list.whereType<Map<String, dynamic>>().toList();
+    return [];
+  }
+
+  String get spz =>
+      raw['spz']?.toString() ??
+      raw['registrationPlate']?.toString() ??
+      raw['plate']?.toString() ?? '';
+}
+
 /// Volání Vincario API přes Cloud Functions. Tajný sdílený klíč je pouze na
 /// serveru; klient jen volá callable funkce, které vynucují měsíční limity.
 /// Sdílí příjem vozidla i modul VIN dekodér.
@@ -160,6 +220,25 @@ class VincarioService {
       final raw = _deepConvert(data['raw']) as Map<String, dynamic>;
       return (
         result: VincarioResult(raw),
+        fromCache: data['fromCache'] == true,
+      );
+    } catch (e) {
+      throw _mapError(e);
+    }
+  }
+
+  /// Zjištění STK z api.dataovozidlech.cz přes Cloud Function.
+  /// `fromCache` = true → data z 24hodinové cache, nepočítalo se do API kvóty.
+  static Future<({StkResult result, bool fromCache})> stk({
+    required String vin,
+  }) async {
+    try {
+      final resp =
+          await _functions.httpsCallable('stkVin').call({'vin': vin});
+      final data = Map<String, dynamic>.from(resp.data as Map);
+      final raw = _deepConvert(data['raw']) as Map<String, dynamic>;
+      return (
+        result: StkResult(raw),
         fromCache: data['fromCache'] == true,
       );
     } catch (e) {
