@@ -51,8 +51,8 @@ class TrialWelcomeScreen extends StatelessWidget {
 
                   // Velký pill „30 DNÍ ZDARMA"
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       color: TokColors.accent.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(TokRadius.round),
@@ -99,39 +99,33 @@ class TrialWelcomeScreen extends StatelessWidget {
                   // Seznam benefitů
                   const SizedBox(height: 14),
                   _BenefitRow(
-                    icon: Icons.check_circle_outline_rounded,
-                    text:
-                        'Neomezený počet záznamů vozidel a zákazníků',
+                    icon: Icons.directions_car_rounded,
+                    text: 'Neomezený počet záznamů vozidel a zákazníků',
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
-                    icon: Icons.check_circle_outline_rounded,
-                    text:
-                        '10 dekodovaných VINů',
+                    icon: Icons.travel_explore_rounded,
+                    text: '10 dekódovaných VINů',
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
-                    icon: Icons.check_circle_outline_rounded,
-                    text:
-                        '5 zjištěných tržních hodnot vozidel podle VIN',
+                    icon: Icons.fact_check_outlined,
+                    text: 'Neomezený počet zjištění platnosti STK',
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
-                    icon: Icons.check_circle_outline_rounded,
-                    text:
-                        'Plný přístup ke všem funkcím aplikace.',
+                    icon: Icons.workspace_premium_rounded,
+                    text: 'Plný přístup ke všem funkcím aplikace.',
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.credit_card_off_rounded,
-                    text:
-                        'Žádné platební údaje. Bez automatického strhávání.',
+                    text: 'Žádné platební údaje. Bez automatického strhávání.',
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.download_done_rounded,
-                    text:
-                        'Vaše data jsou vždy vaše — export kdykoli zdarma.',
+                    text: 'Vaše data jsou vždy vaše — export kdykoli zdarma.',
                   ),
 
                   const Spacer(),
@@ -142,8 +136,7 @@ class TrialWelcomeScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const AuthGate()),
+                        MaterialPageRoute(builder: (_) => const AuthGate()),
                         (route) => false,
                       );
                     },
