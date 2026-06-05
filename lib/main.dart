@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui'; // Potřebné pro PlatformDispatcher
@@ -32,6 +33,11 @@ void main() async {
   final savedNavOrder = prefs.getStringList('nav_order');
   if (savedNavOrder != null && savedNavOrder.isNotEmpty) {
     navOrderNotifier.value = savedNavOrder;
+  }
+
+  final savedLocale = prefs.getString('jazyk');
+  if (savedLocale != null) {
+    localeNotifier.value = Locale(savedLocale);
   }
 
   // --- NASTAVENÍ CRASHLYTICS A ZACHYTÁVÁNÍ CHYB ---
@@ -273,25 +279,32 @@ class VistoApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (_, ThemeMode currentMode, __) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'TORKIS',
-          
-          // --- PŘIDÁNO: Podpora češtiny pro úplně všechny systémové dialogy ---
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('cs', 'CZ'),
-          ],
-
-          theme: _buildTorkisTheme(Brightness.light),
-          darkTheme: _buildTorkisTheme(Brightness.dark),
-          themeMode: currentMode,
-
-          home: const AuthGate(),
+        return ValueListenableBuilder<Locale?>(
+          valueListenable: localeNotifier,
+          builder: (_, Locale? currentLocale, __) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'TORKIS',
+              locale: currentLocale,
+              localizationsDelegates: const [
+                AppLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [
+                Locale('cs'),
+                Locale('en'),
+                Locale('de'),
+                Locale('pl'),
+                Locale('sk'),
+              ],
+              theme: _buildTorkisTheme(Brightness.light),
+              darkTheme: _buildTorkisTheme(Brightness.dark),
+              themeMode: currentMode,
+              home: const AuthGate(),
+            );
+          },
         );
       },
     );

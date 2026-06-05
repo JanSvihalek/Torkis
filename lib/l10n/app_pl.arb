@@ -1,0 +1,90 @@
+{
+  "@@locale": "pl",
+
+  "appName": "TORKIS",
+
+  "btnUlozit": "Zapisz",
+  "btnZrusit": "Anuluj",
+  "btnPotvrdit": "Potwierdź",
+  "btnZavrit": "Zamknij",
+  "btnNovySken": "Nowe skanowanie",
+  "btnSpustitSken": "Uruchom skan →",
+  "btnZacitPouzivat": "Zacznij używać aplikacji",
+  "btnPlany": "Plany",
+
+  "nacitani": "Ładowanie…",
+  "chybaObecna": "Wystąpił błąd.",
+  "zadejteVin": "Proszę wpisać numer VIN.",
+  "zadejteVinRucne": "Wpisz VIN ręcznie (np. TMBJJ7NE5K…)",
+
+  "vinDekoderNav": "VIN",
+  "vinDekoderTabDekodovani": "Dekodowanie VIN",
+  "vinDekoderTabTrzniHodnota": "Wartość rynkowa",
+  "vinDekoderTabStk": "Badanie techniczne",
+
+  "vinDekoderTitle": "Dekoder VIN",
+  "vinDekoderSubtitle": "Szybkie wyszukiwanie specyfikacji pojazdu na podstawie numeru VIN",
+  "trzniHodnotaTitle": "Wartość rynkowa",
+  "trzniHodnotaSubtitle": "Szacunkowa wartość rynkowa pojazdu na podstawie danych z rynku europejskiego",
+  "stkTitle": "Badanie techniczne",
+  "stkSubtitle": "Historia przeglądów technicznych pojazdu z rejestru",
+
+  "skenVinKod": "Skanuj kod VIN",
+  "skenVinProTrzni": "Skanuj VIN dla wartości rynkowej",
+  "skenVinProStk": "Skanuj VIN dla badania technicznego",
+  "skenVinPopis": "Automatycznie ładuje dane pojazdu na podstawie zeskanowanego lub wpisanego numeru VIN",
+  "skenVinTrzniPopis": "Szacuje wartość rynkową pojazdu na podstawie danych z rynku europejskiego",
+  "skenVinStkPopis": "Ładuje dane o przeglądach technicznych z rejestru pojazdów",
+
+  "dekodovat": "Dekoduj",
+  "zjstitHodnotu": "Sprawdź wartość",
+  "zjstitStk": "Sprawdź badanie",
+
+  "stkPlatna": "Badanie ważne",
+  "stkNeplatna": "Badanie nieważne",
+  "stkPlatnaJeste": "Badanie ważne jeszcze {dni} dni",
+  "stkProsla": "Badanie przeterminowane o {dni} dni",
+  "stkDatumNeznamo": "Badanie — data nieznana",
+  "stkPlatnostDo": "Badanie ważne do",
+  "stkInfoBanner": "Dane pochodzą z publicznego rejestru pojazdów. Dostępność i aktualność mogą się różnić — dane o przeglądach mogą być niedostępne dla niektórych pojazdów.",
+
+  "trzniHodnotaTitle2": "WARTOŚĆ RYNKOWA",
+  "trzniMedian": "mediana",
+  "trzniPrumernaCena": "Średnia cena",
+  "trzniPrumernyNajezd": "Średni przebieg",
+  "trzniPocetVzorku": "Liczba próbek",
+  "trzniObdobiDat": "Okres danych",
+  "trzniZdroj": "Rynek europejski · Vincario Market Value",
+  "trzniNeniData": "Dane europejskie niedostępne.",
+
+  "historieNacitani": "Ładowanie…",
+  "historieSken": "Historia skanów",
+  "historiePrvniDekodovani": "Pierwsze dekodowanie",
+  "historieNeznameVozidlo": "Nieznany pojazd",
+  "historieZadneSken": "Brak skanów.",
+  "historieVse": "Wszystkie",
+  "historieDnes": "Dzisiaj · {pocet} zdekodowanych VIN",
+  "historiePosledniSkeny": "Ostatnie skany",
+  "historieNoveVozidlo": "Nowy pojazd",
+  "historieDekodovanoXKrat": "Zdekodowano {pocet}×",
+
+  "limitVyprsel": "Miesięczny limit osiągnięty. Zaktualizuj plan, aby kontynuować.",
+  "limitDekodovaniTitle": "Dekodowania VIN w tym miesiącu",
+  "limitTrzniTitle": "Zapytania o wartość rynkową w tym miesiącu",
+
+  "upsellTrzniTitle": "Wartość rynkowa dostępna w płatnych planach",
+  "upsellTrzniText": "Niedostępna w wersji próbnej. Odblokuj już w planie Basic.",
+
+  "chybaDekodovani": "Nie udało się zdekodować VIN: {zprava}",
+
+  "trialWelcomeTitle": "Witamy w TORKIS",
+  "trialWelcomeSubtitle": "Uruchomiliśmy Twój 30-dniowy bezpłatny okres próbny — bez karty kredytowej i bez zobowiązań.",
+  "trialWelcomePill": "30 DNI ZA DARMO",
+  "trialWelcomeFooter": "Po zakończeniu okresu próbnego wybierz odpowiedni plan.",
+  "trialBenefitVozidla": "Nieograniczona liczba rekordów pojazdów i klientów",
+  "trialBenefitVin": "10 zdekodowanych numerów VIN",
+  "trialBenefitStk": "Nieograniczona liczba sprawdzeń ważności przeglądu technicznego",
+  "trialBenefitFunkce": "Pełny dostęp do wszystkich funkcji aplikacji.",
+  "trialBenefitKarta": "Brak danych płatniczych. Brak automatycznych obciążeń.",
+  "trialBenefitData": "Twoje dane zawsze należą do Ciebie — eksportuj je w dowolnym momencie za darmo."
+}

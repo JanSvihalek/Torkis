@@ -1,0 +1,90 @@
+{
+  "@@locale": "sk",
+
+  "appName": "TORKIS",
+
+  "btnUlozit": "Uložiť",
+  "btnZrusit": "Zrušiť",
+  "btnPotvrdit": "Potvrdiť",
+  "btnZavrit": "Zavrieť",
+  "btnNovySken": "Nový sken",
+  "btnSpustitSken": "Spustiť sken →",
+  "btnZacitPouzivat": "Začať používať aplikáciu",
+  "btnPlany": "Plány",
+
+  "nacitani": "Načítava sa…",
+  "chybaObecna": "Nastala chyba.",
+  "zadejteVin": "Zadajte VIN kód.",
+  "zadejteVinRucne": "Zadať VIN ručne (napr. TMBJJ7NE5K…)",
+
+  "vinDekoderNav": "VIN",
+  "vinDekoderTabDekodovani": "Dekódovanie VIN",
+  "vinDekoderTabTrzniHodnota": "Trhová hodnota",
+  "vinDekoderTabStk": "Zistenie TK",
+
+  "vinDekoderTitle": "Dekodér VIN",
+  "vinDekoderSubtitle": "Rýchle vyhľadanie špecifikácie vozidla podľa VIN kódu",
+  "trzniHodnotaTitle": "Trhová hodnota",
+  "trzniHodnotaSubtitle": "Odhad trhovej ceny vozidla z dát európskeho trhu",
+  "stkTitle": "Zistenie TK",
+  "stkSubtitle": "Prehľad technických prehliadok vozidla z registra",
+
+  "skenVinKod": "Skenovať VIN kód",
+  "skenVinProTrzni": "Skenovať VIN pre trhovú hodnotu",
+  "skenVinProStk": "Skenovať VIN pre TK",
+  "skenVinPopis": "Automaticky načíta špecifikácie vozidla podľa naskenovaného alebo zadaného VIN",
+  "skenVinTrzniPopis": "Zistí odhad trhovej ceny vozidla z dát európskeho trhu",
+  "skenVinStkPopis": "Načíta dáta o technických prehliadkach vozidla z registra",
+
+  "dekodovat": "Dekódovať",
+  "zjstitHodnotu": "Zistiť hodnotu",
+  "zjstitStk": "Zistiť TK",
+
+  "stkPlatna": "TK platná",
+  "stkNeplatna": "TK neplatná",
+  "stkPlatnaJeste": "TK platná ešte {dni} dní",
+  "stkProsla": "TK neplatná (prešla o {dni} dní)",
+  "stkDatumNeznamo": "TK — dátum neznámy",
+  "stkPlatnostDo": "Platnosť TK do",
+  "stkInfoBanner": "Dáta pochádzajú z verejného registra vozidiel. Dostupnosť a aktuálnosť sa líšia — u niektorých vozidiel nemusí byť TK evidovaná.",
+
+  "trzniHodnotaTitle2": "TRHOVÁ HODNOTA",
+  "trzniMedian": "medián",
+  "trzniPrumernaCena": "Priemerná cena",
+  "trzniPrumernyNajezd": "Priemerný nájazd",
+  "trzniPocetVzorku": "Počet vzoriek",
+  "trzniObdobiDat": "Obdobie dát",
+  "trzniZdroj": "Európsky trh · Vincario Market Value",
+  "trzniNeniData": "Európske dáta nie sú k dispozícii.",
+
+  "historieNacitani": "Načítava sa…",
+  "historieSken": "História skenov",
+  "historiePrvniDekodovani": "Prvýkrát dekódované",
+  "historieNeznameVozidlo": "Neznáme vozidlo",
+  "historieZadneSken": "Zatiaľ žiadne skeny.",
+  "historieVse": "Všetky",
+  "historieDnes": "Dnes · {pocet} dekódovaných VIN",
+  "historiePosledniSkeny": "Posledné skeny",
+  "historieNoveVozidlo": "Nové vozidlo",
+  "historieDekodovanoXKrat": "Dekódované {pocet}×",
+
+  "limitVyprsel": "Mesačný limit vyčerpaný. Upgradujte plán pre pokračovanie.",
+  "limitDekodovaniTitle": "Dekódovania VIN tento mesiac",
+  "limitTrzniTitle": "Zistenia trhovej hodnoty tento mesiac",
+
+  "upsellTrzniTitle": "Trhová hodnota je v platených plánoch",
+  "upsellTrzniText": "V skúšobnej verzii nie je dostupná. Odomknete ju už v pláne Basic.",
+
+  "chybaDekodovani": "Nepodarilo sa dekódovať VIN: {zprava}",
+
+  "trialWelcomeTitle": "Vitajte v TORKISe",
+  "trialWelcomeSubtitle": "Spustili sme vám skúšobnú dobu na 30 dní zdarma — bez platobnej karty a bez záväzkov.",
+  "trialWelcomePill": "30 DNÍ ZDARMA",
+  "trialWelcomeFooter": "Po skončení trialu si vyberiete plán, ktorý vám sadne.",
+  "trialBenefitVozidla": "Neobmedzený počet záznamov vozidiel a zákazníkov",
+  "trialBenefitVin": "10 dekódovaných VINov",
+  "trialBenefitStk": "Neobmedzený počet zistení platnosti TK",
+  "trialBenefitFunkce": "Plný prístup ku všetkým funkciám aplikácie.",
+  "trialBenefitKarta": "Žiadne platobné údaje. Bez automatického strhávania.",
+  "trialBenefitData": "Vaše dáta sú vždy vaše — export kedykoľvek zdarma."
+}

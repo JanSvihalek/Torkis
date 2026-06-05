@@ -1,0 +1,90 @@
+{
+  "@@locale": "en",
+
+  "appName": "TORKIS",
+
+  "btnUlozit": "Save",
+  "btnZrusit": "Cancel",
+  "btnPotvrdit": "Confirm",
+  "btnZavrit": "Close",
+  "btnNovySken": "New Scan",
+  "btnSpustitSken": "Start Scan →",
+  "btnZacitPouzivat": "Start using the app",
+  "btnPlany": "Plans",
+
+  "nacitani": "Loading…",
+  "chybaObecna": "An error occurred.",
+  "zadejteVin": "Please enter a VIN code.",
+  "zadejteVinRucne": "Enter VIN manually (e.g. TMBJJ7NE5K…)",
+
+  "vinDekoderNav": "VIN",
+  "vinDekoderTabDekodovani": "VIN Decode",
+  "vinDekoderTabTrzniHodnota": "Market Value",
+  "vinDekoderTabStk": "MOT Check",
+
+  "vinDekoderTitle": "VIN Decoder",
+  "vinDekoderSubtitle": "Quick vehicle specification lookup by VIN code",
+  "trzniHodnotaTitle": "Market Value",
+  "trzniHodnotaSubtitle": "Estimated vehicle market price from European market data",
+  "stkTitle": "MOT Check",
+  "stkSubtitle": "Vehicle inspection record from the registry",
+
+  "skenVinKod": "Scan VIN Code",
+  "skenVinProTrzni": "Scan VIN for Market Value",
+  "skenVinProStk": "Scan VIN for MOT",
+  "skenVinPopis": "Automatically loads vehicle specifications from a scanned or entered VIN",
+  "skenVinTrzniPopis": "Estimates vehicle market price from European market data based on scanned or entered VIN",
+  "skenVinStkPopis": "Loads vehicle inspection records from the registry",
+
+  "dekodovat": "Decode",
+  "zjstitHodnotu": "Get Value",
+  "zjstitStk": "Check MOT",
+
+  "stkPlatna": "MOT Valid",
+  "stkNeplatna": "MOT Expired",
+  "stkPlatnaJeste": "MOT valid for {dni} more days",
+  "stkProsla": "MOT expired {dni} days ago",
+  "stkDatumNeznamo": "MOT — date unknown",
+  "stkPlatnostDo": "MOT Valid Until",
+  "stkInfoBanner": "Data comes from the public vehicle registry. Availability and accuracy may vary — MOT records may not be available for all vehicles.",
+
+  "trzniHodnotaTitle2": "MARKET VALUE",
+  "trzniMedian": "median",
+  "trzniPrumernaCena": "Average price",
+  "trzniPrumernyNajezd": "Average mileage",
+  "trzniPocetVzorku": "Sample count",
+  "trzniObdobiDat": "Data period",
+  "trzniZdroj": "European market · Vincario Market Value",
+  "trzniNeniData": "European data not available.",
+
+  "historieNacitani": "Loading…",
+  "historieSken": "Scan History",
+  "historiePrvniDekodovani": "Decoded for the first time",
+  "historieNeznameVozidlo": "Unknown vehicle",
+  "historieZadneSken": "No scans yet.",
+  "historieVse": "All",
+  "historieDnes": "Today · {pocet} decoded VINs",
+  "historiePosledniSkeny": "Recent scans",
+  "historieNoveVozidlo": "New vehicle",
+  "historieDekodovanoXKrat": "Decoded {pocet}×",
+
+  "limitVyprsel": "Monthly limit reached. Upgrade your plan to continue.",
+  "limitDekodovaniTitle": "VIN decodes this month",
+  "limitTrzniTitle": "Market value checks this month",
+
+  "upsellTrzniTitle": "Market Value is available in paid plans",
+  "upsellTrzniText": "Not available in the trial. Unlock it from the Basic plan.",
+
+  "chybaDekodovani": "Failed to decode VIN: {zprava}",
+
+  "trialWelcomeTitle": "Welcome to TORKIS",
+  "trialWelcomeSubtitle": "We've started your 30-day free trial — no credit card, no commitment.",
+  "trialWelcomePill": "30 DAYS FREE",
+  "trialWelcomeFooter": "After the trial, choose the plan that fits you.",
+  "trialBenefitVozidla": "Unlimited vehicle and customer records",
+  "trialBenefitVin": "10 decoded VINs",
+  "trialBenefitStk": "Unlimited MOT validity checks",
+  "trialBenefitFunkce": "Full access to all app features.",
+  "trialBenefitKarta": "No payment details. No automatic charges.",
+  "trialBenefitData": "Your data is always yours — export anytime for free."
+}

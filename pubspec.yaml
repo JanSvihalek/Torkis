@@ -2,7 +2,7 @@ name: torkis
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 5.2.5
+version: 5.2.6
 
 environment:
   sdk: '>=3.5.3 <4.0.0'
@@ -50,6 +50,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/images/
     - assets/images/car_blueprints/

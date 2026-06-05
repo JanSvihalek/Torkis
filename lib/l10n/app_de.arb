@@ -1,0 +1,90 @@
+{
+  "@@locale": "de",
+
+  "appName": "TORKIS",
+
+  "btnUlozit": "Speichern",
+  "btnZrusit": "Abbrechen",
+  "btnPotvrdit": "Bestätigen",
+  "btnZavrit": "Schließen",
+  "btnNovySken": "Neuer Scan",
+  "btnSpustitSken": "Scan starten →",
+  "btnZacitPouzivat": "App verwenden",
+  "btnPlany": "Pläne",
+
+  "nacitani": "Wird geladen…",
+  "chybaObecna": "Ein Fehler ist aufgetreten.",
+  "zadejteVin": "Bitte VIN-Code eingeben.",
+  "zadejteVinRucne": "VIN manuell eingeben (z.B. TMBJJ7NE5K…)",
+
+  "vinDekoderNav": "VIN",
+  "vinDekoderTabDekodovani": "VIN-Dekodierung",
+  "vinDekoderTabTrzniHodnota": "Marktwert",
+  "vinDekoderTabStk": "HU-Prüfung",
+
+  "vinDekoderTitle": "VIN-Dekoder",
+  "vinDekoderSubtitle": "Schnelle Fahrzeugspezifikation anhand der VIN",
+  "trzniHodnotaTitle": "Marktwert",
+  "trzniHodnotaSubtitle": "Geschätzter Fahrzeugmarktwert aus europäischen Marktdaten",
+  "stkTitle": "HU-Prüfung",
+  "stkSubtitle": "Hauptuntersuchungsnachweis aus dem Fahrzeugregister",
+
+  "skenVinKod": "VIN-Code scannen",
+  "skenVinProTrzni": "VIN für Marktwert scannen",
+  "skenVinProStk": "VIN für HU scannen",
+  "skenVinPopis": "Lädt automatisch Fahrzeugdaten anhand der gescannten oder eingegebenen VIN",
+  "skenVinTrzniPopis": "Schätzt den Fahrzeugmarktwert aus europäischen Marktdaten",
+  "skenVinStkPopis": "Lädt Hauptuntersuchungsdaten aus dem Fahrzeugregister",
+
+  "dekodovat": "Dekodieren",
+  "zjstitHodnotu": "Wert ermitteln",
+  "zjstitStk": "HU prüfen",
+
+  "stkPlatna": "HU gültig",
+  "stkNeplatna": "HU abgelaufen",
+  "stkPlatnaJeste": "HU noch {dni} Tage gültig",
+  "stkProsla": "HU seit {dni} Tagen abgelaufen",
+  "stkDatumNeznamo": "HU — Datum unbekannt",
+  "stkPlatnostDo": "HU gültig bis",
+  "stkInfoBanner": "Daten stammen aus dem öffentlichen Fahrzeugregister. Verfügbarkeit und Aktualität können variieren — HU-Daten sind nicht für alle Fahrzeuge verfügbar.",
+
+  "trzniHodnotaTitle2": "MARKTWERT",
+  "trzniMedian": "Median",
+  "trzniPrumernaCena": "Durchschnittspreis",
+  "trzniPrumernyNajezd": "Durchschnittslaufleistung",
+  "trzniPocetVzorku": "Stichprobenanzahl",
+  "trzniObdobiDat": "Datenzeitraum",
+  "trzniZdroj": "Europäischer Markt · Vincario Market Value",
+  "trzniNeniData": "Europäische Daten nicht verfügbar.",
+
+  "historieNacitani": "Wird geladen…",
+  "historieSken": "Scan-Verlauf",
+  "historiePrvniDekodovani": "Zum ersten Mal dekodiert",
+  "historieNeznameVozidlo": "Unbekanntes Fahrzeug",
+  "historieZadneSken": "Noch keine Scans.",
+  "historieVse": "Alle",
+  "historieDnes": "Heute · {pocet} dekodierte VINs",
+  "historiePosledniSkeny": "Letzte Scans",
+  "historieNoveVozidlo": "Neues Fahrzeug",
+  "historieDekodovanoXKrat": "{pocet}× dekodiert",
+
+  "limitVyprsel": "Monatslimit erreicht. Upgraden Sie Ihren Plan, um fortzufahren.",
+  "limitDekodovaniTitle": "VIN-Dekodierungen diesen Monat",
+  "limitTrzniTitle": "Marktwertabfragen diesen Monat",
+
+  "upsellTrzniTitle": "Marktwert ist in kostenpflichtigen Plänen verfügbar",
+  "upsellTrzniText": "In der Testversion nicht verfügbar. Ab dem Basic-Plan freigeschaltet.",
+
+  "chybaDekodovani": "VIN-Dekodierung fehlgeschlagen: {zprava}",
+
+  "trialWelcomeTitle": "Willkommen bei TORKIS",
+  "trialWelcomeSubtitle": "Wir haben Ihre 30-tägige kostenlose Testphase gestartet — ohne Kreditkarte, ohne Verpflichtung.",
+  "trialWelcomePill": "30 TAGE KOSTENLOS",
+  "trialWelcomeFooter": "Nach der Testphase wählen Sie den passenden Plan.",
+  "trialBenefitVozidla": "Unbegrenzte Fahrzeug- und Kundendatensätze",
+  "trialBenefitVin": "10 dekodierte VINs",
+  "trialBenefitStk": "Unbegrenzte HU-Gültigkeitsprüfungen",
+  "trialBenefitFunkce": "Vollständiger Zugriff auf alle App-Funktionen.",
+  "trialBenefitKarta": "Keine Zahlungsdaten. Keine automatischen Abbuchungen.",
+  "trialBenefitData": "Ihre Daten gehören immer Ihnen — jederzeit kostenlos exportieren."
+}

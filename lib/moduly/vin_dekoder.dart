@@ -1082,26 +1082,21 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     return Container(
       padding: const EdgeInsets.all(TokSpace.md),
       decoration: BoxDecoration(
-        color: tok.isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.blueGrey.withValues(alpha: 0.07),
+        color: Colors.orange.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(TokRadius.lg),
-        border: Border.all(
-            color: tok.isDark
-                ? Colors.white.withValues(alpha: 0.10)
-                : Colors.blueGrey.withValues(alpha: 0.20)),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.40)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline_rounded, size: 16, color: tok.textSecondary),
+          const Icon(Icons.info_outline_rounded, size: 16, color: Colors.orange),
           const SizedBox(width: TokSpace.sm),
           Expanded(
             child: Text(
               'Data pocházejí z veřejného registru vozidel. '
               'Dostupnost a aktuálnost se liší — u některých vozidel '
               'nemusí být STK evidována.',
-              style: TextStyle(fontSize: 12, color: tok.textSecondary, height: 1.4),
+              style: TextStyle(fontSize: 12, color: tok.textPrimary, height: 1.4),
             ),
           ),
         ],

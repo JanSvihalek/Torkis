@@ -45,6 +45,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
   bool _spoustVlevo = false;
+  String? _jazyk; // null = systémový jazyk
 
   bool _isLoading = true;
   bool _isSaving = false;
@@ -88,6 +89,8 @@ class _SettingsPageState extends State<SettingsPage> {
         // Zrcadlíme do SharedPreferences — odtud čte fotoaparát.
         await prefs.setBool(kPrefKameraSpoustVlevo, vlevo);
       }
+
+      _jazyk = prefs.getString('jazyk');
 
       final auth = LocalAuthentication();
       final canBio = await auth.canCheckBiometrics;
@@ -199,6 +202,59 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('biometric_enabled', value);
     setState(() => _biometricEnabled = value);
+  }
+
+  Future<void> _setJazyk(String? kod) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (kod == null) {
+      await prefs.remove('jazyk');
+    } else {
+      await prefs.setString('jazyk', kod);
+    }
+    localeNotifier.value = kod != null ? Locale(kod) : null;
+    if (mounted) setState(() => _jazyk = kod);
+  }
+
+  void _ukazatVyberJazyka(BuildContext context, bool isDark) {
+    const jazyky = [
+      (kod: null,  vlajka: '🌐', nazev: 'Systémový jazyk'),
+      (kod: 'cs',  vlajka: '🇨🇿', nazev: 'Čeština'),
+      (kod: 'en',  vlajka: '🇬🇧', nazev: 'English'),
+      (kod: 'de',  vlajka: '🇩🇪', nazev: 'Deutsch'),
+      (kod: 'pl',  vlajka: '🇵🇱', nazev: 'Polski'),
+      (kod: 'sk',  vlajka: '🇸🇰', nazev: 'Slovenčina'),
+    ];
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Jazyk aplikace',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: jazyky.map((j) => RadioListTile<String?>(
+              value: j.kod,
+              groupValue: _jazyk,
+              activeColor: Colors.blue,
+              title: Text('${j.vlajka}  ${j.nazev}',
+                  style: const TextStyle(fontSize: 14)),
+              onChanged: (v) {
+                setDialogState(() {});
+                _setJazyk(v);
+                Navigator.pop(ctx);
+              },
+            )).toList(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Zrušit'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Přepne osobní režim pro leváky — spoušť fotoaparátu na levé straně při
@@ -1021,6 +1077,33 @@ class _SettingsPageState extends State<SettingsPage> {
                       value: _spoustVlevo,
                       activeColor: Colors.blue,
                       onChanged: _toggleSpoustVlevo,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? TokColors.darkSurface : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                    ),
+                    child: ListTile(
+                      leading: const Icon(Icons.language_rounded, color: Colors.blue),
+                      title: const Text('Jazyk aplikace',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text(
+                        _jazyk == null
+                            ? 'Systémový jazyk'
+                            : const {
+                                'cs': '🇨🇿 Čeština',
+                                'en': '🇬🇧 English',
+                                'de': '🇩🇪 Deutsch',
+                                'pl': '🇵🇱 Polski',
+                                'sk': '🇸🇰 Slovenčina',
+                              }[_jazyk] ?? _jazyk!,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                      onTap: () => _ukazatVyberJazyka(context, isDark),
                     ),
                   ),
                 ],

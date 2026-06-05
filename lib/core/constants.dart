@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.2.5';
+const String kAppVerze = '5.2.6';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
 
 // Globální ThemeNotifier pro přepínání světlého a tmavého režimu
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
+
+// Globální LocaleNotifier — null = sledovat systémový jazyk
+final ValueNotifier<Locale?> localeNotifier = ValueNotifier(null);
 
 // Osobní nastavení uživatele — klíč v SharedPreferences pro režim pro leváky
 // (spoušť fotoaparátu na levé straně, když je zařízení na šířku).

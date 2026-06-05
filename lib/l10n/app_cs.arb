@@ -1,0 +1,115 @@
+{
+  "@@locale": "cs",
+
+  "appName": "TORKIS",
+
+  "btnUlozit": "Uložit",
+  "btnZrusit": "Zrušit",
+  "btnPotvrdit": "Potvrdit",
+  "btnZavrit": "Zavřít",
+  "btnNovySken": "Nový sken",
+  "btnSpustitSken": "Spustit sken →",
+  "btnZacitPouzivat": "Začít používat aplikaci",
+  "btnPlany": "Plány",
+
+  "nacitani": "Načítání…",
+  "chybaObecna": "Nastala chyba.",
+  "zadejteVin": "Zadejte VIN kód.",
+  "zadejteVinRucne": "Zadat VIN ručně (např. TMBJJ7NE5K…)",
+
+  "vinDekoderNav": "VIN",
+  "vinDekoderTabDekodovani": "Dekódování VIN",
+  "vinDekoderTabTrzniHodnota": "Tržní hodnota",
+  "vinDekoderTabStk": "Zjištění STK",
+
+  "vinDekoderTitle": "Dekodér VIN",
+  "vinDekoderSubtitle": "Rychlé vyhledání specifikace vozu z VIN kódu",
+  "trzniHodnotaTitle": "Tržní hodnota",
+  "trzniHodnotaSubtitle": "Odhad tržní ceny vozidla z dat evropského trhu",
+  "stkTitle": "Zjištění STK",
+  "stkSubtitle": "Přehled technických prohlídek vozidla z registru",
+
+  "skenVinKod": "Skenovat VIN kód",
+  "skenVinProTrzni": "Skenovat VIN pro tržní hodnotu",
+  "skenVinProStk": "Skenovat VIN pro STK",
+  "skenVinPopis": "Automaticky načte specifikace vozu podle naskenovaného nebo zadaného VIN",
+  "skenVinTrzniPopis": "Zjistí odhad tržní ceny vozu podle naskenovaného nebo zadaného VIN z dat evropského trhu",
+  "skenVinStkPopis": "Načte data o technických prohlídkách vozidla z registru",
+
+  "dekodovat": "Dekódovat",
+  "zjstitHodnotu": "Zjistit hodnotu",
+  "zjstitStk": "Zjistit STK",
+
+  "stkPlatna": "STK platná",
+  "stkNeplatna": "STK neplatná",
+  "stkPlatnaJeste": "STK platná ještě {dni} dní",
+  "@stkPlatnaJeste": {
+    "placeholders": {
+      "dni": { "type": "int" }
+    }
+  },
+  "stkProsla": "STK neplatná (prošlá o {dni} dní)",
+  "@stkProsla": {
+    "placeholders": {
+      "dni": { "type": "int" }
+    }
+  },
+  "stkDatumNeznamo": "STK — datum neznámé",
+  "stkPlatnostDo": "Platnost STK do",
+  "stkInfoBanner": "Data pocházejí z veřejného registru vozidel. Dostupnost a aktuálnost se liší — u některých vozidel nemusí být STK evidována.",
+
+  "trzniHodnotaTitle2": "TRŽNÍ HODNOTA",
+  "trzniMedian": "medián",
+  "trzniPrumernaCena": "Průměrná cena",
+  "trzniPrumernyNajezd": "Průměrný nájezd",
+  "trzniPocetVzorku": "Počet vzorků",
+  "trzniObdobiDat": "Období dat",
+  "trzniZdroj": "Evropský trh · Vincario Market Value",
+  "trzniNeniData": "Evropská data nejsou k dispozici.",
+
+  "historieNacitani": "Načítání…",
+  "historieSken": "Historie skenů",
+  "historiePrvniDekodovani": "Poprvé dekódováno",
+  "historieNeznameVozidlo": "Neznámé vozidlo",
+  "historieZadneSken": "Zatím žádné skeny.",
+  "historieVse": "Vše",
+  "historieDnes": "Dnes · {pocet} dekódovaných VIN",
+  "@historieDnes": {
+    "placeholders": {
+      "pocet": { "type": "int" }
+    }
+  },
+  "historiePosledniSkeny": "Poslední skeny",
+  "historieNoveVozidlo": "Nové vozidlo",
+  "historieDekodovanoXKrat": "Dekódováno {pocet}×",
+  "@historieDekodovanoXKrat": {
+    "placeholders": {
+      "pocet": { "type": "int" }
+    }
+  },
+
+  "limitVyprsel": "Měsíční limit vyčerpán. Upgradujte plán pro pokračování.",
+  "limitDekodovaniTitle": "Dekódování VIN tento měsíc",
+  "limitTrzniTitle": "Tržní hodnota tento měsíc",
+
+  "upsellTrzniTitle": "Tržní hodnota je v placených plánech",
+  "upsellTrzniText": "Ve zkušební verzi není dostupná. Odemknete ji už v plánu Basic.",
+
+  "chybaDekodovani": "Nepodařilo se dekódovat VIN: {zprava}",
+  "@chybaDekodovani": {
+    "placeholders": {
+      "zprava": { "type": "String" }
+    }
+  },
+
+  "trialWelcomeTitle": "Vítejte v TORKISu",
+  "trialWelcomeSubtitle": "Spustili jsme vám zkušební dobu na 30 dní zdarma — bez platební karty a bez závazků.",
+  "trialWelcomePill": "30 DNÍ ZDARMA",
+  "trialWelcomeFooter": "Po skončení trialu si vyberete plán, který vám sedne.",
+  "trialBenefitVozidla": "Neomezený počet záznamů vozidel a zákazníků",
+  "trialBenefitVin": "10 dekódovaných VINů",
+  "trialBenefitStk": "Neomezený počet zjištění platnosti STK",
+  "trialBenefitFunkce": "Plný přístup ke všem funkcím aplikace.",
+  "trialBenefitKarta": "Žádné platební údaje. Bez automatického strhávání.",
+  "trialBenefitData": "Vaše data jsou vždy vaše — export kdykoli zdarma."
+}
