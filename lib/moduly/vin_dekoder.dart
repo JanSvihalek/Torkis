@@ -1415,25 +1415,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       return '${dt.day}.${dt.month}.${dt.year}';
     }
 
-    Color vysledekColor(String v) {
-      final l = v.toLowerCase();
-      if (l.contains('způsob')) return Colors.green;
-      if (l.contains('nezpůsob')) return Colors.red;
-      return tok.textPrimary;
-    }
-
     final stkPlatnost = parseDatum(data.stkPlatnostDo);
-    final emisePlatnost = parseDatum(data.emisePlatnostDo);
     final now = DateTime.now();
     final stkPlatna = stkPlatnost != null && stkPlatnost.isAfter(now);
-    final emisePlatna = emisePlatnost != null && emisePlatnost.isAfter(now);
     final stkDni = stkPlatnost?.difference(now).inDays;
+    final statusColor = stkPlatna ? Colors.green : Colors.red;
 
     final nadpis = [data.znacka, data.obchodniOznaceni]
         .where((s) => s.isNotEmpty)
         .join(' ');
-
-    final statusColor = stkPlatna ? Colors.green : Colors.red;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1493,11 +1483,16 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                               ),
                             ),
                             Text(
-                              stkPlatna
-                                  ? 'STK platná ještě $stkDni dní'
-                                  : 'STK neplatná${stkDni != null ? ' (prošlá o ${(-stkDni)} dní)' : ''}',
+                              data.stkPlatnostDo.isEmpty
+                                  ? 'STK — datum neznámé'
+                                  : stkPlatna
+                                      ? 'STK platná ještě $stkDni dní'
+                                      : 'STK neplatná (prošlá o ${-(stkDni!)} dní)',
                               style: TextStyle(
-                                  fontSize: 13, color: statusColor),
+                                  fontSize: 13,
+                                  color: data.stkPlatnostDo.isEmpty
+                                      ? tok.textSecondary
+                                      : statusColor),
                             ),
                           ],
                         ),
@@ -1541,57 +1536,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           ],
         ),
 
-        // STK karta
-        const SizedBox(height: TokSpace.md),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: tok.surface,
-            borderRadius: BorderRadius.circular(TokRadius.xl),
-            border: Border.all(color: tok.line),
-          ),
-          padding: const EdgeInsets.all(TokSpace.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(children: [
-                Icon(Icons.fact_check_outlined,
-                    size: 13, color: tok.textSecondary),
-                const SizedBox(width: 6),
-                Text('TECHNICKÁ PROHLÍDKA (STK)',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: tok.textSecondary,
-                      letterSpacing: 0.8,
-                    )),
-              ]),
-              const SizedBox(height: TokSpace.sm),
-              if (data.stkDatumProhlidky.isNotEmpty)
-                _buildTrzniRadek(
-                    tok, 'Datum prohlídky', fmtDatum(data.stkDatumProhlidky)),
-              if (data.stkPlatnostDo.isNotEmpty)
-                _buildStkRadekSBarvou(
-                    tok, 'Platná do', fmtDatum(data.stkPlatnostDo),
-                    stkPlatna ? Colors.green : Colors.red),
-              if (data.stkVysledek.isNotEmpty)
-                _buildStkRadekSBarvou(
-                    tok, 'Výsledek', data.stkVysledek,
-                    vysledekColor(data.stkVysledek)),
-              if (data.stkDruhProhlidky.isNotEmpty)
-                _buildTrzniRadek(tok, 'Druh prohlídky', data.stkDruhProhlidky),
-              if (data.stkIdStanice.isNotEmpty)
-                _buildTrzniRadek(tok, 'Stanice STK', data.stkIdStanice),
-              if (data.stkCisloProtokolu.isNotEmpty)
-                _buildTrzniRadek(
-                    tok, 'Číslo protokolu', data.stkCisloProtokolu),
-            ],
-          ),
-        ),
-
-        // Emise karta (pokud jsou data)
-        if (data.emiseDatumProhlidky.isNotEmpty ||
-            data.emisePlatnostDo.isNotEmpty) ...[
+        if (data.stkPlatnostDo.isNotEmpty) ...[
           const SizedBox(height: TokSpace.md),
           Container(
             width: double.infinity,
@@ -1601,66 +1546,11 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               border: Border.all(color: tok.line),
             ),
             padding: const EdgeInsets.all(TokSpace.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.air_outlined,
-                      size: 13, color: tok.textSecondary),
-                  const SizedBox(width: 6),
-                  Text('MĚŘENÍ EMISÍ',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: tok.textSecondary,
-                        letterSpacing: 0.8,
-                      )),
-                ]),
-                const SizedBox(height: TokSpace.sm),
-                if (data.emiseDatumProhlidky.isNotEmpty)
-                  _buildTrzniRadek(tok, 'Datum měření',
-                      fmtDatum(data.emiseDatumProhlidky)),
-                if (data.emisePlatnostDo.isNotEmpty)
-                  _buildStkRadekSBarvou(
-                      tok, 'Platné do', fmtDatum(data.emisePlatnostDo),
-                      emisePlatna ? Colors.green : Colors.red),
-              ],
-            ),
-          ),
-        ],
-
-        // Doklady vozidla
-        if (data.cisloTp.isNotEmpty || data.cisloOrv.isNotEmpty) ...[
-          const SizedBox(height: TokSpace.md),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: tok.surface,
-              borderRadius: BorderRadius.circular(TokRadius.xl),
-              border: Border.all(color: tok.line),
-            ),
-            padding: const EdgeInsets.all(TokSpace.lg),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(children: [
-                  Icon(Icons.description_outlined,
-                      size: 13, color: tok.textSecondary),
-                  const SizedBox(width: 6),
-                  Text('DOKLADY VOZIDLA',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: tok.textSecondary,
-                        letterSpacing: 0.8,
-                      )),
-                ]),
-                const SizedBox(height: TokSpace.sm),
-                if (data.cisloTp.isNotEmpty)
-                  _buildTrzniRadek(tok, 'Č. tech. průkazu', data.cisloTp),
-                if (data.cisloOrv.isNotEmpty)
-                  _buildTrzniRadek(tok, 'Č. ORV', data.cisloOrv),
-              ],
+            child: _buildStkRadekSBarvou(
+              tok,
+              'Platnost STK do',
+              fmtDatum(data.stkPlatnostDo),
+              stkPlatna ? Colors.green : Colors.red,
             ),
           ),
         ],

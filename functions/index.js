@@ -269,6 +269,22 @@ exports.stkVin = onCall(
           );
         }
         raw = await resp.json();
+        // Odpověď je obalená: { Status: 1, Data: { ... } }
+        if (raw && typeof raw === "object" && "Data" in raw) {
+          if (raw.Status !== 1 || !raw.Data) {
+            throw new HttpsError("not-found",
+                "Pro toto VIN nebyla nalezena data STK.");
+          }
+          raw = raw.Data;
+        }
+        // Záloha pro případ pole
+        if (Array.isArray(raw)) {
+          if (raw.length === 0) {
+            throw new HttpsError("not-found",
+                "Pro toto VIN nebyla nalezena data STK.");
+          }
+          raw = raw[0];
+        }
       } catch (err) {
         if (err instanceof HttpsError) throw err;
         throw new HttpsError("internal", "Nepodařilo se kontaktovat databázi STK.");

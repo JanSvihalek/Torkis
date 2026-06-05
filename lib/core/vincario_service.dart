@@ -81,28 +81,16 @@ class VincarioException implements Exception {
   String toString() => message;
 }
 
-/// Výsledek zjištění STK z api.dataovozidlech.cz (vehicletechnicaldata/v2).
+/// Výsledek z api.dataovozidlech.cz — vehicletechnicaldata/v2.
+/// API vrací { Status, Data } — Cloud Function rozbalí a uloží jen Data.
 class StkResult {
   final Map<String, dynamic> raw;
   const StkResult(this.raw);
 
-  String get vin => raw['vin']?.toString() ?? '';
-  String get znacka => raw['znacka']?.toString() ?? '';
-  String get obchodniOznaceni => raw['obchodniOznaceni']?.toString() ?? '';
-  String get cisloTp => raw['cisloTechnickehoPrukazu']?.toString() ?? '';
-  String get cisloOrv => raw['cisloOrv']?.toString() ?? '';
-
-  // STK
-  String get stkPlatnostDo => raw['stkPlatnostDo']?.toString() ?? '';
-  String get stkDatumProhlidky => raw['stkDatumProhlidky']?.toString() ?? '';
-  String get stkCisloProtokolu => raw['stkCisloProtokolu']?.toString() ?? '';
-  String get stkIdStanice => raw['stkIdStanice']?.toString() ?? '';
-  String get stkDruhProhlidky => raw['stkDruhProhlidky']?.toString() ?? '';
-  String get stkVysledek => raw['stkVysledek']?.toString() ?? '';
-
-  // Emise
-  String get emisePlatnostDo => raw['emisePlatnostDo']?.toString() ?? '';
-  String get emiseDatumProhlidky => raw['emiseDatumProhlidky']?.toString() ?? '';
+  String get znacka => raw['TovarniZnacka']?.toString() ?? '';
+  String get obchodniOznaceni => raw['ObchodniOznaceni']?.toString() ?? '';
+  String get stkPlatnostDo =>
+      raw['PravidelnaTechnickaProhlidkaDo']?.toString() ?? '';
 }
 
 /// Volání Vincario API přes Cloud Functions. Tajný sdílený klíč je pouze na
