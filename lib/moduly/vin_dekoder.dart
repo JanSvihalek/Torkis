@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../core/design_tokens.dart';
 import '../core/constants.dart';
 import '../core/vincario_service.dart';
+import '../l10n/app_localizations.dart';
 import 'auth_gate.dart';
 import 'predplatne_page.dart';
 import 'prijem/ocr_camera_page.dart';
@@ -219,19 +220,18 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
 
   Future<void> _dekodovat() async {
+    final l10n = AppLocalizations.of(context);
     final vin =
         _vinCtrl.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
     if (vin.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Zadejte VIN kód.'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.vinZadejteVin), backgroundColor: Colors.orange));
       return;
     }
     if (!_maKlice) return;
     if (_limitDosazen) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-            'Dosáhli jste měsíčního limitu $_pocetTentoMesic / $_limit dekódování. '
-            'Upgradujte plán pro pokračování.'),
+        content: Text(l10n.vinLimitDekodovani(_pocetTentoMesic, _limit!)),
         backgroundColor: Colors.red,
         duration: const Duration(seconds: 4),
       ));
@@ -315,18 +315,18 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     return buf.toString();
   }
 
-  String _formatCas(DateTime dt) {
+  String _formatCas(DateTime dt, AppLocalizations l10n) {
     final now = DateTime.now();
     final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return 'Právě teď';
-    if (diff.inMinutes < 60) return 'před ${diff.inMinutes} min';
+    if (diff.inMinutes < 1) return l10n.vinPraveTed;
+    if (diff.inMinutes < 60) return l10n.vinPredMinutami(diff.inMinutes);
     if (dt.day == now.day) {
       return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     }
     return '${dt.day}.${dt.month}.';
   }
 
-  List<_Sekce> _buildSekce(VincarioResult r) {
+  List<_Sekce> _buildSekce(VincarioResult r, AppLocalizations l10n) {
     final kW = _f(r, ['Engine Power (kW)']);
     final hp = _f(r, ['Engine Power (HP)']);
     final vykon = [
@@ -359,14 +359,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     ].where((s) => s.isNotEmpty).join(', ');
 
     final identifikace = filtr([
-      ('Značka', _f(r, ['Make'])),
-      ('Model', _f(r, ['Model'])),
-      ('Obchodní označení', _f(r, ['Commercial Name'])),
-      ('Rok výroby', _f(r, ['Model Year'])),
-      ('Karosérie', _f(r, ['Body Type'])),
-      ('Body', _f(r, ['Body'])),
-      ('Typ / varianta', _f(r, ['Trim', 'Series'])),
-      ('Místo výroby', mfAddr),
+      (l10n.vinFieldZnacka, _f(r, ['Make'])),
+      (l10n.vinFieldModel, _f(r, ['Model'])),
+      (l10n.vinFieldObchodniOznaceni, _f(r, ['Commercial Name'])),
+      (l10n.vinFieldRokVyroby, _f(r, ['Model Year'])),
+      (l10n.vinFieldKaroserie, _f(r, ['Body Type'])),
+      (l10n.vinFieldKaroserie, _f(r, ['Body'])),
+      (l10n.vinFieldTypVarianta, _f(r, ['Trim', 'Series'])),
+      (l10n.vinFieldMistoVyroby, mfAddr),
     ]);
 
     final torque = _f(r, ['Max Torque (Nm)']);
@@ -384,44 +384,44 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     final tazna = _f(r, ['Towing Capacity (kg)']);
 
     final motor = filtr([
-      ('Motorizace', _f(r, ['Engine'])),
-      ('Typ motoru', _f(r, ['Engine Type'])),
-      ('Kód motoru', engineCode),
-      ('Zdvihový objem', objemStr),
-      ('Počet válců', cylinders),
-      ('Výkon', vykon),
-      ('Max. točivý moment', torque.isNotEmpty ? '$torque Nm' : ''),
-      ('Palivo', _f(r, ['Fuel Type'])),
-      ('Převodovka', _f(r, ['Transmission'])),
-      ('Počet převodů', _f(r, ['Number of Gears', 'Gears'])),
-      ('Pohon', _f(r, ['Drive'])),
-      ('Max. rychlost', speed.isNotEmpty ? '$speed km/h' : ''),
+      (l10n.vinFieldMotorizace, _f(r, ['Engine'])),
+      (l10n.vinFieldTypMotoru, _f(r, ['Engine Type'])),
+      (l10n.vinFieldKodMotoru, engineCode),
+      (l10n.vinFieldZdvihObjem, objemStr),
+      (l10n.vinFieldPocetValcu, cylinders),
+      (l10n.vinFieldVykon, vykon),
+      (l10n.vinFieldTocivyMoment, torque.isNotEmpty ? '$torque Nm' : ''),
+      (l10n.vinFieldPalivo, _f(r, ['Fuel Type'])),
+      (l10n.vinFieldPrevodovka, _f(r, ['Transmission'])),
+      (l10n.vinFieldPocetPrevodu, _f(r, ['Number of Gears', 'Gears'])),
+      (l10n.vinFieldPohon, _f(r, ['Drive'])),
+      (l10n.vinFieldMaxRychlost, speed.isNotEmpty ? '$speed km/h' : ''),
     ]);
 
     final karoserie = filtr([
-      ('Typ karosérie', _f(r, ['Body Type'])),
-      ('Počet dveří', _f(r, ['Number of Doors'])),
-      ('Počet míst', _f(r, ['Number of Seats'])),
-      ('Provozní hmotnost', curb.isNotEmpty ? '$curb kg' : ''),
-      ('Max. hmotnost', gvw.isNotEmpty ? '${_formatCislo(gvw)} kg' : ''),
-      ('Tažná hmotnost', tazna.isNotEmpty ? '$tazna kg' : ''),
-      ('Rozvor náprav', rozvor.isNotEmpty ? '$rozvor mm' : ''),
-      ('Délka', delka.isNotEmpty ? '$delka mm' : ''),
-      ('Šířka', sirka.isNotEmpty ? '$sirka mm' : ''),
-      ('Výška', vyska.isNotEmpty ? '$vyska mm' : ''),
-      ('Objem nádrže', nadrz.isNotEmpty ? '$nadrz L' : ''),
+      (l10n.vinFieldTypKaroserie, _f(r, ['Body Type'])),
+      (l10n.vinFieldPocetDveri, _f(r, ['Number of Doors'])),
+      (l10n.vinFieldPocetMist, _f(r, ['Number of Seats'])),
+      (l10n.vinFieldProvozniHmotnost, curb.isNotEmpty ? '$curb kg' : ''),
+      (l10n.vinFieldMaxHmotnost, gvw.isNotEmpty ? '${_formatCislo(gvw)} kg' : ''),
+      (l10n.vinFieldTaznaHmotnost, tazna.isNotEmpty ? '$tazna kg' : ''),
+      (l10n.vinFieldRozvorNaprav, rozvor.isNotEmpty ? '$rozvor mm' : ''),
+      (l10n.vinFieldDelka, delka.isNotEmpty ? '$delka mm' : ''),
+      (l10n.vinFieldSirka, sirka.isNotEmpty ? '$sirka mm' : ''),
+      (l10n.vinFieldVyska, vyska.isNotEmpty ? '$vyska mm' : ''),
+      (l10n.vinFieldObjemNadrze, nadrz.isNotEmpty ? '$nadrz L' : ''),
     ]);
 
     final registrace = filtr([
-      ('1. registrace', reg1),
-      ('Emisní norma', _f(r, ['Emission Standard'])),
-      ('Emise CO₂', co2.isNotEmpty ? '$co2 g/km' : ''),
-      ('Spotřeba (komb.)', spotr.isNotEmpty ? '$spotr l/100 km' : ''),
-      ('Spotřeba ve městě',
+      (l10n.vinField1Registrace, reg1),
+      (l10n.vinFieldEmisniNorma, _f(r, ['Emission Standard'])),
+      (l10n.vinFieldEmiseCo2, co2.isNotEmpty ? '$co2 g/km' : ''),
+      (l10n.vinFieldSpotrebaKomb, spotr.isNotEmpty ? '$spotr l/100 km' : ''),
+      (l10n.vinFieldSpotrebaMesto,
           spotrMesto.isNotEmpty ? '$spotrMesto l/100 km' : ''),
-      ('Spotřeba mimo město',
+      (l10n.vinFieldSpotrebaDalnice,
           spotrDalnice.isNotEmpty ? '$spotrDalnice l/100 km' : ''),
-      ('Elektrický dojezd',
+      (l10n.vinFieldElektDojezd,
           elektDojezd.isNotEmpty ? '$elektDojezd km' : ''),
     ]);
 
@@ -447,7 +447,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       'Electric Range (km)',
     };
 
-    // Zbývající pole — labely přeloženy do češtiny přes _kPreloz.
+    // Zbývající pole — labely přeloženy přes _kPreloz.
     final ostatni = r.vsechnyUdaje
         .where((p) => !mapovane.contains(p.label))
         .map((p) => (_kPreloz[p.label] ?? p.label, p.value))
@@ -455,15 +455,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
     return [
       if (identifikace.isNotEmpty)
-        _Sekce('IDENTIFIKACE', Icons.label_outline_rounded, identifikace),
+        _Sekce(l10n.vinSekceIdentifikace, Icons.label_outline_rounded, identifikace),
       if (motor.isNotEmpty)
-        _Sekce('MOTOR A POHON', Icons.settings_outlined, motor),
+        _Sekce(l10n.vinSekceMotor, Icons.settings_outlined, motor),
       if (karoserie.isNotEmpty)
-        _Sekce('KAROSERIE A ROZMĚRY', Icons.directions_car_outlined, karoserie),
+        _Sekce(l10n.vinSekceKaroserie, Icons.directions_car_outlined, karoserie),
       if (registrace.isNotEmpty)
-        _Sekce('PALIVO A EMISE', Icons.cloud_outlined, registrace),
+        _Sekce(l10n.vinSekcePalivo, Icons.cloud_outlined, registrace),
       if (ostatni.isNotEmpty)
-        _Sekce('OSTATNÍ INFORMACE', Icons.data_object_rounded, ostatni),
+        _Sekce(l10n.vinSekceOstatni, Icons.data_object_rounded, ostatni),
     ];
   }
 
@@ -518,26 +518,25 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
 
   Future<void> _nacistTrzniHodnotu() async {
+    final l10n = AppLocalizations.of(context);
     final vin = _vinCtrl.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
     if (vin.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Zadejte VIN kód.'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.vinZadejteVin), backgroundColor: Colors.orange));
       return;
     }
     if (!_maKlice) return;
     if (_valueNeniVPlanu) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text(
-            'Zjištění tržní hodnoty není součástí zkušební verze — odemknete ho v některém z placených plánů.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l10n.vinTrzniChybaVerze),
         backgroundColor: TokColors.accent,
-        duration: Duration(seconds: 4),
+        duration: const Duration(seconds: 4),
       ));
       return;
     }
     if (_valueLimitDosazen) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-            'Dosáhli jste měsíčního limitu $_pocetValueTentoMesic / $_valueLimit zjištění.'),
+        content: Text(l10n.vinLimitValue(_pocetValueTentoMesic, _valueLimit!)),
         backgroundColor: Colors.red,
         duration: const Duration(seconds: 4),
       ));
@@ -596,11 +595,12 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       });
 
   Future<void> _nacistStk() async {
+    final l10n = AppLocalizations.of(context);
     final vin =
         _vinCtrl.text.trim().toUpperCase().replaceAll(RegExp(r'\s+'), '');
     if (vin.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Zadejte VIN kód.'), backgroundColor: Colors.orange));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.vinZadejteVin), backgroundColor: Colors.orange));
       return;
     }
     setState(() {
@@ -623,9 +623,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Future<void> _scanVinAkce() async {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text(
-              'Skenování funguje pouze v nainstalované aplikaci (APK/iOS).'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).vinSkenJenApk),
           backgroundColor: Colors.orange));
       return;
     }
@@ -683,6 +682,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildMainColumn(BuildContext context, {required bool wide}) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final jeVysledek = _rezimValue == 1
         ? (_trzniHodnota != null && !_loadingTrzni)
         : _rezimValue == 2
@@ -705,21 +705,21 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         if (!jeVysledek && !jeNacitani) ...[
           // Přepínač módu
           SegmentedButton<int>(
-            segments: const [
+            segments: [
               ButtonSegment(
                 value: 0,
-                icon: Icon(Icons.manage_search_rounded, size: 16),
-                label: Text('Dekódování VIN'),
+                icon: const Icon(Icons.manage_search_rounded, size: 16),
+                label: Text(l10n.vinDekoderTabDekodovani),
               ),
               ButtonSegment(
                 value: 1,
-                icon: Icon(Icons.bar_chart_rounded, size: 16),
-                label: Text('Tržní hodnota'),
+                icon: const Icon(Icons.bar_chart_rounded, size: 16),
+                label: Text(l10n.vinDekoderTabTrzniHodnota),
               ),
               ButtonSegment(
                 value: 2,
-                icon: Icon(Icons.fact_check_outlined, size: 16),
-                label: Text('Zjištění STK'),
+                icon: const Icon(Icons.fact_check_outlined, size: 16),
+                label: Text(l10n.vinDekoderTabStk),
               ),
             ],
             selected: {_rezimValue},
@@ -738,10 +738,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           const SizedBox(height: TokSpace.lg),
           Text(
             _rezimValue == 1
-                ? 'Tržní hodnota'
+                ? l10n.vinTrzniHodnotaTitle
                 : _rezimValue == 2
-                    ? 'Zjištění STK'
-                    : 'Dekodér VIN',
+                    ? l10n.vinStkTitle
+                    : l10n.vinDekoderTitle,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -753,36 +753,36 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           const SizedBox(height: 4),
           Text(
             _rezimValue == 1
-                ? 'Odhad tržní ceny vozidla z dat evropského trhu'
+                ? l10n.vinTrzniSubtitle
                 : _rezimValue == 2
-                    ? 'Přehled technických prohlídek vozidla z registru'
-                    : 'Rychlé vyhledání specifikace vozu z VIN kódu',
+                    ? l10n.vinStkSubtitle
+                    : l10n.vinDekoderSubtitle,
             style: TextStyle(fontSize: 13, color: tok.textSecondary),
           ),
           const SizedBox(height: TokSpace.lg),
-          _buildScanTile(tok),
+          _buildScanTile(tok, l10n),
           const SizedBox(height: TokSpace.md),
-          _buildManualInput(tok),
+          _buildManualInput(tok, l10n),
           if (_rezimValue == 1 && _valueNeniVPlanu) ...[
             const SizedBox(height: TokSpace.md),
-            _buildValueUpsell(tok),
+            _buildValueUpsell(tok, l10n),
           ] else if (_rezimValue == 1
               ? (!_loadingPocetValue && _valueLimit != null)
               : (_rezimValue == 0 && !_loadingPocet && _limit != null)) ...[
             const SizedBox(height: TokSpace.md),
-            _buildUsageIndicator(tok),
+            _buildUsageIndicator(tok, l10n),
           ],
           if (_rezimValue == 2) ...[
             const SizedBox(height: TokSpace.md),
-            _buildStkInfoBanner(tok),
+            _buildStkInfoBanner(tok, l10n),
           ],
           if (!_maKlice) ...[
             const SizedBox(height: TokSpace.md),
-            _buildKeysBanner(tok),
+            _buildKeysBanner(tok, l10n),
           ],
           if (jeChyba) ...[
             const SizedBox(height: TokSpace.md),
-            _buildErrorCard(tok, _rezimValue == 1
+            _buildErrorCard(tok, l10n, _rezimValue == 1
                 ? _trzniError!
                 : _rezimValue == 2
                     ? _stkError!
@@ -806,7 +806,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   // ── Scan tile ────────────────────────────────────────────────────────────────
 
-  Widget _buildScanTile(TorkisTokens tok) {
+  Widget _buildScanTile(TorkisTokens tok, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: TokColors.ink,
@@ -833,10 +833,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               children: [
                 Text(
                   _rezimValue == 1
-                      ? 'Skenovat VIN pro tržní hodnotu'
+                      ? l10n.vinSkenTitleTrzni
                       : _rezimValue == 2
-                          ? 'Skenovat VIN pro STK'
-                          : 'Skenovat VIN kód',
+                          ? l10n.vinSkenTitleStk
+                          : l10n.vinSkenTitleVin,
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 15,
@@ -844,10 +844,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                 const SizedBox(height: 2),
                 Text(
                   _rezimValue == 1
-                      ? 'Zjistí odhad tržní ceny vozu podle naskenovaného nebo zadaného VIN z dat evropského trhu'
+                      ? l10n.vinSkenPopisTrzni
                       : _rezimValue == 2
-                          ? 'Načte data o technických prohlídkách vozidla z registru'
-                          : 'Automaticky načte specifikace vozu podle naskenovaného nebo zadaného VIN',
+                          ? l10n.vinSkenPopisStk
+                          : l10n.vinSkenPopisVin,
                   style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.50),
                       fontSize: 12),
@@ -867,14 +867,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               textStyle:
                   const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
-            child: const Text('Spustit sken →'),
+            child: Text(l10n.vinSkenTlacitko),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildManualInput(TorkisTokens tok) {
+  Widget _buildManualInput(TorkisTokens tok, AppLocalizations l10n) {
     return TextField(
       controller: _vinCtrl,
       textCapitalization: TextCapitalization.characters,
@@ -896,7 +896,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         }
       },
       decoration: InputDecoration(
-        hintText: 'Zadat VIN ručně (např. TMBJJ7NE5K…)',
+        hintText: l10n.vinInputHint,
         hintStyle: TextStyle(
             fontSize: 13,
             color: tok.textSecondary,
@@ -913,10 +913,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                         ? _nacistStk
                         : _dekodovat,
                 tooltip: _rezimValue == 1
-                    ? 'Zjistit hodnotu'
+                    ? l10n.vinTooltipHodnota
                     : _rezimValue == 2
-                        ? 'Zjistit STK'
-                        : 'Dekódovat',
+                        ? l10n.vinTooltipStk
+                        : l10n.vinTooltipDekodovat,
               )
             : null,
         filled: true,
@@ -937,7 +937,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   }
 
   // Upsell pro Trial — tržní hodnota není ve zkušební verzi, vede na plány.
-  Widget _buildValueUpsell(TorkisTokens tok) {
+  Widget _buildValueUpsell(TorkisTokens tok, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(TokSpace.md),
       decoration: BoxDecoration(
@@ -954,14 +954,13 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Tržní hodnota je v placených plánech',
+                Text(l10n.vinUpsellTitle,
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: tok.textPrimary)),
                 const SizedBox(height: 2),
-                Text(
-                    'Ve zkušební verzi není dostupná. Odemknete ji už v plánu Basic.',
+                Text(l10n.vinUpsellSubtitle,
                     style:
                         TextStyle(fontSize: 11, color: tok.textSecondary)),
               ],
@@ -974,14 +973,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               MaterialPageRoute(builder: (_) => const PredplatnePage()),
             ),
             style: TextButton.styleFrom(foregroundColor: TokColors.accent),
-            child: const Text('Plány'),
+            child: Text(l10n.vinUpsellPlany),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUsageIndicator(TorkisTokens tok) {
+  Widget _buildUsageIndicator(TorkisTokens tok, AppLocalizations l10n) {
     final limit = _rezimValue == 1 ? _valueLimit! : _limit!;
     final pocet = _rezimValue == 1 ? _pocetValueTentoMesic : _pocetTentoMesic;
     final pct = (pocet / limit).clamp(0.0, 1.0);
@@ -1012,8 +1011,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               Expanded(
                 child: Text(
                     _rezimValue == 1
-                        ? 'Tržní hodnota tento měsíc'
-                        : 'Dekódování VIN tento měsíc',
+                        ? l10n.vinLimitTrzniMesic
+                        : l10n.vinLimitDekodovaniMesic,
                     style: TextStyle(
                         fontSize: 12, color: tok.textSecondary)),
               ),
@@ -1041,9 +1040,9 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           ),
           if (_rezimValue == 1 ? _valueLimitDosazen : _limitDosazen) ...[
             const SizedBox(height: 6),
-            const Text(
-              'Měsíční limit vyčerpán. Upgradujte plán pro pokračování.',
-              style: TextStyle(
+            Text(
+              l10n.vinLimitVycerpan,
+              style: const TextStyle(
                   fontSize: 11,
                   color: Colors.red,
                   fontWeight: FontWeight.w500),
@@ -1054,7 +1053,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
-  Widget _buildKeysBanner(TorkisTokens tok) {
+  Widget _buildKeysBanner(TorkisTokens tok, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(TokSpace.lg),
       decoration: BoxDecoration(
@@ -1068,8 +1067,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           const SizedBox(width: TokSpace.md),
           Expanded(
             child: Text(
-              'Vincario API klíče nejsou nastaveny. Doplňte je v Nastavení servisu, '
-              'aby dekódování fungovalo.',
+              l10n.vinVincarioKlice,
               style: TextStyle(fontSize: 13, color: tok.textPrimary),
             ),
           ),
@@ -1078,7 +1076,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
-  Widget _buildStkInfoBanner(TorkisTokens tok) {
+  Widget _buildStkInfoBanner(TorkisTokens tok, AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(TokSpace.md),
       decoration: BoxDecoration(
@@ -1093,9 +1091,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           const SizedBox(width: TokSpace.sm),
           Expanded(
             child: Text(
-              'Data pocházejí z veřejného registru vozidel. '
-              'Dostupnost a aktuálnost se liší — u některých vozidel '
-              'nemusí být STK evidována.',
+              l10n.vinStkInfoBanner,
               style: TextStyle(fontSize: 12, color: tok.textPrimary, height: 1.4),
             ),
           ),
@@ -1104,7 +1100,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
-  Widget _buildErrorCard(TorkisTokens tok, String msg) {
+  Widget _buildErrorCard(TorkisTokens tok, AppLocalizations l10n, String msg) {
     return Container(
       padding: const EdgeInsets.all(TokSpace.lg),
       decoration: BoxDecoration(
@@ -1117,7 +1113,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           const Icon(Icons.error_outline_rounded, color: Colors.red, size: 20),
           const SizedBox(width: TokSpace.md),
           Expanded(
-            child: Text('Nepodařilo se dekódovat VIN: $msg',
+            child: Text(l10n.vinChybaDekodovani(msg),
                 style: TextStyle(fontSize: 13, color: tok.textPrimary)),
           ),
         ],
@@ -1130,6 +1126,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   Widget _buildVehicleResult(
       BuildContext context, TorkisTokens tok, VincarioResult r,
       {required bool wide}) {
+    final l10n = AppLocalizations.of(context);
     final znacka = _f(r, ['Make']);
     final model = _f(r, ['Model']);
     final rok = _f(r, ['Model Year']);
@@ -1146,7 +1143,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     final podnadpis =
         [karoserie, motor, rok].where((s) => s.isNotEmpty).join(' · ');
 
-    final sekce = _buildSekce(r);
+    final sekce = _buildSekce(r, l10n);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1244,7 +1241,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               child: FilledButton.icon(
                 onPressed: _reset,
                 icon: const Icon(Icons.qr_code_scanner_rounded, size: 15),
-                label: const Text('Nový sken'),
+                label: Text(l10n.vinNovySken),
                 style: FilledButton.styleFrom(
                   backgroundColor: TokColors.accent,
                   foregroundColor: Colors.white,
@@ -1266,15 +1263,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           Row(
             children: [
               if (reg1.isNotEmpty)
-                Expanded(child: _buildStatPill(tok, '1. registrace', reg1)),
+                Expanded(child: _buildStatPill(tok, l10n.vinField1Registrace, reg1)),
               if (motor.isNotEmpty) ...[
                 if (reg1.isNotEmpty) const SizedBox(width: TokSpace.sm),
-                Expanded(child: _buildStatPill(tok, 'Motorizace', motor)),
+                Expanded(child: _buildStatPill(tok, l10n.vinFieldMotorizace, motor)),
               ],
               if (prevodovka.isNotEmpty) ...[
                 if (reg1.isNotEmpty || motor.isNotEmpty)
                   const SizedBox(width: TokSpace.sm),
-                Expanded(child: _buildStatPill(tok, 'Převodovka', prevodovka)),
+                Expanded(child: _buildStatPill(tok, l10n.vinFieldPrevodovka, prevodovka)),
               ],
             ],
           ),
@@ -1294,6 +1291,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildValueResult(
       BuildContext context, TorkisTokens tok, VincarioMarketValue data) {
+    final l10n = AppLocalizations.of(context);
     final nadpis = [data.make, data.model]
         .where((s) => s.isNotEmpty)
         .join(' ');
@@ -1372,7 +1370,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               child: FilledButton.icon(
                 onPressed: _reset,
                 icon: const Icon(Icons.qr_code_scanner_rounded, size: 15),
-                label: const Text('Nový sken'),
+                label: Text(l10n.vinNovySken),
                 style: FilledButton.styleFrom(
                   backgroundColor: TokColors.accent,
                   foregroundColor: Colors.white,
@@ -1405,7 +1403,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                   const Icon(Icons.bar_chart_rounded,
                       size: 13, color: TokColors.accent),
                   const SizedBox(width: 6),
-                  Text('TRŽNÍ HODNOTA',
+                  Text(l10n.vinTrzniHodnotaHeader,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -1417,7 +1415,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                 ],
               ),
               const SizedBox(height: TokSpace.md),
-              _buildTrzniData(tok, data),
+              _buildTrzniData(tok, data, l10n),
             ],
           ),
         ),
@@ -1430,6 +1428,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildStkResult(
       BuildContext context, TorkisTokens tok, StkResult data) {
+    final l10n = AppLocalizations.of(context);
     DateTime? parseDatum(String s) {
       if (s.isEmpty) return null;
       try {
@@ -1514,10 +1513,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                             ),
                             Text(
                               data.stkPlatnostDo.isEmpty
-                                  ? 'STK — datum neznámé'
+                                  ? l10n.vinStkPlatnostNeznama
                                   : stkPlatna
-                                      ? 'STK platná ještě $stkDni dní'
-                                      : 'STK neplatná (prošlá o ${-(stkDni!)} dní)',
+                                      ? l10n.vinStkPlatnaJesteXDni(stkDni!)
+                                      : l10n.vinStkNeplatna(-(stkDni!)),
                               style: TextStyle(
                                   fontSize: 13,
                                   color: data.stkPlatnostDo.isEmpty
@@ -1550,7 +1549,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               child: FilledButton.icon(
                 onPressed: _reset,
                 icon: const Icon(Icons.qr_code_scanner_rounded, size: 15),
-                label: const Text('Nový sken'),
+                label: Text(l10n.vinNovySken),
                 style: FilledButton.styleFrom(
                   backgroundColor: TokColors.accent,
                   foregroundColor: Colors.white,
@@ -1578,7 +1577,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             padding: const EdgeInsets.all(TokSpace.lg),
             child: _buildStkRadekSBarvou(
               tok,
-              'Platnost STK do',
+              l10n.vinStkPlatnostDo,
               fmtDatum(data.stkPlatnostDo),
               stkPlatna ? Colors.green : Colors.red,
             ),
@@ -1645,7 +1644,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
-  Widget _buildTrzniData(TorkisTokens tok, VincarioMarketValue data) {
+  Widget _buildTrzniData(TorkisTokens tok, VincarioMarketValue data, AppLocalizations l10n) {
     if (_mena == 'CZK' && _kurz == null) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: TokSpace.md),
@@ -1655,7 +1654,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     final eu = data.europePrice;
     final odo = data.europeOdometer;
     if (eu == null) {
-      return Text('Evropská data nejsou k dispozici.',
+      return Text(l10n.vinTrzniDataNedostupna,
           style: TextStyle(fontSize: 13, color: tok.textSecondary));
     }
 
@@ -1702,7 +1701,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             const SizedBox(width: TokSpace.sm),
             Padding(
               padding: const EdgeInsets.only(bottom: 3),
-              child: Text('medián',
+              child: Text(l10n.vinTrzniMedian,
                   style: TextStyle(
                       fontSize: 12, color: tok.textSecondary)),
             ),
@@ -1712,34 +1711,34 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
         // Cenový rozsah — vizuální bar
         if (below != null && median != null && above != null) ...[
-          _buildCenovyBar(tok, below, median, above, currency),
+          _buildCenovyBar(tok, below, median, above, currency, l10n),
           const SizedBox(height: TokSpace.md),
         ],
 
         // Detailní hodnoty
         Divider(height: 1, color: tok.line),
         const SizedBox(height: TokSpace.sm),
-        _buildTrzniRadek(tok, 'Průměrná cena',
+        _buildTrzniRadek(tok, l10n.vinTrzniPrumernaCena,
             avg != null ? '${fmt(avg)} $currency' : '—'),
         if (odomAvg != null)
-          _buildTrzniRadek(tok, 'Průměrný nájezd',
+          _buildTrzniRadek(tok, l10n.vinTrzniPrumernyNajezd,
               '${fmt(odomAvg)} $odomUnit'),
         if (count != null)
-          _buildTrzniRadek(tok, 'Počet vzorků', '$count inzerátů'),
+          _buildTrzniRadek(tok, l10n.vinTrzniPocetVzorku, '$count'),
         if (data.periodFrom.isNotEmpty && data.periodTo.isNotEmpty)
           _buildTrzniRadek(
-              tok, 'Období dat', '${data.periodFrom} – ${data.periodTo}'),
+              tok, l10n.vinTrzniObdobiDat, '${data.periodFrom} – ${data.periodTo}'),
 
         // Zdroj dat
         const SizedBox(height: TokSpace.sm),
-        Text('Evropský trh · Vincario Market Value',
+        Text(l10n.vinTrzniZdroj,
             style: TextStyle(fontSize: 10, color: tok.textSecondary)),
       ],
     );
   }
 
   Widget _buildCenovyBar(TorkisTokens tok, num below, num median, num above,
-      String currency) {
+      String currency, AppLocalizations l10n) {
     final total = above - below;
     if (total <= 0) return const SizedBox.shrink();
     final leftRatio = ((median - below) / total).clamp(0.0, 1.0);
@@ -1771,9 +1770,9 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('od ${_fmtCena(below)} $currency',
+            Text(l10n.vinTrzniOd(_fmtCena(below), currency),
                 style: TextStyle(fontSize: 10, color: tok.textSecondary)),
-            Text('do ${_fmtCena(above)} $currency',
+            Text(l10n.vinTrzniDo(_fmtCena(above), currency),
                 style: TextStyle(fontSize: 10, color: tok.textSecondary)),
           ],
         ),
@@ -1932,6 +1931,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildHistorieSidebar(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final stream = _rezimValue == 1
         ? _valueStream
         : _rezimValue == 2
@@ -1948,7 +1948,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(TokSpace.xl),
-              child: Text('Nepodařilo se načíst historii.',
+              child: Text(l10n.vinChybaHistorie,
                   style:
                       TextStyle(fontSize: 12, color: tok.textSecondary),
                   textAlign: TextAlign.center),
@@ -2000,15 +2000,15 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               ? '${vin.substring(0, 7)}…${vin.substring(vin.length - 4)}'
               : vin;
           headerSub = zobrazit.isEmpty
-              ? 'Nové vozidlo'
+              ? l10n.vinHistorieNoveVozidlo
               : zobrazit.length == 1
-                  ? 'Poprvé dekódováno'
-                  : 'Dekódováno ${zobrazit.length}×';
+                  ? l10n.vinHistoriePoprve
+                  : l10n.vinHistorieDekodovanoX(zobrazit.length);
         } else {
-          headerTitle = 'Historie skenů';
+          headerTitle = l10n.vinHistorieNadpis;
           headerSub = dnes > 0
-              ? 'Dnes · $dnes dekódovaných VIN'
-              : 'Poslední skeny';
+              ? l10n.vinHistorieDnes(dnes)
+              : l10n.vinHistoriePosledni;
         }
 
         return Column(
@@ -2043,8 +2043,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                         GestureDetector(
                           onTap: () =>
                               setState(() => _dekovanyVin = null),
-                          child: const Text('Vše',
-                              style: TextStyle(
+                          child: Text(l10n.vinHistorieVse,
+                              style: const TextStyle(
                                   fontSize: 11,
                                   color: TokColors.accent,
                                   fontWeight: FontWeight.w600)),
@@ -2067,10 +2067,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                         child: Text(
                           snap.connectionState ==
                                   ConnectionState.waiting
-                              ? 'Načítání…'
+                              ? l10n.vinHistorieNacitani
                               : isFiltered
-                                  ? 'Toto vozidlo nebylo dříve dekódováno.'
-                                  : 'Zatím žádné skeny.',
+                                  ? l10n.vinTotoVozidloNebyloDekodovano
+                                  : l10n.vinHistorieZadneSkeny,
                           style: TextStyle(
                               fontSize: 13, color: tok.textSecondary),
                           textAlign: TextAlign.center,
@@ -2108,6 +2108,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
                         return _buildHistoriePolozka(
                           tok,
+                          l10n: l10n,
                           nazev: nazev,
                           detail: detail,
                           vinTrunc: vinTrunc,
@@ -2132,6 +2133,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
 
   Widget _buildHistoriePolozka(
     TorkisTokens tok, {
+    required AppLocalizations l10n,
     required String nazev,
     required String detail,
     required String vinTrunc,
@@ -2177,7 +2179,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      nazev.isNotEmpty ? nazev : 'Neznámé vozidlo',
+                      nazev.isNotEmpty ? nazev : l10n.vinHistorieNezname,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -2201,7 +2203,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
                 ),
               ),
               if (cas != null)
-                Text(_formatCas(cas),
+                Text(_formatCas(cas, l10n),
                     style: TextStyle(fontSize: 10, color: tok.textSecondary)),
             ],
           ),

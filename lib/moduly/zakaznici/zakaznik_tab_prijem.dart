@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../historie_prijmu/prijem_detail.dart';
 import '../../core/shared_widgets.dart';
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 
 class ZakaznikPrijemTab extends StatelessWidget {
   final bool isDark;
@@ -24,6 +25,7 @@ class ZakaznikPrijemTab extends StatelessWidget {
           .where('servis_id', isEqualTo: servisId)
           .snapshots(),
       builder: (context, snap) {
+        final l10n = AppLocalizations.of(context);
         if (snap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -40,12 +42,12 @@ class ZakaznikPrijemTab extends StatelessWidget {
         }).toList();
 
         if (docs.isEmpty) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.all(30),
+              padding: const EdgeInsets.all(30),
               child: Text(
-                  'Zákazník zatím nemá žádné záznamy o příjmu.',
-                  style: TextStyle(color: Colors.grey)),
+                  l10n.zakZadneZaznamy,
+                  style: const TextStyle(color: Colors.grey)),
             ),
           );
         }
@@ -122,7 +124,7 @@ class ZakaznikPrijemTab extends StatelessWidget {
                           Text(
                             spz.isNotEmpty
                                 ? spz
-                                : 'Zakázka ${data['cislo_zakazky']}',
+                                : l10n.zakZakazka(data['cislo_zakazky'].toString()),
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16),
@@ -136,7 +138,7 @@ class ZakaznikPrijemTab extends StatelessWidget {
                       ),
                       if (spz.isNotEmpty)
                         Text(
-                            'Zakázka ${data['cislo_zakazky']}',
+                            l10n.zakZakazka(data['cislo_zakazky'].toString()),
                             style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[500])),
@@ -169,7 +171,7 @@ class ZakaznikPrijemTab extends StatelessWidget {
                               poskozeni.first == 'Neuvedeno')) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'Poškození: ${poskozeni.join(', ')}',
+                          l10n.zakPoskozeni(poskozeni.join(', ')),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
@@ -214,10 +216,10 @@ class ZakaznikPrijemTab extends StatelessWidget {
                         children: [
                           if (pocetFotek > 0)
                             buildBadge(Icons.photo_library,
-                                '$pocetFotek foto', Colors.blue),
+                                l10n.zakFotoKs(pocetFotek), Colors.blue),
                           if (maPodpis) ...[
                             const SizedBox(width: 6),
-                            buildBadge(Icons.draw, 'Podepsáno',
+                            buildBadge(Icons.draw, l10n.zakPodepsano,
                                 Colors.green),
                           ],
                           if (prijal.isNotEmpty) ...[

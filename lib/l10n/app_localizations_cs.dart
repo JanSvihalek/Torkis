@@ -249,4 +249,1074 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get trialBenefitData =>
       'Vaše data jsou vždy vaše — export kdykoli zdarma.';
+
+  @override
+  String get vozidloStatTacho => 'TACHOMETR';
+
+  @override
+  String get vozidloStatStkDo => 'STK DO';
+
+  @override
+  String get vozidloStatPrijmu => 'PŘÍJMŮ';
+
+  @override
+  String get vozidloStkPlatna => 'STK platná';
+
+  @override
+  String get vozidloStkProsla => 'STK prošlá';
+
+  @override
+  String vozidloStkVyprsiBehemMesicu(String mesic, String rok, int pocet) {
+    return 'Vyprší $mesic/$rok · zbývá $pocet měsíců';
+  }
+
+  @override
+  String vozidloStkVyprsela(String mesic, String rok) {
+    return 'Vypršela $mesic/$rok';
+  }
+
+  @override
+  String get vozidloTechnickeUdaje => 'Technické údaje';
+
+  @override
+  String get vozidloZnackaModel => 'Značka & Model';
+
+  @override
+  String get vozidloMotorizace => 'Motorizace';
+
+  @override
+  String get vozidloVin => 'VIN';
+
+  @override
+  String get vozidloRokVyroby => 'Rok výroby';
+
+  @override
+  String get vozidloPalivo => 'Palivo';
+
+  @override
+  String get vozidloPrevodovka => 'Převodovka';
+
+  @override
+  String get vozidloTachometrLabel => 'Tachometr';
+
+  @override
+  String get vozidloMajitel => 'Majitel vozidla';
+
+  @override
+  String get vozidloJmeno => 'Jméno';
+
+  @override
+  String get vozidloTelefon => 'Telefon';
+
+  @override
+  String get vozidloEmail => 'E-mail';
+
+  @override
+  String get vozidloVolat => 'Volat';
+
+  @override
+  String get vozidlaTitle => 'Databáze vozidel';
+
+  @override
+  String get vozidlaSubtitle => 'Přehled všech servisovaných aut.';
+
+  @override
+  String get vozidlaHledatHint => 'Hledat SPZ, Značku nebo VIN...';
+
+  @override
+  String get vozidlaSkenSpzTooltip => 'Naskenovat SPZ fotoaparátem';
+
+  @override
+  String get vozidlaZadnaVozidla => 'Zatím nemáte v databázi žádná vozidla.';
+
+  @override
+  String get vozidlaNejstePrihlaseni => 'Nejste přihlášeni.';
+
+  @override
+  String get vozidlaSkenJenApp =>
+      'Skenování funguje pouze v nainstalované aplikaci (APK/iOS).';
+
+  @override
+  String get vozidloDetailUprava => 'Úprava vozidla';
+
+  @override
+  String get vozidloDetailSpz => 'SPZ';
+
+  @override
+  String get vozidloDetailZnacka => 'Značka';
+
+  @override
+  String get vozidloDetailModel => 'Model';
+
+  @override
+  String get vozidloDetailTachoKm => 'Tachometr (km)';
+
+  @override
+  String get vozidloDetailPlatnostStk => 'Platnost STK';
+
+  @override
+  String get vozidloDetailStkMesic => 'Měsíc (MM)';
+
+  @override
+  String get vozidloDetailStkRok => 'Rok (YYYY)';
+
+  @override
+  String get vozidloDetailUlozitZmeny => 'ULOŽIT ZMĚNY';
+
+  @override
+  String get vozidloDetailSpzExistuje => 'Vozidlo s touto SPZ již existuje!';
+
+  @override
+  String vozidloDetailPrejmenovano(String spz) {
+    return 'Vozidlo přejmenováno na $spz. Historie byla zachována.';
+  }
+
+  @override
+  String get vozidloDetailNenalezeno => 'Vozidlo nenalezeno.';
+
+  @override
+  String get vozidloDetailBezSpz => 'Vozidlo bez SPZ';
+
+  @override
+  String get vozidloDetailLabel => 'VOZIDLO';
+
+  @override
+  String get vozidloTabInfo => 'Info';
+
+  @override
+  String get vozidloTabZaznamy => 'Záznamy';
+
+  @override
+  String get vozidloSmazatAkce => 'Smazat vozidlo';
+
+  @override
+  String get vozidloSmazatDialogTitle => 'Smazat vozidlo?';
+
+  @override
+  String get vozidloSmazatDialogText =>
+      'Vozidlo bude odebráno z adresáře. Historie zakázek zůstane zachována.';
+
+  @override
+  String get vozidloSmazano => 'Vozidlo bylo smazáno.';
+
+  @override
+  String get vozidloSmazatBtn => 'Smazat';
+
+  @override
+  String get prijemHelperTelefon => 'Telefonní číslo';
+
+  @override
+  String get prijemHelperPredvolba => 'Vyberte předvolbu';
+
+  @override
+  String get prijemStavTitle => 'Stav vozidla';
+
+  @override
+  String get prijemStavTacho => 'Stav tachometru (km)';
+
+  @override
+  String prijemStavNadrz(int value) {
+    return 'Stav paliva v nádrži ($value %)';
+  }
+
+  @override
+  String get prijemStavPoskozeni => 'Zjištěná poškození (lze vybrat více)';
+
+  @override
+  String get prijemStavVlastniPopis => 'Vlastní popis poškození...';
+
+  @override
+  String get prijemStavPridat => 'Přidat vlastní poškození';
+
+  @override
+  String get prijemStavPlatnostStk => 'Platnost STK';
+
+  @override
+  String get prijemStavMesic => 'Měsíc';
+
+  @override
+  String get prijemStavRok => 'Rok';
+
+  @override
+  String get prijemStavPneu => 'Hloubka dezénu pneu (v mm)';
+
+  @override
+  String get prijemStavLevaPreh => 'Levá př.';
+
+  @override
+  String get prijemStavPravaPreh => 'Pravá př.';
+
+  @override
+  String get prijemStavLevaZad => 'Levá zad.';
+
+  @override
+  String get prijemStavPravaZad => 'Pravá zad.';
+
+  @override
+  String get prijemStavPoznamky => 'Dodatečné poznámky k vozu';
+
+  @override
+  String get prijemStavPoznamkyHint => 'Jakékoliv další detaily k příjmu...';
+
+  @override
+  String get prijemZakaznikTitle => 'Údaje o zákazníkovi';
+
+  @override
+  String get prijemZakaznikJmeno => 'Jméno a příjmení / Název firmy';
+
+  @override
+  String get prijemZakaznikHledat => 'Hledat uloženého zákazníka';
+
+  @override
+  String get prijemZakaznikIco => 'IČO (ARES vyhledávání)';
+
+  @override
+  String get prijemZakaznikHledatAres => 'Hledat v ARES';
+
+  @override
+  String get prijemZakaznikPravniForma => 'Právní forma';
+
+  @override
+  String get prijemZakaznikUlice => 'Ulice a číslo';
+
+  @override
+  String get prijemZakaznikMesto => 'Město';
+
+  @override
+  String get prijemZakaznikPsc => 'PSČ';
+
+  @override
+  String get prijemZakaznikEmail => 'E-mail';
+
+  @override
+  String get prijemZakaznikFyzicka => 'Fyzická osoba';
+
+  @override
+  String get prijemZakaznikOsvc => 'OSVČ';
+
+  @override
+  String get prijemVozidloTitle => 'Záznam vozidla';
+
+  @override
+  String get prijemVozidloNapoveda =>
+      'Naskenujte VIN nebo SPZ, nebo údaje doplňte ručně.';
+
+  @override
+  String get prijemVozidloZeme => 'Země';
+
+  @override
+  String get prijemVozidloSpz => 'SPZ vozidla';
+
+  @override
+  String get prijemVozidloHledatSpz => 'Hledat SPZ v databázi';
+
+  @override
+  String get prijemVozidloHledatSpzSub =>
+      'Najít dříve uložené vozidlo podle SPZ';
+
+  @override
+  String get prijemVozidloVin => 'VIN kód';
+
+  @override
+  String get prijemVozidloHledatVin => 'Hledat VIN v databázi';
+
+  @override
+  String get prijemVozidloHledatVinSub =>
+      'Najít dříve uložené vozidlo podle VIN';
+
+  @override
+  String get prijemVozidloDekodovat => 'Dekódovat VIN online';
+
+  @override
+  String get prijemVozidloDekodovatSub =>
+      'Doplnit značku, model, motorizaci a STK';
+
+  @override
+  String get prijemVozidloZnackaHint => 'Značka (např. Škoda)';
+
+  @override
+  String get prijemVozidloModelHint => 'Model (např. Octavia)';
+
+  @override
+  String get prijemVozidloSkenovat => 'Skenovat VIN/SPZ';
+
+  @override
+  String get prijemVozidloSkenSub => 'Automaticky rozpozná typ kódu';
+
+  @override
+  String get prijemVozidloRozlozeniPodSebou => 'Pod sebou';
+
+  @override
+  String get prijemVozidloRozlozeniVMrizce => 'V mřížce';
+
+  @override
+  String get prijemVozidloTypZaznamu => 'Typ záznamu';
+
+  @override
+  String get prijemVozidloCisloZaznamu => 'Číslo záznamu';
+
+  @override
+  String get prijemVozidloGenerovat => 'Vygenerovat nové číslo';
+
+  @override
+  String get prijemVozidloUlozenaVozidla => 'Zákazník má uložená tato vozidla';
+
+  @override
+  String get prijemVozidloRokVyroby => 'Rok výroby';
+
+  @override
+  String get prijemVozidloMotorizaceHint => 'Motorizace (např. 2.0 TDI)';
+
+  @override
+  String get prijemVozidloTypPaliva => 'Typ paliva';
+
+  @override
+  String get prijemVozidloPrevodovka => 'Převodovka';
+
+  @override
+  String get prijemVozidloTypKaroserie => 'Typ karosérie';
+
+  @override
+  String get prijemVozidloBenzin => 'Benzín';
+
+  @override
+  String get prijemVozidloNafta => 'Nafta';
+
+  @override
+  String get prijemVozidloElektro => 'Elektro';
+
+  @override
+  String get prijemVozidloHybrid => 'Hybrid';
+
+  @override
+  String get prijemVozidloLpgCng => 'LPG/CNG';
+
+  @override
+  String get prijemVozidloJine => 'Jiné';
+
+  @override
+  String get prijemVozidloManualni => 'Manuální';
+
+  @override
+  String get prijemVozidloAutomaticka => 'Automatická';
+
+  @override
+  String get prijemPraceTitle => 'Požadované práce';
+
+  @override
+  String get prijemPracePozadavkyHint =>
+      'Na čem jsme se se zákazníkem domluvili?';
+
+  @override
+  String get prijemPraceRychlyVyber => 'Rychlý výběr nejčastějších úkonů:';
+
+  @override
+  String get prijemPraceSeznam => 'Seznam požadavků k zakázce:';
+
+  @override
+  String get prijemPracePridat => 'Přidat jiný úkon';
+
+  @override
+  String prijemPraceUkonN(int n) {
+    return 'Úkon $n';
+  }
+
+  @override
+  String get prijemPodpisTitle => 'Shrnutí';
+
+  @override
+  String get prijemPodpisNeuvedeno => 'Neuvedeno';
+
+  @override
+  String prijemPodpisZakaznik(String jmeno) {
+    return 'Zákazník: $jmeno';
+  }
+
+  @override
+  String prijemPodpisAdresa(String adresa) {
+    return 'Adresa: $adresa';
+  }
+
+  @override
+  String prijemPodpisVozidlo(String spzZnacka) {
+    return 'Vozidlo: $spzZnacka';
+  }
+
+  @override
+  String get prijemPodpisSjednaneUkony => 'Sjednané úkony:';
+
+  @override
+  String get prijemPodpisEmailToggle => 'Odeslat kopii protokolu na e-mail';
+
+  @override
+  String get prijemPodpisEmailChybi =>
+      'U zákazníka (krok 2) není vyplněn žádný e-mail.';
+
+  @override
+  String prijemPodpisEmailKam(String email) {
+    return 'Bude odesláno na: $email';
+  }
+
+  @override
+  String get prijemPodpisSouhlas =>
+      'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.';
+
+  @override
+  String get prijemPodpisSmazat => 'Smazat podpis';
+
+  @override
+  String get prijemPodpisVypnut =>
+      'Podpis zákazníka je v nastavení servisu vypnut.';
+
+  @override
+  String get prijemTabletPostup => 'POSTUP';
+
+  @override
+  String get prijemTabletPosledniNavsteva => 'POSLEDNÍ NÁVŠTĚVA';
+
+  @override
+  String get prijemTabletVozidlo => 'Vozidlo';
+
+  @override
+  String get prijemTabletTacho => 'Tachometr';
+
+  @override
+  String get prijemTabletStk => 'STK';
+
+  @override
+  String get prijemTabletNaposledy => 'Naposledy';
+
+  @override
+  String get prijemTabletStav => 'Stav';
+
+  @override
+  String get prijemTabletStavPriPrijmu => 'Stav při příjmu';
+
+  @override
+  String get prijemTabletPoskozeni => 'Poškození';
+
+  @override
+  String get prijemTabletNeuvedeno => 'Neuvedeno';
+
+  @override
+  String get prijemTabletNahled => 'NÁHLED VOZIDLA';
+
+  @override
+  String get prijemTabletSpz => 'SPZ';
+
+  @override
+  String get prijemTabletVin => 'VIN';
+
+  @override
+  String get prijemTabletZakazka => 'Zakázka';
+
+  @override
+  String get prijemTabletUdajePlni =>
+      'Údaje se plní průběžně při vyplňování formuláře.';
+
+  @override
+  String get prijemErrVinVyhledani => 'Zadejte alespoň část VIN pro vyhledání.';
+
+  @override
+  String get prijemErrServisId => 'Chyba: ID Servisu se nepodařilo načíst.';
+
+  @override
+  String get prijemErrZadneVozidloVin =>
+      'Žádné vozidlo s tímto VIN nebylo nalezeno.';
+
+  @override
+  String get prijemErrSpzVyhledani => 'Zadejte alespoň část SPZ pro vyhledání.';
+
+  @override
+  String get prijemErrZadneVozidloSpz =>
+      'Žádné vozidlo s touto SPZ nebylo nalezeno.';
+
+  @override
+  String get prijemErrZadejteVin => 'Zadejte VIN kód pro dekódování.';
+
+  @override
+  String prijemStkPlatnaSnackbar(String datum) {
+    return 'STK platná do $datum';
+  }
+
+  @override
+  String prijemStkProslaSnackbar(String datum) {
+    return 'STK prošlá! Platila do $datum';
+  }
+
+  @override
+  String get prijemVincarioDoplneno => 'Údaje vozidla doplněny z Vincario.';
+
+  @override
+  String get prijemVozidloNacteno =>
+      'Údaje o vozidle a zákazníkovi byly načteny.';
+
+  @override
+  String get prijemNalezenoVice => 'Nalezeno více vozidel';
+
+  @override
+  String get prijemVyberVozidlo => 'Vyberte konkrétní vozidlo ze seznamu:';
+
+  @override
+  String get prijemNeznanaSpz => 'Neznámá SPZ';
+
+  @override
+  String get prijemErrCisloASpz => 'Číslo záznamu a SPZ jsou povinné údaje!';
+
+  @override
+  String get prijemErrCislo => 'Číslo záznamu je povinný údaj!';
+
+  @override
+  String get prijemErrSpz => 'SPZ vozidla je povinný údaj!';
+
+  @override
+  String get prijemErrCisloDuplicitni =>
+      'Toto číslo záznamu již v databázi existuje! Zadejte prosím jiné.';
+
+  @override
+  String get prijemErrPodpis => 'Zákazník musí připojit podpis před odesláním.';
+
+  @override
+  String get prijemLimitTitle => 'Limit příjmů dosažen';
+
+  @override
+  String prijemLimitText(String plan, int limit) {
+    return 'Váš plán $plan umožňuje maximálně $limit příjmů za měsíc. Pro více příjmů upgradujte plán.';
+  }
+
+  @override
+  String get prijemZavrit => 'Zavřít';
+
+  @override
+  String get prijemUspesne => 'Zakázka úspěšně odeslána';
+
+  @override
+  String get prijemErrNejstePrirazeni => 'Nejste přiřazeni k žádnému servisu!';
+
+  @override
+  String get prijemSkenJenApp =>
+      'Skenování pomocí AI funguje pouze v nainstalované aplikaci (APK/iOS).';
+
+  @override
+  String get prijemNavigaceLabel => 'ZÁZNAM VOZIDLA';
+
+  @override
+  String get prijemNovyZaznam => 'Nový záznam';
+
+  @override
+  String get prijemDokoncit => 'Dokončit a odeslat';
+
+  @override
+  String get prijemPokracovat => 'Pokračovat';
+
+  @override
+  String get prijemOdesilamMsg => 'Odesílám zakázku a protokol...';
+
+  @override
+  String prijemKrokZ(int krok, int celkem) {
+    return 'Krok $krok z $celkem';
+  }
+
+  @override
+  String get prijemStepIdentifikace => 'Identifikace vozu';
+
+  @override
+  String get prijemStepZakaznik => 'Zákazník';
+
+  @override
+  String get prijemStepFoto => 'Fotodokumentace';
+
+  @override
+  String get prijemStepStav => 'Stav vozu';
+
+  @override
+  String get prijemStepPrace => 'Úkony a práce';
+
+  @override
+  String get prijemStepSouhrn => 'Souhrn';
+
+  @override
+  String prijemSkenNenalezeno(String co) {
+    return 'Naskenováno \'$co\'. V databázi nenalezeno — údaje doplňte ručně.';
+  }
+
+  @override
+  String get vinSekceIdentifikace => 'IDENTIFIKACE';
+
+  @override
+  String get vinSekceMotor => 'MOTOR A POHON';
+
+  @override
+  String get vinSekceKaroserie => 'KAROSERIE A ROZMĚRY';
+
+  @override
+  String get vinSekcePalivo => 'PALIVO A EMISE';
+
+  @override
+  String get vinSekceOstatni => 'OSTATNÍ INFORMACE';
+
+  @override
+  String get vinFieldZnacka => 'Značka';
+
+  @override
+  String get vinFieldModel => 'Model';
+
+  @override
+  String get vinFieldObchodniOznaceni => 'Obchodní označení';
+
+  @override
+  String get vinFieldRokVyroby => 'Rok výroby';
+
+  @override
+  String get vinFieldKaroserie => 'Karosérie';
+
+  @override
+  String get vinFieldTypVarianta => 'Typ / varianta';
+
+  @override
+  String get vinFieldMistoVyroby => 'Místo výroby';
+
+  @override
+  String get vinFieldMotorizace => 'Motorizace';
+
+  @override
+  String get vinFieldTypMotoru => 'Typ motoru';
+
+  @override
+  String get vinFieldZdvihObjem => 'Zdvihový objem';
+
+  @override
+  String get vinFieldPocetValcu => 'Počet válců';
+
+  @override
+  String get vinFieldVykon => 'Výkon';
+
+  @override
+  String get vinFieldTocivyMoment => 'Max. točivý moment';
+
+  @override
+  String get vinFieldPalivo => 'Palivo';
+
+  @override
+  String get vinFieldPrevodovka => 'Převodovka';
+
+  @override
+  String get vinFieldPocetPrevodu => 'Počet převodů';
+
+  @override
+  String get vinFieldPohon => 'Pohon';
+
+  @override
+  String get vinFieldMaxRychlost => 'Max. rychlost';
+
+  @override
+  String get vinFieldTypKaroserie => 'Typ karosérie';
+
+  @override
+  String get vinFieldPocetDveri => 'Počet dveří';
+
+  @override
+  String get vinFieldPocetMist => 'Počet míst';
+
+  @override
+  String get vinFieldProvozniHmotnost => 'Provozní hmotnost';
+
+  @override
+  String get vinFieldMaxHmotnost => 'Max. hmotnost';
+
+  @override
+  String get vinFieldTaznaHmotnost => 'Tažná hmotnost';
+
+  @override
+  String get vinFieldRozvorNaprav => 'Rozvor náprav';
+
+  @override
+  String get vinFieldDelka => 'Délka';
+
+  @override
+  String get vinFieldSirka => 'Šířka';
+
+  @override
+  String get vinFieldVyska => 'Výška';
+
+  @override
+  String get vinFieldObjemNadrze => 'Objem nádrže';
+
+  @override
+  String get vinField1Registrace => '1. registrace';
+
+  @override
+  String get vinFieldEmisniNorma => 'Emisní norma';
+
+  @override
+  String get vinFieldEmiseCo2 => 'Emise CO₂';
+
+  @override
+  String get vinFieldSpotrebaKomb => 'Spotřeba (komb.)';
+
+  @override
+  String get vinFieldSpotrebaMesto => 'Spotřeba ve městě';
+
+  @override
+  String get vinFieldSpotrebaDalnice => 'Spotřeba mimo město';
+
+  @override
+  String get vinFieldElektDojezd => 'Elektrický dojezd';
+
+  @override
+  String vinLimitDekodovani(int pocet, int limit) {
+    return 'Dosáhli jste měsíčního limitu $pocet / $limit dekódování. Upgradujte plán pro pokračování.';
+  }
+
+  @override
+  String vinLimitValue(int pocet, int limit) {
+    return 'Dosáhli jste měsíčního limitu $pocet / $limit zjištění.';
+  }
+
+  @override
+  String get vinTrzniChybaVerze =>
+      'Zjištění tržní hodnoty není součástí zkušební verze — odemknete ho v některém z placených plánů.';
+
+  @override
+  String get vinChybaHistorie => 'Nepodařilo se načíst historii.';
+
+  @override
+  String get vinTotoVozidloNebyloDekodovano =>
+      'Toto vozidlo nebylo dříve dekódováno.';
+
+  @override
+  String get vinPraveTed => 'Právě teď';
+
+  @override
+  String vinPredMinutami(int pocet) {
+    return 'před $pocet min';
+  }
+
+  @override
+  String get vinVincarioKlice =>
+      'Vincario API klíče nejsou nastaveny. Doplňte je v Nastavení servisu, aby dekódování fungovalo.';
+
+  @override
+  String vinTrzniOd(String value, String mena) {
+    return 'od $value $mena';
+  }
+
+  @override
+  String vinTrzniDo(String value, String mena) {
+    return 'do $value $mena';
+  }
+
+  @override
+  String get vinTrzniHodnotaTitle => 'Tržní hodnota';
+
+  @override
+  String get vinStkTitle => 'Zjištění STK';
+
+  @override
+  String get vinTrzniSubtitle =>
+      'Odhad tržní ceny vozidla z dat evropského trhu';
+
+  @override
+  String get vinStkSubtitle =>
+      'Přehled technických prohlídek vozidla z registru';
+
+  @override
+  String get vinSkenTitleVin => 'Skenovat VIN kód';
+
+  @override
+  String get vinSkenTitleTrzni => 'Skenovat VIN pro tržní hodnotu';
+
+  @override
+  String get vinSkenTitleStk => 'Skenovat VIN pro STK';
+
+  @override
+  String get vinSkenPopisVin =>
+      'Automaticky načte specifikace vozu podle naskenovaného nebo zadaného VIN';
+
+  @override
+  String get vinSkenPopisTrzni =>
+      'Zjistí odhad tržní ceny vozu podle naskenovaného nebo zadaného VIN z dat evropského trhu';
+
+  @override
+  String get vinSkenPopisStk =>
+      'Načte data o technických prohlídkách vozidla z registru';
+
+  @override
+  String get vinSkenTlacitko => 'Spustit sken';
+
+  @override
+  String get vinInputHint => 'Zadat VIN ručně (např. TMBJJ7NE5K…)';
+
+  @override
+  String get vinTooltipHodnota => 'Zjistit hodnotu';
+
+  @override
+  String get vinTooltipStk => 'Zjistit STK';
+
+  @override
+  String get vinTooltipDekodovat => 'Dekódovat';
+
+  @override
+  String get vinUpsellTitle => 'Tržní hodnota je v placených plánech';
+
+  @override
+  String get vinUpsellSubtitle =>
+      'Ve zkušební verzi není dostupná. Odemknete ji už v plánu Basic.';
+
+  @override
+  String get vinUpsellPlany => 'Plány';
+
+  @override
+  String get vinLimitTrzniMesic => 'Tržní hodnota tento měsíc';
+
+  @override
+  String get vinLimitDekodovaniMesic => 'Dekódování VIN tento měsíc';
+
+  @override
+  String get vinLimitVycerpan =>
+      'Měsíční limit vyčerpán. Upgradujte plán pro pokračování.';
+
+  @override
+  String get vinStkInfoBanner =>
+      'Data pocházejí z veřejného registru vozidel. Dostupnost a aktuálnost se liší — u některých vozidel nemusí být STK evidována.';
+
+  @override
+  String vinChybaDekodovani(String chyba) {
+    return 'Nepodařilo se dekódovat VIN: $chyba';
+  }
+
+  @override
+  String get vinNovySken => 'Nový sken';
+
+  @override
+  String get vinTrzniHodnotaHeader => 'TRŽNÍ HODNOTA';
+
+  @override
+  String get vinStkPlatnostNeznama => 'STK — datum neznámé';
+
+  @override
+  String vinStkPlatnaJesteXDni(int dnu) {
+    return 'STK platná ještě $dnu dní';
+  }
+
+  @override
+  String vinStkNeplatna(int dnu) {
+    return 'STK neplatná (prošlá o $dnu dní)';
+  }
+
+  @override
+  String get vinStkPlatnostDo => 'Platnost STK do';
+
+  @override
+  String get vinTrzniDataNedostupna => 'Evropská data nejsou k dispozici.';
+
+  @override
+  String get vinTrzniMedian => 'medián';
+
+  @override
+  String get vinTrzniPrumernaCena => 'Průměrná cena';
+
+  @override
+  String get vinTrzniPrumernyNajezd => 'Průměrný nájezd';
+
+  @override
+  String get vinTrzniPocetVzorku => 'Počet vzorků';
+
+  @override
+  String get vinTrzniObdobiDat => 'Období dat';
+
+  @override
+  String get vinTrzniZdroj => 'Evropský trh · Vincario Market Value';
+
+  @override
+  String get vinHistorieNadpis => 'Historie skenů';
+
+  @override
+  String vinHistorieDnes(int pocet) {
+    return 'Dnes · $pocet dekódovaných VIN';
+  }
+
+  @override
+  String get vinHistoriePosledni => 'Poslední skeny';
+
+  @override
+  String get vinHistorieVse => 'Vše';
+
+  @override
+  String get vinHistorieNacitani => 'Načítání…';
+
+  @override
+  String get vinHistorieZadneSkeny => 'Zatím žádné skeny.';
+
+  @override
+  String get vinHistorieNoveVozidlo => 'Nové vozidlo';
+
+  @override
+  String get vinHistoriePoprve => 'Poprvé dekódováno';
+
+  @override
+  String vinHistorieDekodovanoX(int pocet) {
+    return 'Dekódováno $pocet×';
+  }
+
+  @override
+  String get vinHistorieNezname => 'Neznámé vozidlo';
+
+  @override
+  String get vinZadejteVin => 'Zadejte VIN kód.';
+
+  @override
+  String get vinSkenJenApk =>
+      'Skenování funguje pouze v nainstalované aplikaci (APK/iOS).';
+
+  @override
+  String get vinFieldKodMotoru => 'Kód motoru';
+
+  @override
+  String get zakZakaznici => 'Zákazníci';
+
+  @override
+  String get zakSubtitle => 'Adresář vašich klientů a jejich vozidel.';
+
+  @override
+  String get zakHledatHint => 'Hledat jméno, telefon nebo IČO...';
+
+  @override
+  String zakChybaDb(String chyba) {
+    return 'Chyba databáze: $chyba';
+  }
+
+  @override
+  String get zakZadniZakaznici => 'Zatím nemáte žádné zákazníky.';
+
+  @override
+  String zakIcoZnak(String ico) {
+    return '🏢 IČO: $ico';
+  }
+
+  @override
+  String get zakEditTitle => 'Úprava zákazníka';
+
+  @override
+  String get zakJmenoLabel => 'Jméno a Příjmení / Název firmy';
+
+  @override
+  String get zakTelLabel => 'Telefon';
+
+  @override
+  String get zakVybertePredvolbu => 'Vyberte předvolbu';
+
+  @override
+  String get zakCisloLabel => 'Číslo';
+
+  @override
+  String get zakEmailLabel => 'E-mail';
+
+  @override
+  String get zakAdresaLabel => 'Adresa';
+
+  @override
+  String get zakIcoLabel => 'IČO';
+
+  @override
+  String get zakDicLabel => 'DIČ';
+
+  @override
+  String get zakUlozitZmeny => 'ULOŽIT ZMĚNY';
+
+  @override
+  String get zakZpracovavam => 'Zpracovávám data...';
+
+  @override
+  String get zakKartaZakaznika => 'Karta zákazníka';
+
+  @override
+  String get zakHeaderLabel => 'ZÁKAZNÍK';
+
+  @override
+  String get zakTabInfo => 'Info';
+
+  @override
+  String get zakTabZaznamy => 'Záznamy';
+
+  @override
+  String get zakSmazatMenu => 'Smazat zákazníka';
+
+  @override
+  String get zakSmazatTitle => 'Smazat zákazníka?';
+
+  @override
+  String get zakSmazatContent =>
+      'Zákazník bude odebrán z adresáře. Jeho vozidla a historie zakázek zůstanou zachovány.';
+
+  @override
+  String get zakZrusit => 'Zrušit';
+
+  @override
+  String get zakSmazatPotvrdit => 'Smazat';
+
+  @override
+  String get zakSmazanUspesne => 'Zákazník byl smazán.';
+
+  @override
+  String zakChybaMazani(String chyba) {
+    return 'Chyba při mazání: $chyba';
+  }
+
+  @override
+  String get zakNeznamyZakaznik => 'Neznámý zákazník';
+
+  @override
+  String get zakFirma => 'Firma';
+
+  @override
+  String get zakSoukromaOsoba => 'Soukromá osoba';
+
+  @override
+  String get zakStatVozidel => 'VOZIDEL';
+
+  @override
+  String get zakStatPrijmu => 'PŘÍJMŮ';
+
+  @override
+  String get zakVolat => 'Volat';
+
+  @override
+  String get zakSms => 'SMS';
+
+  @override
+  String get zakKontaktniUdaje => 'Kontaktní údaje';
+
+  @override
+  String get zakVozidlaTitle => 'Vozidla zákazníka';
+
+  @override
+  String get zakPridat => 'Přidat';
+
+  @override
+  String get zakZadnaVozidla => 'Zákazník nemá uložená žádná vozidla.';
+
+  @override
+  String get zakBezSpz => 'Bez SPZ';
+
+  @override
+  String get zakZadneZaznamy => 'Zákazník zatím nemá žádné záznamy o příjmu.';
+
+  @override
+  String zakZakazka(Object cislo) {
+    return 'Zakázka $cislo';
+  }
+
+  @override
+  String zakPoskozeni(String seznam) {
+    return 'Poškození: $seznam';
+  }
+
+  @override
+  String get zakPodepsano => 'Podepsáno';
+
+  @override
+  String zakFotoKs(int pocet) {
+    return '$pocet foto';
+  }
 }

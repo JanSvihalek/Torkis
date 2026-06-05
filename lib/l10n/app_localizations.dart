@@ -541,6 +541,1968 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Vaše data jsou vždy vaše — export kdykoli zdarma.'**
   String get trialBenefitData;
+
+  /// No description provided for @vozidloStatTacho.
+  ///
+  /// In cs, this message translates to:
+  /// **'TACHOMETR'**
+  String get vozidloStatTacho;
+
+  /// No description provided for @vozidloStatStkDo.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK DO'**
+  String get vozidloStatStkDo;
+
+  /// No description provided for @vozidloStatPrijmu.
+  ///
+  /// In cs, this message translates to:
+  /// **'PŘÍJMŮ'**
+  String get vozidloStatPrijmu;
+
+  /// No description provided for @vozidloStkPlatna.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK platná'**
+  String get vozidloStkPlatna;
+
+  /// No description provided for @vozidloStkProsla.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK prošlá'**
+  String get vozidloStkProsla;
+
+  /// No description provided for @vozidloStkVyprsiBehemMesicu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyprší {mesic}/{rok} · zbývá {pocet} měsíců'**
+  String vozidloStkVyprsiBehemMesicu(String mesic, String rok, int pocet);
+
+  /// No description provided for @vozidloStkVyprsela.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vypršela {mesic}/{rok}'**
+  String vozidloStkVyprsela(String mesic, String rok);
+
+  /// No description provided for @vozidloTechnickeUdaje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Technické údaje'**
+  String get vozidloTechnickeUdaje;
+
+  /// No description provided for @vozidloZnackaModel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Značka & Model'**
+  String get vozidloZnackaModel;
+
+  /// No description provided for @vozidloMotorizace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Motorizace'**
+  String get vozidloMotorizace;
+
+  /// No description provided for @vozidloVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN'**
+  String get vozidloVin;
+
+  /// No description provided for @vozidloRokVyroby.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rok výroby'**
+  String get vozidloRokVyroby;
+
+  /// No description provided for @vozidloPalivo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Palivo'**
+  String get vozidloPalivo;
+
+  /// No description provided for @vozidloPrevodovka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Převodovka'**
+  String get vozidloPrevodovka;
+
+  /// No description provided for @vozidloTachometrLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tachometr'**
+  String get vozidloTachometrLabel;
+
+  /// No description provided for @vozidloMajitel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Majitel vozidla'**
+  String get vozidloMajitel;
+
+  /// No description provided for @vozidloJmeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jméno'**
+  String get vozidloJmeno;
+
+  /// No description provided for @vozidloTelefon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Telefon'**
+  String get vozidloTelefon;
+
+  /// No description provided for @vozidloEmail.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mail'**
+  String get vozidloEmail;
+
+  /// No description provided for @vozidloVolat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Volat'**
+  String get vozidloVolat;
+
+  /// No description provided for @vozidlaTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Databáze vozidel'**
+  String get vozidlaTitle;
+
+  /// No description provided for @vozidlaSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přehled všech servisovaných aut.'**
+  String get vozidlaSubtitle;
+
+  /// No description provided for @vozidlaHledatHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hledat SPZ, Značku nebo VIN...'**
+  String get vozidlaHledatHint;
+
+  /// No description provided for @vozidlaSkenSpzTooltip.
+  ///
+  /// In cs, this message translates to:
+  /// **'Naskenovat SPZ fotoaparátem'**
+  String get vozidlaSkenSpzTooltip;
+
+  /// No description provided for @vozidlaZadnaVozidla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím nemáte v databázi žádná vozidla.'**
+  String get vozidlaZadnaVozidla;
+
+  /// No description provided for @vozidlaNejstePrihlaseni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nejste přihlášeni.'**
+  String get vozidlaNejstePrihlaseni;
+
+  /// No description provided for @vozidlaSkenJenApp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Skenování funguje pouze v nainstalované aplikaci (APK/iOS).'**
+  String get vozidlaSkenJenApp;
+
+  /// No description provided for @vozidloDetailUprava.
+  ///
+  /// In cs, this message translates to:
+  /// **'Úprava vozidla'**
+  String get vozidloDetailUprava;
+
+  /// No description provided for @vozidloDetailSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'SPZ'**
+  String get vozidloDetailSpz;
+
+  /// No description provided for @vozidloDetailZnacka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Značka'**
+  String get vozidloDetailZnacka;
+
+  /// No description provided for @vozidloDetailModel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Model'**
+  String get vozidloDetailModel;
+
+  /// No description provided for @vozidloDetailTachoKm.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tachometr (km)'**
+  String get vozidloDetailTachoKm;
+
+  /// No description provided for @vozidloDetailPlatnostStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Platnost STK'**
+  String get vozidloDetailPlatnostStk;
+
+  /// No description provided for @vozidloDetailStkMesic.
+  ///
+  /// In cs, this message translates to:
+  /// **'Měsíc (MM)'**
+  String get vozidloDetailStkMesic;
+
+  /// No description provided for @vozidloDetailStkRok.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rok (YYYY)'**
+  String get vozidloDetailStkRok;
+
+  /// No description provided for @vozidloDetailUlozitZmeny.
+  ///
+  /// In cs, this message translates to:
+  /// **'ULOŽIT ZMĚNY'**
+  String get vozidloDetailUlozitZmeny;
+
+  /// No description provided for @vozidloDetailSpzExistuje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo s touto SPZ již existuje!'**
+  String get vozidloDetailSpzExistuje;
+
+  /// No description provided for @vozidloDetailPrejmenovano.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo přejmenováno na {spz}. Historie byla zachována.'**
+  String vozidloDetailPrejmenovano(String spz);
+
+  /// No description provided for @vozidloDetailNenalezeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo nenalezeno.'**
+  String get vozidloDetailNenalezeno;
+
+  /// No description provided for @vozidloDetailBezSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo bez SPZ'**
+  String get vozidloDetailBezSpz;
+
+  /// No description provided for @vozidloDetailLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'VOZIDLO'**
+  String get vozidloDetailLabel;
+
+  /// No description provided for @vozidloTabInfo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Info'**
+  String get vozidloTabInfo;
+
+  /// No description provided for @vozidloTabZaznamy.
+  ///
+  /// In cs, this message translates to:
+  /// **'Záznamy'**
+  String get vozidloTabZaznamy;
+
+  /// No description provided for @vozidloSmazatAkce.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat vozidlo'**
+  String get vozidloSmazatAkce;
+
+  /// No description provided for @vozidloSmazatDialogTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat vozidlo?'**
+  String get vozidloSmazatDialogTitle;
+
+  /// No description provided for @vozidloSmazatDialogText.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo bude odebráno z adresáře. Historie zakázek zůstane zachována.'**
+  String get vozidloSmazatDialogText;
+
+  /// No description provided for @vozidloSmazano.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo bylo smazáno.'**
+  String get vozidloSmazano;
+
+  /// No description provided for @vozidloSmazatBtn.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat'**
+  String get vozidloSmazatBtn;
+
+  /// No description provided for @prijemHelperTelefon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Telefonní číslo'**
+  String get prijemHelperTelefon;
+
+  /// No description provided for @prijemHelperPredvolba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyberte předvolbu'**
+  String get prijemHelperPredvolba;
+
+  /// No description provided for @prijemStavTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav vozidla'**
+  String get prijemStavTitle;
+
+  /// No description provided for @prijemStavTacho.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav tachometru (km)'**
+  String get prijemStavTacho;
+
+  /// No description provided for @prijemStavNadrz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav paliva v nádrži ({value} %)'**
+  String prijemStavNadrz(int value);
+
+  /// No description provided for @prijemStavPoskozeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zjištěná poškození (lze vybrat více)'**
+  String get prijemStavPoskozeni;
+
+  /// No description provided for @prijemStavVlastniPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vlastní popis poškození...'**
+  String get prijemStavVlastniPopis;
+
+  /// No description provided for @prijemStavPridat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat vlastní poškození'**
+  String get prijemStavPridat;
+
+  /// No description provided for @prijemStavPlatnostStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Platnost STK'**
+  String get prijemStavPlatnostStk;
+
+  /// No description provided for @prijemStavMesic.
+  ///
+  /// In cs, this message translates to:
+  /// **'Měsíc'**
+  String get prijemStavMesic;
+
+  /// No description provided for @prijemStavRok.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rok'**
+  String get prijemStavRok;
+
+  /// No description provided for @prijemStavPneu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hloubka dezénu pneu (v mm)'**
+  String get prijemStavPneu;
+
+  /// No description provided for @prijemStavLevaPreh.
+  ///
+  /// In cs, this message translates to:
+  /// **'Levá př.'**
+  String get prijemStavLevaPreh;
+
+  /// No description provided for @prijemStavPravaPreh.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pravá př.'**
+  String get prijemStavPravaPreh;
+
+  /// No description provided for @prijemStavLevaZad.
+  ///
+  /// In cs, this message translates to:
+  /// **'Levá zad.'**
+  String get prijemStavLevaZad;
+
+  /// No description provided for @prijemStavPravaZad.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pravá zad.'**
+  String get prijemStavPravaZad;
+
+  /// No description provided for @prijemStavPoznamky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dodatečné poznámky k vozu'**
+  String get prijemStavPoznamky;
+
+  /// No description provided for @prijemStavPoznamkyHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jakékoliv další detaily k příjmu...'**
+  String get prijemStavPoznamkyHint;
+
+  /// No description provided for @prijemZakaznikTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje o zákazníkovi'**
+  String get prijemZakaznikTitle;
+
+  /// No description provided for @prijemZakaznikJmeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jméno a příjmení / Název firmy'**
+  String get prijemZakaznikJmeno;
+
+  /// No description provided for @prijemZakaznikHledat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hledat uloženého zákazníka'**
+  String get prijemZakaznikHledat;
+
+  /// No description provided for @prijemZakaznikIco.
+  ///
+  /// In cs, this message translates to:
+  /// **'IČO (ARES vyhledávání)'**
+  String get prijemZakaznikIco;
+
+  /// No description provided for @prijemZakaznikHledatAres.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hledat v ARES'**
+  String get prijemZakaznikHledatAres;
+
+  /// No description provided for @prijemZakaznikPravniForma.
+  ///
+  /// In cs, this message translates to:
+  /// **'Právní forma'**
+  String get prijemZakaznikPravniForma;
+
+  /// No description provided for @prijemZakaznikUlice.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ulice a číslo'**
+  String get prijemZakaznikUlice;
+
+  /// No description provided for @prijemZakaznikMesto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Město'**
+  String get prijemZakaznikMesto;
+
+  /// No description provided for @prijemZakaznikPsc.
+  ///
+  /// In cs, this message translates to:
+  /// **'PSČ'**
+  String get prijemZakaznikPsc;
+
+  /// No description provided for @prijemZakaznikEmail.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mail'**
+  String get prijemZakaznikEmail;
+
+  /// No description provided for @prijemZakaznikFyzicka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Fyzická osoba'**
+  String get prijemZakaznikFyzicka;
+
+  /// No description provided for @prijemZakaznikOsvc.
+  ///
+  /// In cs, this message translates to:
+  /// **'OSVČ'**
+  String get prijemZakaznikOsvc;
+
+  /// No description provided for @prijemVozidloTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Záznam vozidla'**
+  String get prijemVozidloTitle;
+
+  /// No description provided for @prijemVozidloNapoveda.
+  ///
+  /// In cs, this message translates to:
+  /// **'Naskenujte VIN nebo SPZ, nebo údaje doplňte ručně.'**
+  String get prijemVozidloNapoveda;
+
+  /// No description provided for @prijemVozidloZeme.
+  ///
+  /// In cs, this message translates to:
+  /// **'Země'**
+  String get prijemVozidloZeme;
+
+  /// No description provided for @prijemVozidloSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'SPZ vozidla'**
+  String get prijemVozidloSpz;
+
+  /// No description provided for @prijemVozidloHledatSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hledat SPZ v databázi'**
+  String get prijemVozidloHledatSpz;
+
+  /// No description provided for @prijemVozidloHledatSpzSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Najít dříve uložené vozidlo podle SPZ'**
+  String get prijemVozidloHledatSpzSub;
+
+  /// No description provided for @prijemVozidloVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN kód'**
+  String get prijemVozidloVin;
+
+  /// No description provided for @prijemVozidloHledatVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hledat VIN v databázi'**
+  String get prijemVozidloHledatVin;
+
+  /// No description provided for @prijemVozidloHledatVinSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Najít dříve uložené vozidlo podle VIN'**
+  String get prijemVozidloHledatVinSub;
+
+  /// No description provided for @prijemVozidloDekodovat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dekódovat VIN online'**
+  String get prijemVozidloDekodovat;
+
+  /// No description provided for @prijemVozidloDekodovatSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Doplnit značku, model, motorizaci a STK'**
+  String get prijemVozidloDekodovatSub;
+
+  /// No description provided for @prijemVozidloZnackaHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Značka (např. Škoda)'**
+  String get prijemVozidloZnackaHint;
+
+  /// No description provided for @prijemVozidloModelHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Model (např. Octavia)'**
+  String get prijemVozidloModelHint;
+
+  /// No description provided for @prijemVozidloSkenovat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Skenovat VIN/SPZ'**
+  String get prijemVozidloSkenovat;
+
+  /// No description provided for @prijemVozidloSkenSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Automaticky rozpozná typ kódu'**
+  String get prijemVozidloSkenSub;
+
+  /// No description provided for @prijemVozidloRozlozeniPodSebou.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pod sebou'**
+  String get prijemVozidloRozlozeniPodSebou;
+
+  /// No description provided for @prijemVozidloRozlozeniVMrizce.
+  ///
+  /// In cs, this message translates to:
+  /// **'V mřížce'**
+  String get prijemVozidloRozlozeniVMrizce;
+
+  /// No description provided for @prijemVozidloTypZaznamu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typ záznamu'**
+  String get prijemVozidloTypZaznamu;
+
+  /// No description provided for @prijemVozidloCisloZaznamu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Číslo záznamu'**
+  String get prijemVozidloCisloZaznamu;
+
+  /// No description provided for @prijemVozidloGenerovat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vygenerovat nové číslo'**
+  String get prijemVozidloGenerovat;
+
+  /// No description provided for @prijemVozidloUlozenaVozidla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník má uložená tato vozidla'**
+  String get prijemVozidloUlozenaVozidla;
+
+  /// No description provided for @prijemVozidloRokVyroby.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rok výroby'**
+  String get prijemVozidloRokVyroby;
+
+  /// No description provided for @prijemVozidloMotorizaceHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Motorizace (např. 2.0 TDI)'**
+  String get prijemVozidloMotorizaceHint;
+
+  /// No description provided for @prijemVozidloTypPaliva.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typ paliva'**
+  String get prijemVozidloTypPaliva;
+
+  /// No description provided for @prijemVozidloPrevodovka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Převodovka'**
+  String get prijemVozidloPrevodovka;
+
+  /// No description provided for @prijemVozidloTypKaroserie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typ karosérie'**
+  String get prijemVozidloTypKaroserie;
+
+  /// No description provided for @prijemVozidloBenzin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Benzín'**
+  String get prijemVozidloBenzin;
+
+  /// No description provided for @prijemVozidloNafta.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nafta'**
+  String get prijemVozidloNafta;
+
+  /// No description provided for @prijemVozidloElektro.
+  ///
+  /// In cs, this message translates to:
+  /// **'Elektro'**
+  String get prijemVozidloElektro;
+
+  /// No description provided for @prijemVozidloHybrid.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hybrid'**
+  String get prijemVozidloHybrid;
+
+  /// No description provided for @prijemVozidloLpgCng.
+  ///
+  /// In cs, this message translates to:
+  /// **'LPG/CNG'**
+  String get prijemVozidloLpgCng;
+
+  /// No description provided for @prijemVozidloJine.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jiné'**
+  String get prijemVozidloJine;
+
+  /// No description provided for @prijemVozidloManualni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Manuální'**
+  String get prijemVozidloManualni;
+
+  /// No description provided for @prijemVozidloAutomaticka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Automatická'**
+  String get prijemVozidloAutomaticka;
+
+  /// No description provided for @prijemPraceTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Požadované práce'**
+  String get prijemPraceTitle;
+
+  /// No description provided for @prijemPracePozadavkyHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Na čem jsme se se zákazníkem domluvili?'**
+  String get prijemPracePozadavkyHint;
+
+  /// No description provided for @prijemPraceRychlyVyber.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rychlý výběr nejčastějších úkonů:'**
+  String get prijemPraceRychlyVyber;
+
+  /// No description provided for @prijemPraceSeznam.
+  ///
+  /// In cs, this message translates to:
+  /// **'Seznam požadavků k zakázce:'**
+  String get prijemPraceSeznam;
+
+  /// No description provided for @prijemPracePridat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat jiný úkon'**
+  String get prijemPracePridat;
+
+  /// No description provided for @prijemPraceUkonN.
+  ///
+  /// In cs, this message translates to:
+  /// **'Úkon {n}'**
+  String prijemPraceUkonN(int n);
+
+  /// No description provided for @prijemPodpisTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Shrnutí'**
+  String get prijemPodpisTitle;
+
+  /// No description provided for @prijemPodpisNeuvedeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neuvedeno'**
+  String get prijemPodpisNeuvedeno;
+
+  /// No description provided for @prijemPodpisZakaznik.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník: {jmeno}'**
+  String prijemPodpisZakaznik(String jmeno);
+
+  /// No description provided for @prijemPodpisAdresa.
+  ///
+  /// In cs, this message translates to:
+  /// **'Adresa: {adresa}'**
+  String prijemPodpisAdresa(String adresa);
+
+  /// No description provided for @prijemPodpisVozidlo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo: {spzZnacka}'**
+  String prijemPodpisVozidlo(String spzZnacka);
+
+  /// No description provided for @prijemPodpisSjednaneUkony.
+  ///
+  /// In cs, this message translates to:
+  /// **'Sjednané úkony:'**
+  String get prijemPodpisSjednaneUkony;
+
+  /// No description provided for @prijemPodpisEmailToggle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odeslat kopii protokolu na e-mail'**
+  String get prijemPodpisEmailToggle;
+
+  /// No description provided for @prijemPodpisEmailChybi.
+  ///
+  /// In cs, this message translates to:
+  /// **'U zákazníka (krok 2) není vyplněn žádný e-mail.'**
+  String get prijemPodpisEmailChybi;
+
+  /// No description provided for @prijemPodpisEmailKam.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bude odesláno na: {email}'**
+  String prijemPodpisEmailKam(String email);
+
+  /// No description provided for @prijemPodpisSouhlas.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.'**
+  String get prijemPodpisSouhlas;
+
+  /// No description provided for @prijemPodpisSmazat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat podpis'**
+  String get prijemPodpisSmazat;
+
+  /// No description provided for @prijemPodpisVypnut.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podpis zákazníka je v nastavení servisu vypnut.'**
+  String get prijemPodpisVypnut;
+
+  /// No description provided for @prijemTabletPostup.
+  ///
+  /// In cs, this message translates to:
+  /// **'POSTUP'**
+  String get prijemTabletPostup;
+
+  /// No description provided for @prijemTabletPosledniNavsteva.
+  ///
+  /// In cs, this message translates to:
+  /// **'POSLEDNÍ NÁVŠTĚVA'**
+  String get prijemTabletPosledniNavsteva;
+
+  /// No description provided for @prijemTabletVozidlo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo'**
+  String get prijemTabletVozidlo;
+
+  /// No description provided for @prijemTabletTacho.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tachometr'**
+  String get prijemTabletTacho;
+
+  /// No description provided for @prijemTabletStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK'**
+  String get prijemTabletStk;
+
+  /// No description provided for @prijemTabletNaposledy.
+  ///
+  /// In cs, this message translates to:
+  /// **'Naposledy'**
+  String get prijemTabletNaposledy;
+
+  /// No description provided for @prijemTabletStav.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav'**
+  String get prijemTabletStav;
+
+  /// No description provided for @prijemTabletStavPriPrijmu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav při příjmu'**
+  String get prijemTabletStavPriPrijmu;
+
+  /// No description provided for @prijemTabletPoskozeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Poškození'**
+  String get prijemTabletPoskozeni;
+
+  /// No description provided for @prijemTabletNeuvedeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neuvedeno'**
+  String get prijemTabletNeuvedeno;
+
+  /// No description provided for @prijemTabletNahled.
+  ///
+  /// In cs, this message translates to:
+  /// **'NÁHLED VOZIDLA'**
+  String get prijemTabletNahled;
+
+  /// No description provided for @prijemTabletSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'SPZ'**
+  String get prijemTabletSpz;
+
+  /// No description provided for @prijemTabletVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN'**
+  String get prijemTabletVin;
+
+  /// No description provided for @prijemTabletZakazka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zakázka'**
+  String get prijemTabletZakazka;
+
+  /// No description provided for @prijemTabletUdajePlni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje se plní průběžně při vyplňování formuláře.'**
+  String get prijemTabletUdajePlni;
+
+  /// No description provided for @prijemErrVinVyhledani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte alespoň část VIN pro vyhledání.'**
+  String get prijemErrVinVyhledani;
+
+  /// No description provided for @prijemErrServisId.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba: ID Servisu se nepodařilo načíst.'**
+  String get prijemErrServisId;
+
+  /// No description provided for @prijemErrZadneVozidloVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Žádné vozidlo s tímto VIN nebylo nalezeno.'**
+  String get prijemErrZadneVozidloVin;
+
+  /// No description provided for @prijemErrSpzVyhledani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte alespoň část SPZ pro vyhledání.'**
+  String get prijemErrSpzVyhledani;
+
+  /// No description provided for @prijemErrZadneVozidloSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Žádné vozidlo s touto SPZ nebylo nalezeno.'**
+  String get prijemErrZadneVozidloSpz;
+
+  /// No description provided for @prijemErrZadejteVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte VIN kód pro dekódování.'**
+  String get prijemErrZadejteVin;
+
+  /// No description provided for @prijemStkPlatnaSnackbar.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK platná do {datum}'**
+  String prijemStkPlatnaSnackbar(String datum);
+
+  /// No description provided for @prijemStkProslaSnackbar.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK prošlá! Platila do {datum}'**
+  String prijemStkProslaSnackbar(String datum);
+
+  /// No description provided for @prijemVincarioDoplneno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje vozidla doplněny z Vincario.'**
+  String get prijemVincarioDoplneno;
+
+  /// No description provided for @prijemVozidloNacteno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje o vozidle a zákazníkovi byly načteny.'**
+  String get prijemVozidloNacteno;
+
+  /// No description provided for @prijemNalezenoVice.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nalezeno více vozidel'**
+  String get prijemNalezenoVice;
+
+  /// No description provided for @prijemVyberVozidlo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyberte konkrétní vozidlo ze seznamu:'**
+  String get prijemVyberVozidlo;
+
+  /// No description provided for @prijemNeznanaSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neznámá SPZ'**
+  String get prijemNeznanaSpz;
+
+  /// No description provided for @prijemErrCisloASpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Číslo záznamu a SPZ jsou povinné údaje!'**
+  String get prijemErrCisloASpz;
+
+  /// No description provided for @prijemErrCislo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Číslo záznamu je povinný údaj!'**
+  String get prijemErrCislo;
+
+  /// No description provided for @prijemErrSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'SPZ vozidla je povinný údaj!'**
+  String get prijemErrSpz;
+
+  /// No description provided for @prijemErrCisloDuplicitni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Toto číslo záznamu již v databázi existuje! Zadejte prosím jiné.'**
+  String get prijemErrCisloDuplicitni;
+
+  /// No description provided for @prijemErrPodpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník musí připojit podpis před odesláním.'**
+  String get prijemErrPodpis;
+
+  /// No description provided for @prijemLimitTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Limit příjmů dosažen'**
+  String get prijemLimitTitle;
+
+  /// No description provided for @prijemLimitText.
+  ///
+  /// In cs, this message translates to:
+  /// **'Váš plán {plan} umožňuje maximálně {limit} příjmů za měsíc. Pro více příjmů upgradujte plán.'**
+  String prijemLimitText(String plan, int limit);
+
+  /// No description provided for @prijemZavrit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zavřít'**
+  String get prijemZavrit;
+
+  /// No description provided for @prijemUspesne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zakázka úspěšně odeslána'**
+  String get prijemUspesne;
+
+  /// No description provided for @prijemErrNejstePrirazeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nejste přiřazeni k žádnému servisu!'**
+  String get prijemErrNejstePrirazeni;
+
+  /// No description provided for @prijemSkenJenApp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Skenování pomocí AI funguje pouze v nainstalované aplikaci (APK/iOS).'**
+  String get prijemSkenJenApp;
+
+  /// No description provided for @prijemNavigaceLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'ZÁZNAM VOZIDLA'**
+  String get prijemNavigaceLabel;
+
+  /// No description provided for @prijemNovyZaznam.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nový záznam'**
+  String get prijemNovyZaznam;
+
+  /// No description provided for @prijemDokoncit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dokončit a odeslat'**
+  String get prijemDokoncit;
+
+  /// No description provided for @prijemPokracovat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pokračovat'**
+  String get prijemPokracovat;
+
+  /// No description provided for @prijemOdesilamMsg.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odesílám zakázku a protokol...'**
+  String get prijemOdesilamMsg;
+
+  /// No description provided for @prijemKrokZ.
+  ///
+  /// In cs, this message translates to:
+  /// **'Krok {krok} z {celkem}'**
+  String prijemKrokZ(int krok, int celkem);
+
+  /// No description provided for @prijemStepIdentifikace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Identifikace vozu'**
+  String get prijemStepIdentifikace;
+
+  /// No description provided for @prijemStepZakaznik.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník'**
+  String get prijemStepZakaznik;
+
+  /// No description provided for @prijemStepFoto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Fotodokumentace'**
+  String get prijemStepFoto;
+
+  /// No description provided for @prijemStepStav.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav vozu'**
+  String get prijemStepStav;
+
+  /// No description provided for @prijemStepPrace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Úkony a práce'**
+  String get prijemStepPrace;
+
+  /// No description provided for @prijemStepSouhrn.
+  ///
+  /// In cs, this message translates to:
+  /// **'Souhrn'**
+  String get prijemStepSouhrn;
+
+  /// No description provided for @prijemSkenNenalezeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Naskenováno \'{co}\'. V databázi nenalezeno — údaje doplňte ručně.'**
+  String prijemSkenNenalezeno(String co);
+
+  /// No description provided for @vinSekceIdentifikace.
+  ///
+  /// In cs, this message translates to:
+  /// **'IDENTIFIKACE'**
+  String get vinSekceIdentifikace;
+
+  /// No description provided for @vinSekceMotor.
+  ///
+  /// In cs, this message translates to:
+  /// **'MOTOR A POHON'**
+  String get vinSekceMotor;
+
+  /// No description provided for @vinSekceKaroserie.
+  ///
+  /// In cs, this message translates to:
+  /// **'KAROSERIE A ROZMĚRY'**
+  String get vinSekceKaroserie;
+
+  /// No description provided for @vinSekcePalivo.
+  ///
+  /// In cs, this message translates to:
+  /// **'PALIVO A EMISE'**
+  String get vinSekcePalivo;
+
+  /// No description provided for @vinSekceOstatni.
+  ///
+  /// In cs, this message translates to:
+  /// **'OSTATNÍ INFORMACE'**
+  String get vinSekceOstatni;
+
+  /// No description provided for @vinFieldZnacka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Značka'**
+  String get vinFieldZnacka;
+
+  /// No description provided for @vinFieldModel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Model'**
+  String get vinFieldModel;
+
+  /// No description provided for @vinFieldObchodniOznaceni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Obchodní označení'**
+  String get vinFieldObchodniOznaceni;
+
+  /// No description provided for @vinFieldRokVyroby.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rok výroby'**
+  String get vinFieldRokVyroby;
+
+  /// No description provided for @vinFieldKaroserie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Karosérie'**
+  String get vinFieldKaroserie;
+
+  /// No description provided for @vinFieldTypVarianta.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typ / varianta'**
+  String get vinFieldTypVarianta;
+
+  /// No description provided for @vinFieldMistoVyroby.
+  ///
+  /// In cs, this message translates to:
+  /// **'Místo výroby'**
+  String get vinFieldMistoVyroby;
+
+  /// No description provided for @vinFieldMotorizace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Motorizace'**
+  String get vinFieldMotorizace;
+
+  /// No description provided for @vinFieldTypMotoru.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typ motoru'**
+  String get vinFieldTypMotoru;
+
+  /// No description provided for @vinFieldZdvihObjem.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zdvihový objem'**
+  String get vinFieldZdvihObjem;
+
+  /// No description provided for @vinFieldPocetValcu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Počet válců'**
+  String get vinFieldPocetValcu;
+
+  /// No description provided for @vinFieldVykon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Výkon'**
+  String get vinFieldVykon;
+
+  /// No description provided for @vinFieldTocivyMoment.
+  ///
+  /// In cs, this message translates to:
+  /// **'Max. točivý moment'**
+  String get vinFieldTocivyMoment;
+
+  /// No description provided for @vinFieldPalivo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Palivo'**
+  String get vinFieldPalivo;
+
+  /// No description provided for @vinFieldPrevodovka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Převodovka'**
+  String get vinFieldPrevodovka;
+
+  /// No description provided for @vinFieldPocetPrevodu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Počet převodů'**
+  String get vinFieldPocetPrevodu;
+
+  /// No description provided for @vinFieldPohon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pohon'**
+  String get vinFieldPohon;
+
+  /// No description provided for @vinFieldMaxRychlost.
+  ///
+  /// In cs, this message translates to:
+  /// **'Max. rychlost'**
+  String get vinFieldMaxRychlost;
+
+  /// No description provided for @vinFieldTypKaroserie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typ karosérie'**
+  String get vinFieldTypKaroserie;
+
+  /// No description provided for @vinFieldPocetDveri.
+  ///
+  /// In cs, this message translates to:
+  /// **'Počet dveří'**
+  String get vinFieldPocetDveri;
+
+  /// No description provided for @vinFieldPocetMist.
+  ///
+  /// In cs, this message translates to:
+  /// **'Počet míst'**
+  String get vinFieldPocetMist;
+
+  /// No description provided for @vinFieldProvozniHmotnost.
+  ///
+  /// In cs, this message translates to:
+  /// **'Provozní hmotnost'**
+  String get vinFieldProvozniHmotnost;
+
+  /// No description provided for @vinFieldMaxHmotnost.
+  ///
+  /// In cs, this message translates to:
+  /// **'Max. hmotnost'**
+  String get vinFieldMaxHmotnost;
+
+  /// No description provided for @vinFieldTaznaHmotnost.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tažná hmotnost'**
+  String get vinFieldTaznaHmotnost;
+
+  /// No description provided for @vinFieldRozvorNaprav.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rozvor náprav'**
+  String get vinFieldRozvorNaprav;
+
+  /// No description provided for @vinFieldDelka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Délka'**
+  String get vinFieldDelka;
+
+  /// No description provided for @vinFieldSirka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Šířka'**
+  String get vinFieldSirka;
+
+  /// No description provided for @vinFieldVyska.
+  ///
+  /// In cs, this message translates to:
+  /// **'Výška'**
+  String get vinFieldVyska;
+
+  /// No description provided for @vinFieldObjemNadrze.
+  ///
+  /// In cs, this message translates to:
+  /// **'Objem nádrže'**
+  String get vinFieldObjemNadrze;
+
+  /// No description provided for @vinField1Registrace.
+  ///
+  /// In cs, this message translates to:
+  /// **'1. registrace'**
+  String get vinField1Registrace;
+
+  /// No description provided for @vinFieldEmisniNorma.
+  ///
+  /// In cs, this message translates to:
+  /// **'Emisní norma'**
+  String get vinFieldEmisniNorma;
+
+  /// No description provided for @vinFieldEmiseCo2.
+  ///
+  /// In cs, this message translates to:
+  /// **'Emise CO₂'**
+  String get vinFieldEmiseCo2;
+
+  /// No description provided for @vinFieldSpotrebaKomb.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spotřeba (komb.)'**
+  String get vinFieldSpotrebaKomb;
+
+  /// No description provided for @vinFieldSpotrebaMesto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spotřeba ve městě'**
+  String get vinFieldSpotrebaMesto;
+
+  /// No description provided for @vinFieldSpotrebaDalnice.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spotřeba mimo město'**
+  String get vinFieldSpotrebaDalnice;
+
+  /// No description provided for @vinFieldElektDojezd.
+  ///
+  /// In cs, this message translates to:
+  /// **'Elektrický dojezd'**
+  String get vinFieldElektDojezd;
+
+  /// No description provided for @vinLimitDekodovani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dosáhli jste měsíčního limitu {pocet} / {limit} dekódování. Upgradujte plán pro pokračování.'**
+  String vinLimitDekodovani(int pocet, int limit);
+
+  /// No description provided for @vinLimitValue.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dosáhli jste měsíčního limitu {pocet} / {limit} zjištění.'**
+  String vinLimitValue(int pocet, int limit);
+
+  /// No description provided for @vinTrzniChybaVerze.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zjištění tržní hodnoty není součástí zkušební verze — odemknete ho v některém z placených plánů.'**
+  String get vinTrzniChybaVerze;
+
+  /// No description provided for @vinChybaHistorie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nepodařilo se načíst historii.'**
+  String get vinChybaHistorie;
+
+  /// No description provided for @vinTotoVozidloNebyloDekodovano.
+  ///
+  /// In cs, this message translates to:
+  /// **'Toto vozidlo nebylo dříve dekódováno.'**
+  String get vinTotoVozidloNebyloDekodovano;
+
+  /// No description provided for @vinPraveTed.
+  ///
+  /// In cs, this message translates to:
+  /// **'Právě teď'**
+  String get vinPraveTed;
+
+  /// No description provided for @vinPredMinutami.
+  ///
+  /// In cs, this message translates to:
+  /// **'před {pocet} min'**
+  String vinPredMinutami(int pocet);
+
+  /// No description provided for @vinVincarioKlice.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vincario API klíče nejsou nastaveny. Doplňte je v Nastavení servisu, aby dekódování fungovalo.'**
+  String get vinVincarioKlice;
+
+  /// No description provided for @vinTrzniOd.
+  ///
+  /// In cs, this message translates to:
+  /// **'od {value} {mena}'**
+  String vinTrzniOd(String value, String mena);
+
+  /// No description provided for @vinTrzniDo.
+  ///
+  /// In cs, this message translates to:
+  /// **'do {value} {mena}'**
+  String vinTrzniDo(String value, String mena);
+
+  /// No description provided for @vinTrzniHodnotaTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tržní hodnota'**
+  String get vinTrzniHodnotaTitle;
+
+  /// No description provided for @vinStkTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zjištění STK'**
+  String get vinStkTitle;
+
+  /// No description provided for @vinTrzniSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odhad tržní ceny vozidla z dat evropského trhu'**
+  String get vinTrzniSubtitle;
+
+  /// No description provided for @vinStkSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přehled technických prohlídek vozidla z registru'**
+  String get vinStkSubtitle;
+
+  /// No description provided for @vinSkenTitleVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Skenovat VIN kód'**
+  String get vinSkenTitleVin;
+
+  /// No description provided for @vinSkenTitleTrzni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Skenovat VIN pro tržní hodnotu'**
+  String get vinSkenTitleTrzni;
+
+  /// No description provided for @vinSkenTitleStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Skenovat VIN pro STK'**
+  String get vinSkenTitleStk;
+
+  /// No description provided for @vinSkenPopisVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Automaticky načte specifikace vozu podle naskenovaného nebo zadaného VIN'**
+  String get vinSkenPopisVin;
+
+  /// No description provided for @vinSkenPopisTrzni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zjistí odhad tržní ceny vozu podle naskenovaného nebo zadaného VIN z dat evropského trhu'**
+  String get vinSkenPopisTrzni;
+
+  /// No description provided for @vinSkenPopisStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Načte data o technických prohlídkách vozidla z registru'**
+  String get vinSkenPopisStk;
+
+  /// No description provided for @vinSkenTlacitko.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spustit sken'**
+  String get vinSkenTlacitko;
+
+  /// No description provided for @vinInputHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadat VIN ručně (např. TMBJJ7NE5K…)'**
+  String get vinInputHint;
+
+  /// No description provided for @vinTooltipHodnota.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zjistit hodnotu'**
+  String get vinTooltipHodnota;
+
+  /// No description provided for @vinTooltipStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zjistit STK'**
+  String get vinTooltipStk;
+
+  /// No description provided for @vinTooltipDekodovat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dekódovat'**
+  String get vinTooltipDekodovat;
+
+  /// No description provided for @vinUpsellTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tržní hodnota je v placených plánech'**
+  String get vinUpsellTitle;
+
+  /// No description provided for @vinUpsellSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ve zkušební verzi není dostupná. Odemknete ji už v plánu Basic.'**
+  String get vinUpsellSubtitle;
+
+  /// No description provided for @vinUpsellPlany.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plány'**
+  String get vinUpsellPlany;
+
+  /// No description provided for @vinLimitTrzniMesic.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tržní hodnota tento měsíc'**
+  String get vinLimitTrzniMesic;
+
+  /// No description provided for @vinLimitDekodovaniMesic.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dekódování VIN tento měsíc'**
+  String get vinLimitDekodovaniMesic;
+
+  /// No description provided for @vinLimitVycerpan.
+  ///
+  /// In cs, this message translates to:
+  /// **'Měsíční limit vyčerpán. Upgradujte plán pro pokračování.'**
+  String get vinLimitVycerpan;
+
+  /// No description provided for @vinStkInfoBanner.
+  ///
+  /// In cs, this message translates to:
+  /// **'Data pocházejí z veřejného registru vozidel. Dostupnost a aktuálnost se liší — u některých vozidel nemusí být STK evidována.'**
+  String get vinStkInfoBanner;
+
+  /// No description provided for @vinChybaDekodovani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nepodařilo se dekódovat VIN: {chyba}'**
+  String vinChybaDekodovani(String chyba);
+
+  /// No description provided for @vinNovySken.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nový sken'**
+  String get vinNovySken;
+
+  /// No description provided for @vinTrzniHodnotaHeader.
+  ///
+  /// In cs, this message translates to:
+  /// **'TRŽNÍ HODNOTA'**
+  String get vinTrzniHodnotaHeader;
+
+  /// No description provided for @vinStkPlatnostNeznama.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK — datum neznámé'**
+  String get vinStkPlatnostNeznama;
+
+  /// No description provided for @vinStkPlatnaJesteXDni.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK platná ještě {dnu} dní'**
+  String vinStkPlatnaJesteXDni(int dnu);
+
+  /// No description provided for @vinStkNeplatna.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK neplatná (prošlá o {dnu} dní)'**
+  String vinStkNeplatna(int dnu);
+
+  /// No description provided for @vinStkPlatnostDo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Platnost STK do'**
+  String get vinStkPlatnostDo;
+
+  /// No description provided for @vinTrzniDataNedostupna.
+  ///
+  /// In cs, this message translates to:
+  /// **'Evropská data nejsou k dispozici.'**
+  String get vinTrzniDataNedostupna;
+
+  /// No description provided for @vinTrzniMedian.
+  ///
+  /// In cs, this message translates to:
+  /// **'medián'**
+  String get vinTrzniMedian;
+
+  /// No description provided for @vinTrzniPrumernaCena.
+  ///
+  /// In cs, this message translates to:
+  /// **'Průměrná cena'**
+  String get vinTrzniPrumernaCena;
+
+  /// No description provided for @vinTrzniPrumernyNajezd.
+  ///
+  /// In cs, this message translates to:
+  /// **'Průměrný nájezd'**
+  String get vinTrzniPrumernyNajezd;
+
+  /// No description provided for @vinTrzniPocetVzorku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Počet vzorků'**
+  String get vinTrzniPocetVzorku;
+
+  /// No description provided for @vinTrzniObdobiDat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Období dat'**
+  String get vinTrzniObdobiDat;
+
+  /// No description provided for @vinTrzniZdroj.
+  ///
+  /// In cs, this message translates to:
+  /// **'Evropský trh · Vincario Market Value'**
+  String get vinTrzniZdroj;
+
+  /// No description provided for @vinHistorieNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Historie skenů'**
+  String get vinHistorieNadpis;
+
+  /// No description provided for @vinHistorieDnes.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dnes · {pocet} dekódovaných VIN'**
+  String vinHistorieDnes(int pocet);
+
+  /// No description provided for @vinHistoriePosledni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Poslední skeny'**
+  String get vinHistoriePosledni;
+
+  /// No description provided for @vinHistorieVse.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vše'**
+  String get vinHistorieVse;
+
+  /// No description provided for @vinHistorieNacitani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Načítání…'**
+  String get vinHistorieNacitani;
+
+  /// No description provided for @vinHistorieZadneSkeny.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím žádné skeny.'**
+  String get vinHistorieZadneSkeny;
+
+  /// No description provided for @vinHistorieNoveVozidlo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nové vozidlo'**
+  String get vinHistorieNoveVozidlo;
+
+  /// No description provided for @vinHistoriePoprve.
+  ///
+  /// In cs, this message translates to:
+  /// **'Poprvé dekódováno'**
+  String get vinHistoriePoprve;
+
+  /// No description provided for @vinHistorieDekodovanoX.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dekódováno {pocet}×'**
+  String vinHistorieDekodovanoX(int pocet);
+
+  /// No description provided for @vinHistorieNezname.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neznámé vozidlo'**
+  String get vinHistorieNezname;
+
+  /// No description provided for @vinZadejteVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte VIN kód.'**
+  String get vinZadejteVin;
+
+  /// No description provided for @vinSkenJenApk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Skenování funguje pouze v nainstalované aplikaci (APK/iOS).'**
+  String get vinSkenJenApk;
+
+  /// No description provided for @vinFieldKodMotoru.
+  ///
+  /// In cs, this message translates to:
+  /// **'Kód motoru'**
+  String get vinFieldKodMotoru;
+
+  /// No description provided for @zakZakaznici.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazníci'**
+  String get zakZakaznici;
+
+  /// No description provided for @zakSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Adresář vašich klientů a jejich vozidel.'**
+  String get zakSubtitle;
+
+  /// No description provided for @zakHledatHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hledat jméno, telefon nebo IČO...'**
+  String get zakHledatHint;
+
+  /// No description provided for @zakChybaDb.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba databáze: {chyba}'**
+  String zakChybaDb(String chyba);
+
+  /// No description provided for @zakZadniZakaznici.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím nemáte žádné zákazníky.'**
+  String get zakZadniZakaznici;
+
+  /// No description provided for @zakIcoZnak.
+  ///
+  /// In cs, this message translates to:
+  /// **'🏢 IČO: {ico}'**
+  String zakIcoZnak(String ico);
+
+  /// No description provided for @zakEditTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Úprava zákazníka'**
+  String get zakEditTitle;
+
+  /// No description provided for @zakJmenoLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jméno a Příjmení / Název firmy'**
+  String get zakJmenoLabel;
+
+  /// No description provided for @zakTelLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Telefon'**
+  String get zakTelLabel;
+
+  /// No description provided for @zakVybertePredvolbu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyberte předvolbu'**
+  String get zakVybertePredvolbu;
+
+  /// No description provided for @zakCisloLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Číslo'**
+  String get zakCisloLabel;
+
+  /// No description provided for @zakEmailLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mail'**
+  String get zakEmailLabel;
+
+  /// No description provided for @zakAdresaLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Adresa'**
+  String get zakAdresaLabel;
+
+  /// No description provided for @zakIcoLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'IČO'**
+  String get zakIcoLabel;
+
+  /// No description provided for @zakDicLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'DIČ'**
+  String get zakDicLabel;
+
+  /// No description provided for @zakUlozitZmeny.
+  ///
+  /// In cs, this message translates to:
+  /// **'ULOŽIT ZMĚNY'**
+  String get zakUlozitZmeny;
+
+  /// No description provided for @zakZpracovavam.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zpracovávám data...'**
+  String get zakZpracovavam;
+
+  /// No description provided for @zakKartaZakaznika.
+  ///
+  /// In cs, this message translates to:
+  /// **'Karta zákazníka'**
+  String get zakKartaZakaznika;
+
+  /// No description provided for @zakHeaderLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'ZÁKAZNÍK'**
+  String get zakHeaderLabel;
+
+  /// No description provided for @zakTabInfo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Info'**
+  String get zakTabInfo;
+
+  /// No description provided for @zakTabZaznamy.
+  ///
+  /// In cs, this message translates to:
+  /// **'Záznamy'**
+  String get zakTabZaznamy;
+
+  /// No description provided for @zakSmazatMenu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat zákazníka'**
+  String get zakSmazatMenu;
+
+  /// No description provided for @zakSmazatTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat zákazníka?'**
+  String get zakSmazatTitle;
+
+  /// No description provided for @zakSmazatContent.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník bude odebrán z adresáře. Jeho vozidla a historie zakázek zůstanou zachovány.'**
+  String get zakSmazatContent;
+
+  /// No description provided for @zakZrusit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zrušit'**
+  String get zakZrusit;
+
+  /// No description provided for @zakSmazatPotvrdit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat'**
+  String get zakSmazatPotvrdit;
+
+  /// No description provided for @zakSmazanUspesne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník byl smazán.'**
+  String get zakSmazanUspesne;
+
+  /// No description provided for @zakChybaMazani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba při mazání: {chyba}'**
+  String zakChybaMazani(String chyba);
+
+  /// No description provided for @zakNeznamyZakaznik.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neznámý zákazník'**
+  String get zakNeznamyZakaznik;
+
+  /// No description provided for @zakFirma.
+  ///
+  /// In cs, this message translates to:
+  /// **'Firma'**
+  String get zakFirma;
+
+  /// No description provided for @zakSoukromaOsoba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Soukromá osoba'**
+  String get zakSoukromaOsoba;
+
+  /// No description provided for @zakStatVozidel.
+  ///
+  /// In cs, this message translates to:
+  /// **'VOZIDEL'**
+  String get zakStatVozidel;
+
+  /// No description provided for @zakStatPrijmu.
+  ///
+  /// In cs, this message translates to:
+  /// **'PŘÍJMŮ'**
+  String get zakStatPrijmu;
+
+  /// No description provided for @zakVolat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Volat'**
+  String get zakVolat;
+
+  /// No description provided for @zakSms.
+  ///
+  /// In cs, this message translates to:
+  /// **'SMS'**
+  String get zakSms;
+
+  /// No description provided for @zakKontaktniUdaje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Kontaktní údaje'**
+  String get zakKontaktniUdaje;
+
+  /// No description provided for @zakVozidlaTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidla zákazníka'**
+  String get zakVozidlaTitle;
+
+  /// No description provided for @zakPridat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat'**
+  String get zakPridat;
+
+  /// No description provided for @zakZadnaVozidla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník nemá uložená žádná vozidla.'**
+  String get zakZadnaVozidla;
+
+  /// No description provided for @zakBezSpz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bez SPZ'**
+  String get zakBezSpz;
+
+  /// No description provided for @zakZadneZaznamy.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník zatím nemá žádné záznamy o příjmu.'**
+  String get zakZadneZaznamy;
+
+  /// No description provided for @zakZakazka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zakázka {cislo}'**
+  String zakZakazka(Object cislo);
+
+  /// No description provided for @zakPoskozeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Poškození: {seznam}'**
+  String zakPoskozeni(String seznam);
+
+  /// No description provided for @zakPodepsano.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podepsáno'**
+  String get zakPodepsano;
+
+  /// No description provided for @zakFotoKs.
+  ///
+  /// In cs, this message translates to:
+  /// **'{pocet} foto'**
+  String zakFotoKs(int pocet);
 }
 
 class _AppLocalizationsDelegate

@@ -5,6 +5,7 @@ import '../vozidla/vozidlo_detail.dart';
 import '../prijem/prijem_vozidla.dart';
 import '../prijem/prijem_vozidla_tablet_layout.dart' show kTabletBreakpoint;
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 
 class ZakaznikInfoTab extends StatelessWidget {
   final bool isDark;
@@ -88,12 +89,13 @@ class ZakaznikInfoTab extends StatelessWidget {
 
   Widget _buildTabletLayout(BuildContext context, TorkisTokens tok,
       ({int vozidla, int prijmy}) counts) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(TokSpace.xl),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(width: 320, child: _identityCard(counts, rounded: true)),
+          SizedBox(width: 320, child: _identityCard(counts, rounded: true, l10n: l10n)),
           const SizedBox(width: TokSpace.lg),
           Expanded(
             child: Align(
@@ -118,11 +120,12 @@ class ZakaznikInfoTab extends StatelessWidget {
 
   Widget _buildMobileLayout(BuildContext context, TorkisTokens tok,
       ({int vozidla, int prijmy}) counts) {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _identityCard(counts, rounded: false),
+          _identityCard(counts, rounded: false, l10n: l10n),
           Padding(
             padding: const EdgeInsets.all(TokSpace.xl),
             child: Column(
@@ -141,7 +144,7 @@ class ZakaznikInfoTab extends StatelessWidget {
   // ── Identity karta (tmavý gradient) ───────────────────────────────────────
 
   Widget _identityCard(({int vozidla, int prijmy}) counts,
-      {required bool rounded}) {
+      {required bool rounded, required AppLocalizations l10n}) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -175,7 +178,7 @@ class ZakaznikInfoTab extends StatelessWidget {
           ),
           const SizedBox(height: TokSpace.lg),
           Text(
-            _jmeno.isEmpty ? 'Neznámý zákazník' : _jmeno,
+            _jmeno.isEmpty ? l10n.zakNeznamyZakaznik : _jmeno,
             style: const TextStyle(
                 color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
             textAlign: TextAlign.center,
@@ -189,7 +192,7 @@ class ZakaznikInfoTab extends StatelessWidget {
               borderRadius: BorderRadius.circular(TokRadius.round),
             ),
             child: Text(
-              _jeFirma ? 'Firma' : 'Soukromá osoba',
+              _jeFirma ? l10n.zakFirma : l10n.zakSoukromaOsoba,
               style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.85),
                   fontSize: 12,
@@ -197,13 +200,13 @@ class ZakaznikInfoTab extends StatelessWidget {
             ),
           ),
           const SizedBox(height: TokSpace.xl),
-          _statsRow(counts),
+          _statsRow(counts, l10n),
         ],
       ),
     );
   }
 
-  Widget _statsRow(({int vozidla, int prijmy}) counts) {
+  Widget _statsRow(({int vozidla, int prijmy}) counts, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.07),
@@ -213,9 +216,9 @@ class ZakaznikInfoTab extends StatelessWidget {
           vertical: TokSpace.md, horizontal: TokSpace.sm),
       child: Row(
         children: [
-          _statItem('VOZIDEL', '${counts.vozidla}'),
+          _statItem(l10n.zakStatVozidel, '${counts.vozidla}'),
           _statDivider(),
-          _statItem('PŘÍJMŮ', '${counts.prijmy}'),
+          _statItem(l10n.zakStatPrijmu, '${counts.prijmy}'),
         ],
       ),
     );
@@ -254,24 +257,25 @@ class ZakaznikInfoTab extends StatelessWidget {
   // ── Kontaktní karta ────────────────────────────────────────────────────
 
   Widget _contactCard(BuildContext context, TorkisTokens tok) {
+    final l10n = AppLocalizations.of(context);
     final tel = _telefon.replaceAll(' ', '');
     final actions = <Widget>[
       if (_telefon.isNotEmpty)
         _actionBtn(tok,
             icon: Icons.phone_outlined,
-            label: 'Volat',
+            label: l10n.zakVolat,
             filled: true,
             onTap: () => launchUrl(Uri.parse('tel:$tel'))),
       if (_telefon.isNotEmpty)
         _actionBtn(tok,
             icon: Icons.sms_outlined,
-            label: 'SMS',
+            label: l10n.zakSms,
             filled: false,
             onTap: () => launchUrl(Uri.parse('sms:$tel'))),
       if (_email.isNotEmpty)
         _actionBtn(tok,
             icon: Icons.mail_outline_rounded,
-            label: 'E-mail',
+            label: l10n.zakEmailLabel,
             filled: false,
             onTap: () => launchUrl(Uri.parse('mailto:$_email'))),
     ];
@@ -279,13 +283,13 @@ class ZakaznikInfoTab extends StatelessWidget {
     return _sectionCard(
       tok,
       icon: Icons.person_outline_rounded,
-      title: 'Kontaktní údaje',
+      title: l10n.zakKontaktniUdaje,
       children: [
-        _infoRow(tok, 'IČO', _ico),
-        _infoRow(tok, 'DIČ', _dic),
-        _infoRow(tok, 'Telefon', _telefon),
-        _infoRow(tok, 'E-mail', _email),
-        _infoRow(tok, 'Adresa', _adresa),
+        _infoRow(tok, l10n.zakIcoLabel, _ico),
+        _infoRow(tok, l10n.zakDicLabel, _dic),
+        _infoRow(tok, l10n.zakTelLabel, _telefon),
+        _infoRow(tok, l10n.zakEmailLabel, _email),
+        _infoRow(tok, l10n.zakAdresaLabel, _adresa),
         if (actions.isNotEmpty) ...[
           const SizedBox(height: TokSpace.md),
           Row(
@@ -341,6 +345,7 @@ class ZakaznikInfoTab extends StatelessWidget {
   // ── Karta vozidel zákazníka ──────────────────────────────────────────────
 
   Widget _vozidlaCard(BuildContext context, TorkisTokens tok) {
+    final l10n = AppLocalizations.of(context);
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('vozidla')
@@ -353,7 +358,7 @@ class ZakaznikInfoTab extends StatelessWidget {
         return _sectionCard(
           tok,
           icon: Icons.directions_car_outlined,
-          title: 'Vozidla zákazníka',
+          title: l10n.zakVozidlaTitle,
           count: docs.isNotEmpty ? docs.length : null,
           trailing: TextButton.icon(
             onPressed: () => Navigator.push(context,
@@ -365,7 +370,7 @@ class ZakaznikInfoTab extends StatelessWidget {
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('Přidat'),
+            label: Text(l10n.zakPridat),
           ),
           children: [
             if (waiting)
@@ -376,7 +381,7 @@ class ZakaznikInfoTab extends StatelessWidget {
             else if (docs.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: TokSpace.sm),
-                child: Text('Zákazník nemá uložená žádná vozidla.',
+                child: Text(l10n.zakZadnaVozidla,
                     style:
                         TextStyle(color: tok.textSecondary, fontSize: 13)),
               )
@@ -392,6 +397,7 @@ class ZakaznikInfoTab extends StatelessWidget {
   Widget _vozidloRow(
       BuildContext context, TorkisTokens tok, QueryDocumentSnapshot doc,
       {required bool isLast}) {
+    final l10n = AppLocalizations.of(context);
     final vozidlo = doc.data() as Map<String, dynamic>;
     final spz = vozidlo['spz']?.toString() ?? '';
     final znacka = vozidlo['znacka']?.toString() ?? '';
@@ -430,7 +436,7 @@ class ZakaznikInfoTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(spz.isEmpty ? 'Bez SPZ' : spz,
+                      Text(spz.isEmpty ? l10n.zakBezSpz : spz,
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,

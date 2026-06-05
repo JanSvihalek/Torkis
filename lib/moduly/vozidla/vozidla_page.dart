@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'vozidlo_detail.dart';
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth_gate.dart';
 
 class VozidlaPage extends StatefulWidget {
@@ -35,10 +36,10 @@ class _VozidlaPageState extends State<VozidlaPage> {
 
   Future<void> _scanSpz() async {
     if (kIsWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Skenování funguje pouze v nainstalované aplikaci (APK/iOS).'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context).vozidlaSkenJenApp),
           backgroundColor: Colors.orange,
-          duration: Duration(seconds: 4)));
+          duration: const Duration(seconds: 4)));
       return;
     }
     try {
@@ -92,8 +93,9 @@ class _VozidlaPageState extends State<VozidlaPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = FirebaseAuth.instance.currentUser;
 
-    if (user == null) return const Center(child: Text("Nejste přihlášeni."));
+    if (user == null) return Center(child: Text(AppLocalizations.of(context).vozidlaNejstePrihlaseni));
 
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -102,14 +104,14 @@ class _VozidlaPageState extends State<VozidlaPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Databáze vozidel',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              Text(
+                l10n.vozidlaTitle,
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Přehled všech servisovaných aut.',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                l10n.vozidlaSubtitle,
+                style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 15),
               Container(
@@ -129,12 +131,12 @@ class _VozidlaPageState extends State<VozidlaPage> {
                   onChanged: (value) =>
                       setState(() => _searchQuery = value.toLowerCase()),
                   decoration: InputDecoration(
-                    hintText: 'Hledat SPZ, Značku nebo VIN...',
+                    hintText: l10n.vozidlaHledatHint,
                     prefixIcon: const Icon(Icons.search, color: Colors.teal),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.document_scanner, color: Colors.teal),
                       onPressed: _scanSpz,
-                      tooltip: 'Naskenovat SPZ fotoaparátem',
+                      tooltip: l10n.vozidlaSkenSpzTooltip,
                     ),
                     filled: true,
                     fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
@@ -199,10 +201,10 @@ class _VozidlaPageState extends State<VozidlaPage> {
               });
 
               if (docs.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
-                    'Zatím nemáte v databázi žádná vozidla.',
-                    style: TextStyle(color: Colors.grey),
+                    l10n.vozidlaZadnaVozidla,
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 );
               }
@@ -278,7 +280,7 @@ class _VozidlaPageState extends State<VozidlaPage> {
                             if (data['vin'] != null &&
                                 data['vin'].toString().isNotEmpty)
                               Text(
-                                'VIN: ${data['vin']}',
+                                '${l10n.vozidloVin}: ${data['vin']}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey,
@@ -287,7 +289,7 @@ class _VozidlaPageState extends State<VozidlaPage> {
                             const SizedBox(height: 4),
                             if (tacho.isNotEmpty || maStk)
                               Text(
-                                '${tacho.isNotEmpty ? 'Tachometr: $tacho km' : ''}${tacho.isNotEmpty && maStk ? ' • ' : ''}${maStk ? 'STK: $stkM/$stkR' : ''}',
+                                '${tacho.isNotEmpty ? '${l10n.vozidloTachometrLabel}: $tacho km' : ''}${tacho.isNotEmpty && maStk ? ' • ' : ''}${maStk ? '${l10n.vozidloStatStkDo}: $stkM/$stkR' : ''}',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.teal,

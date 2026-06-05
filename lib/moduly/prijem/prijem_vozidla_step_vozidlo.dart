@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/design_tokens.dart';
 import '../../core/torkis_ui.dart';
 import 'prijem_vozidla_helpers.dart';
+import '../../l10n/app_localizations.dart';
 
 const _kVsechnyZeme = {
   'CZ': '🇨🇿 Česká republika',
@@ -229,6 +230,7 @@ class _StepVozidloState extends State<StepVozidlo> {
 
   Widget _buildSpzSection(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -242,7 +244,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6, left: 2),
-                    child: Text('Země',
+                    child: Text(l10n.prijemVozidloZeme,
                         style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -302,7 +304,7 @@ class _StepVozidloState extends State<StepVozidlo> {
             const SizedBox(width: 8),
             Expanded(
               child: buildInput(
-                'SPZ vozidla',
+                l10n.prijemVozidloSpz,
                 Icons.confirmation_number_outlined,
                 widget.spzController,
                 widget.isDark,
@@ -315,8 +317,8 @@ class _StepVozidloState extends State<StepVozidlo> {
         _buildActionTile(
           context,
           icon: Icons.search_rounded,
-          title: 'Hledat SPZ v databázi',
-          subtitle: 'Najít dříve uložené vozidlo podle SPZ',
+          title: l10n.prijemVozidloHledatSpz,
+          subtitle: l10n.prijemVozidloHledatSpzSub,
           loading: widget.isLoadingSpz,
           onTap: widget.onHledatSpz,
         ),
@@ -325,11 +327,12 @@ class _StepVozidloState extends State<StepVozidlo> {
   }
 
   Widget _buildVinSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         buildInput(
-          'VIN kód',
+          l10n.prijemVozidloVin,
           Icons.tag_outlined,
           widget.vinController,
           widget.isDark,
@@ -339,8 +342,8 @@ class _StepVozidloState extends State<StepVozidlo> {
         _buildActionTile(
           context,
           icon: Icons.search_rounded,
-          title: 'Hledat VIN v databázi',
-          subtitle: 'Najít dříve uložené vozidlo podle VIN',
+          title: l10n.prijemVozidloHledatVin,
+          subtitle: l10n.prijemVozidloHledatVinSub,
           loading: widget.isLoadingVin,
           onTap: widget.onHledatVin,
         ),
@@ -349,8 +352,8 @@ class _StepVozidloState extends State<StepVozidlo> {
           _buildActionTile(
             context,
             icon: Icons.cloud_download_rounded,
-            title: 'Dekódovat VIN online',
-            subtitle: 'Doplnit značku, model, motorizaci a STK',
+            title: l10n.prijemVozidloDekodovat,
+            subtitle: l10n.prijemVozidloDekodovatSub,
             loading: widget.isLoadingVincario,
             onTap: widget.onDekovatVin,
           ),
@@ -361,13 +364,14 @@ class _StepVozidloState extends State<StepVozidlo> {
 
   Widget _buildZnackaSection(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 6, left: 2),
           child: Text(
-            'Značka (např. Škoda)',
+            l10n.prijemVozidloZnackaHint,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -475,13 +479,14 @@ class _StepVozidloState extends State<StepVozidlo> {
 
   Widget _buildModelSection(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 6, left: 2),
           child: Text(
-            'Model (např. Octavia)',
+            l10n.prijemVozidloModelHint,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -577,6 +582,7 @@ class _StepVozidloState extends State<StepVozidlo> {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final isTablet = constraints.maxWidth >= 720;
@@ -620,7 +626,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Záznam vozidla',
+                            Text(l10n.prijemVozidloTitle,
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.w700,
@@ -630,7 +636,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                                 )),
                             const SizedBox(height: 6),
                             Text(
-                                'Naskenujte VIN nebo SPZ, nebo údaje doplňte ručně.',
+                                l10n.prijemVozidloNapoveda,
                                 style: TextStyle(
                                     fontSize: 13, color: tok.textSecondary)),
                           ],
@@ -639,16 +645,16 @@ class _StepVozidloState extends State<StepVozidlo> {
                       if (isTablet) ...[
                         const SizedBox(width: TokSpace.lg),
                         SegmentedButton<bool>(
-                          segments: const [
+                          segments: [
                             ButtonSegment(
                               value: false,
-                              icon: Icon(Icons.view_agenda_outlined, size: 16),
-                              label: Text('Pod sebou'),
+                              icon: const Icon(Icons.view_agenda_outlined, size: 16),
+                              label: Text(l10n.prijemVozidloRozlozeniPodSebou),
                             ),
                             ButtonSegment(
                               value: true,
-                              icon: Icon(Icons.grid_view_outlined, size: 16),
-                              label: Text('V mřížce'),
+                              icon: const Icon(Icons.grid_view_outlined, size: 16),
+                              label: Text(l10n.prijemVozidloRozlozeniVMrizce),
                             ),
                           ],
                           selected: {_useGrid ?? true},
@@ -665,14 +671,14 @@ class _StepVozidloState extends State<StepVozidlo> {
                   const SizedBox(height: TokSpace.lg),
                   TorkisActionTile(
                     icon: Icons.qr_code_scanner_rounded,
-                    title: 'Skenovat VIN/SPZ',
-                    subtitle: 'Automaticky rozpozná typ kódu',
+                    title: l10n.prijemVozidloSkenovat,
+                    subtitle: l10n.prijemVozidloSkenSub,
                     onTap: widget.onScanVinOrSpz,
                   ),
                   const SizedBox(height: TokSpace.lg),
                   rowPair(
                     buildDropdown(
-                      'Typ záznamu',
+                      l10n.prijemVozidloTypZaznamu,
                       Icons.label_outline,
                       widget.typyZaznamu.contains(widget.typZaznamu)
                           ? widget.typZaznamu
@@ -684,7 +690,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                       widget.isDark,
                     ),
                     buildInput(
-                      'Číslo záznamu',
+                      l10n.prijemVozidloCisloZaznamu,
                       Icons.tag_rounded,
                       widget.zakazkaController,
                       widget.isDark,
@@ -706,7 +712,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                                     icon: const Icon(Icons.refresh_rounded,
                                         size: 18, color: TokColors.accent),
                                     onPressed: widget.onRegenerateCislo,
-                                    tooltip: 'Vygenerovat nové číslo',
+                                    tooltip: l10n.prijemVozidloGenerovat,
                                   ),
                         ],
                       ),
@@ -736,7 +742,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                               const Icon(Icons.directions_car_outlined,
                                   color: TokColors.accent, size: 18),
                               const SizedBox(width: 10),
-                              Text('Zákazník má uložená tato vozidla',
+                              Text(l10n.prijemVozidloUlozenaVozidla,
                                   style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -785,24 +791,24 @@ class _StepVozidloState extends State<StepVozidlo> {
                   ),
                   const SizedBox(height: 20),
                   rowPair(
-                    buildInput('Rok výroby', Icons.calendar_today,
+                    buildInput(l10n.prijemVozidloRokVyroby, Icons.calendar_today,
                         widget.rokVyrobyController, widget.isDark,
                         numbersOnly: true, onScan: widget.onScan),
-                    buildInput('Motorizace (např. 2.0 TDI)', Icons.settings,
+                    buildInput(l10n.prijemVozidloMotorizaceHint, Icons.settings,
                         widget.motorizaceController, widget.isDark,
                         onScan: widget.onScan),
                   ),
                   const SizedBox(height: 20),
                   rowPair(
                     buildDropdown(
-                        'Typ paliva',
+                        l10n.prijemVozidloTypPaliva,
                         Icons.local_gas_station,
                         widget.vybranePalivo,
                         widget.moznostiPaliva,
                         widget.onPalivoChanged,
                         widget.isDark),
                     buildDropdown(
-                        'Převodovka',
+                        l10n.prijemVozidloPrevodovka,
                         Icons.settings_input_component,
                         widget.vybranaPrevodovka,
                         widget.moznostiPrevodovky,
@@ -811,7 +817,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                   ),
                   const SizedBox(height: 20),
                   buildDropdown(
-                      'Typ karosérie',
+                      l10n.prijemVozidloTypKaroserie,
                       Icons.directions_car_outlined,
                       widget.typKaroserie,
                       widget.moznostiKaroserie,

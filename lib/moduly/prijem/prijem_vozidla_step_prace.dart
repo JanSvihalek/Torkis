@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'prijem_vozidla_helpers.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Krok 5 – Požadované práce.
 /// Rychlé čipy z katalogu úkonů + dynamický seznam textových polí.
@@ -27,6 +28,7 @@ class StepPrace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Center(
@@ -35,16 +37,16 @@ class StepPrace extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Požadované práce',
+          Text(l10n.prijemPraceTitle,
               style:
-                  TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                  const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          const Text('Na čem jsme se se zákazníkem domluvili?',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
+          Text(l10n.prijemPracePozadavkyHint,
+              style: const TextStyle(fontSize: 16, color: Colors.grey)),
           const SizedBox(height: 30),
           if (!isLoadingUkony && rychleUkony.isNotEmpty) ...[
-            const Text('Rychlý výběr nejčastějších úkonů:',
-                style: TextStyle(
+            Text(l10n.prijemPraceRychlyVyber,
+                style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.blue)),
             const SizedBox(height: 10),
@@ -68,8 +70,8 @@ class StepPrace extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 20),
           ],
-          const Text('Seznam požadavků k zakázce:',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
+          Text(l10n.prijemPraceSeznam,
+              style: const TextStyle(fontSize: 16, color: Colors.grey)),
           const SizedBox(height: 20),
           ...List.generate(pozadavkyControllers.length, (index) {
             return Padding(
@@ -79,7 +81,7 @@ class StepPrace extends StatelessWidget {
                 children: [
                   Expanded(
                       child: buildInput(
-                          'Úkon ${index + 1}',
+                          l10n.prijemPraceUkonN(index + 1),
                           Icons.build_circle_outlined,
                           pozadavkyControllers[index],
                           isDark)),
@@ -101,8 +103,8 @@ class StepPrace extends StatelessWidget {
           TextButton.icon(
               onPressed: onPridatUkon,
               icon: const Icon(Icons.add),
-              label: const Text('Přidat jiný úkon',
-                  style: TextStyle(
+              label: Text(l10n.prijemPracePridat,
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold, fontSize: 16))),
         ],
           ),

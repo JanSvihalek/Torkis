@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'prijem_vozidla_helpers.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Krok 2 – Údaje o zákazníkovi.
 /// Pole: jméno/firma, IČO (s ARES vyhledáváním), ulice, město, PSČ, telefon, e-mail.
@@ -60,6 +61,7 @@ class StepZakaznik extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Center(
@@ -68,12 +70,12 @@ class StepZakaznik extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Údaje o zákazníkovi',
+          Text(l10n.prijemZakaznikTitle,
               style:
-                  TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                  const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 40),
           buildInput(
-            'Jméno a příjmení / Název firmy',
+            l10n.prijemZakaznikJmeno,
             Icons.person,
             jmenoController,
             isDark,
@@ -81,15 +83,15 @@ class StepZakaznik extends StatelessWidget {
                 icon: const Icon(Icons.person_search,
                     color: Colors.blue),
                 onPressed: onVyberZakaznika,
-                tooltip: 'Hledat uloženého zákazníka'),
+                tooltip: l10n.prijemZakaznikHledat),
           ),
           const SizedBox(height: 20),
           // IČO s ARES vyhledáváním — vlastní layout (loading indikátor v suffixu)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('IČO (ARES vyhledávání)',
-                  style: TextStyle(
+              Text(l10n.prijemZakaznikIco,
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.grey)),
               const SizedBox(height: 8),
@@ -122,7 +124,7 @@ class StepZakaznik extends StatelessWidget {
                               icon: const Icon(Icons.search,
                                   color: Colors.blue),
                               onPressed: onFetchAres,
-                              tooltip: 'Hledat v ARES'),
+                              tooltip: l10n.prijemZakaznikHledatAres),
                       filled: true,
                       fillColor: isDark
                           ? Colors.white.withValues(alpha: 0.1)
@@ -153,8 +155,8 @@ class StepZakaznik extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Právní forma',
-                  style: TextStyle(
+              Text(l10n.prijemZakaznikPravniForma,
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.grey)),
               const SizedBox(height: 8),
@@ -216,18 +218,18 @@ class StepZakaznik extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          buildInput('Ulice a číslo', Icons.location_on,
+          buildInput(l10n.prijemZakaznikUlice, Icons.location_on,
               uliceController, isDark),
           const SizedBox(height: 20),
           Row(children: [
             Expanded(
                 flex: 2,
-                child: buildInput('Město', Icons.location_city,
+                child: buildInput(l10n.prijemZakaznikMesto, Icons.location_city,
                     mestoController, isDark)),
             const SizedBox(width: 15),
             Expanded(
                 flex: 1,
-                child: buildInput('PSČ', Icons.markunread_mailbox,
+                child: buildInput(l10n.prijemZakaznikPsc, Icons.markunread_mailbox,
                     pscController, isDark,
                     numbersOnly: true)),
           ]),
@@ -241,7 +243,7 @@ class StepZakaznik extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           buildInput(
-              'E-mail', Icons.email, emailController, isDark),
+              l10n.prijemZakaznikEmail, Icons.email, emailController, isDark),
         ],
           ),
         ),

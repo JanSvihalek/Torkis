@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:signature/signature.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Krok 6 – Shrnutí a podpis zákazníka.
 /// Zobrazuje souhrn zákazníka, vozidla a sjednaných úkonů.
@@ -42,6 +43,7 @@ class StepPodpis extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final validniPozadavky =
         pozadavkyControllers.where((c) => c.text.trim().isNotEmpty).toList();
 
@@ -53,8 +55,8 @@ class StepPodpis extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Shrnutí',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              Text(l10n.prijemPodpisTitle,
+                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
               const SizedBox(height: 30),
               // Souhrn
               Container(
@@ -68,23 +70,26 @@ class StepPodpis extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Zákazník: ${jmeno.isEmpty ? 'Neuvedeno' : jmeno}',
+                    Text(
+                        l10n.prijemPodpisZakaznik(
+                            jmeno.isEmpty ? l10n.prijemPodpisNeuvedeno : jmeno),
                         style: const TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 5),
                     Text(
-                        'Adresa: ${ulice.isNotEmpty ? "$ulice, " : ""}$psc $mesto',
+                        l10n.prijemPodpisAdresa(
+                            '${ulice.isNotEmpty ? "$ulice, " : ""}$psc $mesto'),
                         style:
                             const TextStyle(fontSize: 14, color: Colors.grey)),
                     const SizedBox(height: 10),
-                    Text('Vozidlo: ${spz.toUpperCase()} $znacka',
+                    Text(l10n.prijemPodpisVozidlo('${spz.toUpperCase()} $znacka'),
                         style: const TextStyle(fontSize: 16)),
                     if (validniPozadavky.isNotEmpty) ...[
                       const Padding(
                           padding: EdgeInsets.symmetric(vertical: 15),
                           child: Divider()),
-                      const Text('Sjednané úkony:',
-                          style: TextStyle(
+                      Text(l10n.prijemPodpisSjednaneUkony,
+                          style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: Colors.blue,
                               fontSize: 16)),
@@ -117,12 +122,12 @@ class StepPodpis extends StatelessWidget {
                     border:
                         Border.all(color: Colors.blue.withValues(alpha: 0.3))),
                 child: CheckboxListTile(
-                  title: const Text('Odeslat kopii protokolu na e-mail',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(l10n.prijemPodpisEmailToggle,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(
                       email.isEmpty
-                          ? 'U zákazníka (krok 2) není vyplněn žádný e-mail.'
-                          : 'Bude odesláno na: $email',
+                          ? l10n.prijemPodpisEmailChybi
+                          : l10n.prijemPodpisEmailKam(email),
                       style: TextStyle(
                           color: email.isEmpty ? Colors.red : Colors.grey,
                           fontSize: 13)),
@@ -135,9 +140,8 @@ class StepPodpis extends StatelessWidget {
               ),
               const SizedBox(height: 30),
               if (podpisPovolen) ...[
-                const Text(
-                    'Zákazník svým podpisem stvrzuje správnost výše uvedených údajů a souhlasí se stavem vozidla při převzetí do servisu.',
-                    style: TextStyle(color: Colors.grey, fontSize: 14)),
+                Text(l10n.prijemPodpisSouhlas,
+                    style: const TextStyle(color: Colors.grey, fontSize: 14)),
                 const SizedBox(height: 20),
                 Container(
                   decoration: BoxDecoration(
@@ -157,8 +161,8 @@ class StepPodpis extends StatelessWidget {
                     child: TextButton.icon(
                         onPressed: () => signatureController.clear(),
                         icon: const Icon(Icons.clear, color: Colors.red),
-                        label: const Text('Smazat podpis',
-                            style: TextStyle(color: Colors.red)))),
+                        label: Text(l10n.prijemPodpisSmazat,
+                            style: const TextStyle(color: Colors.red)))),
               ] else ...[
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -167,14 +171,14 @@ class StepPodpis extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                           color: Colors.grey.withValues(alpha: 0.2))),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.draw_outlined, color: Colors.grey, size: 20),
-                      SizedBox(width: 10),
+                      const Icon(Icons.draw_outlined, color: Colors.grey, size: 20),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Podpis zákazníka je v nastavení servisu vypnut.',
-                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                          l10n.prijemPodpisVypnut,
+                          style: const TextStyle(color: Colors.grey, fontSize: 13),
                         ),
                       ),
                     ],

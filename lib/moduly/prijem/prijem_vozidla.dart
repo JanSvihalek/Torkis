@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/design_tokens.dart';
 import '../../core/torkis_ui.dart';
+import '../../l10n/app_localizations.dart';
 import '../../core/pdf_generator.dart';
 import '../../core/vincario_service.dart';
 import '../auth_gate.dart';
@@ -1650,13 +1651,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
-  static const _stepLabels = [
-    'Identifikace vozu',
-    'Zákazník',
-    'Fotodokumentace',
-    'Stav vozu',
-    'Úkony a práce',
-    'Souhrn',
+  List<String> _getStepLabels(AppLocalizations l10n) => [
+    l10n.prijemStepIdentifikace,
+    l10n.prijemStepZakaznik,
+    l10n.prijemStepFoto,
+    l10n.prijemStepStav,
+    l10n.prijemStepPrace,
+    l10n.prijemStepSouhrn,
   ];
 
   List<Widget> _buildStepPages(bool isDark) => [
@@ -1668,42 +1669,47 @@ class _MainWizardPageState extends State<MainWizardPage> {
         _buildPodpisStep(isDark),
       ];
 
-  Widget _uploadingOverlay() => Container(
-        color: Colors.black54,
-        child: const Center(
-          child: Card(
-            elevation: 10,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 30),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 20),
-                  Text('Odesílám zakázku a protokol...',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
+  Widget _uploadingOverlay() {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      color: Colors.black54,
+      child: Center(
+        child: Card(
+          elevation: 10,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 20),
+                Text(l10n.prijemOdesilamMsg,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= kTabletBreakpoint &&
             MediaQuery.orientationOf(context) == Orientation.landscape) {
-          return _buildTabletLayout(isDark);
+          return _buildTabletLayout(isDark, l10n);
         }
-        return _buildMobileLayout(isDark);
+        return _buildMobileLayout(isDark, l10n);
       },
     );
   }
 
-  Widget _buildMobileLayout(bool isDark) {
+  Widget _buildMobileLayout(bool isDark, AppLocalizations l10n) {
+    final stepLabels = _getStepLabels(l10n);
     return Stack(
       children: [
         Column(
@@ -1714,7 +1720,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
               child: TorkisStepProgress(
                 currentStep: _currentPage + 1,
                 totalSteps: _totalPages,
-                stepLabel: _stepLabels[_currentPage.clamp(0, _totalPages - 1)],
+                stepLabel: stepLabels[_currentPage.clamp(0, _totalPages - 1)],
               ),
             ),
             Expanded(
@@ -1733,8 +1739,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
     );
   }
 
-  Widget _buildTabletLayout(bool isDark) {
+  Widget _buildTabletLayout(bool isDark, AppLocalizations l10n) {
     final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
+    final stepLabels = _getStepLabels(l10n);
     return Stack(
       children: [
         Row(
@@ -1743,7 +1750,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
             PrijemTabletSidebar(
               currentStep: _currentPage,
               totalSteps: _totalPages,
-              stepLabels: _stepLabels,
+              stepLabels: stepLabels,
               onStepTap: (i) {
                 _pageController.jumpToPage(i);
                 setState(() => _currentPage = i);
@@ -1770,8 +1777,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'ZÁZNAM VOZIDLA',
-                                style: TextStyle(
+                                l10n.prijemNavigaceLabel,
+                                style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1.2,
@@ -1779,7 +1786,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                                 ),
                               ),
                               Text(
-                                'Nový záznam',
+                                l10n.prijemNovyZaznam,
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w700,
@@ -1791,7 +1798,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
                           ),
                           const Spacer(),
                           Text(
-                            'Krok ${_currentPage + 1} z $_totalPages',
+                            l10n.prijemKrokZ(_currentPage + 1, _totalPages),
                             style: TextStyle(
                                 fontSize: 13, color: tok.textSecondary),
                           ),
@@ -2053,7 +2060,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 width: 220,
                 height: 52,
                 child: TorkisPrimaryButton(
-                  label: isLast ? 'Dokončit a odeslat' : 'Pokračovat',
+                  label: isLast
+                      ? AppLocalizations.of(context).prijemDokoncit
+                      : AppLocalizations.of(context).prijemPokracovat,
                   loading: isBusy,
                   onPressed: isBusy ? null : _moveNext,
                   trailingIcon: Icons.arrow_forward_rounded,
@@ -2062,7 +2071,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
             else
               Expanded(
                 child: TorkisPrimaryButton(
-                  label: isLast ? 'Dokončit a odeslat' : 'Pokračovat',
+                  label: isLast
+                      ? AppLocalizations.of(context).prijemDokoncit
+                      : AppLocalizations.of(context).prijemPokracovat,
                   loading: isBusy,
                   onPressed: isBusy ? null : _moveNext,
                 ),

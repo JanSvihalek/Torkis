@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Sdílené pomocné widgety pro wizard příjmu vozidla.
 /// Používají TORKIS design tokens — sjednocený vizuál se zbytkem aplikace.
@@ -186,6 +187,7 @@ class PhoneFieldWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final selectedEntry = predvolby.firstWhere(
       (p) => p['kod'] == telPredvolba,
       orElse: () => predvolby.first,
@@ -194,7 +196,7 @@ class PhoneFieldWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _labelText('Telefonní číslo', isDark),
+        _labelText(l10n.prijemHelperTelefon, isDark),
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -224,7 +226,7 @@ class PhoneFieldWidget extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Vyberte předvolbu',
+                          l10n.prijemHelperPredvolba,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -305,7 +307,7 @@ class PhoneFieldWidget extends StatelessWidget {
                   decoration: _buildDecoration(
                     icon: Icons.phone_outlined,
                     isDark: isDark,
-                    hint: 'Telefonní číslo',
+                    hint: l10n.prijemHelperTelefon,
                   ),
                 ),
               ),

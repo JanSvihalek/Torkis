@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 
 const double kTabletBreakpoint = 800.0;
 const double kSidebarWidth = 210.0;
@@ -173,6 +174,7 @@ class _SidebarProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -180,7 +182,7 @@ class _SidebarProgress extends StatelessWidget {
         Row(
           children: [
             Text(
-              'POSTUP',
+              l10n.prijemTabletPostup,
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w700,
@@ -247,6 +249,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: kPreviewPanelWidth,
       decoration: BoxDecoration(
@@ -256,14 +259,14 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(TokSpace.lg),
         child: vehicleInfo != null
-            ? _buildHistoryView(tok)
-            : _buildLiveView(tok),
+            ? _buildHistoryView(tok, l10n)
+            : _buildLiveView(tok, l10n),
       ),
     );
   }
 
   // Zobrazí historická data načteného vozidla
-  Widget _buildHistoryView(TorkisTokens tok) {
+  Widget _buildHistoryView(TorkisTokens tok, AppLocalizations l10n) {
     final info = vehicleInfo!;
     final title = [info['znacka'] ?? '', info['model'] ?? '']
         .where((s) => (s as String).isNotEmpty)
@@ -291,7 +294,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
       children: [
         const SizedBox(height: TokSpace.sm),
         Text(
-          'POSLEDNÍ NÁVŠTĚVA',
+          l10n.prijemTabletPosledniNavsteva,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
@@ -305,7 +308,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
         _InfoCard(tok: tok, children: [
           _CardHeader(
             icon: Icons.directions_car_rounded,
-            title: title.isEmpty ? 'Vozidlo' : title,
+            title: title.isEmpty ? l10n.prijemTabletVozidlo : title,
             subtitle: rok,
             tok: tok,
           ),
@@ -314,13 +317,13 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
             Divider(color: tok.line, height: 1),
             const SizedBox(height: TokSpace.md),
             if (spzVal.isNotEmpty)
-              _PreviewRow(label: 'SPZ', value: spzVal, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletSpz, value: spzVal, tok: tok),
             if (tach.isNotEmpty)
-              _PreviewRow(label: 'Tachometr', value: '$tach km', tok: tok),
+              _PreviewRow(label: l10n.prijemTabletTacho, value: '$tach km', tok: tok),
             if (stk.isNotEmpty)
-              _PreviewRow(label: 'STK', value: stk, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletStk, value: stk, tok: tok),
             if (navsteva.isNotEmpty)
-              _PreviewRow(label: 'Naposledy', value: navsteva, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletNaposledy, value: navsteva, tok: tok),
           ],
         ]),
 
@@ -350,7 +353,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
               const SizedBox(height: TokSpace.md),
               Divider(color: tok.line, height: 1),
               const SizedBox(height: TokSpace.md),
-              _PreviewRow(label: 'Stav', value: zakazkaStav, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletStav, value: zakazkaStav, tok: tok),
             ],
           ]),
         ],
@@ -364,20 +367,20 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
           _InfoCard(tok: tok, children: [
             _CardHeader(
               icon: Icons.car_crash_outlined,
-              title: 'Stav při příjmu',
+              title: l10n.prijemTabletStavPriPrijmu,
               tok: tok,
             ),
             const SizedBox(height: TokSpace.md),
             Divider(color: tok.line, height: 1),
             const SizedBox(height: TokSpace.md),
             if (stavTach.isNotEmpty)
-              _PreviewRow(label: 'Tachometr', value: '$stavTach km', tok: tok),
+              _PreviewRow(label: l10n.prijemTabletTacho, value: '$stavTach km', tok: tok),
             if (stavStk.isNotEmpty)
-              _PreviewRow(label: 'STK', value: stavStk, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletStk, value: stavStk, tok: tok),
             if (stavPoskozeni.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: TokSpace.sm),
-                child: Text('Poškození',
+                child: Text(l10n.prijemTabletPoskozeni,
                     style: TextStyle(fontSize: 11, color: tok.textSecondary)),
               ),
               ...stavPoskozeni.map((p) => Padding(
@@ -416,7 +419,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
   }
 
   // Původní live náhled při zadávání nového vozidla
-  Widget _buildLiveView(TorkisTokens tok) {
+  Widget _buildLiveView(TorkisTokens tok, AppLocalizations l10n) {
     final vehicleTitle = [znacka, model].where((s) => s.isNotEmpty).join(' ');
     final hasData = spz.isNotEmpty ||
         vin.isNotEmpty ||
@@ -428,7 +431,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
       children: [
         const SizedBox(height: TokSpace.sm),
         Text(
-          'NÁHLED VOZIDLA',
+          l10n.prijemTabletNahled,
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
@@ -440,7 +443,7 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
         _InfoCard(tok: tok, children: [
           _CardHeader(
             icon: Icons.directions_car_rounded,
-            title: vehicleTitle.isEmpty ? 'Vozidlo' : vehicleTitle,
+            title: vehicleTitle.isEmpty ? l10n.prijemTabletVozidlo : vehicleTitle,
             subtitle: rokVyroby,
             tok: tok,
           ),
@@ -449,11 +452,11 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
             Divider(color: tok.line, height: 1),
             const SizedBox(height: TokSpace.md),
             if (spz.isNotEmpty)
-              _PreviewRow(label: 'SPZ', value: spz, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletSpz, value: spz, tok: tok),
             if (vin.isNotEmpty)
-              _PreviewRow(label: 'VIN', value: vin, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletVin, value: vin, tok: tok),
             if (cisloZakazky.isNotEmpty)
-              _PreviewRow(label: 'Zakázka', value: cisloZakazky, tok: tok),
+              _PreviewRow(label: l10n.prijemTabletZakazka, value: cisloZakazky, tok: tok),
           ],
         ]),
         const SizedBox(height: TokSpace.md),
@@ -469,10 +472,10 @@ class PrijemVehiclePreviewPanel extends StatelessWidget {
               const Icon(Icons.info_outline_rounded,
                   size: 13, color: TokColors.accent),
               const SizedBox(width: 6),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Údaje se plní průběžně při vyplňování formuláře.',
-                  style: TextStyle(fontSize: 11, color: TokColors.accent),
+                  l10n.prijemTabletUdajePlni,
+                  style: const TextStyle(fontSize: 11, color: TokColors.accent),
                 ),
               ),
             ],

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'vozidlo_tab_info.dart';
 import 'vozidlo_tab_prijem.dart';
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 
 class VozidloDetailScreen extends StatelessWidget {
   final String vozidloDocId;
@@ -34,6 +35,7 @@ class VozidloDetailScreen extends StatelessWidget {
 
     String vybranaZnacka = znackaCtrl.text;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     // Future se vytváří jednou před otevřením sheetu — není uvnitř builderu,
     // takže setModalState ho neobnoví a nezpůsobí blikání.
@@ -98,16 +100,16 @@ class VozidloDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Text('Úprava vozidla',
-                            style: TextStyle(
+                        Text(l10n.vozidloDetailUprava,
+                            style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold)),
                         const SizedBox(height: 20),
                         TextField(
                           controller: spzCtrl,
-                          decoration: const InputDecoration(
-                              labelText: 'SPZ',
-                              border: OutlineInputBorder()),
+                          decoration: InputDecoration(
+                              labelText: l10n.vozidloDetailSpz,
+                              border: const OutlineInputBorder()),
                           textCapitalization:
                               TextCapitalization.characters,
                         ),
@@ -119,7 +121,7 @@ class VozidloDetailScreen extends StatelessWidget {
                             controller: znackaCtrl,
                             enableFilter: true,
                             enableSearch: true,
-                            label: const Text('Značka'),
+                            label: Text(l10n.vozidloDetailZnacka),
                             inputDecorationTheme:
                                 const InputDecorationTheme(
                                     border: OutlineInputBorder()),
@@ -141,7 +143,7 @@ class VozidloDetailScreen extends StatelessWidget {
                             controller: modelCtrl,
                             enableFilter: true,
                             enableSearch: true,
-                            label: const Text('Model'),
+                            label: Text(l10n.vozidloDetailModel),
                             inputDecorationTheme:
                                 const InputDecorationTheme(
                                     border: OutlineInputBorder()),
@@ -154,9 +156,9 @@ class VozidloDetailScreen extends StatelessWidget {
                         const SizedBox(height: 15),
                         TextField(
                           controller: vinCtrl,
-                          decoration: const InputDecoration(
-                              labelText: 'VIN',
-                              border: OutlineInputBorder()),
+                          decoration: InputDecoration(
+                              labelText: l10n.vozidloVin,
+                              border: const OutlineInputBorder()),
                           textCapitalization:
                               TextCapitalization.characters,
                         ),
@@ -166,18 +168,18 @@ class VozidloDetailScreen extends StatelessWidget {
                             child: TextField(
                               controller: rokCtrl,
                               keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                  labelText: 'Rok výroby',
-                                  border: OutlineInputBorder()),
+                              decoration: InputDecoration(
+                                  labelText: l10n.vozidloRokVyroby,
+                                  border: const OutlineInputBorder()),
                             ),
                           ),
                           const SizedBox(width: 15),
                           Expanded(
                             child: TextField(
                               controller: motorCtrl,
-                              decoration: const InputDecoration(
-                                  labelText: 'Motorizace',
-                                  border: OutlineInputBorder()),
+                              decoration: InputDecoration(
+                                  labelText: l10n.vozidloMotorizace,
+                                  border: const OutlineInputBorder()),
                             ),
                           ),
                         ]),
@@ -185,13 +187,13 @@ class VozidloDetailScreen extends StatelessWidget {
                         TextField(
                           controller: tachoCtrl,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                              labelText: 'Tachometr (km)',
-                              border: OutlineInputBorder()),
+                          decoration: InputDecoration(
+                              labelText: l10n.vozidloDetailTachoKm,
+                              border: const OutlineInputBorder()),
                         ),
                         const SizedBox(height: 15),
-                        const Text('Platnost STK',
-                            style: TextStyle(
+                        Text(l10n.vozidloDetailPlatnostStk,
+                            style: const TextStyle(
                                 fontSize: 12, color: Colors.grey)),
                         const SizedBox(height: 5),
                         Row(children: [
@@ -199,9 +201,9 @@ class VozidloDetailScreen extends StatelessWidget {
                             child: TextField(
                               controller: stkMCtrl,
                               keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                  labelText: 'Měsíc (MM)',
-                                  border: OutlineInputBorder()),
+                              decoration: InputDecoration(
+                                  labelText: l10n.vozidloDetailStkMesic,
+                                  border: const OutlineInputBorder()),
                             ),
                           ),
                           const SizedBox(width: 15),
@@ -209,9 +211,9 @@ class VozidloDetailScreen extends StatelessWidget {
                             child: TextField(
                               controller: stkRCtrl,
                               keyboardType: TextInputType.number,
-                              decoration: const InputDecoration(
-                                  labelText: 'Rok (YYYY)',
-                                  border: OutlineInputBorder()),
+                              decoration: InputDecoration(
+                                  labelText: l10n.vozidloDetailStkRok,
+                                  border: const OutlineInputBorder()),
                             ),
                           ),
                         ]),
@@ -269,9 +271,8 @@ class VozidloDetailScreen extends StatelessWidget {
                                     if (sheetCtx.mounted) {
                                       Navigator.pop(sheetCtx);
                                       ScaffoldMessenger.of(sheetCtx)
-                                          .showSnackBar(const SnackBar(
-                                        content: Text(
-                                            'Vozidlo s touto SPZ již existuje!'),
+                                          .showSnackBar(SnackBar(
+                                        content: Text(l10n.vozidloDetailSpzExistuje),
                                         backgroundColor: Colors.red,
                                       ));
                                     }
@@ -291,8 +292,7 @@ class VozidloDetailScreen extends StatelessWidget {
                                     Navigator.pop(sheetCtx);
                                     ScaffoldMessenger.of(sheetCtx)
                                         .showSnackBar(SnackBar(
-                                      content: Text(
-                                          'Vozidlo přejmenováno na $newSpz. Historie byla zachována.'),
+                                      content: Text(l10n.vozidloDetailPrejmenovano(newSpz)),
                                       backgroundColor: Colors.green,
                                     ));
                                   }
@@ -315,8 +315,8 @@ class VozidloDetailScreen extends StatelessWidget {
                                 }
                               }
                             },
-                            child: const Text('ULOŽIT ZMĚNY',
-                                style: TextStyle(
+                            child: Text(l10n.vozidloDetailUlozitZmeny,
+                                style: const TextStyle(
                                     fontWeight: FontWeight.bold)),
                           ),
                         ),
@@ -338,8 +338,8 @@ class VozidloDetailScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      return const Scaffold(
-          body: Center(child: Text('Nejste přihlášeni')));
+      return Scaffold(
+          body: Center(child: Text(AppLocalizations.of(context).vozidlaNejstePrihlaseni)));
     }
 
     return StreamBuilder<DocumentSnapshot>(
@@ -366,11 +366,12 @@ class VozidloDetailScreen extends StatelessWidget {
         if (autoData == null) {
           return Scaffold(
             appBar: AppBar(),
-            body: const Center(child: Text("Vozidlo nenalezeno.")),
+            body: Center(child: Text(AppLocalizations.of(context).vozidloDetailNenalezeno)),
           );
         }
 
         final tok = context.tok;
+        final l10n = AppLocalizations.of(context);
         final spz = autoData['spz']?.toString() ?? '';
         final zakaznikId = autoData['zakaznik_id']?.toString() ?? '';
         final znackaNazev = (autoData['znacka']?.toString() ?? '').trim();
@@ -384,7 +385,7 @@ class VozidloDetailScreen extends StatelessWidget {
             '${autoData['znacka'] ?? ''} ${autoData['model'] ?? ''}'.trim();
         final titleText = spz.isNotEmpty
             ? spz
-            : (vehicleTitle.isNotEmpty ? vehicleTitle : 'Vozidlo bez SPZ');
+            : (vehicleTitle.isNotEmpty ? vehicleTitle : l10n.vozidloDetailBezSpz);
 
         final views = <Widget>[
           VozidloInfoTab(
@@ -410,7 +411,7 @@ class VozidloDetailScreen extends StatelessWidget {
             body: SafeArea(
               child: Column(
                 children: [
-                  _buildHeader(context, tok, titleText, autoData),
+                  _buildHeader(context, tok, l10n, titleText, autoData),
                   Expanded(child: TabBarView(children: views)),
                 ],
               ),
@@ -422,8 +423,8 @@ class VozidloDetailScreen extends StatelessWidget {
   }
 
   // ── Hlavička karty vozidla ─────────────────────────────────────────────────
-  Widget _buildHeader(BuildContext context, TorkisTokens tok, String title,
-      Map<String, dynamic> autoData) {
+  Widget _buildHeader(BuildContext context, TorkisTokens tok,
+      AppLocalizations l10n, String title, Map<String, dynamic> autoData) {
     return Container(
       decoration: BoxDecoration(
         color: tok.surface,
@@ -443,8 +444,8 @@ class VozidloDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('VOZIDLO',
-                        style: TextStyle(
+                    Text(l10n.vozidloDetailLabel,
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
@@ -482,9 +483,9 @@ class VozidloDetailScreen extends StatelessWidget {
                 const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             unselectedLabelStyle:
                 const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            tabs: const [
-              Tab(text: 'Info'),
-              Tab(text: 'Záznamy'),
+            tabs: [
+              Tab(text: l10n.vozidloTabInfo),
+              Tab(text: l10n.vozidloTabZaznamy),
             ],
           ),
         ],
@@ -529,15 +530,15 @@ class VozidloDetailScreen extends StatelessWidget {
         onSelected: (v) {
           if (v == 'smazat') _smazatVozidlo(context);
         },
-        itemBuilder: (_) => const [
+        itemBuilder: (ctx) => [
           PopupMenuItem(
             value: 'smazat',
             child: Row(children: [
-              Icon(Icons.delete_outline_rounded,
+              const Icon(Icons.delete_outline_rounded,
                   size: 18, color: Colors.redAccent),
-              SizedBox(width: 10),
-              Text('Smazat vozidlo',
-                  style: TextStyle(color: Colors.redAccent)),
+              const SizedBox(width: 10),
+              Text(AppLocalizations.of(ctx).vozidloSmazatAkce,
+                  style: const TextStyle(color: Colors.redAccent)),
             ]),
           ),
         ],
@@ -546,20 +547,20 @@ class VozidloDetailScreen extends StatelessWidget {
   }
 
   Future<void> _smazatVozidlo(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Smazat vozidlo?'),
-        content: const Text(
-            'Vozidlo bude odebráno z adresáře. Historie zakázek zůstane zachována.'),
+        title: Text(l10n.vozidloSmazatDialogTitle),
+        content: Text(l10n.vozidloSmazatDialogText),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(c, false),
-              child: const Text('Zrušit')),
+              child: Text(l10n.btnZrusit)),
           TextButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Smazat',
-                style: TextStyle(color: Colors.redAccent)),
+            child: Text(l10n.vozidloSmazatBtn,
+                style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -572,8 +573,8 @@ class VozidloDetailScreen extends StatelessWidget {
           .delete();
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Vozidlo bylo smazáno.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.vozidloSmazano),
             backgroundColor: Colors.green));
       }
     } catch (e) {

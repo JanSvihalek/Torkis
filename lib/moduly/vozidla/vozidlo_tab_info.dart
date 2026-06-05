@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../zakaznici/zakaznik_detail.dart';
 import '../prijem/prijem_vozidla_tablet_layout.dart' show kTabletBreakpoint;
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 import '../auth_gate.dart';
 
 class VozidloInfoTab extends StatelessWidget {
@@ -164,13 +165,13 @@ class VozidloInfoTab extends StatelessWidget {
         children: [
           SizedBox(
             width: 320,
-            child: _vehicleCard(prijmuCount, logo),
+            child: _vehicleCard(context, prijmuCount, logo),
           ),
           const SizedBox(width: TokSpace.lg),
           Expanded(
             child: Align(
               alignment: Alignment.topCenter,
-              child: _techCard(tok),
+              child: _techCard(context, tok),
             ),
           ),
           if (zakaznikId.isNotEmpty) ...[
@@ -196,12 +197,12 @@ class VozidloInfoTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildMobileHeader(prijmuCount, logo),
+          _buildMobileHeader(context, prijmuCount, logo),
           Padding(
             padding: const EdgeInsets.all(TokSpace.xl),
             child: Column(
               children: [
-                _techCard(tok),
+                _techCard(context, tok),
                 if (zakaznikId.isNotEmpty) ...[
                   const SizedBox(height: TokSpace.lg),
                   _ownerCard(context, tok),
@@ -214,9 +215,7 @@ class VozidloInfoTab extends StatelessWidget {
     );
   }
 
-  /// Mobilní hlavička — gradient přes celou šířku (full-bleed), jako původně.
-  /// Obsahuje ale nově logo značky, ošetřenou prázdnou SPZ a formátované km.
-  Widget _buildMobileHeader(int prijmuCount, String? logo) {
+  Widget _buildMobileHeader(BuildContext context, int prijmuCount, String? logo) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(
@@ -255,9 +254,9 @@ class VozidloInfoTab extends StatelessWidget {
             ),
           ],
           const SizedBox(height: TokSpace.xl),
-          _buildStatsRow(prijmuCount),
+          _buildStatsRow(context, prijmuCount),
           const SizedBox(height: TokSpace.lg),
-          _buildStkBanner(),
+          _buildStkBanner(context),
         ],
       ),
     );
@@ -265,7 +264,7 @@ class VozidloInfoTab extends StatelessWidget {
 
   // ── Levá / horní karta vozidla ───────────────────────────────────────────
 
-  Widget _vehicleCard(int prijmuCount, String? logo) {
+  Widget _vehicleCard(BuildContext context, int prijmuCount, String? logo) {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -309,9 +308,9 @@ class VozidloInfoTab extends StatelessWidget {
             ),
           ],
           const SizedBox(height: TokSpace.xl),
-          _buildStatsRow(prijmuCount),
+          _buildStatsRow(context, prijmuCount),
           const SizedBox(height: TokSpace.lg),
-          _buildStkBanner(),
+          _buildStkBanner(context),
         ],
       ),
     );
@@ -387,7 +386,7 @@ class VozidloInfoTab extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsRow(int prijmuCount) {
+  Widget _buildStatsRow(BuildContext context, int prijmuCount) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.07),
@@ -397,11 +396,11 @@ class VozidloInfoTab extends StatelessWidget {
           vertical: TokSpace.md, horizontal: TokSpace.sm),
       child: Row(
         children: [
-          _statItem('TACHOMETR', tacho.isNotEmpty ? '${_formatKm(tacho)} km' : '—'),
+          _statItem(AppLocalizations.of(context).vozidloStatTacho, tacho.isNotEmpty ? '${_formatKm(tacho)} km' : '—'),
           _statDivider(),
-          _statItem('STK DO', _stkValue),
+          _statItem(AppLocalizations.of(context).vozidloStatStkDo, _stkValue),
           _statDivider(),
-          _statItem('PŘÍJMŮ', '$prijmuCount'),
+          _statItem(AppLocalizations.of(context).vozidloStatPrijmu, '$prijmuCount'),
         ],
       ),
     );
@@ -442,16 +441,17 @@ class VozidloInfoTab extends StatelessWidget {
         width: 1, height: 32, color: Colors.white.withValues(alpha: 0.12));
   }
 
-  Widget _buildStkBanner() {
+  Widget _buildStkBanner(BuildContext context) {
     if (stkM.isEmpty || stkR.isEmpty) return const SizedBox.shrink();
     final remaining = _stkRemainingMonths();
     final isValid = remaining >= 0;
     final color = isValid ? const Color(0xFF22C55E) : Colors.redAccent;
     final icon = isValid ? Icons.verified_outlined : Icons.warning_amber_outlined;
-    final title = isValid ? 'STK platná' : 'STK prošlá';
+    final l10n = AppLocalizations.of(context);
+    final title = isValid ? l10n.vozidloStkPlatna : l10n.vozidloStkProsla;
     final subtitle = isValid
-        ? 'Vyprší $stkM/$stkR · zbývá $remaining měsíců'
-        : 'Vypršela $stkM/$stkR';
+        ? l10n.vozidloStkVyprsiBehemMesicu(stkM, stkR, remaining)
+        : l10n.vozidloStkVyprsela(stkM, stkR);
 
     return Container(
       width: double.infinity,
@@ -488,19 +488,20 @@ class VozidloInfoTab extends StatelessWidget {
 
   // ── Karty ────────────────────────────────────────────────────────────────
 
-  Widget _techCard(TorkisTokens tok) {
+  Widget _techCard(BuildContext context, TorkisTokens tok) {
+    final l10n = AppLocalizations.of(context);
     return _sectionCard(
       tok,
       icon: Icons.directions_car_outlined,
-      title: 'Technické údaje',
+      title: l10n.vozidloTechnickeUdaje,
       children: [
-        _infoRow(tok, 'Značka & Model', _vehicleTitle),
-        _infoRow(tok, 'Motorizace', autoData['motorizace']),
-        _infoRow(tok, 'VIN', autoData['vin']),
-        _infoRow(tok, 'Rok výroby', autoData['rok_vyroby']),
-        _infoRow(tok, 'Palivo', autoData['palivo']),
-        _infoRow(tok, 'Převodovka', autoData['prevodovka']),
-        _infoRow(tok, 'Tachometr',
+        _infoRow(tok, l10n.vozidloZnackaModel, _vehicleTitle),
+        _infoRow(tok, l10n.vozidloMotorizace, autoData['motorizace']),
+        _infoRow(tok, l10n.vozidloVin, autoData['vin']),
+        _infoRow(tok, l10n.vozidloRokVyroby, autoData['rok_vyroby']),
+        _infoRow(tok, l10n.vozidloPalivo, autoData['palivo']),
+        _infoRow(tok, l10n.vozidloPrevodovka, autoData['prevodovka']),
+        _infoRow(tok, l10n.vozidloTachometrLabel,
             tacho.isNotEmpty ? '${_formatKm(tacho)} km' : null),
       ],
     );
@@ -525,19 +526,20 @@ class VozidloInfoTab extends StatelessWidget {
         final telefon = zd['telefon']?.toString() ?? '';
         final email = zd['email']?.toString() ?? '';
 
+        final l10n = AppLocalizations.of(context);
         return _sectionCard(
           tok,
           icon: Icons.person_outline_rounded,
-          title: 'Majitel vozidla',
+          title: l10n.vozidloMajitel,
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
                 builder: (_) => ZakaznikDetailScreen(zakaznikData: zd)),
           ),
           children: [
-            _infoRow(tok, 'Jméno', zd['jmeno']),
-            _infoRow(tok, 'Telefon', telefon),
-            _infoRow(tok, 'E-mail', email),
+            _infoRow(tok, l10n.vozidloJmeno, zd['jmeno']),
+            _infoRow(tok, l10n.vozidloTelefon, telefon),
+            _infoRow(tok, l10n.vozidloEmail, email),
             if (telefon.isNotEmpty || email.isNotEmpty) ...[
               const SizedBox(height: TokSpace.md),
               Row(
@@ -547,7 +549,7 @@ class VozidloInfoTab extends StatelessWidget {
                       child: _ownerAction(
                         tok,
                         icon: Icons.phone_outlined,
-                        label: 'Volat',
+                        label: l10n.vozidloVolat,
                         filled: true,
                         onTap: () => launchUrl(Uri.parse('tel:$telefon')),
                       ),
@@ -559,7 +561,7 @@ class VozidloInfoTab extends StatelessWidget {
                       child: _ownerAction(
                         tok,
                         icon: Icons.mail_outline_rounded,
-                        label: 'E-mail',
+                        label: l10n.vozidloEmail,
                         filled: false,
                         onTap: () => launchUrl(Uri.parse('mailto:$email')),
                       ),

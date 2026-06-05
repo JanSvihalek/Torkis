@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth_gate.dart';
+import '../../l10n/app_localizations.dart';
 import 'zakaznici_constants.dart';
 import 'zakaznik_detail.dart';
 
@@ -17,6 +18,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     if (globalServisId == null) {
       return const Center(child: CircularProgressIndicator());
@@ -30,14 +32,14 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Zákazníci',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              Text(
+                l10n.zakZakaznici,
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Adresář vašich klientů a jejich vozidel.',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                l10n.zakSubtitle,
+                style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 15),
               Container(
@@ -56,7 +58,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                   onChanged: (value) =>
                       setState(() => _searchQuery = value.toLowerCase()),
                   decoration: InputDecoration(
-                    hintText: 'Hledat jméno, telefon nebo IČO...',
+                    hintText: l10n.zakHledatHint,
                     prefixIcon: const Icon(Icons.search, color: Colors.blue),
                     filled: true,
                     fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
@@ -96,7 +98,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text("Chyba databáze: ${snapshot.error}"));
+                return Center(child: Text(l10n.zakChybaDb(snapshot.error.toString())));
               }
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -121,8 +123,8 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
               });
 
               if (docs.isEmpty) {
-                return const Center(
-                  child: Text('Zatím nemáte žádné zákazníky.'),
+                return Center(
+                  child: Text(l10n.zakZadniZakaznici),
                 );
               }
 
@@ -169,7 +171,7 @@ class _ZakazniciPageState extends State<ZakazniciPage> {
                               Text('✉️ ${data['email']}'),
                             if (data['ico'] != null &&
                                 data['ico'].toString().isNotEmpty)
-                              Text('🏢 IČO: ${data['ico']}'),
+                              Text(l10n.zakIcoZnak(data['ico'].toString())),
                           ],
                         ),
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../auth_gate.dart';
 import '../../core/design_tokens.dart';
+import '../../l10n/app_localizations.dart';
 import 'zakaznici_constants.dart';
 import 'zakaznik_tab_info.dart';
 import 'zakaznik_tab_prijem.dart';
@@ -37,6 +38,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
     final dicCtrl =
         TextEditingController(text: data['dic']?.toString() ?? '');
 
+    final l10n = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -70,20 +72,20 @@ class ZakaznikDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Úprava zákazníka',
-                      style: TextStyle(
+                  Text(l10n.zakEditTitle,
+                      style: const TextStyle(
                           fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
                   TextField(
                     controller: jmenoCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Jméno a Příjmení / Název firmy',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.zakJmenoLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 15),
-                  const Text('Telefon',
-                      style: TextStyle(
+                  Text(l10n.zakTelLabel,
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.grey)),
                   const SizedBox(height: 8),
@@ -117,8 +119,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
                                         borderRadius:
                                             BorderRadius.circular(10)),
                                   ),
-                                  const Text('Vyberte předvolbu',
-                                      style: TextStyle(
+                                  Text(l10n.zakVybertePredvolbu,
+                                      style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight:
                                               FontWeight.bold)),
@@ -180,9 +182,9 @@ class ZakaznikDetailScreen extends StatelessWidget {
                           child: TextField(
                             controller: telCtrl,
                             keyboardType: TextInputType.phone,
-                            decoration: const InputDecoration(
-                                labelText: 'Číslo',
-                                border: OutlineInputBorder()),
+                            decoration: InputDecoration(
+                                labelText: l10n.zakCisloLabel,
+                                border: const OutlineInputBorder()),
                           ),
                         ),
                       ],
@@ -191,34 +193,34 @@ class ZakaznikDetailScreen extends StatelessWidget {
                   const SizedBox(height: 15),
                   TextField(
                     controller: emailCtrl,
-                    decoration: const InputDecoration(
-                        labelText: 'E-mail',
-                        border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                        labelText: l10n.zakEmailLabel,
+                        border: const OutlineInputBorder()),
                   ),
                   const SizedBox(height: 15),
                   TextField(
                     controller: adresaCtrl,
-                    decoration: const InputDecoration(
-                        labelText: 'Adresa',
-                        border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                        labelText: l10n.zakAdresaLabel,
+                        border: const OutlineInputBorder()),
                   ),
                   const SizedBox(height: 15),
                   Row(children: [
                     Expanded(
                       child: TextField(
                         controller: icoCtrl,
-                        decoration: const InputDecoration(
-                            labelText: 'IČO',
-                            border: OutlineInputBorder()),
+                        decoration: InputDecoration(
+                            labelText: l10n.zakIcoLabel,
+                            border: const OutlineInputBorder()),
                       ),
                     ),
                     const SizedBox(width: 15),
                     Expanded(
                       child: TextField(
                         controller: dicCtrl,
-                        decoration: const InputDecoration(
-                            labelText: 'DIČ',
-                            border: OutlineInputBorder()),
+                        decoration: InputDecoration(
+                            labelText: l10n.zakDicLabel,
+                            border: const OutlineInputBorder()),
                       ),
                     ),
                   ]),
@@ -247,9 +249,9 @@ class ZakaznikDetailScreen extends StatelessWidget {
                         });
                         if (context.mounted) Navigator.pop(context);
                       },
-                      child: const Text('ULOŽIT ZMĚNY',
+                      child: Text(l10n.zakUlozitZmeny,
                           style:
-                              TextStyle(fontWeight: FontWeight.bold)),
+                              const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -266,8 +268,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (globalServisId == null) {
-      return const Scaffold(
-          body: Center(child: Text('Zpracovávám data...')));
+      return Scaffold(
+          body: Center(child: Text(AppLocalizations.of(context).zakZpracovavam)));
     }
 
     final zakaznikId = zakaznikData['id_zakaznika'] ?? '';
@@ -316,7 +318,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
     final tok = context.tok;
     final zakaznikId = aktualniData['id_zakaznika'] ?? '';
     final jmeno = aktualniData['jmeno']?.toString() ?? '';
-    final titleText = jmeno.isNotEmpty ? jmeno : 'Karta zákazníka';
+    final l10n = AppLocalizations.of(context);
+    final titleText = jmeno.isNotEmpty ? jmeno : l10n.zakKartaZakaznika;
 
     final views = <Widget>[
       ZakaznikInfoTab(
@@ -367,8 +370,8 @@ class ZakaznikDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('ZÁKAZNÍK',
-                        style: TextStyle(
+                    Text(AppLocalizations.of(context).zakHeaderLabel,
+                        style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.2,
@@ -407,9 +410,9 @@ class ZakaznikDetailScreen extends StatelessWidget {
                 const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
             unselectedLabelStyle:
                 const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            tabs: const [
-              Tab(text: 'Info'),
-              Tab(text: 'Záznamy'),
+            tabs: [
+              Tab(text: AppLocalizations.of(context).zakTabInfo),
+              Tab(text: AppLocalizations.of(context).zakTabZaznamy),
             ],
           ),
         ],
@@ -439,6 +442,7 @@ class ZakaznikDetailScreen extends StatelessWidget {
   }
 
   Widget _buildMenuButton(BuildContext context, TorkisTokens tok, String docId) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: 42,
       height: 42,
@@ -454,15 +458,15 @@ class ZakaznikDetailScreen extends StatelessWidget {
         onSelected: (v) {
           if (v == 'smazat') _smazatZakaznika(context, docId);
         },
-        itemBuilder: (_) => const [
+        itemBuilder: (_) => [
           PopupMenuItem(
             value: 'smazat',
             child: Row(children: [
-              Icon(Icons.delete_outline_rounded,
+              const Icon(Icons.delete_outline_rounded,
                   size: 18, color: Colors.redAccent),
-              SizedBox(width: 10),
-              Text('Smazat zákazníka',
-                  style: TextStyle(color: Colors.redAccent)),
+              const SizedBox(width: 10),
+              Text(l10n.zakSmazatMenu,
+                  style: const TextStyle(color: Colors.redAccent)),
             ]),
           ),
         ],
@@ -471,20 +475,20 @@ class ZakaznikDetailScreen extends StatelessWidget {
   }
 
   Future<void> _smazatZakaznika(BuildContext context, String docId) async {
+    final l10n = AppLocalizations.of(context);
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Smazat zákazníka?'),
-        content: const Text(
-            'Zákazník bude odebrán z adresáře. Jeho vozidla a historie zakázek zůstanou zachovány.'),
+        title: Text(l10n.zakSmazatTitle),
+        content: Text(l10n.zakSmazatContent),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(c, false),
-              child: const Text('Zrušit')),
+              child: Text(l10n.zakZrusit)),
           TextButton(
             onPressed: () => Navigator.pop(c, true),
-            child: const Text('Smazat',
-                style: TextStyle(color: Colors.redAccent)),
+            child: Text(l10n.zakSmazatPotvrdit,
+                style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -497,14 +501,14 @@ class ZakaznikDetailScreen extends StatelessWidget {
           .delete();
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Zákazník byl smazán.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.zakSmazanUspesne),
             backgroundColor: Colors.green));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Chyba při mazání: $e'),
+            content: Text(l10n.zakChybaMazani(e.toString())),
             backgroundColor: Colors.red));
       }
     }
