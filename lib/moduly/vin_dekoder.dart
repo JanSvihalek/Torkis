@@ -772,6 +772,10 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
             const SizedBox(height: TokSpace.md),
             _buildUsageIndicator(tok),
           ],
+          if (_rezimValue == 2) ...[
+            const SizedBox(height: TokSpace.md),
+            _buildStkInfoBanner(tok),
+          ],
           if (!_maKlice) ...[
             const SizedBox(height: TokSpace.md),
             _buildKeysBanner(tok),
@@ -1067,6 +1071,37 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
               'Vincario API klíče nejsou nastaveny. Doplňte je v Nastavení servisu, '
               'aby dekódování fungovalo.',
               style: TextStyle(fontSize: 13, color: tok.textPrimary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStkInfoBanner(TorkisTokens tok) {
+    return Container(
+      padding: const EdgeInsets.all(TokSpace.md),
+      decoration: BoxDecoration(
+        color: tok.isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.blueGrey.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(TokRadius.lg),
+        border: Border.all(
+            color: tok.isDark
+                ? Colors.white.withValues(alpha: 0.10)
+                : Colors.blueGrey.withValues(alpha: 0.20)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline_rounded, size: 16, color: tok.textSecondary),
+          const SizedBox(width: TokSpace.sm),
+          Expanded(
+            child: Text(
+              'Data pocházejí z veřejného registru vozidel. '
+              'Dostupnost a aktuálnost se liší — u některých vozidel '
+              'nemusí být STK evidována.',
+              style: TextStyle(fontSize: 12, color: tok.textSecondary, height: 1.4),
             ),
           ),
         ],
