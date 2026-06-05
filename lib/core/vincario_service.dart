@@ -81,64 +81,28 @@ class VincarioException implements Exception {
   String toString() => message;
 }
 
-/// Výsledek zjištění STK z api.dataovozidlech.cz.
+/// Výsledek zjištění STK z api.dataovozidlech.cz (vehicletechnicaldata/v2).
 class StkResult {
   final Map<String, dynamic> raw;
   const StkResult(this.raw);
 
-  List<Map<String, dynamic>> get kontroly {
-    final list = raw['technicalInspections'] ?? raw['inspections'] ?? raw['kontroly'];
-    if (list is List) return list.whereType<Map<String, dynamic>>().toList();
-    return [];
-  }
+  String get vin => raw['vin']?.toString() ?? '';
+  String get znacka => raw['znacka']?.toString() ?? '';
+  String get obchodniOznaceni => raw['obchodniOznaceni']?.toString() ?? '';
+  String get cisloTp => raw['cisloTechnickehoPrukazu']?.toString() ?? '';
+  String get cisloOrv => raw['cisloOrv']?.toString() ?? '';
 
-  Map<String, dynamic>? get posledniKontrola =>
-      kontroly.isNotEmpty ? kontroly.first : null;
+  // STK
+  String get stkPlatnostDo => raw['stkPlatnostDo']?.toString() ?? '';
+  String get stkDatumProhlidky => raw['stkDatumProhlidky']?.toString() ?? '';
+  String get stkCisloProtokolu => raw['stkCisloProtokolu']?.toString() ?? '';
+  String get stkIdStanice => raw['stkIdStanice']?.toString() ?? '';
+  String get stkDruhProhlidky => raw['stkDruhProhlidky']?.toString() ?? '';
+  String get stkVysledek => raw['stkVysledek']?.toString() ?? '';
 
-  String get platnostDo {
-    final k = posledniKontrola;
-    if (k == null) return '';
-    return k['validUntil']?.toString() ??
-        k['platnostDo']?.toString() ??
-        k['valid_until']?.toString() ?? '';
-  }
-
-  String get datumPosledni {
-    final k = posledniKontrola;
-    if (k == null) return '';
-    return k['inspectionDate']?.toString() ??
-        k['date']?.toString() ??
-        k['datum']?.toString() ?? '';
-  }
-
-  String get vysledekPosledni {
-    final k = posledniKontrola;
-    if (k == null) return '';
-    return k['inspectionResult']?.toString() ??
-        k['result']?.toString() ??
-        k['vysledek']?.toString() ?? '';
-  }
-
-  int? get najezdPosledni {
-    final k = posledniKontrola;
-    if (k == null) return null;
-    final v = k['mileage'] ?? k['najezd'] ?? k['odometer'];
-    if (v is num) return v.toInt();
-    return int.tryParse(v?.toString() ?? '');
-  }
-
-  List<Map<String, dynamic>> get zavadyPosledni {
-    final k = posledniKontrola;
-    if (k == null) return [];
-    final list = k['defects'] ?? k['zavady'] ?? k['errors'];
-    if (list is List) return list.whereType<Map<String, dynamic>>().toList();
-    return [];
-  }
-
-  String get spz =>
-      raw['spz']?.toString() ??
-      raw['registrationPlate']?.toString() ??
-      raw['plate']?.toString() ?? '';
+  // Emise
+  String get emisePlatnostDo => raw['emisePlatnostDo']?.toString() ?? '';
+  String get emiseDatumProhlidky => raw['emiseDatumProhlidky']?.toString() ?? '';
 }
 
 /// Volání Vincario API přes Cloud Functions. Tajný sdílený klíč je pouze na

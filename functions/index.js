@@ -252,7 +252,7 @@ exports.stkVin = onCall(
       try {
         const resp = await fetch(url, {
           headers: {
-            "Authorization": `Bearer ${apiKey}`,
+            "api_key": apiKey,
             "Accept": "application/json",
           },
         });
