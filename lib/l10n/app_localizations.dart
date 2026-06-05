@@ -2503,6 +2503,450 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'{pocet} foto'**
   String zakFotoKs(int pocet);
+
+  /// No description provided for @authBiometricReason.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přihlaste se do Torkis'**
+  String get authBiometricReason;
+
+  /// No description provided for @authBiometricChybaStorage.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nejprve se přihlaste heslem — Face ID se aktivuje pro příští spuštění.'**
+  String get authBiometricChybaStorage;
+
+  /// No description provided for @authBiometricChybaUdaje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Uložené přihlašovací údaje jsou neplatné. Přihlaste se heslem.'**
+  String get authBiometricChybaUdaje;
+
+  /// No description provided for @authChybaPrazdnaPola.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte prosím e-mail i heslo.'**
+  String get authChybaPrazdnaPola;
+
+  /// No description provided for @authChybaHeslaNeshoda.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadaná hesla se neshodují.'**
+  String get authChybaHeslaNeshoda;
+
+  /// No description provided for @authChybaOverovani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Došlo k chybě při ověřování.'**
+  String get authChybaOverovani;
+
+  /// No description provided for @authChybaNeplatneUdaje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nesprávný e-mail nebo heslo.'**
+  String get authChybaNeplatneUdaje;
+
+  /// No description provided for @authChybaEmailExistuje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tento e-mail je již zaregistrován.'**
+  String get authChybaEmailExistuje;
+
+  /// No description provided for @authChybaSlabeHeslo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Heslo je příliš slabé (min. 6 znaků).'**
+  String get authChybaSlabeHeslo;
+
+  /// No description provided for @authChybaFormatEmail.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neplatný formát e-mailu.'**
+  String get authChybaFormatEmail;
+
+  /// No description provided for @authChybaNeocekvana.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neočekávaná chyba: {chyba}'**
+  String authChybaNeocekvana(String chyba);
+
+  /// No description provided for @authResetHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pro obnovu hesla zadejte platný e-mail do horního políčka.'**
+  String get authResetHint;
+
+  /// No description provided for @authResetOdeslan.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mail pro obnovu hesla byl odeslán.'**
+  String get authResetOdeslan;
+
+  /// No description provided for @authResetChyba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba při odesílání e-mailu pro obnovu.'**
+  String get authResetChyba;
+
+  /// No description provided for @authSubtitleLogin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Digitální evidence vozidel'**
+  String get authSubtitleLogin;
+
+  /// No description provided for @authSubtitleRegister.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zaregistrujte svůj servis'**
+  String get authSubtitleRegister;
+
+  /// No description provided for @authEmailHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mail'**
+  String get authEmailHint;
+
+  /// No description provided for @authHesloHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Heslo'**
+  String get authHesloHint;
+
+  /// No description provided for @authPotvrzeniHeslaHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Potvrzení hesla'**
+  String get authPotvrzeniHeslaHint;
+
+  /// No description provided for @authZapomenuteHeslo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zapomněli jste heslo?'**
+  String get authZapomenuteHeslo;
+
+  /// No description provided for @authPrihlasitSe.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přihlásit se'**
+  String get authPrihlasitSe;
+
+  /// No description provided for @authVytvoritUcet.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vytvořit účet'**
+  String get authVytvoritUcet;
+
+  /// No description provided for @authBiometrickePrihlaseni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přihlásit se biometricky'**
+  String get authBiometrickePrihlaseni;
+
+  /// No description provided for @authNebo.
+  ///
+  /// In cs, this message translates to:
+  /// **'nebo'**
+  String get authNebo;
+
+  /// No description provided for @authGoogleBtn.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pokračovat přes Google'**
+  String get authGoogleBtn;
+
+  /// No description provided for @authAppleBtn.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pokračovat přes Apple'**
+  String get authAppleBtn;
+
+  /// No description provided for @authNematUcet.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nemáte účet?'**
+  String get authNematUcet;
+
+  /// No description provided for @authZaregistrujteSe.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zaregistrujte se'**
+  String get authZaregistrujteSe;
+
+  /// No description provided for @authMateUcet.
+  ///
+  /// In cs, this message translates to:
+  /// **'Již máte účet?'**
+  String get authMateUcet;
+
+  /// No description provided for @authPrihlasteSe.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přihlaste se'**
+  String get authPrihlasteSe;
+
+  /// No description provided for @predChybaNakup.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nákup se nepodařil: {chyba}'**
+  String predChybaNakup(String chyba);
+
+  /// No description provided for @predChybaEmailKlient.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nepodařilo se otevřít e-mailového klienta.'**
+  String get predChybaEmailKlient;
+
+  /// No description provided for @predTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vaše předplatné'**
+  String get predTitle;
+
+  /// No description provided for @predSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spravujte plán svého servisu a podle potřeby ho upgradujte.'**
+  String get predSubtitle;
+
+  /// No description provided for @predTrialBannerTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Aktivní zkušební doba'**
+  String get predTrialBannerTitle;
+
+  /// No description provided for @predAktivniPlanTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Aktivní plán: {plan}'**
+  String predAktivniPlanTitle(String plan);
+
+  /// No description provided for @predTrialBannerSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Po skončení trialu si vyberete plán, který vám sedne.'**
+  String get predTrialBannerSubtitle;
+
+  /// No description provided for @predAktivniPlanSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Děkujeme, že používáte TORKIS.'**
+  String get predAktivniPlanSubtitle;
+
+  /// No description provided for @predMesicne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Měsíčně'**
+  String get predMesicne;
+
+  /// No description provided for @predRocne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ročně'**
+  String get predRocne;
+
+  /// No description provided for @predFootnote.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bez závazku · Zrušení kdykoli · Ceny bez DPH'**
+  String get predFootnote;
+
+  /// No description provided for @predBasicDesc.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pro malé autoservisy a OSVČ.'**
+  String get predBasicDesc;
+
+  /// No description provided for @predStandardDesc.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pro střední servisy do 150 zakázek měsíčně.'**
+  String get predStandardDesc;
+
+  /// No description provided for @predProDesc.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pro velké servisy a sítě bez limitu záznamů.'**
+  String get predProDesc;
+
+  /// No description provided for @predCustomDesc.
+  ///
+  /// In cs, this message translates to:
+  /// **'Individuální úprava pro speciální požadavky a integrace.'**
+  String get predCustomDesc;
+
+  /// No description provided for @predFeat50Zaznamu.
+  ///
+  /// In cs, this message translates to:
+  /// **'50 záznamů/měsíc'**
+  String get predFeat50Zaznamu;
+
+  /// No description provided for @predFeat3Uziv.
+  ///
+  /// In cs, this message translates to:
+  /// **'3 uživatelé max.'**
+  String get predFeat3Uziv;
+
+  /// No description provided for @predFeat30Vin.
+  ///
+  /// In cs, this message translates to:
+  /// **'30 dekodovaných VIN měsíčně'**
+  String get predFeat30Vin;
+
+  /// No description provided for @predFeat1TrzniHodnota.
+  ///
+  /// In cs, this message translates to:
+  /// **'1 zjištění tržní hodnoty měsíčně'**
+  String get predFeat1TrzniHodnota;
+
+  /// No description provided for @predFeatNeomezStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neomezený počet zjištění platnosti STK'**
+  String get predFeatNeomezStk;
+
+  /// No description provided for @predFeatFotodok.
+  ///
+  /// In cs, this message translates to:
+  /// **'Fotodokumentace'**
+  String get predFeatFotodok;
+
+  /// No description provided for @predFeatEvidZak.
+  ///
+  /// In cs, this message translates to:
+  /// **'Evidence zákazníků a vozidel'**
+  String get predFeatEvidZak;
+
+  /// No description provided for @predFeatHistorie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Historie záznamů'**
+  String get predFeatHistorie;
+
+  /// No description provided for @predFeatSpravaTymu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Správa týmu'**
+  String get predFeatSpravaTymu;
+
+  /// No description provided for @predFeat150Zaznamu.
+  ///
+  /// In cs, this message translates to:
+  /// **'150 záznamů/měsíc'**
+  String get predFeat150Zaznamu;
+
+  /// No description provided for @predFeat10Uziv.
+  ///
+  /// In cs, this message translates to:
+  /// **'10 uživatelů max.'**
+  String get predFeat10Uziv;
+
+  /// No description provided for @predFeat75Vin.
+  ///
+  /// In cs, this message translates to:
+  /// **'75 dekodovaných VIN měsíčně'**
+  String get predFeat75Vin;
+
+  /// No description provided for @predFeat3TrzniHodnota.
+  ///
+  /// In cs, this message translates to:
+  /// **'3 zjištění tržní hodnoty měsíčně'**
+  String get predFeat3TrzniHodnota;
+
+  /// No description provided for @predFeatVseBasic.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vše z Basic'**
+  String get predFeatVseBasic;
+
+  /// No description provided for @predFeatReporty.
+  ///
+  /// In cs, this message translates to:
+  /// **'Reporty a statistiky'**
+  String get predFeatReporty;
+
+  /// No description provided for @predFeatChat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chat se zákazníkem'**
+  String get predFeatChat;
+
+  /// No description provided for @predFeatWebPortal.
+  ///
+  /// In cs, this message translates to:
+  /// **'Webový portál pro správu vozidel a zákazníků'**
+  String get predFeatWebPortal;
+
+  /// No description provided for @predFeatNeomezZaznamu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neomezené záznamy'**
+  String get predFeatNeomezZaznamu;
+
+  /// No description provided for @predFeatNeomezUziv.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neomezený počet uživatelů'**
+  String get predFeatNeomezUziv;
+
+  /// No description provided for @predFeatVseStandard.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vše ze Standard'**
+  String get predFeatVseStandard;
+
+  /// No description provided for @predFeat150Vin.
+  ///
+  /// In cs, this message translates to:
+  /// **'150 dekodovaných VIN měsíčně'**
+  String get predFeat150Vin;
+
+  /// No description provided for @predFeat5TrzniHodnota.
+  ///
+  /// In cs, this message translates to:
+  /// **'5 zjištění tržní hodnoty měsíčně'**
+  String get predFeat5TrzniHodnota;
+
+  /// No description provided for @predFeatPrioritniPodpora.
+  ///
+  /// In cs, this message translates to:
+  /// **'Prioritní podpora'**
+  String get predFeatPrioritniPodpora;
+
+  /// No description provided for @predFeatPokrocileStatistiky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pokročilé statistiky'**
+  String get predFeatPokrocileStatistiky;
+
+  /// No description provided for @predFeatVicenasobinaVzd.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vícenásobná pracoviště'**
+  String get predFeatVicenasobinaVzd;
+
+  /// No description provided for @predFeatErp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Napojení na vaše ERP/DMS'**
+  String get predFeatErp;
+
+  /// No description provided for @predFeatNeomezVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neomezený počet dekodovaných VIN měsíčně'**
+  String get predFeatNeomezVin;
+
+  /// No description provided for @predFeatNeomezTrzni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neomezená tržní hodnota vozidel'**
+  String get predFeatNeomezTrzni;
+
+  /// No description provided for @predFeatPrioritniSla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Prioritní podpora s SLA'**
+  String get predFeatPrioritniSla;
 }
 
 class _AppLocalizationsDelegate

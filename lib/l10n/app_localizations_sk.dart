@@ -1319,4 +1319,240 @@ class AppLocalizationsSk extends AppLocalizations {
   String zakFotoKs(int pocet) {
     return '$pocet foto';
   }
+
+  @override
+  String get authBiometricReason => 'Prihláste sa do Torkis';
+
+  @override
+  String get authBiometricChybaStorage =>
+      'Najprv sa prihláste heslom – Face ID sa aktivuje pri ďalšom spustení.';
+
+  @override
+  String get authBiometricChybaUdaje =>
+      'Uložené prihlasovacie údaje sú neplatné. Prihláste sa heslom.';
+
+  @override
+  String get authChybaPrazdnaPola => 'Zadajte prosím e-mail aj heslo.';
+
+  @override
+  String get authChybaHeslaNeshoda => 'Zadané heslá sa nezhodujú.';
+
+  @override
+  String get authChybaOverovani => 'Došlo k chybe pri overovaní.';
+
+  @override
+  String get authChybaNeplatneUdaje => 'Nesprávny e-mail alebo heslo.';
+
+  @override
+  String get authChybaEmailExistuje => 'Tento e-mail je už zaregistrovaný.';
+
+  @override
+  String get authChybaSlabeHeslo => 'Heslo je príliš slabé (min. 6 znakov).';
+
+  @override
+  String get authChybaFormatEmail => 'Neplatný formát e-mailu.';
+
+  @override
+  String authChybaNeocekvana(String chyba) {
+    return 'Neočakávaná chyba: $chyba';
+  }
+
+  @override
+  String get authResetHint =>
+      'Pre obnovu hesla zadajte platný e-mail do horného políčka.';
+
+  @override
+  String get authResetOdeslan => 'E-mail na obnovu hesla bol odoslaný.';
+
+  @override
+  String get authResetChyba => 'Chyba pri odosielaní e-mailu na obnovu.';
+
+  @override
+  String get authSubtitleLogin => 'Digitálna evidencia vozidiel';
+
+  @override
+  String get authSubtitleRegister => 'Zaregistrujte svoj servis';
+
+  @override
+  String get authEmailHint => 'E-mail';
+
+  @override
+  String get authHesloHint => 'Heslo';
+
+  @override
+  String get authPotvrzeniHeslaHint => 'Potvrdenie hesla';
+
+  @override
+  String get authZapomenuteHeslo => 'Zabudli ste heslo?';
+
+  @override
+  String get authPrihlasitSe => 'Prihlásiť sa';
+
+  @override
+  String get authVytvoritUcet => 'Vytvoriť účet';
+
+  @override
+  String get authBiometrickePrihlaseni => 'Prihlásiť sa biometricky';
+
+  @override
+  String get authNebo => 'alebo';
+
+  @override
+  String get authGoogleBtn => 'Pokračovať cez Google';
+
+  @override
+  String get authAppleBtn => 'Pokračovať cez Apple';
+
+  @override
+  String get authNematUcet => 'Nemáte účet?';
+
+  @override
+  String get authZaregistrujteSe => 'Zaregistrujte sa';
+
+  @override
+  String get authMateUcet => 'Máte už účet?';
+
+  @override
+  String get authPrihlasteSe => 'Prihláste sa';
+
+  @override
+  String predChybaNakup(String chyba) {
+    return 'Nákup sa nepodaril: $chyba';
+  }
+
+  @override
+  String get predChybaEmailKlient =>
+      'Nepodarilo sa otvoriť e-mailového klienta.';
+
+  @override
+  String get predTitle => 'Vaše predplatné';
+
+  @override
+  String get predSubtitle =>
+      'Spravujte plán svojho servisu a podľa potreby ho upgradujte.';
+
+  @override
+  String get predTrialBannerTitle => 'Aktívna skúšobná doba';
+
+  @override
+  String predAktivniPlanTitle(String plan) {
+    return 'Aktívny plán: $plan';
+  }
+
+  @override
+  String get predTrialBannerSubtitle =>
+      'Po skončení trialu si vyberiete plán, ktorý vám sadne.';
+
+  @override
+  String get predAktivniPlanSubtitle => 'Ďakujeme, že používate TORKIS.';
+
+  @override
+  String get predMesicne => 'Mesačne';
+
+  @override
+  String get predRocne => 'Ročne';
+
+  @override
+  String get predFootnote => 'Bez záväzku · Zrušenie kedykoľvek · Ceny bez DPH';
+
+  @override
+  String get predBasicDesc => 'Pre malé autoservisy a SZČO.';
+
+  @override
+  String get predStandardDesc => 'Pre stredné servisy do 150 zákaziek mesačne.';
+
+  @override
+  String get predProDesc => 'Pre veľké servisy a siete bez limitu záznamov.';
+
+  @override
+  String get predCustomDesc =>
+      'Individuálna úprava pre špeciálne požiadavky a integrácie.';
+
+  @override
+  String get predFeat50Zaznamu => '50 záznamov/mesiac';
+
+  @override
+  String get predFeat3Uziv => 'Max. 3 používatelia';
+
+  @override
+  String get predFeat30Vin => '30 dekódovaní VIN/mesiac';
+
+  @override
+  String get predFeat1TrzniHodnota => '1 zistenie trhovej hodnoty/mesiac';
+
+  @override
+  String get predFeatNeomezStk => 'Neobmedzené zistenia platnosti STK';
+
+  @override
+  String get predFeatFotodok => 'Fotodokumentácia';
+
+  @override
+  String get predFeatEvidZak => 'Evidencia zákazníkov a vozidiel';
+
+  @override
+  String get predFeatHistorie => 'História záznamov';
+
+  @override
+  String get predFeatSpravaTymu => 'Správa tímu';
+
+  @override
+  String get predFeat150Zaznamu => '150 záznamov/mesiac';
+
+  @override
+  String get predFeat10Uziv => 'Max. 10 používateľov';
+
+  @override
+  String get predFeat75Vin => '75 dekódovaní VIN/mesiac';
+
+  @override
+  String get predFeat3TrzniHodnota => '3 zistenia trhovej hodnoty/mesiac';
+
+  @override
+  String get predFeatVseBasic => 'Všetko z Basic';
+
+  @override
+  String get predFeatReporty => 'Reporty a štatistiky';
+
+  @override
+  String get predFeatChat => 'Chat so zákazníkom';
+
+  @override
+  String get predFeatWebPortal =>
+      'Webový portál pre správu vozidiel a zákazníkov';
+
+  @override
+  String get predFeatNeomezZaznamu => 'Neobmedzené záznamy';
+
+  @override
+  String get predFeatNeomezUziv => 'Neobmedzený počet používateľov';
+
+  @override
+  String get predFeatVseStandard => 'Všetko zo Standard';
+
+  @override
+  String get predFeat150Vin => '150 dekódovaní VIN/mesiac';
+
+  @override
+  String get predFeat5TrzniHodnota => '5 zistení trhovej hodnoty/mesiac';
+
+  @override
+  String get predFeatPrioritniPodpora => 'Prioritná podpora';
+
+  @override
+  String get predFeatPokrocileStatistiky => 'Pokročilé štatistiky';
+
+  @override
+  String get predFeatVicenasobinaVzd => 'Viacnásobné pracoviská';
+
+  @override
+  String get predFeatErp => 'Napojenie na váš ERP/DMS';
+
+  @override
+  String get predFeatNeomezVin => 'Neobmedzený počet dekódovaní VIN/mesiac';
+
+  @override
+  String get predFeatNeomezTrzni => 'Neobmedzená trhová hodnota vozidiel';
+
+  @override
+  String get predFeatPrioritniSla => 'Prioritná podpora s SLA';
 }

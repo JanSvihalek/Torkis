@@ -1316,4 +1316,241 @@ class AppLocalizationsEn extends AppLocalizations {
   String zakFotoKs(int pocet) {
     return '$pocet photos';
   }
+
+  @override
+  String get authBiometricReason => 'Sign in to Torkis';
+
+  @override
+  String get authBiometricChybaStorage =>
+      'Sign in with your password first — Face ID will be enabled for the next launch.';
+
+  @override
+  String get authBiometricChybaUdaje =>
+      'Saved credentials are invalid. Please sign in with your password.';
+
+  @override
+  String get authChybaPrazdnaPola => 'Please enter your email and password.';
+
+  @override
+  String get authChybaHeslaNeshoda => 'Passwords do not match.';
+
+  @override
+  String get authChybaOverovani => 'An authentication error occurred.';
+
+  @override
+  String get authChybaNeplatneUdaje => 'Incorrect email or password.';
+
+  @override
+  String get authChybaEmailExistuje => 'This email is already registered.';
+
+  @override
+  String get authChybaSlabeHeslo => 'Password is too weak (min. 6 characters).';
+
+  @override
+  String get authChybaFormatEmail => 'Invalid email format.';
+
+  @override
+  String authChybaNeocekvana(String chyba) {
+    return 'Unexpected error: $chyba';
+  }
+
+  @override
+  String get authResetHint =>
+      'Enter a valid email in the field above to reset your password.';
+
+  @override
+  String get authResetOdeslan => 'Password reset email has been sent.';
+
+  @override
+  String get authResetChyba => 'Error sending password reset email.';
+
+  @override
+  String get authSubtitleLogin => 'Digital vehicle records';
+
+  @override
+  String get authSubtitleRegister => 'Register your garage';
+
+  @override
+  String get authEmailHint => 'Email';
+
+  @override
+  String get authHesloHint => 'Password';
+
+  @override
+  String get authPotvrzeniHeslaHint => 'Confirm password';
+
+  @override
+  String get authZapomenuteHeslo => 'Forgot your password?';
+
+  @override
+  String get authPrihlasitSe => 'Sign in';
+
+  @override
+  String get authVytvoritUcet => 'Create account';
+
+  @override
+  String get authBiometrickePrihlaseni => 'Sign in with biometrics';
+
+  @override
+  String get authNebo => 'or';
+
+  @override
+  String get authGoogleBtn => 'Continue with Google';
+
+  @override
+  String get authAppleBtn => 'Continue with Apple';
+
+  @override
+  String get authNematUcet => 'Don\'t have an account?';
+
+  @override
+  String get authZaregistrujteSe => 'Sign up';
+
+  @override
+  String get authMateUcet => 'Already have an account?';
+
+  @override
+  String get authPrihlasteSe => 'Sign in';
+
+  @override
+  String predChybaNakup(String chyba) {
+    return 'Purchase failed: $chyba';
+  }
+
+  @override
+  String get predChybaEmailKlient => 'Could not open email client.';
+
+  @override
+  String get predTitle => 'Your subscription';
+
+  @override
+  String get predSubtitle => 'Manage your garage plan and upgrade as needed.';
+
+  @override
+  String get predTrialBannerTitle => 'Active trial period';
+
+  @override
+  String predAktivniPlanTitle(String plan) {
+    return 'Active plan: $plan';
+  }
+
+  @override
+  String get predTrialBannerSubtitle =>
+      'After the trial, choose the plan that suits you.';
+
+  @override
+  String get predAktivniPlanSubtitle => 'Thank you for using TORKIS.';
+
+  @override
+  String get predMesicne => 'Monthly';
+
+  @override
+  String get predRocne => 'Yearly';
+
+  @override
+  String get predFootnote =>
+      'No commitment · Cancel anytime · Prices excl. VAT';
+
+  @override
+  String get predBasicDesc => 'For small garages and sole traders.';
+
+  @override
+  String get predStandardDesc =>
+      'For medium garages with up to 150 orders per month.';
+
+  @override
+  String get predProDesc =>
+      'For large garages and networks with unlimited records.';
+
+  @override
+  String get predCustomDesc =>
+      'Custom setup for special requirements and integrations.';
+
+  @override
+  String get predFeat50Zaznamu => '50 records/month';
+
+  @override
+  String get predFeat3Uziv => '3 users max.';
+
+  @override
+  String get predFeat30Vin => '30 VIN decodings/month';
+
+  @override
+  String get predFeat1TrzniHodnota => '1 market value lookup/month';
+
+  @override
+  String get predFeatNeomezStk => 'Unlimited MOT validity checks';
+
+  @override
+  String get predFeatFotodok => 'Photo documentation';
+
+  @override
+  String get predFeatEvidZak => 'Customer and vehicle records';
+
+  @override
+  String get predFeatHistorie => 'Record history';
+
+  @override
+  String get predFeatSpravaTymu => 'Team management';
+
+  @override
+  String get predFeat150Zaznamu => '150 records/month';
+
+  @override
+  String get predFeat10Uziv => '10 users max.';
+
+  @override
+  String get predFeat75Vin => '75 VIN decodings/month';
+
+  @override
+  String get predFeat3TrzniHodnota => '3 market value lookups/month';
+
+  @override
+  String get predFeatVseBasic => 'All Basic features';
+
+  @override
+  String get predFeatReporty => 'Reports and statistics';
+
+  @override
+  String get predFeatChat => 'Customer chat';
+
+  @override
+  String get predFeatWebPortal =>
+      'Web portal for vehicle and customer management';
+
+  @override
+  String get predFeatNeomezZaznamu => 'Unlimited records';
+
+  @override
+  String get predFeatNeomezUziv => 'Unlimited users';
+
+  @override
+  String get predFeatVseStandard => 'All Standard features';
+
+  @override
+  String get predFeat150Vin => '150 VIN decodings/month';
+
+  @override
+  String get predFeat5TrzniHodnota => '5 market value lookups/month';
+
+  @override
+  String get predFeatPrioritniPodpora => 'Priority support';
+
+  @override
+  String get predFeatPokrocileStatistiky => 'Advanced statistics';
+
+  @override
+  String get predFeatVicenasobinaVzd => 'Multiple locations';
+
+  @override
+  String get predFeatErp => 'ERP/DMS integration';
+
+  @override
+  String get predFeatNeomezVin => 'Unlimited VIN decodings/month';
+
+  @override
+  String get predFeatNeomezTrzni => 'Unlimited vehicle market values';
+
+  @override
+  String get predFeatPrioritniSla => 'Priority support with SLA';
 }

@@ -1321,4 +1321,245 @@ class AppLocalizationsPl extends AppLocalizations {
   String zakFotoKs(int pocet) {
     return '$pocet zdjęć';
   }
+
+  @override
+  String get authBiometricReason => 'Zaloguj się do Torkis';
+
+  @override
+  String get authBiometricChybaStorage =>
+      'Najpierw zaloguj się hasłem – Face ID zostanie aktywowane przy następnym uruchomieniu.';
+
+  @override
+  String get authBiometricChybaUdaje =>
+      'Zapisane dane logowania są nieprawidłowe. Zaloguj się hasłem.';
+
+  @override
+  String get authChybaPrazdnaPola => 'Wprowadź adres e-mail i hasło.';
+
+  @override
+  String get authChybaHeslaNeshoda => 'Podane hasła nie są zgodne.';
+
+  @override
+  String get authChybaOverovani => 'Wystąpił błąd uwierzytelniania.';
+
+  @override
+  String get authChybaNeplatneUdaje => 'Nieprawidłowy adres e-mail lub hasło.';
+
+  @override
+  String get authChybaEmailExistuje =>
+      'Ten adres e-mail jest już zarejestrowany.';
+
+  @override
+  String get authChybaSlabeHeslo => 'Hasło jest za słabe (min. 6 znaków).';
+
+  @override
+  String get authChybaFormatEmail => 'Nieprawidłowy format adresu e-mail.';
+
+  @override
+  String authChybaNeocekvana(String chyba) {
+    return 'Nieoczekiwany błąd: $chyba';
+  }
+
+  @override
+  String get authResetHint =>
+      'Wpisz prawidłowy adres e-mail w pole powyżej, aby zresetować hasło.';
+
+  @override
+  String get authResetOdeslan => 'E-mail do resetowania hasła został wysłany.';
+
+  @override
+  String get authResetChyba =>
+      'Błąd przy wysyłaniu e-maila do resetowania hasła.';
+
+  @override
+  String get authSubtitleLogin => 'Cyfrowa ewidencja pojazdów';
+
+  @override
+  String get authSubtitleRegister => 'Zarejestruj swój serwis';
+
+  @override
+  String get authEmailHint => 'E-mail';
+
+  @override
+  String get authHesloHint => 'Hasło';
+
+  @override
+  String get authPotvrzeniHeslaHint => 'Potwierdź hasło';
+
+  @override
+  String get authZapomenuteHeslo => 'Nie pamiętasz hasła?';
+
+  @override
+  String get authPrihlasitSe => 'Zaloguj się';
+
+  @override
+  String get authVytvoritUcet => 'Utwórz konto';
+
+  @override
+  String get authBiometrickePrihlaseni => 'Zaloguj się biometrycznie';
+
+  @override
+  String get authNebo => 'lub';
+
+  @override
+  String get authGoogleBtn => 'Kontynuuj przez Google';
+
+  @override
+  String get authAppleBtn => 'Kontynuuj przez Apple';
+
+  @override
+  String get authNematUcet => 'Nie masz konta?';
+
+  @override
+  String get authZaregistrujteSe => 'Zarejestruj się';
+
+  @override
+  String get authMateUcet => 'Masz już konto?';
+
+  @override
+  String get authPrihlasteSe => 'Zaloguj się';
+
+  @override
+  String predChybaNakup(String chyba) {
+    return 'Zakup nie powiódł się: $chyba';
+  }
+
+  @override
+  String get predChybaEmailKlient => 'Nie można otworzyć klienta poczty.';
+
+  @override
+  String get predTitle => 'Twoja subskrypcja';
+
+  @override
+  String get predSubtitle =>
+      'Zarządzaj planem swojego serwisu i aktualizuj go wedle potrzeb.';
+
+  @override
+  String get predTrialBannerTitle => 'Aktywny okres próbny';
+
+  @override
+  String predAktivniPlanTitle(String plan) {
+    return 'Aktywny plan: $plan';
+  }
+
+  @override
+  String get predTrialBannerSubtitle =>
+      'Po zakończeniu okresu próbnego wybierz plan odpowiedni dla Ciebie.';
+
+  @override
+  String get predAktivniPlanSubtitle => 'Dziękujemy za korzystanie z TORKIS.';
+
+  @override
+  String get predMesicne => 'Miesięcznie';
+
+  @override
+  String get predRocne => 'Rocznie';
+
+  @override
+  String get predFootnote =>
+      'Bez zobowiązań · Anuluj w dowolnym momencie · Ceny bez VAT';
+
+  @override
+  String get predBasicDesc =>
+      'Dla małych serwisów i jednoosobowych działalności.';
+
+  @override
+  String get predStandardDesc =>
+      'Dla średnich serwisów z do 150 zleceń miesięcznie.';
+
+  @override
+  String get predProDesc => 'Dla dużych serwisów i sieci bez limitu wpisów.';
+
+  @override
+  String get predCustomDesc =>
+      'Indywidualne dostosowanie do specjalnych wymagań i integracji.';
+
+  @override
+  String get predFeat50Zaznamu => '50 wpisów/miesiąc';
+
+  @override
+  String get predFeat3Uziv => 'Maks. 3 użytkowników';
+
+  @override
+  String get predFeat30Vin => '30 dekodowań VIN/miesiąc';
+
+  @override
+  String get predFeat1TrzniHodnota => '1 wycena rynkowa/miesiąc';
+
+  @override
+  String get predFeatNeomezStk =>
+      'Nieograniczone sprawdzenia ważności przeglądu';
+
+  @override
+  String get predFeatFotodok => 'Dokumentacja fotograficzna';
+
+  @override
+  String get predFeatEvidZak => 'Ewidencja klientów i pojazdów';
+
+  @override
+  String get predFeatHistorie => 'Historia wpisów';
+
+  @override
+  String get predFeatSpravaTymu => 'Zarządzanie zespołem';
+
+  @override
+  String get predFeat150Zaznamu => '150 wpisów/miesiąc';
+
+  @override
+  String get predFeat10Uziv => 'Maks. 10 użytkowników';
+
+  @override
+  String get predFeat75Vin => '75 dekodowań VIN/miesiąc';
+
+  @override
+  String get predFeat3TrzniHodnota => '3 wyceny rynkowe/miesiąc';
+
+  @override
+  String get predFeatVseBasic => 'Wszystko z Basic';
+
+  @override
+  String get predFeatReporty => 'Raporty i statystyki';
+
+  @override
+  String get predFeatChat => 'Czat z klientem';
+
+  @override
+  String get predFeatWebPortal =>
+      'Portal internetowy do zarządzania pojazdami i klientami';
+
+  @override
+  String get predFeatNeomezZaznamu => 'Nieograniczone wpisy';
+
+  @override
+  String get predFeatNeomezUziv => 'Nieograniczona liczba użytkowników';
+
+  @override
+  String get predFeatVseStandard => 'Wszystko ze Standard';
+
+  @override
+  String get predFeat150Vin => '150 dekodowań VIN/miesiąc';
+
+  @override
+  String get predFeat5TrzniHodnota => '5 wycen rynkowych/miesiąc';
+
+  @override
+  String get predFeatPrioritniPodpora => 'Wsparcie priorytetowe';
+
+  @override
+  String get predFeatPokrocileStatistiky => 'Zaawansowane statystyki';
+
+  @override
+  String get predFeatVicenasobinaVzd => 'Wiele lokalizacji';
+
+  @override
+  String get predFeatErp => 'Integracja ERP/DMS';
+
+  @override
+  String get predFeatNeomezVin => 'Nieograniczone dekodowania VIN/miesiąc';
+
+  @override
+  String get predFeatNeomezTrzni => 'Nieograniczone wyceny rynkowe pojazdów';
+
+  @override
+  String get predFeatPrioritniSla => 'Wsparcie priorytetowe z SLA';
 }

@@ -11,6 +11,7 @@ import '../core/biometric_gate.dart';
 import '../core/design_tokens.dart';
 import '../core/social_auth_service.dart';
 import '../core/torkis_ui.dart';
+import '../l10n/app_localizations.dart';
 import 'auth_gate.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -62,10 +63,11 @@ class _AuthScreenState extends State<AuthScreen> {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
+    final l10n = AppLocalizations.of(context);
     final auth = LocalAuthentication();
     try {
       final ok = await auth.authenticate(
-        localizedReason: 'Přihlaste se do Torkis',
+        localizedReason: l10n.authBiometricReason,
         options: const AuthenticationOptions(stickyAuth: true),
       );
       if (!ok || !mounted) {
@@ -79,8 +81,7 @@ class _AuthScreenState extends State<AuthScreen> {
       if (email == null || password == null) {
         if (mounted) {
           setState(() => _isLoading = false);
-          _showError(
-              'Nejprve se přihlaste heslem — Face ID se aktivuje pro příští spuštění.');
+          _showError(l10n.authBiometricChybaStorage);
         }
         return;
       }
@@ -98,7 +99,7 @@ class _AuthScreenState extends State<AuthScreen> {
     } on FirebaseAuthException {
       if (mounted) {
         setState(() => _isLoading = false);
-        _showError('Uložené přihlašovací údaje jsou neplatné. Přihlaste se heslem.');
+        _showError(l10n.authBiometricChybaUdaje);
       }
     } catch (_) {
       if (mounted) setState(() => _isLoading = false);
@@ -107,16 +108,17 @@ class _AuthScreenState extends State<AuthScreen> {
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
+    final l10n = AppLocalizations.of(context);
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showError('Zadejte prosím e-mail i heslo.');
+      _showError(l10n.authChybaPrazdnaPola);
       return;
     }
 
     if (!_isLogin && password != _confirmPasswordController.text.trim()) {
-      _showError('Zadaná hesla se neshodují.');
+      _showError(l10n.authChybaHeslaNeshoda);
       return;
     }
 
@@ -142,21 +144,21 @@ class _AuthScreenState extends State<AuthScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      String message = 'Došlo k chybě při ověřování.';
+      String message = l10n.authChybaOverovani;
       if (e.code == 'user-not-found' ||
           e.code == 'wrong-password' ||
           e.code == 'invalid-credential') {
-        message = 'Nesprávný e-mail nebo heslo.';
+        message = l10n.authChybaNeplatneUdaje;
       } else if (e.code == 'email-already-in-use') {
-        message = 'Tento e-mail je již zaregistrován.';
+        message = l10n.authChybaEmailExistuje;
       } else if (e.code == 'weak-password') {
-        message = 'Heslo je příliš slabé (min. 6 znaků).';
+        message = l10n.authChybaSlabeHeslo;
       } else if (e.code == 'invalid-email') {
-        message = 'Neplatný formát e-mailu.';
+        message = l10n.authChybaFormatEmail;
       }
       _showError(message);
     } catch (e) {
-      _showError('Neočekávaná chyba: $e');
+      _showError(l10n.authChybaNeocekvana(e.toString()));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -200,9 +202,10 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Future<void> _resetPassword() async {
+    final l10n = AppLocalizations.of(context);
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      _showError('Pro obnovu hesla zadejte platný e-mail do horního políčka.');
+      _showError(l10n.authResetHint);
       return;
     }
 
@@ -210,14 +213,14 @@ class _AuthScreenState extends State<AuthScreen> {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('E-mail pro obnovu hesla byl odeslán.'),
+          SnackBar(
+            content: Text(l10n.authResetOdeslan),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
-      _showError('Chyba při odesílání e-mailu pro obnovu.');
+      _showError(l10n.authResetChyba);
     }
   }
 
@@ -235,6 +238,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Widget build(BuildContext context) => _buildFormScreen();
 
   Widget _buildFormScreen() {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: TokColors.ink,
       body: Stack(
@@ -293,8 +297,8 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 8),
                     Text(
                       _isLogin
-                          ? 'Digitální evidence vozidel'
-                          : 'Zaregistrujte svůj servis',
+                          ? l10n.authSubtitleLogin
+                          : l10n.authSubtitleRegister,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 14,
@@ -306,14 +310,14 @@ class _AuthScreenState extends State<AuthScreen> {
 
                     _buildDarkField(
                       controller: _emailController,
-                      hint: 'E-mail',
+                      hint: l10n.authEmailHint,
                       icon: Icons.mail_outline_rounded,
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 12),
                     _buildDarkField(
                       controller: _passwordController,
-                      hint: 'Heslo',
+                      hint: l10n.authHesloHint,
                       icon: Icons.lock_outline_rounded,
                       isPassword: true,
                     ),
@@ -321,7 +325,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 12),
                       _buildDarkField(
                         controller: _confirmPasswordController,
-                        hint: 'Potvrzení hesla',
+                        hint: l10n.authPotvrzeniHeslaHint,
                         icon: Icons.lock_reset_rounded,
                         isPassword: true,
                       ),
@@ -338,9 +342,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             tapTargetSize:
                                 MaterialTapTargetSize.shrinkWrap,
                           ),
-                          child: const Text(
-                            'Zapomněli jste heslo?',
-                            style: TextStyle(
+                          child: Text(
+                            l10n.authZapomenuteHeslo,
+                            style: const TextStyle(
                               color: TokColors.steelSoft,
                               fontSize: 13,
                             ),
@@ -352,7 +356,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 10),
 
                     TorkisPrimaryButton(
-                      label: _isLogin ? 'Přihlásit se' : 'Vytvořit účet',
+                      label: _isLogin ? l10n.authPrihlasitSe : l10n.authVytvoritUcet,
                       loading: _isLoading,
                       dark: true,
                       onPressed: _isLoading ? null : _submit,
@@ -361,7 +365,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     if (_isLogin) ...[
                       const SizedBox(height: 12),
                       TorkisSecondaryButton(
-                        label: 'Přihlásit se biometricky',
+                        label: l10n.authBiometrickePrihlaseni,
                         leadingIcon: Icons.fingerprint_rounded,
                         dark: true,
                         onPressed:
@@ -377,7 +381,7 @@ class _AuthScreenState extends State<AuthScreen> {
                     if (!kIsWeb && Platform.isIOS) ...[
                       const SizedBox(height: 12),
                       TorkisSecondaryButton(
-                        label: 'Pokračovat přes Apple',
+                        label: l10n.authAppleBtn,
                         leadingIcon: Icons.apple,
                         dark: true,
                         onPressed: _isLoading ? null : _signInWithApple,
@@ -397,8 +401,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       child: RichText(
                         text: TextSpan(
                           text: _isLogin
-                              ? 'Nemáte účet? '
-                              : 'Již máte účet? ',
+                              ? '${l10n.authNematUcet} '
+                              : '${l10n.authMateUcet} ',
                           style: const TextStyle(
                             color: TokColors.steelSoft,
                             fontSize: 13,
@@ -406,8 +410,8 @@ class _AuthScreenState extends State<AuthScreen> {
                           children: [
                             TextSpan(
                               text: _isLogin
-                                  ? 'Zaregistrujte se'
-                                  : 'Přihlaste se',
+                                  ? l10n.authZaregistrujteSe
+                                  : l10n.authPrihlasteSe,
                               style: const TextStyle(
                                 color: TokColors.accent,
                                 fontWeight: FontWeight.w600,
@@ -430,15 +434,16 @@ class _AuthScreenState extends State<AuthScreen> {
   }
 
   Widget _buildDivider() {
+    final l10n = AppLocalizations.of(context);
     final line = Colors.white.withValues(alpha: 0.12);
     return Row(
       children: [
         Expanded(child: Divider(color: line)),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'nebo',
-            style: TextStyle(color: TokColors.steelSoft, fontSize: 12),
+            l10n.authNebo,
+            style: const TextStyle(color: TokColors.steelSoft, fontSize: 12),
           ),
         ),
         Expanded(child: Divider(color: line)),
@@ -479,9 +484,9 @@ class _AuthScreenState extends State<AuthScreen> {
               ),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Pokračovat přes Google',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            Text(
+              AppLocalizations.of(context).authGoogleBtn,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ],
         ),

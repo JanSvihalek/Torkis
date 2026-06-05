@@ -6,6 +6,7 @@ import '../core/constants.dart';
 import '../core/design_tokens.dart';
 import '../core/subscription_service.dart';
 import '../core/torkis_ui.dart';
+import '../l10n/app_localizations.dart';
 import 'auth_gate.dart';
 import 'paywall_screen.dart';
 
@@ -61,7 +62,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
         );
       }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Nákup se nepodařil: $e');
+      if (mounted) setState(() => _errorMessage = AppLocalizations.of(context).predChybaNakup(e.toString()));
     } finally {
       if (mounted) setState(() => _purchasing = false);
     }
@@ -83,8 +84,8 @@ class _PredplatnePageState extends State<PredplatnePage> {
       await launchUrl(uri);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Nepodařilo se otevřít e-mailového klienta.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).predChybaEmailKlient)),
       );
     }
   }
@@ -97,6 +98,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final aktualniPlan = globalPlanTyp;
     final jeTrial = aktualniPlan == 'trial';
 
@@ -112,10 +114,9 @@ class _PredplatnePageState extends State<PredplatnePage> {
                 padding: EdgeInsets.fromLTRB(
                     TokSpace.xl, TokSpace.lg, TokSpace.xl, 4),
               ),
-              const TorkisPageTitle(
-                title: 'Vaše předplatné',
-                subtitle:
-                    'Spravujte plán svého servisu a podle potřeby ho upgradujte.',
+              TorkisPageTitle(
+                title: l10n.predTitle,
+                subtitle: l10n.predSubtitle,
               ),
               const SizedBox(height: TokSpace.sm),
               Padding(
@@ -126,11 +127,11 @@ class _PredplatnePageState extends State<PredplatnePage> {
                       : Icons.workspace_premium_outlined,
                   accentColor: jeTrial ? TokColors.warning : TokColors.success,
                   title: jeTrial
-                      ? 'Aktivní zkušební doba'
-                      : 'Aktivní plán: ${aktualniPlan.toUpperCase()}',
+                      ? l10n.predTrialBannerTitle
+                      : l10n.predAktivniPlanTitle(aktualniPlan.toUpperCase()),
                   subtitle: jeTrial
-                      ? 'Po skončení trialu si vyberete plán, který vám sedne.'
-                      : 'Děkujeme, že používáte TORKIS.',
+                      ? l10n.predTrialBannerSubtitle
+                      : l10n.predAktivniPlanSubtitle,
                 ),
               ),
               const SizedBox(height: TokSpace.lg),
@@ -138,9 +139,9 @@ class _PredplatnePageState extends State<PredplatnePage> {
                 child: TorkisSegmented<_Period>(
                   selected: _period,
                   onChanged: (p) => setState(() => _period = p),
-                  options: const [
-                    (value: _Period.monthly, label: 'Měsíčně', badge: null),
-                    (value: _Period.yearly, label: 'Ročně', badge: '−19 %'),
+                  options: [
+                    (value: _Period.monthly, label: l10n.predMesicne, badge: null),
+                    (value: _Period.yearly, label: l10n.predRocne, badge: '−19 %'),
                   ],
                 ),
               ),
@@ -157,17 +158,17 @@ class _PredplatnePageState extends State<PredplatnePage> {
                     children: [
                       PaywallPlanCard(
                         name: 'Basic',
-                        description: 'Pro malé autoservisy a OSVČ.',
-                        features: const [
-                          '50 záznamů/měsíc',
-                          '3 uživatelé max.',
-                          '30 dekodovaných VIN měsíčně',
-                          '1 zjištění tržní hodnoty měsíčně',
-                          'Neomezený počet zjištění platnosti STK',
-                          'Fotodokumentace',
-                          'Evidence zákazníků a vozidel',
-                          'Historie záznamů',
-                          'Správa týmu',
+                        description: l10n.predBasicDesc,
+                        features: [
+                          l10n.predFeat50Zaznamu,
+                          l10n.predFeat3Uziv,
+                          l10n.predFeat30Vin,
+                          l10n.predFeat1TrzniHodnota,
+                          l10n.predFeatNeomezStk,
+                          l10n.predFeatFotodok,
+                          l10n.predFeatEvidZak,
+                          l10n.predFeatHistorie,
+                          l10n.predFeatSpravaTymu,
                         ],
                         package: _packageFor('basic'),
                         periodMonthly: _period == _Period.monthly,
@@ -177,19 +178,18 @@ class _PredplatnePageState extends State<PredplatnePage> {
                       ),
                       PaywallPlanCard(
                         name: 'Standard',
-                        description:
-                            'Pro střední servisy do 150 zakázek měsíčně.',
+                        description: l10n.predStandardDesc,
                         featured: aktualniPlan != 'standard',
-                        features: const [
-                          '150 záznamů/měsíc',
-                          '10 uživatelů max.',
-                          '75 dekodovaných VIN měsíčně',
-                          '3 zjištění tržní hodnoty měsíčně',
-                          'Neomezený počet zjištění platnosti STK',
-                          'Vše z Basic',
-                          'Reporty a statistiky',
-                          'Chat se zákazníkem',
-                          'Webový portál pro správu vozidel a zákazníků',
+                        features: [
+                          l10n.predFeat150Zaznamu,
+                          l10n.predFeat10Uziv,
+                          l10n.predFeat75Vin,
+                          l10n.predFeat3TrzniHodnota,
+                          l10n.predFeatNeomezStk,
+                          l10n.predFeatVseBasic,
+                          l10n.predFeatReporty,
+                          l10n.predFeatChat,
+                          l10n.predFeatWebPortal,
                         ],
                         package: _packageFor('standard'),
                         periodMonthly: _period == _Period.monthly,
@@ -199,18 +199,17 @@ class _PredplatnePageState extends State<PredplatnePage> {
                       ),
                       PaywallPlanCard(
                         name: 'Pro',
-                        description:
-                            'Pro velké servisy a sítě bez limitu záznamů.',
-                        features: const [
-                          'Neomezené záznamy',
-                          'Neomezený počet uživatelů',
-                          'Vše ze Standard',
-                          '150 dekodovaných VIN měsíčně',
-                          '5 zjištění tržní hodnoty měsíčně',
-                          'Neomezený počet zjištění platnosti STK',
-                          'Prioritní podpora',
-                          'Pokročilé statistiky',
-                          'Vícenásobná pracoviště',
+                        description: l10n.predProDesc,
+                        features: [
+                          l10n.predFeatNeomezZaznamu,
+                          l10n.predFeatNeomezUziv,
+                          l10n.predFeatVseStandard,
+                          l10n.predFeat150Vin,
+                          l10n.predFeat5TrzniHodnota,
+                          l10n.predFeatNeomezStk,
+                          l10n.predFeatPrioritniPodpora,
+                          l10n.predFeatPokrocileStatistiky,
+                          l10n.predFeatVicenasobinaVzd,
                         ],
                         package: _packageFor('pro'),
                         periodMonthly: _period == _Period.monthly,
@@ -220,13 +219,12 @@ class _PredplatnePageState extends State<PredplatnePage> {
                       ),
                       PaywallPlanCard(
                         name: 'Custom',
-                        description:
-                            'Individuální úprava pro speciální požadavky a integrace.',
-                        features: const [
-                          'Napojení na vaše ERP/DMS',
-                          'Neomezený počet dekodovaných VIN měsíčně',
-                          'Neomezená tržní hodnota vozidel',
-                          'Prioritní podpora s SLA',
+                        description: l10n.predCustomDesc,
+                        features: [
+                          l10n.predFeatErp,
+                          l10n.predFeatNeomezVin,
+                          l10n.predFeatNeomezTrzni,
+                          l10n.predFeatPrioritniSla,
                         ],
                         package: null,
                         periodMonthly: _period == _Period.monthly,
@@ -259,7 +257,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
               const SizedBox(height: TokSpace.sm),
               Center(
                 child: Text(
-                  'Bez závazku · Zrušení kdykoli · Ceny bez DPH',
+                  l10n.predFootnote,
                   style: TextStyle(
                     fontSize: 11,
                     color: tok.textMuted,
