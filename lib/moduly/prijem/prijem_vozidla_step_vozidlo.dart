@@ -350,7 +350,7 @@ class _StepVozidloState extends State<StepVozidlo> {
             context,
             icon: Icons.cloud_download_rounded,
             title: 'Dekódovat VIN online',
-            subtitle: 'Doplnit značku, model a motorizaci',
+            subtitle: 'Doplnit značku, model, motorizaci a STK',
             loading: widget.isLoadingVincario,
             onTap: widget.onDekovatVin,
           ),
@@ -382,8 +382,8 @@ class _StepVozidloState extends State<StepVozidlo> {
           displayStringForOption: (z) => z,
           optionsBuilder: (TextEditingValue value) {
             if (value.text.isEmpty) return widget.dostupneZnacky;
-            return widget.dostupneZnacky.where((z) =>
-                z.toLowerCase().contains(value.text.toLowerCase()));
+            return widget.dostupneZnacky.where(
+                (z) => z.toLowerCase().contains(value.text.toLowerCase()));
           },
           onSelected: (String val) {
             widget.znackaController.text = val;
@@ -407,8 +407,8 @@ class _StepVozidloState extends State<StepVozidlo> {
                 fillColor: widget.isDark
                     ? Colors.white.withValues(alpha: 0.06)
                     : TokColors.paper,
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(TokRadius.md),
                     borderSide: BorderSide(
@@ -417,8 +417,8 @@ class _StepVozidloState extends State<StepVozidlo> {
                             : context.tok.line)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(TokRadius.md),
-                    borderSide: const BorderSide(
-                        color: TokColors.accent, width: 1.5)),
+                    borderSide:
+                        const BorderSide(color: TokColors.accent, width: 1.5)),
               ),
               onChanged: (val) {
                 widget.znackaController.text = val;
@@ -451,14 +451,14 @@ class _StepVozidloState extends State<StepVozidlo> {
                                   width: 28,
                                   height: 28,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.directions_car,
-                                          color: Colors.blue))
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.directions_car,
+                                      color: Colors.blue))
                               : const Icon(Icons.directions_car,
                                   color: Colors.blue),
                           title: Text(z,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w500)),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500)),
                           onTap: () => onSel(z),
                         );
                       },
@@ -499,8 +499,8 @@ class _StepVozidloState extends State<StepVozidlo> {
               return const Iterable<String>.empty();
             }
             if (value.text.isEmpty) return widget.dostupneModely;
-            return widget.dostupneModely.where((m) =>
-                m.toLowerCase().contains(value.text.toLowerCase()));
+            return widget.dostupneModely.where(
+                (m) => m.toLowerCase().contains(value.text.toLowerCase()));
           },
           onSelected: (String val) {
             widget.modelController.text = val;
@@ -517,17 +517,15 @@ class _StepVozidloState extends State<StepVozidlo> {
               ),
               cursorColor: TokColors.accent,
               decoration: InputDecoration(
-                prefixIcon: const Icon(
-                    Icons.directions_car_filled_outlined,
-                    color: TokColors.accent,
-                    size: 18),
+                prefixIcon: const Icon(Icons.directions_car_filled_outlined,
+                    color: TokColors.accent, size: 18),
                 suffixIcon: null,
                 filled: true,
                 fillColor: widget.isDark
                     ? Colors.white.withValues(alpha: 0.06)
                     : TokColors.paper,
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                 enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(TokRadius.md),
                     borderSide: BorderSide(
@@ -536,8 +534,8 @@ class _StepVozidloState extends State<StepVozidlo> {
                             : context.tok.line)),
                 focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(TokRadius.md),
-                    borderSide: const BorderSide(
-                        color: TokColors.accent, width: 1.5)),
+                    borderSide:
+                        const BorderSide(color: TokColors.accent, width: 1.5)),
               ),
               onChanged: (val) => widget.modelController.text = val,
             );
@@ -560,8 +558,8 @@ class _StepVozidloState extends State<StepVozidlo> {
                         final m = options.elementAt(i);
                         return ListTile(
                           title: Text(m,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w500)),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w500)),
                           onTap: () => onSel(m),
                         );
                       },
@@ -634,8 +632,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                             Text(
                                 'Naskenujte VIN nebo SPZ, nebo údaje doplňte ručně.',
                                 style: TextStyle(
-                                    fontSize: 13,
-                                    color: tok.textSecondary)),
+                                    fontSize: 13, color: tok.textSecondary)),
                           ],
                         ),
                       ),
@@ -755,9 +752,8 @@ class _StepVozidloState extends State<StepVozidlo> {
                               final spz = v['spz'] ?? '';
                               final znacka = v['znacka']?.toString() ?? '';
                               final model = v['model']?.toString() ?? '';
-                              final podtitul = znacka.isNotEmpty
-                                  ? ' ($znacka $model)'
-                                  : '';
+                              final podtitul =
+                                  znacka.isNotEmpty ? ' ($znacka $model)' : '';
                               return ActionChip(
                                 backgroundColor: TokColors.accentSoft,
                                 side: BorderSide.none,
@@ -769,8 +765,7 @@ class _StepVozidloState extends State<StepVozidlo> {
                                     fontSize: 12,
                                   ),
                                 ),
-                                onPressed: () =>
-                                    widget.onVozidloSelected(v),
+                                onPressed: () => widget.onVozidloSelected(v),
                               );
                             }).toList(),
                           ),
@@ -793,11 +788,8 @@ class _StepVozidloState extends State<StepVozidlo> {
                     buildInput('Rok výroby', Icons.calendar_today,
                         widget.rokVyrobyController, widget.isDark,
                         numbersOnly: true, onScan: widget.onScan),
-                    buildInput(
-                        'Motorizace (např. 2.0 TDI)',
-                        Icons.settings,
-                        widget.motorizaceController,
-                        widget.isDark,
+                    buildInput('Motorizace (např. 2.0 TDI)', Icons.settings,
+                        widget.motorizaceController, widget.isDark,
                         onScan: widget.onScan),
                   ),
                   const SizedBox(height: 20),

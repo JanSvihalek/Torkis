@@ -553,6 +553,35 @@ class _MainWizardPageState extends State<MainWizardPage> {
     } finally {
       if (mounted) setState(() => _isLoadingVincario = false);
     }
+
+    // Paralelně načteme STK — chyby ignorujeme (neblokují příjem)
+    _nacistStkProPrijem(vin);
+  }
+
+  Future<void> _nacistStkProPrijem(String vin) async {
+    try {
+      final res = await VincarioService.stk(vin: vin);
+      final platnostRaw = res.result.stkPlatnostDo;
+      if (platnostRaw.isEmpty || !mounted) return;
+      final dt = DateTime.tryParse(platnostRaw);
+      if (dt == null) return;
+      setState(() {
+        _stkMesicController.text = dt.month.toString();
+        _stkRokController.text = dt.year.toString();
+      });
+      if (mounted) {
+        final platna = dt.isAfter(DateTime.now());
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(platna
+              ? 'STK platná do ${dt.day}.${dt.month}.${dt.year}'
+              : 'STK prošlá! Platila do ${dt.day}.${dt.month}.${dt.year}'),
+          backgroundColor: platna ? Colors.green : Colors.red,
+          duration: const Duration(seconds: 4),
+        ));
+      }
+    } catch (_) {
+      // STK není dostupná — pole zůstanou prázdná, uživatel doplní ručně
+    }
   }
 
   void _aplikovatVincarioData(Map<String, dynamic> data) {
