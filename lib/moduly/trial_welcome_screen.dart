@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/design_tokens.dart';
 import '../core/torkis_ui.dart';
+import '../l10n/app_localizations.dart';
 import 'auth_gate.dart';
 
 /// Welcome obrazovka zobrazená po dokončení onboardingu.
@@ -11,6 +12,7 @@ class TrialWelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: TokColors.ink,
       body: Stack(
@@ -60,9 +62,9 @@ class TrialWelcomeScreen extends StatelessWidget {
                         color: TokColors.accent.withValues(alpha: 0.4),
                       ),
                     ),
-                    child: const Text(
-                      '30 DNÍ ZDARMA',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.trialBadge,
+                      style: const TextStyle(
                         color: TokColors.accent,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -72,10 +74,10 @@ class TrialWelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text(
-                    'Vítejte v TORKISu',
+                  Text(
+                    l10n.trialNadpis,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w700,
                       color: TokColors.paper,
@@ -85,10 +87,9 @@ class TrialWelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Spustili jsme vám zkušební dobu na 30 dní zdarma — '
-                    'bez platební karty a bez závazků.',
+                    l10n.trialPopis,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 15,
                       color: TokColors.steelSoft,
                       height: 1.5,
@@ -100,38 +101,38 @@ class TrialWelcomeScreen extends StatelessWidget {
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.directions_car_rounded,
-                    text: 'Neomezený počet záznamů vozidel a zákazníků',
+                    text: l10n.trialBenefit1,
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.travel_explore_rounded,
-                    text: '10 dekódovaných VINů',
+                    text: l10n.trialBenefit2,
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.fact_check_outlined,
-                    text: 'Neomezený počet zjištění platnosti STK',
+                    text: l10n.trialBenefit3,
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.workspace_premium_rounded,
-                    text: 'Plný přístup ke všem funkcím aplikace.',
+                    text: l10n.trialBenefit4,
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.credit_card_off_rounded,
-                    text: 'Žádné platební údaje. Bez automatického strhávání.',
+                    text: l10n.trialBenefit5,
                   ),
                   const SizedBox(height: 14),
                   _BenefitRow(
                     icon: Icons.download_done_rounded,
-                    text: 'Vaše data jsou vždy vaše — export kdykoli zdarma.',
+                    text: l10n.trialBenefit6,
                   ),
 
                   const Spacer(),
 
                   TorkisPrimaryButton(
-                    label: 'Začít používat aplikaci',
+                    label: l10n.trialBtn,
                     dark: true,
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
@@ -143,9 +144,9 @@ class TrialWelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Po skončení trialu si vyberete plán, který vám sedne.',
+                    l10n.predTrialBannerSubtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 11,
                       color: TokColors.steelSoft,
                     ),

@@ -46,7 +46,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Historie příjmů',
+                'Historie záznamů',
                 style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
@@ -74,13 +74,14 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                     hintText: 'Hledat SPZ, zákazníka nebo vozidlo...',
                     prefixIcon: const Icon(Icons.search, color: Colors.blue),
                     filled: true,
-                    fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
+                    fillColor: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : Colors.white,
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(
-                          color: isDark
-                              ? Colors.grey[800]!
-                              : Colors.grey[300]!),
+                          color:
+                              isDark ? Colors.grey[800]! : Colors.grey[300]!),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -90,12 +91,10 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(15),
                       borderSide: BorderSide(
-                          color: isDark
-                              ? Colors.grey[800]!
-                              : Colors.grey[300]!),
+                          color:
+                              isDark ? Colors.grey[800]! : Colors.grey[300]!),
                     ),
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 15),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
                   ),
                 ),
               ),
@@ -119,26 +118,21 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
               var docs = snapshot.data!.docs.where((doc) {
                 if (_searchQuery.isEmpty) return true;
                 final d = doc.data() as Map<String, dynamic>;
-                final spz =
-                    d['spz']?.toString().toLowerCase() ?? '';
-                final jmeno =
-                    ((d['zakaznik'] as Map?)?['jmeno'] ?? '')
-                        .toString()
-                        .toLowerCase();
-                final znackaModel =
-                    '${d['znacka'] ?? ''} ${d['model'] ?? ''}'
-                        .trim()
-                        .toLowerCase();
+                final spz = d['spz']?.toString().toLowerCase() ?? '';
+                final jmeno = ((d['zakaznik'] as Map?)?['jmeno'] ?? '')
+                    .toString()
+                    .toLowerCase();
+                final znackaModel = '${d['znacka'] ?? ''} ${d['model'] ?? ''}'
+                    .trim()
+                    .toLowerCase();
                 return spz.contains(_searchQuery) ||
                     jmeno.contains(_searchQuery) ||
                     znackaModel.contains(_searchQuery);
               }).toList();
 
               docs.sort((a, b) {
-                final tA =
-                    (a.data() as Map)['cas_prijeti'] as Timestamp?;
-                final tB =
-                    (b.data() as Map)['cas_prijeti'] as Timestamp?;
+                final tA = (a.data() as Map)['cas_prijeti'] as Timestamp?;
+                final tB = (b.data() as Map)['cas_prijeti'] as Timestamp?;
                 if (tA == null && tB == null) return 0;
                 if (tA == null) return 1;
                 if (tB == null) return -1;
@@ -161,17 +155,21 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                   final data = docs[index].data() as Map<String, dynamic>;
                   final docId = docs[index].id;
                   final spz = data['spz']?.toString() ?? '';
-                  final jmeno = (data['zakaznik'] as Map?)?['jmeno']?.toString() ?? '';
+                  final jmeno =
+                      (data['zakaznik'] as Map?)?['jmeno']?.toString() ?? '';
                   final znacka = data['znacka']?.toString() ?? '';
                   final model = data['model']?.toString() ?? '';
-                  final stavVozidla = (data['stav_vozidla'] as Map<String, dynamic>?) ?? {};
+                  final stavVozidla =
+                      (data['stav_vozidla'] as Map<String, dynamic>?) ?? {};
                   final tacho = stavVozidla['tachometr']?.toString() ?? '';
-                  final fotografieMap = (data['fotografie_urls'] as Map<String, dynamic>?) ?? {};
+                  final fotografieMap =
+                      (data['fotografie_urls'] as Map<String, dynamic>?) ?? {};
                   int pocetFotek = 0;
                   for (final urls in fotografieMap.values) {
                     pocetFotek += (urls as List<dynamic>).length;
                   }
-                  final maPodpis = data['podpis_url']?.toString().isNotEmpty == true;
+                  final maPodpis =
+                      data['podpis_url']?.toString().isNotEmpty == true;
                   final prijal = data['prijal_jmeno']?.toString() ?? '';
                   final cisloZakazky = data['cislo_zakazky']?.toString() ?? '';
                   final vin = data['vin']?.toString() ?? '';
@@ -264,19 +262,22 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                 ],
                                 const SizedBox(height: 10),
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       _formatDateHeader(data['cas_prijeti']),
                                       style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.6),
                                         fontSize: 12,
                                       ),
                                     ),
                                     Text(
                                       cisloZakazky,
                                       style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.6),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.6),
                                         fontSize: 12,
                                       ),
                                     ),
@@ -285,12 +286,14 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                 if (prijal.isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         'Přijal',
                                         style: TextStyle(
-                                          color: Colors.white.withValues(alpha: 0.5),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.5),
                                           fontSize: 12,
                                         ),
                                       ),
@@ -333,7 +336,8 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                           ),
                           // ── Bílé tělo ─────────────────────────────────
                           Container(
-                            color: isDark ? const Color(0xFF1A2B3C) : Colors.white,
+                            color:
+                                isDark ? const Color(0xFF1A2B3C) : Colors.white,
                             padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                             child: Column(
                               children: [
@@ -345,7 +349,8 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                       height: 32,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Colors.blue.withValues(alpha: 0.1),
+                                        color:
+                                            Colors.blue.withValues(alpha: 0.1),
                                       ),
                                       child: const Icon(Icons.directions_car,
                                           color: Colors.blue, size: 17),
@@ -367,8 +372,10 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 9, vertical: 4),
                                         decoration: BoxDecoration(
-                                          color: Colors.blue.withValues(alpha: 0.08),
-                                          borderRadius: BorderRadius.circular(7),
+                                          color: Colors.blue
+                                              .withValues(alpha: 0.08),
+                                          borderRadius:
+                                              BorderRadius.circular(7),
                                         ),
                                         child: Text(
                                           spz,
@@ -405,7 +412,8 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                 if (poskozeni.isNotEmpty) ...[
                                   const SizedBox(height: 5),
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const SizedBox(width: 42),
                                       const Icon(Icons.warning_amber_rounded,
@@ -441,7 +449,8 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                         height: 32,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: Colors.teal.withValues(alpha: 0.1),
+                                          color: Colors.teal
+                                              .withValues(alpha: 0.1),
                                         ),
                                         child: const Icon(Icons.person,
                                             color: Colors.teal, size: 17),
@@ -472,7 +481,8 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                             '$pocetFotek foto', Colors.blue),
                                       if (maPodpis) ...[
                                         const SizedBox(width: 6),
-                                        buildBadge(Icons.draw, 'Podepsáno', Colors.green),
+                                        buildBadge(Icons.draw, 'Podepsáno',
+                                            Colors.green),
                                       ],
                                       const Spacer(),
                                       const Icon(Icons.arrow_forward_ios,

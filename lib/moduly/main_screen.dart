@@ -8,6 +8,7 @@ import '../core/design_tokens.dart';
 import '../core/torkis_ui.dart';
 import 'auth_gate.dart';
 import 'auth_screen.dart';
+import '../l10n/app_localizations.dart';
 
 // Sjednocené relativní importy!
 import 'prijem/prijem_vozidla.dart';
@@ -57,57 +58,22 @@ class _MainScreenState extends State<MainScreen> {
   // (např. formuláře příjmu) zůstane zachován.
   final GlobalKey _pagesKey = GlobalKey();
 
-  final Map<String, _NavData> _allNavItems = {
-    'prijem': _NavData(
-        page: const MainWizardPage(),
-        icon: Icons.add_circle_outline_rounded,
-        activeIcon: Icons.add_circle_rounded,
-        label: 'Nový'),
-    'menu': _NavData(
-        page: const MenuPage(),
-        icon: Icons.grid_view,
-        activeIcon: Icons.grid_view_rounded,
-        label: 'Menu'),
-    'vozidla': _NavData(
-        page: const VozidlaPage(),
-        icon: Icons.directions_car_outlined,
-        activeIcon: Icons.directions_car,
-        label: 'Vozidla'),
-    'ukony': _NavData(
-        page: const UkonyPage(),
-        icon: Icons.playlist_add_check_circle_outlined,
-        activeIcon: Icons.playlist_add_check_circle,
-        label: 'Úkony'),
-    'zakaznici': _NavData(
-        page: const ZakazniciPage(),
-        icon: Icons.people_alt_outlined,
-        activeIcon: Icons.people_alt,
-        label: 'Zákazníci'),
-    'zamestnanci': _NavData(
-        page: const ZamestnanciPage(),
-        icon: Icons.badge_outlined,
-        activeIcon: Icons.badge,
-        label: 'Tým'),
-    'statistiky': _NavData(
-        page: const StatisticsPage(),
-        icon: Icons.bar_chart_outlined,
-        activeIcon: Icons.bar_chart,
-        label: 'Statistiky'),
-    'nastaveni': _NavData(
-        page: const SettingsPage(),
-        icon: Icons.settings_outlined,
-        activeIcon: Icons.settings,
-        label: 'Nastavení'),
-    'historie_prijmu': _NavData(
-        page: const HistoriePrijmuPage(),
-        icon: Icons.assignment_add,
-        activeIcon: Icons.assignment_add,
-        label: 'Příjmy'),
-    'vin_dekoder': _NavData(
-        page: const VinDekoderPage(),
-        icon: Icons.travel_explore_outlined,
-        activeIcon: Icons.travel_explore_rounded,
-        label: 'VIN'),
+  static const Set<String> _validNavIds = {
+    'prijem', 'menu', 'vozidla', 'ukony', 'zakaznici',
+    'zamestnanci', 'statistiky', 'nastaveni', 'historie_prijmu', 'vin_dekoder',
+  };
+
+  Map<String, _NavData> _buildNavItems(AppLocalizations l10n) => {
+    'prijem': _NavData(page: const MainWizardPage(), icon: Icons.add_circle_outline_rounded, activeIcon: Icons.add_circle_rounded, label: l10n.mainNavNovy),
+    'menu': _NavData(page: const MenuPage(), icon: Icons.grid_view, activeIcon: Icons.grid_view_rounded, label: l10n.mainNavMenu),
+    'vozidla': _NavData(page: const VozidlaPage(), icon: Icons.directions_car_outlined, activeIcon: Icons.directions_car, label: l10n.mainNavVozidla),
+    'ukony': _NavData(page: const UkonyPage(), icon: Icons.playlist_add_check_circle_outlined, activeIcon: Icons.playlist_add_check_circle, label: l10n.mainNavUkony),
+    'zakaznici': _NavData(page: const ZakazniciPage(), icon: Icons.people_alt_outlined, activeIcon: Icons.people_alt, label: l10n.mainNavZakaznici),
+    'zamestnanci': _NavData(page: const ZamestnanciPage(), icon: Icons.badge_outlined, activeIcon: Icons.badge, label: l10n.mainNavTym),
+    'statistiky': _NavData(page: const StatisticsPage(), icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart, label: l10n.mainNavStatistiky),
+    'nastaveni': _NavData(page: const SettingsPage(), icon: Icons.settings_outlined, activeIcon: Icons.settings, label: l10n.mainNavNastaveni),
+    'historie_prijmu': _NavData(page: const HistoriePrijmuPage(), icon: Icons.assignment_add, activeIcon: Icons.assignment_add, label: l10n.mainNavPrijmy),
+    'vin_dekoder': _NavData(page: const VinDekoderPage(), icon: Icons.travel_explore_outlined, activeIcon: Icons.travel_explore_rounded, label: l10n.mainNavVin),
   };
 
   @override
@@ -143,7 +109,7 @@ class _MainScreenState extends State<MainScreen> {
     final prefs = await SharedPreferences.getInstance();
     final savedOrder = prefs.getStringList('nav_order');
     if (savedOrder != null && savedOrder.isNotEmpty) {
-      final validOrder = savedOrder.where(_allNavItems.containsKey).toList();
+      final validOrder = savedOrder.where(_validNavIds.contains).toList();
       if (validOrder.isNotEmpty) navOrderNotifier.value = validOrder;
     }
   }
@@ -151,12 +117,14 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+    final navItems = _buildNavItems(l10n);
 
     return ValueListenableBuilder<List<String>>(
         valueListenable: navOrderNotifier,
         builder: (context, navOrder, child) {
           final filteredNavOrder = navOrder
-              .where((id) => _allNavItems.containsKey(id) && maPristup(id))
+              .where((id) => navItems.containsKey(id) && maPristup(id))
               .toList();
 
           int currentIndex = filteredNavOrder.indexOf(_currentTabId);
@@ -169,10 +137,10 @@ class _MainScreenState extends State<MainScreen> {
           }
 
           final List<Widget> currentPages =
-              filteredNavOrder.map((id) => _allNavItems[id]!.page).toList();
+              filteredNavOrder.map((id) => navItems[id]!.page).toList();
           final List<NavigationDestination> currentDestinations =
               filteredNavOrder.map((id) {
-            final item = _allNavItems[id]!;
+            final item = navItems[id]!;
             return NavigationDestination(
               icon: Icon(item.icon),
               selectedIcon: Icon(item.activeIcon),
@@ -190,41 +158,40 @@ class _MainScreenState extends State<MainScreen> {
                 body: SafeArea(
                   bottom: false,
                   child: Row(
-                  children: [
-                    _MainTabletSidebar(
-                      navItems: filteredNavOrder
-                          .map((id) => (id: id, data: _allNavItems[id]!))
-                          .toList(),
-                      currentTabId: _currentTabId,
-                      isDark: isDark,
-                      onTabSelected: (id) =>
-                          setState(() => _currentTabId = id),
-                      onToggleTheme: () async {
-                        final newIsDark = !isDark;
-                        themeNotifier.value = newIsDark
-                            ? ThemeMode.dark
-                            : ThemeMode.light;
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('tmavy_rezim', newIsDark);
-                        final user = FirebaseAuth.instance.currentUser;
-                        if (user != null) {
-                          await FirebaseFirestore.instance
-                              .collection('uzivatele')
-                              .doc(user.uid)
-                              .set({'tmavy_rezim': newIsDark},
-                                  SetOptions(merge: true));
-                        }
-                      },
-                    ),
-                    Expanded(
-                      child: IndexedStack(
-                        key: _pagesKey,
-                        index: currentIndex,
-                        children: currentPages,
+                    children: [
+                      _MainTabletSidebar(
+                        navItems: filteredNavOrder
+                            .map((id) => (id: id, data: navItems[id]!))
+                            .toList(),
+                        currentTabId: _currentTabId,
+                        isDark: isDark,
+                        onTabSelected: (id) =>
+                            setState(() => _currentTabId = id),
+                        onToggleTheme: () async {
+                          final newIsDark = !isDark;
+                          themeNotifier.value =
+                              newIsDark ? ThemeMode.dark : ThemeMode.light;
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('tmavy_rezim', newIsDark);
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            await FirebaseFirestore.instance
+                                .collection('uzivatele')
+                                .doc(user.uid)
+                                .set({'tmavy_rezim': newIsDark},
+                                    SetOptions(merge: true));
+                          }
+                        },
                       ),
-                    ),
-                  ],
-                ),
+                      Expanded(
+                        child: IndexedStack(
+                          key: _pagesKey,
+                          index: currentIndex,
+                          children: currentPages,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -305,8 +272,7 @@ class _MainScreenState extends State<MainScreen> {
                   backgroundColor: Colors.transparent,
                   surfaceTintColor: Colors.transparent,
                   indicatorColor: TokColors.accentSoft,
-                  labelBehavior:
-                      NavigationDestinationLabelBehavior.alwaysShow,
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
                   destinations: currentDestinations,
                 ),
               ),
@@ -361,46 +327,41 @@ class MenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final role = globalUserRole ?? 'zamestnanec';
 
     final items = <_ModuleEntry>[
       if (maPristup('vozidla'))
-        _ModuleEntry('Vozidla', Icons.directions_car_outlined,
-            const VozidlaPage(),
-            subtitle: 'Evidence vozů v servisu', countKey: 'vozidla'),
+        _ModuleEntry(l10n.mainNavVozidla, Icons.directions_car_outlined, const VozidlaPage(),
+            subtitle: l10n.mainModVozidlaSubtitle, countKey: 'vozidla'),
       if (maPristup('zakaznici'))
-        _ModuleEntry('Zákazníci', Icons.people_alt_outlined,
-            const ZakazniciPage(),
-            subtitle: 'Kontakty a vozový park', countKey: 'zakaznici'),
+        _ModuleEntry(l10n.mainNavZakaznici, Icons.people_alt_outlined, const ZakazniciPage(),
+            subtitle: l10n.mainModZakazniciSubtitle, countKey: 'zakaznici'),
       if (maPristup('historie_prijmu'))
-        _ModuleEntry('Historie příjmů', Icons.history_rounded,
+        _ModuleEntry(l10n.mainModHistorieLabel, Icons.history_rounded,
             const HistoriePrijmuPage(),
-            subtitle: 'Archiv zakázek', countKey: 'zakazky'),
+            subtitle: l10n.mainModHistorieSubtitle, countKey: 'zakazky'),
       if (maPristup('ukony'))
-        _ModuleEntry('Úkony', Icons.playlist_add_check_rounded,
-            const UkonyPage(),
-            subtitle: 'Ceník prací a služeb', countKey: 'ukony'),
-      _ModuleEntry('VIN dekodér', Icons.travel_explore_rounded,
-          const VinDekoderPage(),
-          subtitle: 'Údaje o vozidle z VIN'),
+        _ModuleEntry(l10n.mainNavUkony, Icons.playlist_add_check_rounded, const UkonyPage(),
+            subtitle: l10n.mainModUkonySubtitle, countKey: 'ukony'),
+      _ModuleEntry(l10n.mainModVinLabel, Icons.travel_explore_rounded, const VinDekoderPage(),
+          subtitle: l10n.mainModVinSubtitle),
       if (maPristup('zamestnanci'))
-        _ModuleEntry('Tým', Icons.badge_outlined, const ZamestnanciPage(),
-            subtitle: 'Technici a oprávnění', countKey: 'uzivatele'),
+        _ModuleEntry(l10n.mainNavTym, Icons.badge_outlined, const ZamestnanciPage(),
+            subtitle: l10n.mainModTymSubtitle, countKey: 'uzivatele'),
       if (maPristup('statistiky'))
-        _ModuleEntry(
-            'Statistiky', Icons.bar_chart_rounded, const StatisticsPage(),
-            subtitle: 'Přehledy a tržby'),
+        _ModuleEntry(l10n.mainNavStatistiky, Icons.bar_chart_rounded, const StatisticsPage(),
+            subtitle: l10n.mainModStatistikySubtitle),
       if (maPristup('nastaveni'))
-        _ModuleEntry(
-            'Nastavení', Icons.settings_outlined, const SettingsPage(),
-            subtitle: 'Servis, faktury, integrace'),
+        _ModuleEntry(l10n.mainNavNastaveni, Icons.settings_outlined, const SettingsPage(),
+            subtitle: l10n.mainModNastaveniSubtitle),
       if (globalUserRole == 'admin')
-        _ModuleEntry('Předplatné', Icons.workspace_premium_outlined,
+        _ModuleEntry(l10n.mainModPredplatneLabel, Icons.workspace_premium_outlined,
             const PredplatnePage(),
-            subtitle: 'Plán a platby'),
+            subtitle: l10n.mainModPredplatneSubtitle),
       if (globalUserRole == 'admin')
-        _ModuleEntry('Web', Icons.public_rounded, const LandingPage(),
-            subtitle: 'Veřejná stránka'),
+        _ModuleEntry(l10n.mainModWebLabel, Icons.public_rounded, const LandingPage(),
+            subtitle: l10n.mainModWebSubtitle),
     ];
 
     return LayoutBuilder(
@@ -409,9 +370,9 @@ class MenuPage extends StatelessWidget {
             MediaQuery.orientationOf(context) == Orientation.landscape;
         if (isTabletLandscape) {
           final cols = (constraints.maxWidth / 300).floor().clamp(2, 4);
-          return _buildTabletLayout(context, tok, role, items, cols);
+          return _buildTabletLayout(context, tok, role, items, cols, l10n);
         }
-        return _buildMobileLayout(context, tok, role, items);
+        return _buildMobileLayout(context, tok, role, items, l10n);
       },
     );
   }
@@ -434,15 +395,15 @@ class MenuPage extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(TorkisTokens tok, String role) {
+  Widget _buildHeader(TorkisTokens tok, String role, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(
-              horizontal: TokSpace.xs, vertical: 4),
+          padding:
+              const EdgeInsets.symmetric(horizontal: TokSpace.xs, vertical: 4),
           child: Text(
-            'Moduly',
+            l10n.mainModulyNadpis,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
@@ -460,7 +421,7 @@ class MenuPage extends StatelessWidget {
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  'Přihlášen v servisu',
+                  l10n.mainPrihlasenv,
                   style: TextStyle(fontSize: 13, color: tok.textSecondary),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -473,15 +434,15 @@ class MenuPage extends StatelessWidget {
   }
 
   // ── Mobil (na výšku) — ponecháno beze změny ───────────────────────────────
-  Widget _buildMobileLayout(BuildContext context, TorkisTokens tok,
-      String role, List<_ModuleEntry> items) {
+  Widget _buildMobileLayout(BuildContext context, TorkisTokens tok, String role,
+      List<_ModuleEntry> items, AppLocalizations l10n) {
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
           TokSpace.lg, TokSpace.sm, TokSpace.lg, TokSpace.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(tok, role),
+          _buildHeader(tok, role, l10n),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -507,8 +468,8 @@ class MenuPage extends StatelessWidget {
   }
 
   // ── iPad (na šířku) — mřížka karet se živými počty ────────────────────────
-  Widget _buildTabletLayout(BuildContext context, TorkisTokens tok,
-      String role, List<_ModuleEntry> items, int cols) {
+  Widget _buildTabletLayout(BuildContext context, TorkisTokens tok, String role,
+      List<_ModuleEntry> items, int cols, AppLocalizations l10n) {
     final sId = globalServisId ?? FirebaseAuth.instance.currentUser?.uid;
     final collections =
         items.map((e) => e.countKey).whereType<String>().toSet();
@@ -518,7 +479,7 @@ class MenuPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader(tok, role),
+          _buildHeader(tok, role, l10n),
           FutureBuilder<Map<String, int>>(
             future: _fetchCounts(sId, collections),
             builder: (context, snap) {
@@ -533,8 +494,7 @@ class MenuPage extends StatelessWidget {
                 children: items
                     .map((e) => _ModuleGridCard(
                           entry: e,
-                          count:
-                              e.countKey != null ? counts[e.countKey] : null,
+                          count: e.countKey != null ? counts[e.countKey] : null,
                           onTap: () => _openModule(context, e),
                         ))
                     .toList(),
@@ -575,24 +535,25 @@ class MenuPage extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return TorkisSecondaryButton(
-      label: 'Odhlásit se',
+      label: l10n.mainOdhlasitSe,
       leadingIcon: Icons.logout_rounded,
       onPressed: () async {
         final potvrdit = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Odhlášení'),
-            content: const Text('Opravdu se chcete odhlásit?'),
+            title: Text(l10n.mainOdhlaseniTitle),
+            content: Text(l10n.mainOdhlaseniContent),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Zrušit')),
+                  child: Text(l10n.mainZrusit)),
               TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: const Text(
-                    'Odhlásit',
-                    style: TextStyle(color: TokColors.danger),
+                  child: Text(
+                    l10n.mainOdhlasit,
+                    style: const TextStyle(color: TokColors.danger),
                   )),
             ],
           ),
@@ -743,15 +704,14 @@ class _ContactCard extends StatelessWidget {
                   )),
               const Spacer(),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: TokColors.accentSoft,
                   borderRadius: BorderRadius.circular(TokRadius.round),
                 ),
-                child: Text(
+                child: const Text(
                   'v$kAppVerze',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: TokColors.accent,
                     fontWeight: FontWeight.w600,
                     fontSize: 11,
@@ -871,7 +831,7 @@ class _MainTabletSidebar extends StatelessWidget {
                       size: 20,
                     ),
                     onPressed: onToggleTheme,
-                    tooltip: isDark ? 'Světlý režim' : 'Tmavý režim',
+                    tooltip: isDark ? AppLocalizations.of(context).mainSvetlyRezim : AppLocalizations.of(context).mainTmavyRezim,
                   ),
                   const SizedBox(height: TokSpace.sm),
                   _SidebarUserChip(),
@@ -927,11 +887,9 @@ class _SidebarNavItem extends StatelessWidget {
                 Text(
                   label,
                   style: TextStyle(
-                    color:
-                        isActive ? TokColors.accent : TokColors.steelSoft,
+                    color: isActive ? TokColors.accent : TokColors.steelSoft,
                     fontSize: 10,
-                    fontWeight:
-                        isActive ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,

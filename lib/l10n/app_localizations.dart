@@ -2947,6 +2947,702 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Prioritní podpora s SLA'**
   String get predFeatPrioritniSla;
+
+  /// No description provided for @onbAresChybaIco.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte platné 8místné IČO.'**
+  String get onbAresChybaIco;
+
+  /// No description provided for @onbAresNacteno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje z ARES byly načteny.'**
+  String get onbAresNacteno;
+
+  /// No description provided for @onbAresNenalezeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadané IČO nebylo v registru ARES nalezeno.'**
+  String get onbAresNenalezeno;
+
+  /// No description provided for @onbAresChyba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba při komunikaci s ARES: {chyba}'**
+  String onbAresChyba(String chyba);
+
+  /// No description provided for @onbBiometricReason.
+  ///
+  /// In cs, this message translates to:
+  /// **'Potvrďte svou totožnost pro zapnutí biometrického přihlášení'**
+  String get onbBiometricReason;
+
+  /// No description provided for @onbDialogUpravitTyp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Upravit typ'**
+  String get onbDialogUpravitTyp;
+
+  /// No description provided for @onbDialogNovyTyp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nový typ záznamu'**
+  String get onbDialogNovyTyp;
+
+  /// No description provided for @onbDialogNazevTypuHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Název typu (např. Servis, Výkup...)'**
+  String get onbDialogNazevTypuHint;
+
+  /// No description provided for @onbZrusit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zrušit'**
+  String get onbZrusit;
+
+  /// No description provided for @onbUlozit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Uložit'**
+  String get onbUlozit;
+
+  /// No description provided for @onbChybaUkladani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba při ukládání: {chyba}'**
+  String onbChybaUkladani(String chyba);
+
+  /// No description provided for @onbChybaNazev.
+  ///
+  /// In cs, this message translates to:
+  /// **'Název servisu je povinný pro pokračování.'**
+  String get onbChybaNazev;
+
+  /// No description provided for @onbDokoncit.
+  ///
+  /// In cs, this message translates to:
+  /// **'DOKONČIT NASTAVENÍ'**
+  String get onbDokoncit;
+
+  /// No description provided for @onbPokracovat.
+  ///
+  /// In cs, this message translates to:
+  /// **'POKRAČOVAT'**
+  String get onbPokracovat;
+
+  /// No description provided for @onbKrok1Nadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vítejte ve TORKIS!'**
+  String get onbKrok1Nadpis;
+
+  /// No description provided for @onbKrok1Popis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nejprve vyplníme základní informace o vás nebo o vaší společnosti.'**
+  String get onbKrok1Popis;
+
+  /// No description provided for @onbIcoLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'IČO (ARES vyhledávání)'**
+  String get onbIcoLabel;
+
+  /// No description provided for @onbIcoHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. 12345678'**
+  String get onbIcoHint;
+
+  /// No description provided for @onbAresLoadTooltip.
+  ///
+  /// In cs, this message translates to:
+  /// **'Načíst z ARES'**
+  String get onbAresLoadTooltip;
+
+  /// No description provided for @onbNazevLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Název servisu / Jméno *'**
+  String get onbNazevLabel;
+
+  /// No description provided for @onbNazevHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte název...'**
+  String get onbNazevHint;
+
+  /// No description provided for @onbDicLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'DIČ (nepovinné)'**
+  String get onbDicLabel;
+
+  /// No description provided for @onbDicHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. CZ12345678'**
+  String get onbDicHint;
+
+  /// No description provided for @onbRegistraceLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zápis v rejstříku (nepovinné)'**
+  String get onbRegistraceLabel;
+
+  /// No description provided for @onbRegistraceHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. zapsán v ŽR u MÚ...'**
+  String get onbRegistraceHint;
+
+  /// No description provided for @onbSidloNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Sídlo a kontakt'**
+  String get onbSidloNadpis;
+
+  /// No description provided for @onbSidloPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje se použijí na nabídkách, fakturách a v komunikaci.'**
+  String get onbSidloPopis;
+
+  /// No description provided for @onbUliceLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ulice a č.p.'**
+  String get onbUliceLabel;
+
+  /// No description provided for @onbUliceHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. Hlavní 123'**
+  String get onbUliceHint;
+
+  /// No description provided for @onbMestoLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Město'**
+  String get onbMestoLabel;
+
+  /// No description provided for @onbMestoHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. Brno'**
+  String get onbMestoHint;
+
+  /// No description provided for @onbPscLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'PSČ'**
+  String get onbPscLabel;
+
+  /// No description provided for @onbTelefonLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Telefon servisu'**
+  String get onbTelefonLabel;
+
+  /// No description provided for @onbTelefonHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. +420 777 123 456'**
+  String get onbTelefonHint;
+
+  /// No description provided for @onbKomunikaceNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Komunikace a vzhled'**
+  String get onbKomunikaceNadpis;
+
+  /// No description provided for @onbEmailLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mailová adresa (z níž budou odcházet e-maily zákazníkům)'**
+  String get onbEmailLabel;
+
+  /// No description provided for @onbEmailHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. info@autoservis.cz'**
+  String get onbEmailHint;
+
+  /// No description provided for @onbEmailySwitchTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Automaticky zasílat e-maily'**
+  String get onbEmailySwitchTitle;
+
+  /// No description provided for @onbEmailySwitchSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazníkům bude v nabídkách a při ukončení předzaškrtnuta možnost odeslání PDF e-mailem.'**
+  String get onbEmailySwitchSubtitle;
+
+  /// No description provided for @onbAdminNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Váš účet (administrátor)'**
+  String get onbAdminNadpis;
+
+  /// No description provided for @onbAdminPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadejte své jméno — budete přidáni jako hlavní správce servisu.'**
+  String get onbAdminPopis;
+
+  /// No description provided for @onbJmenoLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jméno a příjmení *'**
+  String get onbJmenoLabel;
+
+  /// No description provided for @onbJmenoHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. Jan Novák'**
+  String get onbJmenoHint;
+
+  /// No description provided for @onbTmavyRezimTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vynutit tmavý režim'**
+  String get onbTmavyRezimTitle;
+
+  /// No description provided for @onbTmavyRezimSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Aplikace bude okamžitě přepnuta do tmavého vzhledu.'**
+  String get onbTmavyRezimSubtitle;
+
+  /// No description provided for @onbKrok2Nadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Provoz a automatizace'**
+  String get onbKrok2Nadpis;
+
+  /// No description provided for @onbKrok2Popis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nastavte chování příjmu vozidla. Vše lze později kdykoliv změnit v Nastavení.'**
+  String get onbKrok2Popis;
+
+  /// No description provided for @onbAutoCisloTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Automaticky generovat číslo zakázky'**
+  String get onbAutoCisloTitle;
+
+  /// No description provided for @onbAutoCisloSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při příjmu vozidla se číslo zakázky předvyplní automaticky. Vypnutím umožníte ruční zadání.'**
+  String get onbAutoCisloSubtitle;
+
+  /// No description provided for @onbPodpisTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyžadovat podpis zákazníka'**
+  String get onbPodpisTitle;
+
+  /// No description provided for @onbPodpisSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při vypnutí se krok s podpisem v příjmu zobrazí bez podpisového plátna.'**
+  String get onbPodpisSubtitle;
+
+  /// No description provided for @onbSpzTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Povinná SPZ vozidla'**
+  String get onbSpzTitle;
+
+  /// No description provided for @onbSpzSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při vypnutí lze příjem odeslat i bez vyplněné SPZ (např. vozidla bez registrace).'**
+  String get onbSpzSubtitle;
+
+  /// No description provided for @onbTypyNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typy záznamu'**
+  String get onbTypyNadpis;
+
+  /// No description provided for @onbTypyPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Slouží k rozlišení příjmu vozidla (např. Servis, Výkup). První typ je výchozí.'**
+  String get onbTypyPopis;
+
+  /// No description provided for @onbTypyVychozi.
+  ///
+  /// In cs, this message translates to:
+  /// **'výchozí'**
+  String get onbTypyVychozi;
+
+  /// No description provided for @onbPridatTyp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat typ'**
+  String get onbPridatTyp;
+
+  /// No description provided for @onbTypyHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dlouhý stisk = nastavit jako výchozí.'**
+  String get onbTypyHint;
+
+  /// No description provided for @onbOsobniNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Osobní nastavení'**
+  String get onbOsobniNadpis;
+
+  /// No description provided for @onbBiometrieTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Biometrické přihlášení'**
+  String get onbBiometrieTitle;
+
+  /// No description provided for @onbBiometrieSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Face ID / otisk prstu při každém spuštění.'**
+  String get onbBiometrieSubtitle;
+
+  /// No description provided for @onbLevacTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Režim pro leváky'**
+  String get onbLevacTitle;
+
+  /// No description provided for @onbLevacSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spoušť fotoaparátu vlevo, když je zařízení na šířku.'**
+  String get onbLevacSubtitle;
+
+  /// No description provided for @onbKrok3Nadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nejčastější úkony'**
+  String get onbKrok3Nadpis;
+
+  /// No description provided for @onbKrok3Popis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Připravili jsme pro vás seznam typických úkonů. Můžete je libovolně přepsat, smazat nebo si přidat další. Budou se vám nabízet pro rychlé přidání při příjmu vozu.'**
+  String get onbKrok3Popis;
+
+  /// No description provided for @onbUkonNazevLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Název úkonu'**
+  String get onbUkonNazevLabel;
+
+  /// No description provided for @onbUkonCenaLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jedn. cena (Kč)'**
+  String get onbUkonCenaLabel;
+
+  /// No description provided for @onbUkonCasLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Čas'**
+  String get onbUkonCasLabel;
+
+  /// No description provided for @onbUkonHod.
+  ///
+  /// In cs, this message translates to:
+  /// **'hod'**
+  String get onbUkonHod;
+
+  /// No description provided for @onbUkonMin.
+  ///
+  /// In cs, this message translates to:
+  /// **'min'**
+  String get onbUkonMin;
+
+  /// No description provided for @onbUkonCelkovaCenaLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Celková cena (Kč)'**
+  String get onbUkonCelkovaCenaLabel;
+
+  /// No description provided for @onbUkonKategorieLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Kategorie'**
+  String get onbUkonKategorieLabel;
+
+  /// No description provided for @onbPridatUkon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat další úkon'**
+  String get onbPridatUkon;
+
+  /// No description provided for @trialBadge.
+  ///
+  /// In cs, this message translates to:
+  /// **'30 DNÍ ZDARMA'**
+  String get trialBadge;
+
+  /// No description provided for @trialNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vítejte v TORKISu'**
+  String get trialNadpis;
+
+  /// No description provided for @trialPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spustili jsme vám zkušební dobu na 30 dní zdarma — bez platební karty a bez závazků.'**
+  String get trialPopis;
+
+  /// No description provided for @trialBenefit1.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neomezený počet záznamů vozidel a zákazníků'**
+  String get trialBenefit1;
+
+  /// No description provided for @trialBenefit2.
+  ///
+  /// In cs, this message translates to:
+  /// **'10 dekódovaných VINů'**
+  String get trialBenefit2;
+
+  /// No description provided for @trialBenefit3.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neomezený počet zjištění platnosti STK'**
+  String get trialBenefit3;
+
+  /// No description provided for @trialBenefit4.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plný přístup ke všem funkcím aplikace.'**
+  String get trialBenefit4;
+
+  /// No description provided for @trialBenefit5.
+  ///
+  /// In cs, this message translates to:
+  /// **'Žádné platební údaje. Bez automatického strhávání.'**
+  String get trialBenefit5;
+
+  /// No description provided for @trialBenefit6.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vaše data jsou vždy vaše — export kdykoli zdarma.'**
+  String get trialBenefit6;
+
+  /// No description provided for @trialBtn.
+  ///
+  /// In cs, this message translates to:
+  /// **'Začít používat aplikaci'**
+  String get trialBtn;
+
+  /// No description provided for @mainNavNovy.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nový'**
+  String get mainNavNovy;
+
+  /// No description provided for @mainNavMenu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Menu'**
+  String get mainNavMenu;
+
+  /// No description provided for @mainNavVozidla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidla'**
+  String get mainNavVozidla;
+
+  /// No description provided for @mainNavUkony.
+  ///
+  /// In cs, this message translates to:
+  /// **'Úkony'**
+  String get mainNavUkony;
+
+  /// No description provided for @mainNavZakaznici.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazníci'**
+  String get mainNavZakaznici;
+
+  /// No description provided for @mainNavTym.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tým'**
+  String get mainNavTym;
+
+  /// No description provided for @mainNavStatistiky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Statistiky'**
+  String get mainNavStatistiky;
+
+  /// No description provided for @mainNavNastaveni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nastavení'**
+  String get mainNavNastaveni;
+
+  /// No description provided for @mainNavPrijmy.
+  ///
+  /// In cs, this message translates to:
+  /// **'Příjmy'**
+  String get mainNavPrijmy;
+
+  /// No description provided for @mainNavVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN'**
+  String get mainNavVin;
+
+  /// No description provided for @mainModVozidlaSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Evidence vozů v servisu'**
+  String get mainModVozidlaSubtitle;
+
+  /// No description provided for @mainModZakazniciSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Kontakty a vozový park'**
+  String get mainModZakazniciSubtitle;
+
+  /// No description provided for @mainModHistorieLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Historie záznamů'**
+  String get mainModHistorieLabel;
+
+  /// No description provided for @mainModHistorieSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Archiv zakázek'**
+  String get mainModHistorieSubtitle;
+
+  /// No description provided for @mainModUkonySubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ceník prací a služeb'**
+  String get mainModUkonySubtitle;
+
+  /// No description provided for @mainModVinLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN dekodér'**
+  String get mainModVinLabel;
+
+  /// No description provided for @mainModVinSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje o vozidle z VIN'**
+  String get mainModVinSubtitle;
+
+  /// No description provided for @mainModTymSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Technici a oprávnění'**
+  String get mainModTymSubtitle;
+
+  /// No description provided for @mainModStatistikySubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přehledy a tržby'**
+  String get mainModStatistikySubtitle;
+
+  /// No description provided for @mainModNastaveniSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Servis, faktury, integrace'**
+  String get mainModNastaveniSubtitle;
+
+  /// No description provided for @mainModPredplatneLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Předplatné'**
+  String get mainModPredplatneLabel;
+
+  /// No description provided for @mainModPredplatneSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plán a platby'**
+  String get mainModPredplatneSubtitle;
+
+  /// No description provided for @mainModWebLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Web'**
+  String get mainModWebLabel;
+
+  /// No description provided for @mainModWebSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Veřejná stránka'**
+  String get mainModWebSubtitle;
+
+  /// No description provided for @mainModulyNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Moduly'**
+  String get mainModulyNadpis;
+
+  /// No description provided for @mainPrihlasenv.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přihlášen v servisu'**
+  String get mainPrihlasenv;
+
+  /// No description provided for @mainOdhlasitSe.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odhlásit se'**
+  String get mainOdhlasitSe;
+
+  /// No description provided for @mainOdhlaseniTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odhlášení'**
+  String get mainOdhlaseniTitle;
+
+  /// No description provided for @mainOdhlaseniContent.
+  ///
+  /// In cs, this message translates to:
+  /// **'Opravdu se chcete odhlásit?'**
+  String get mainOdhlaseniContent;
+
+  /// No description provided for @mainZrusit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zrušit'**
+  String get mainZrusit;
+
+  /// No description provided for @mainOdhlasit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odhlásit'**
+  String get mainOdhlasit;
+
+  /// No description provided for @mainSvetlyRezim.
+  ///
+  /// In cs, this message translates to:
+  /// **'Světlý režim'**
+  String get mainSvetlyRezim;
+
+  /// No description provided for @mainTmavyRezim.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tmavý režim'**
+  String get mainTmavyRezim;
 }
 
 class _AppLocalizationsDelegate

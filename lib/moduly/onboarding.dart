@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'trial_welcome_screen.dart';
 import '../core/constants.dart';
+import '../l10n/app_localizations.dart';
 
 class _UkonData {
   final TextEditingController nazev;
@@ -144,10 +145,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   }
 
   Future<void> _fetchAresData() async {
+    final l10n = AppLocalizations.of(context);
     final ico = _icoController.text.trim();
     if (ico.isEmpty || ico.length != 8) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Zadejte platné 8místné IČO.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.onbAresChybaIco),
           backgroundColor: Colors.orange));
       return;
     }
@@ -160,17 +162,17 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         setState(() {
           _nazevController.text = data['obchodniJmeno'] ?? '';
         });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Údaje z ARES byly načteny.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.onbAresNacteno),
             backgroundColor: Colors.green));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Zadané IČO nebylo v registru ARES nalezeno.'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(l10n.onbAresNenalezeno),
             backgroundColor: Colors.red));
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Chyba při komunikaci s ARES: $e'),
+          content: Text(l10n.onbAresChyba(e.toString())),
           backgroundColor: Colors.red));
     } finally {
       setState(() => _isLoadingAres = false);
@@ -193,11 +195,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   /// Přepne biometrické přihlášení. Při zapnutí vyžádá ověření, aby se
   /// předešlo zapnutí cizí osobou.
   Future<void> _toggleBiometric(bool value) async {
+    final l10n = AppLocalizations.of(context);
     if (value) {
       try {
         final ok = await LocalAuthentication().authenticate(
-          localizedReason:
-              'Potvrďte svou totožnost pro zapnutí biometrického přihlášení',
+          localizedReason: l10n.onbBiometricReason,
           options: const AuthenticationOptions(stickyAuth: true),
         );
         if (!ok) return;
@@ -209,18 +211,19 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   }
 
   void _otevritDialogTypuZaznamu({String? initialText, int? editIndex}) {
+    final l10n = AppLocalizations.of(context);
     final ctrl = TextEditingController(text: initialText ?? '');
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
-        title: Text(editIndex != null ? 'Upravit typ' : 'Nový typ záznamu'),
+        title: Text(editIndex != null ? l10n.onbDialogUpravitTyp : l10n.onbDialogNovyTyp),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           decoration: InputDecoration(
-            hintText: 'Název typu (např. Servis, Výkup...)',
+            hintText: l10n.onbDialogNazevTypuHint,
             filled: true,
             fillColor:
                 isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
@@ -232,7 +235,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Zrušit'),
+            child: Text(l10n.onbZrusit),
           ),
           ElevatedButton(
             onPressed: () {
@@ -250,7 +253,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               });
               Navigator.pop(ctx);
             },
-            child: const Text('Uložit'),
+            child: Text(l10n.onbUlozit),
           ),
         ],
       ),
@@ -258,6 +261,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   }
 
   Future<void> _dokoncitNastaveni() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSaving = true);
 
     try {
@@ -366,16 +370,17 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Chyba při ukládání: $e'),
+          content: Text(l10n.onbChybaUkladani(e.toString())),
           backgroundColor: Colors.red));
       setState(() => _isSaving = false);
     }
   }
 
   void _moveNext() {
+    final l10n = AppLocalizations.of(context);
     if (_currentPage == 0 && _nazevController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Název servisu je povinný pro pokračování.'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.onbChybaNazev),
           backgroundColor: Colors.orange));
       return;
     }
@@ -398,6 +403,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -477,8 +483,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                                   color: Colors.white, strokeWidth: 2))
                           : Text(
                               _currentPage == _pocetKroku - 1
-                                  ? 'DOKONČIT NASTAVENÍ'
-                                  : 'POKRAČOVAT',
+                                  ? l10n.onbDokoncit
+                                  : l10n.onbPokracovat,
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 16)),
                     ),
@@ -566,6 +572,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   // IČO (ARES lookup), název servisu, DIČ, zápis v rejstříku, sídlo a kontakt,
   // e-mail, přepínač e-mailů, tmavý režim, jméno majitele (admin účet).
   Widget _buildStep1(bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(30),
       child: Column(
@@ -578,22 +585,21 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             child: const Icon(Icons.handshake, color: Colors.blue, size: 40),
           ),
           const SizedBox(height: 20),
-          const Text('Vítejte ve TORKIS!',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+          Text(l10n.onbKrok1Nadpis,
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          const Text(
-              'Nejprve vyplníme základní informace o vás nebo o vaší společnosti.',
-              style: TextStyle(fontSize: 14, color: Colors.grey)),
+          Text(l10n.onbKrok1Popis,
+              style: const TextStyle(fontSize: 14, color: Colors.grey)),
           const SizedBox(height: 40),
-          const Text('IČO (ARES vyhledávání)',
+          Text(l10n.onbIcoLabel,
               style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           TextField(
             controller: _icoController,
             keyboardType: TextInputType.number,
             decoration: InputDecoration(
-              hintText: 'Např. 12345678',
+              hintText: l10n.onbIcoHint,
               prefixIcon: const Icon(Icons.business, color: Colors.blue),
               suffixIcon: _isLoadingAres
                   ? const Padding(
@@ -605,7 +611,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                   : IconButton(
                       icon: const Icon(Icons.search, color: Colors.blue),
                       onPressed: _fetchAresData,
-                      tooltip: 'Načíst z ARES'),
+                      tooltip: l10n.onbAresLoadTooltip),
               filled: true,
               fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
               border: OutlineInputBorder(
@@ -619,15 +625,15 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text('Název servisu / Jméno *',
+          Text(l10n.onbNazevLabel,
               style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           TextField(
             controller: _nazevController,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             decoration: InputDecoration(
-              hintText: 'Zadejte název...',
+              hintText: l10n.onbNazevHint,
               prefixIcon: const Icon(Icons.storefront, color: Colors.blue),
               filled: true,
               fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
@@ -643,31 +649,31 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           ),
           const SizedBox(height: 20),
           _onbField(isDark,
-              label: 'DIČ (nepovinné)',
+              label: l10n.onbDicLabel,
               ctrl: _dicController,
-              hint: 'Např. CZ12345678',
+              hint: l10n.onbDicHint,
               icon: Icons.badge,
               iconColor: Colors.blueGrey),
           const SizedBox(height: 20),
           _onbField(isDark,
-              label: 'Zápis v rejstříku (nepovinné)',
+              label: l10n.onbRegistraceLabel,
               ctrl: _registraceController,
-              hint: 'Např. zapsán v ŽR u MÚ...',
+              hint: l10n.onbRegistraceHint,
               icon: Icons.gavel,
               iconColor: Colors.blueGrey),
           const SizedBox(height: 30),
           const Divider(),
           const SizedBox(height: 20),
-          const Text('Sídlo a kontakt',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(l10n.onbSidloNadpis,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          const Text('Údaje se použijí na nabídkách, fakturách a v komunikaci.',
-              style: TextStyle(fontSize: 13, color: Colors.grey)),
+          Text(l10n.onbSidloPopis,
+              style: const TextStyle(fontSize: 13, color: Colors.grey)),
           const SizedBox(height: 16),
           _onbField(isDark,
-              label: 'Ulice a č.p.',
+              label: l10n.onbUliceLabel,
               ctrl: _adresaController,
-              hint: 'Např. Hlavní 123',
+              hint: l10n.onbUliceHint,
               icon: Icons.map),
           const SizedBox(height: 16),
           Row(
@@ -676,16 +682,16 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               Expanded(
                 flex: 2,
                 child: _onbField(isDark,
-                    label: 'Město',
+                    label: l10n.onbMestoLabel,
                     ctrl: _mestoController,
-                    hint: 'Např. Brno',
+                    hint: l10n.onbMestoHint,
                     icon: Icons.location_city),
               ),
               const SizedBox(width: 12),
               Expanded(
                 flex: 1,
                 child: _onbField(isDark,
-                    label: 'PSČ',
+                    label: l10n.onbPscLabel,
                     ctrl: _pscController,
                     hint: '60200',
                     icon: Icons.markunread_mailbox,
@@ -695,27 +701,26 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           ),
           const SizedBox(height: 16),
           _onbField(isDark,
-              label: 'Telefon servisu',
+              label: l10n.onbTelefonLabel,
               ctrl: _telefonController,
-              hint: 'Např. +420 777 123 456',
+              hint: l10n.onbTelefonHint,
               icon: Icons.phone,
               keyboard: TextInputType.phone),
           const SizedBox(height: 30),
           const Divider(),
           const SizedBox(height: 20),
-          const Text('Komunikace a vzhled',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(l10n.onbKomunikaceNadpis,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 10),
-          const Text(
-              'E-mailová adresa (z níž budou odcházet e-maily zákazníkům)',
+          Text(l10n.onbEmailLabel,
               style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
           const SizedBox(height: 8),
           TextField(
             controller: _emailServisuController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              hintText: 'Např. info@autoservis.cz',
+              hintText: l10n.onbEmailHint,
               prefixIcon: const Icon(Icons.email, color: Colors.blue),
               filled: true,
               fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
@@ -738,11 +743,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 border: Border.all(
                     color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             child: SwitchListTile(
-              title: const Text('Automaticky zasílat e-maily',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text(
-                  'Zákazníkům bude v nabídkách a při ukončení předzaškrtnuta možnost odeslání PDF e-mailem.',
-                  style: TextStyle(fontSize: 12)),
+              title: Text(l10n.onbEmailySwitchTitle,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(l10n.onbEmailySwitchSubtitle,
+                  style: const TextStyle(fontSize: 12)),
               value: _defaultOdeslatEmaily,
               activeColor: Colors.blue,
               onChanged: (val) => setState(() => _defaultOdeslatEmaily = val),
@@ -751,19 +755,18 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           const SizedBox(height: 30),
           const Divider(),
           const SizedBox(height: 20),
-          const Text('Váš účet (administrátor)',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(l10n.onbAdminNadpis,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          const Text(
-              'Zadejte své jméno — budete přidáni jako hlavní správce servisu.',
-              style: TextStyle(fontSize: 13, color: Colors.grey)),
+          Text(l10n.onbAdminPopis,
+              style: const TextStyle(fontSize: 13, color: Colors.grey)),
           const SizedBox(height: 15),
           TextField(
             controller: _jmenoMajiteleController,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Jméno a příjmení *',
-              hintText: 'Např. Jan Novák',
+              labelText: l10n.onbJmenoLabel,
+              hintText: l10n.onbJmenoHint,
               prefixIcon: const Icon(Icons.person, color: Colors.blue),
               filled: true,
               fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.white,
@@ -786,11 +789,10 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 border: Border.all(
                     color: isDark ? Colors.grey[800]! : Colors.grey[300]!)),
             child: SwitchListTile(
-              title: const Text('Vynutit tmavý režim',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: const Text(
-                  'Aplikace bude okamžitě přepnuta do tmavého vzhledu.',
-                  style: TextStyle(fontSize: 12)),
+              title: Text(l10n.onbTmavyRezimTitle,
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(l10n.onbTmavyRezimSubtitle,
+                  style: const TextStyle(fontSize: 12)),
               value: _tmavyRezim,
               activeColor: Colors.blue,
               onChanged: (val) {
@@ -808,6 +810,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   // Automatizace zakázek (číslo, podpis, SPZ), typy záznamu a osobní přepínače
   // (biometrie, režim pro leváky). Uloží se do nastaveni_servisu / uzivatele.
   Widget _buildStep2(bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.all(30),
       children: [
@@ -819,40 +822,35 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               color: Colors.purple, size: 40),
         ),
         const SizedBox(height: 20),
-        const Text('Provoz a automatizace',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        Text(l10n.onbKrok2Nadpis,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        const Text(
-            'Nastavte chování příjmu vozidla. Vše lze později kdykoliv změnit v Nastavení.',
-            style: TextStyle(fontSize: 14, color: Colors.grey)),
+        Text(l10n.onbKrok2Popis,
+            style: const TextStyle(fontSize: 14, color: Colors.grey)),
         const SizedBox(height: 30),
         _onbSwitch(isDark,
-            title: 'Automaticky generovat číslo zakázky',
-            subtitle:
-                'Při příjmu vozidla se číslo zakázky předvyplní automaticky. Vypnutím umožníte ruční zadání.',
+            title: l10n.onbAutoCisloTitle,
+            subtitle: l10n.onbAutoCisloSubtitle,
             value: _autoCisloZakazky,
             onChanged: (v) => setState(() => _autoCisloZakazky = v)),
         _onbSwitch(isDark,
-            title: 'Vyžadovat podpis zákazníka',
-            subtitle:
-                'Při vypnutí se krok s podpisem v příjmu zobrazí bez podpisového plátna.',
+            title: l10n.onbPodpisTitle,
+            subtitle: l10n.onbPodpisSubtitle,
             value: _podpisPovolen,
             onChanged: (v) => setState(() => _podpisPovolen = v)),
         _onbSwitch(isDark,
-            title: 'Povinná SPZ vozidla',
-            subtitle:
-                'Při vypnutí lze příjem odeslat i bez vyplněné SPZ (např. vozidla bez registrace).',
+            title: l10n.onbSpzTitle,
+            subtitle: l10n.onbSpzSubtitle,
             value: _spzPovinne,
             onChanged: (v) => setState(() => _spzPovinne = v)),
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 20),
-        const Text('Typy záznamu',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(l10n.onbTypyNadpis,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 5),
-        const Text(
-            'Slouží k rozlišení příjmu vozidla (např. Servis, Výkup). První typ je výchozí.',
-            style: TextStyle(fontSize: 13, color: Colors.grey)),
+        Text(l10n.onbTypyPopis,
+            style: const TextStyle(fontSize: 13, color: Colors.grey)),
         const SizedBox(height: 16),
         for (int i = 0; i < _typyZaznamu.length; i++)
           Container(
@@ -872,11 +870,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (_defaultTypZaznamu == _typyZaznamu[i])
-                    const Padding(
-                      padding: EdgeInsets.only(right: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
                       child: Chip(
-                        label: Text('výchozí',
-                            style: TextStyle(fontSize: 11)),
+                        label: Text(l10n.onbTypyVychozi,
+                            style: const TextStyle(fontSize: 11)),
                         visualDensity: VisualDensity.compact,
                         padding: EdgeInsets.zero,
                       ),
@@ -911,7 +909,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           child: OutlinedButton.icon(
             onPressed: () => _otevritDialogTypuZaznamu(),
             icon: const Icon(Icons.add, size: 18),
-            label: const Text('Přidat typ'),
+            label: Text(l10n.onbPridatTyp),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.indigo,
               side: const BorderSide(color: Colors.indigo),
@@ -922,26 +920,25 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        const Text('Dlouhý stisk = nastavit jako výchozí.',
-            style: TextStyle(fontSize: 11, color: Colors.grey)),
+        Text(l10n.onbTypyHint,
+            style: const TextStyle(fontSize: 11, color: Colors.grey)),
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 20),
-        const Text('Osobní nastavení',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(l10n.onbOsobniNadpis,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
         if (_biometricAvailable)
           _onbSwitch(isDark,
               icon: Icons.fingerprint,
-              title: 'Biometrické přihlášení',
-              subtitle: 'Face ID / otisk prstu při každém spuštění.',
+              title: l10n.onbBiometrieTitle,
+              subtitle: l10n.onbBiometrieSubtitle,
               value: _biometricEnabled,
               onChanged: _toggleBiometric),
         _onbSwitch(isDark,
             icon: Icons.pan_tool_alt,
-            title: 'Režim pro leváky',
-            subtitle:
-                'Spoušť fotoaparátu vlevo, když je zařízení na šířku.',
+            title: l10n.onbLevacTitle,
+            subtitle: l10n.onbLevacSubtitle,
             value: _spoustVlevo,
             onChanged: (v) => setState(() => _spoustVlevo = v)),
       ],
@@ -952,6 +949,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   // Přednastavené úkony servisu — každý má název, cenu bez DPH, odhadovaný čas,
   // jednotku času (hod/min) a kategorii. Uloží se do samostatné kolekce 'ukony'.
   Widget _buildStep3(bool isDark) {
+    final l10n = AppLocalizations.of(context);
     return ListView(
       padding: const EdgeInsets.all(30),
       children: [
@@ -964,12 +962,11 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               color: Colors.deepOrange, size: 40),
         ),
         const SizedBox(height: 20),
-        const Text('Nejčastější úkony',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        Text(l10n.onbKrok3Nadpis,
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
-        const Text(
-            'Připravili jsme pro vás seznam typických úkonů. Můžete je libovolně přepsat, smazat nebo si přidat další. Budou se vám nabízet pro rychlé přidání při příjmu vozu.',
-            style: TextStyle(fontSize: 14, color: Colors.grey)),
+        Text(l10n.onbKrok3Popis,
+            style: const TextStyle(fontSize: 14, color: Colors.grey)),
         const SizedBox(height: 30),
         ...List.generate(_ukony.length, (index) {
           final ukon = _ukony[index];
@@ -996,7 +993,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       child: TextField(
                         controller: ukon.nazev,
                         decoration: InputDecoration(
-                          labelText: 'Název úkonu',
+                          labelText: l10n.onbUkonNazevLabel,
                           filled: true,
                           fillColor: fillColor,
                           border: border,
@@ -1035,7 +1032,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                           setState(() {});
                         },
                         decoration: InputDecoration(
-                          labelText: 'Jedn. cena (Kč)',
+                          labelText: l10n.onbUkonCenaLabel,
                           filled: true,
                           fillColor: fillColor,
                           border: border,
@@ -1064,7 +1061,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                           setState(() {});
                         },
                         decoration: InputDecoration(
-                          labelText: 'Čas',
+                          labelText: l10n.onbUkonCasLabel,
                           filled: true,
                           fillColor: fillColor,
                           border: border,
@@ -1085,7 +1082,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                       borderRadius: BorderRadius.circular(10),
                       constraints:
                           const BoxConstraints(minWidth: 40, minHeight: 48),
-                      children: const [Text('hod'), Text('min')],
+                      children: [Text(l10n.onbUkonHod), Text(l10n.onbUkonMin)],
                     ),
                   ],
                 ),
@@ -1108,7 +1105,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                     setState(() {});
                   },
                   decoration: InputDecoration(
-                    labelText: 'Celková cena (Kč)',
+                    labelText: l10n.onbUkonCelkovaCenaLabel,
                     filled: true,
                     fillColor: fillColor,
                     border: border,
@@ -1121,7 +1118,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
                 DropdownButtonFormField<String>(
                   value: ukon.kategorie,
                   decoration: InputDecoration(
-                    labelText: 'Kategorie',
+                    labelText: l10n.onbUkonKategorieLabel,
                     filled: true,
                     fillColor: fillColor,
                     border: border,
@@ -1143,8 +1140,8 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         TextButton.icon(
             onPressed: _pridatPrazdnyUkon,
             icon: const Icon(Icons.add),
-            label: const Text('Přidat další úkon',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+            label: Text(l10n.onbPridatUkon,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
         const SizedBox(height: 20),
       ],
     );

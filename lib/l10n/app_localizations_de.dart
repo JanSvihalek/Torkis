@@ -1576,4 +1576,376 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get predFeatPrioritniSla => 'Prioritätssupport mit SLA';
+
+  @override
+  String get onbAresChybaIco =>
+      'Bitte geben Sie eine gültige 8-stellige Unternehmens-ID ein.';
+
+  @override
+  String get onbAresNacteno => 'Unternehmensdaten aus dem Register geladen.';
+
+  @override
+  String get onbAresNenalezeno =>
+      'Die eingegebene ID wurde im Register nicht gefunden.';
+
+  @override
+  String onbAresChyba(String chyba) {
+    return 'Fehler bei der Kommunikation mit dem Register: $chyba';
+  }
+
+  @override
+  String get onbBiometricReason =>
+      'Bestätigen Sie Ihre Identität, um die biometrische Anmeldung zu aktivieren';
+
+  @override
+  String get onbDialogUpravitTyp => 'Typ bearbeiten';
+
+  @override
+  String get onbDialogNovyTyp => 'Neuer Auftragstyp';
+
+  @override
+  String get onbDialogNazevTypuHint => 'Typname (z.B. Service, Ankauf...)';
+
+  @override
+  String get onbZrusit => 'Abbrechen';
+
+  @override
+  String get onbUlozit => 'Speichern';
+
+  @override
+  String onbChybaUkladani(String chyba) {
+    return 'Fehler beim Speichern: $chyba';
+  }
+
+  @override
+  String get onbChybaNazev =>
+      'Der Werkstattname ist für die Fortsetzung erforderlich.';
+
+  @override
+  String get onbDokoncit => 'EINRICHTUNG ABSCHLIESSEN';
+
+  @override
+  String get onbPokracovat => 'WEITER';
+
+  @override
+  String get onbKrok1Nadpis => 'Willkommen bei TORKIS!';
+
+  @override
+  String get onbKrok1Popis =>
+      'Zuerst füllen wir einige grundlegende Informationen über Sie oder Ihr Unternehmen aus.';
+
+  @override
+  String get onbIcoLabel => 'Unternehmens-ID (Register-Suche)';
+
+  @override
+  String get onbIcoHint => 'z.B. 12345678';
+
+  @override
+  String get onbAresLoadTooltip => 'Aus Register laden';
+
+  @override
+  String get onbNazevLabel => 'Werkstattname / Vollständiger Name *';
+
+  @override
+  String get onbNazevHint => 'Namen eingeben...';
+
+  @override
+  String get onbDicLabel => 'USt-ID (optional)';
+
+  @override
+  String get onbDicHint => 'z.B. CZ12345678';
+
+  @override
+  String get onbRegistraceLabel => 'Handelsregistereintrag (optional)';
+
+  @override
+  String get onbRegistraceHint => 'z.B. eingetragen im Handelsregister...';
+
+  @override
+  String get onbSidloNadpis => 'Adresse & Kontakt';
+
+  @override
+  String get onbSidloPopis =>
+      'Wird auf Angeboten, Rechnungen und in der Kommunikation verwendet.';
+
+  @override
+  String get onbUliceLabel => 'Straße & Hausnummer';
+
+  @override
+  String get onbUliceHint => 'z.B. Hauptstraße 123';
+
+  @override
+  String get onbMestoLabel => 'Stadt';
+
+  @override
+  String get onbMestoHint => 'z.B. Berlin';
+
+  @override
+  String get onbPscLabel => 'PLZ';
+
+  @override
+  String get onbTelefonLabel => 'Telefon der Werkstatt';
+
+  @override
+  String get onbTelefonHint => 'z.B. +49 151 123 456';
+
+  @override
+  String get onbKomunikaceNadpis => 'Kommunikation & Erscheinungsbild';
+
+  @override
+  String get onbEmailLabel =>
+      'E-Mail-Adresse (von der E-Mails an Kunden versendet werden)';
+
+  @override
+  String get onbEmailHint => 'z.B. info@autowerkstatt.de';
+
+  @override
+  String get onbEmailySwitchTitle => 'E-Mails automatisch versenden';
+
+  @override
+  String get onbEmailySwitchSubtitle =>
+      'Bei Angeboten und beim Abschluss wird die Option zum Versenden einer PDF per E-Mail vorangehakt.';
+
+  @override
+  String get onbAdminNadpis => 'Ihr Konto (Administrator)';
+
+  @override
+  String get onbAdminPopis =>
+      'Geben Sie Ihren Namen ein — Sie werden als Hauptverantwortlicher der Werkstatt hinzugefügt.';
+
+  @override
+  String get onbJmenoLabel => 'Vollständiger Name *';
+
+  @override
+  String get onbJmenoHint => 'z.B. Max Mustermann';
+
+  @override
+  String get onbTmavyRezimTitle => 'Dunklen Modus erzwingen';
+
+  @override
+  String get onbTmavyRezimSubtitle =>
+      'Die App wird sofort auf ein dunkles Erscheinungsbild umgestellt.';
+
+  @override
+  String get onbKrok2Nadpis => 'Betrieb & Automatisierung';
+
+  @override
+  String get onbKrok2Popis =>
+      'Konfigurieren Sie das Verhalten bei der Fahrzeugannahme. Alles kann später in den Einstellungen geändert werden.';
+
+  @override
+  String get onbAutoCisloTitle => 'Auftragsnummer automatisch generieren';
+
+  @override
+  String get onbAutoCisloSubtitle =>
+      'Die Auftragsnummer wird bei der Annahme automatisch vorausgefüllt. Deaktivieren für manuelle Eingabe.';
+
+  @override
+  String get onbPodpisTitle => 'Kundenunterschrift erforderlich';
+
+  @override
+  String get onbPodpisSubtitle =>
+      'Bei Deaktivierung wird der Unterschriftsschritt ohne Unterschriftenfeld angezeigt.';
+
+  @override
+  String get onbSpzTitle => 'Kennzeichen erforderlich';
+
+  @override
+  String get onbSpzSubtitle =>
+      'Bei Deaktivierung kann die Annahme auch ohne Kennzeichen abgeschlossen werden.';
+
+  @override
+  String get onbTypyNadpis => 'Auftragstypen';
+
+  @override
+  String get onbTypyPopis =>
+      'Zur Klassifizierung der Fahrzeugannahme (z.B. Service, Ankauf). Der erste Typ ist Standard.';
+
+  @override
+  String get onbTypyVychozi => 'Standard';
+
+  @override
+  String get onbPridatTyp => 'Typ hinzufügen';
+
+  @override
+  String get onbTypyHint => 'Lang drücken = als Standard setzen.';
+
+  @override
+  String get onbOsobniNadpis => 'Persönliche Einstellungen';
+
+  @override
+  String get onbBiometrieTitle => 'Biometrische Anmeldung';
+
+  @override
+  String get onbBiometrieSubtitle => 'Face ID / Fingerabdruck bei jedem Start.';
+
+  @override
+  String get onbLevacTitle => 'Linkshänder-Modus';
+
+  @override
+  String get onbLevacSubtitle =>
+      'Kameraauslöser links, wenn das Gerät im Querformat ist.';
+
+  @override
+  String get onbKrok3Nadpis => 'Häufige Leistungen';
+
+  @override
+  String get onbKrok3Popis =>
+      'Wir haben eine Liste typischer Leistungen vorbereitet. Sie können diese bearbeiten, löschen oder weitere hinzufügen.';
+
+  @override
+  String get onbUkonNazevLabel => 'Leistungsname';
+
+  @override
+  String get onbUkonCenaLabel => 'Einzelpreis (CZK)';
+
+  @override
+  String get onbUkonCasLabel => 'Zeit';
+
+  @override
+  String get onbUkonHod => 'Std';
+
+  @override
+  String get onbUkonMin => 'Min';
+
+  @override
+  String get onbUkonCelkovaCenaLabel => 'Gesamtpreis (CZK)';
+
+  @override
+  String get onbUkonKategorieLabel => 'Kategorie';
+
+  @override
+  String get onbPridatUkon => 'Weitere Leistung hinzufügen';
+
+  @override
+  String get trialBadge => '30 TAGE KOSTENLOS';
+
+  @override
+  String get trialNadpis => 'Willkommen bei TORKIS';
+
+  @override
+  String get trialPopis =>
+      'Wir haben Ihre 30-tägige kostenlose Testphase gestartet — keine Kreditkarte, keine Verpflichtungen.';
+
+  @override
+  String get trialBenefit1 => 'Unbegrenzte Fahrzeug- und Kundendatensätze';
+
+  @override
+  String get trialBenefit2 => '10 dekodierte VINs';
+
+  @override
+  String get trialBenefit3 => 'Unbegrenzte HU-Gültigkeitsprüfungen';
+
+  @override
+  String get trialBenefit4 => 'Vollständiger Zugriff auf alle App-Funktionen.';
+
+  @override
+  String get trialBenefit5 =>
+      'Keine Zahlungsdaten. Keine automatischen Abbuchungen.';
+
+  @override
+  String get trialBenefit6 =>
+      'Ihre Daten gehören immer Ihnen — kostenloser Export jederzeit.';
+
+  @override
+  String get trialBtn => 'App verwenden';
+
+  @override
+  String get mainNavNovy => 'Neu';
+
+  @override
+  String get mainNavMenu => 'Menü';
+
+  @override
+  String get mainNavVozidla => 'Fahrzeuge';
+
+  @override
+  String get mainNavUkony => 'Leistungen';
+
+  @override
+  String get mainNavZakaznici => 'Kunden';
+
+  @override
+  String get mainNavTym => 'Team';
+
+  @override
+  String get mainNavStatistiky => 'Statistiken';
+
+  @override
+  String get mainNavNastaveni => 'Einstellungen';
+
+  @override
+  String get mainNavPrijmy => 'Annahmen';
+
+  @override
+  String get mainNavVin => 'VIN';
+
+  @override
+  String get mainModVozidlaSubtitle => 'Fahrzeuge in der Werkstatt';
+
+  @override
+  String get mainModZakazniciSubtitle => 'Kontakte & Fuhrpark';
+
+  @override
+  String get mainModHistorieLabel => 'Auftragshistorie';
+
+  @override
+  String get mainModHistorieSubtitle => 'Auftragsarchiv';
+
+  @override
+  String get mainModUkonySubtitle => 'Preisliste der Leistungen';
+
+  @override
+  String get mainModVinLabel => 'VIN-Decoder';
+
+  @override
+  String get mainModVinSubtitle => 'Fahrzeugdaten aus VIN';
+
+  @override
+  String get mainModTymSubtitle => 'Techniker & Berechtigungen';
+
+  @override
+  String get mainModStatistikySubtitle => 'Berichte & Umsatz';
+
+  @override
+  String get mainModNastaveniSubtitle => 'Werkstatt, Rechnungen, Integrationen';
+
+  @override
+  String get mainModPredplatneLabel => 'Abonnement';
+
+  @override
+  String get mainModPredplatneSubtitle => 'Plan & Zahlungen';
+
+  @override
+  String get mainModWebLabel => 'Web';
+
+  @override
+  String get mainModWebSubtitle => 'Öffentliche Seite';
+
+  @override
+  String get mainModulyNadpis => 'Module';
+
+  @override
+  String get mainPrihlasenv => 'In Werkstatt angemeldet';
+
+  @override
+  String get mainOdhlasitSe => 'Abmelden';
+
+  @override
+  String get mainOdhlaseniTitle => 'Abmeldung';
+
+  @override
+  String get mainOdhlaseniContent => 'Möchten Sie sich wirklich abmelden?';
+
+  @override
+  String get mainZrusit => 'Abbrechen';
+
+  @override
+  String get mainOdhlasit => 'Abmelden';
+
+  @override
+  String get mainSvetlyRezim => 'Heller Modus';
+
+  @override
+  String get mainTmavyRezim => 'Dunkler Modus';
 }

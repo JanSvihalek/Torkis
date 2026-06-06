@@ -1553,4 +1553,372 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get predFeatPrioritniSla => 'Priority support with SLA';
+
+  @override
+  String get onbAresChybaIco => 'Please enter a valid 8-digit company ID.';
+
+  @override
+  String get onbAresNacteno => 'Company data loaded from registry.';
+
+  @override
+  String get onbAresNenalezeno =>
+      'The entered ID was not found in the registry.';
+
+  @override
+  String onbAresChyba(String chyba) {
+    return 'Error communicating with registry: $chyba';
+  }
+
+  @override
+  String get onbBiometricReason =>
+      'Confirm your identity to enable biometric login';
+
+  @override
+  String get onbDialogUpravitTyp => 'Edit type';
+
+  @override
+  String get onbDialogNovyTyp => 'New record type';
+
+  @override
+  String get onbDialogNazevTypuHint => 'Type name (e.g. Service, Purchase...)';
+
+  @override
+  String get onbZrusit => 'Cancel';
+
+  @override
+  String get onbUlozit => 'Save';
+
+  @override
+  String onbChybaUkladani(String chyba) {
+    return 'Error saving data: $chyba';
+  }
+
+  @override
+  String get onbChybaNazev => 'Garage name is required to continue.';
+
+  @override
+  String get onbDokoncit => 'COMPLETE SETUP';
+
+  @override
+  String get onbPokracovat => 'CONTINUE';
+
+  @override
+  String get onbKrok1Nadpis => 'Welcome to TORKIS!';
+
+  @override
+  String get onbKrok1Popis =>
+      'First, let\'s fill in some basic information about you or your company.';
+
+  @override
+  String get onbIcoLabel => 'Company ID (registry lookup)';
+
+  @override
+  String get onbIcoHint => 'e.g. 12345678';
+
+  @override
+  String get onbAresLoadTooltip => 'Load from registry';
+
+  @override
+  String get onbNazevLabel => 'Garage name / Full name *';
+
+  @override
+  String get onbNazevHint => 'Enter name...';
+
+  @override
+  String get onbDicLabel => 'VAT number (optional)';
+
+  @override
+  String get onbDicHint => 'e.g. CZ12345678';
+
+  @override
+  String get onbRegistraceLabel => 'Trade register entry (optional)';
+
+  @override
+  String get onbRegistraceHint => 'e.g. registered in trade register...';
+
+  @override
+  String get onbSidloNadpis => 'Address & contact';
+
+  @override
+  String get onbSidloPopis => 'Used on quotes, invoices and in communications.';
+
+  @override
+  String get onbUliceLabel => 'Street & number';
+
+  @override
+  String get onbUliceHint => 'e.g. Main St 123';
+
+  @override
+  String get onbMestoLabel => 'City';
+
+  @override
+  String get onbMestoHint => 'e.g. Prague';
+
+  @override
+  String get onbPscLabel => 'ZIP';
+
+  @override
+  String get onbTelefonLabel => 'Garage phone';
+
+  @override
+  String get onbTelefonHint => 'e.g. +420 777 123 456';
+
+  @override
+  String get onbKomunikaceNadpis => 'Communication & appearance';
+
+  @override
+  String get onbEmailLabel =>
+      'Email address (used to send emails to customers)';
+
+  @override
+  String get onbEmailHint => 'e.g. info@autogarage.com';
+
+  @override
+  String get onbEmailySwitchTitle => 'Automatically send emails';
+
+  @override
+  String get onbEmailySwitchSubtitle =>
+      'On quotes and at handover, the option to send a PDF by email will be pre-checked.';
+
+  @override
+  String get onbAdminNadpis => 'Your account (administrator)';
+
+  @override
+  String get onbAdminPopis =>
+      'Enter your name — you will be added as the primary manager of the garage.';
+
+  @override
+  String get onbJmenoLabel => 'Full name *';
+
+  @override
+  String get onbJmenoHint => 'e.g. John Smith';
+
+  @override
+  String get onbTmavyRezimTitle => 'Force dark mode';
+
+  @override
+  String get onbTmavyRezimSubtitle =>
+      'The app will immediately switch to a dark appearance.';
+
+  @override
+  String get onbKrok2Nadpis => 'Operations & automation';
+
+  @override
+  String get onbKrok2Popis =>
+      'Configure vehicle intake behaviour. Everything can be changed later in Settings.';
+
+  @override
+  String get onbAutoCisloTitle => 'Auto-generate job number';
+
+  @override
+  String get onbAutoCisloSubtitle =>
+      'The job number will be pre-filled automatically at intake. Disable to allow manual entry.';
+
+  @override
+  String get onbPodpisTitle => 'Require customer signature';
+
+  @override
+  String get onbPodpisSubtitle =>
+      'When disabled, the signature step will appear without the signature canvas.';
+
+  @override
+  String get onbSpzTitle => 'Require licence plate';
+
+  @override
+  String get onbSpzSubtitle =>
+      'When disabled, intake can be submitted without a licence plate (e.g. unregistered vehicles).';
+
+  @override
+  String get onbTypyNadpis => 'Record types';
+
+  @override
+  String get onbTypyPopis =>
+      'Used to classify vehicle intake (e.g. Service, Purchase). The first type is default.';
+
+  @override
+  String get onbTypyVychozi => 'default';
+
+  @override
+  String get onbPridatTyp => 'Add type';
+
+  @override
+  String get onbTypyHint => 'Long press = set as default.';
+
+  @override
+  String get onbOsobniNadpis => 'Personal settings';
+
+  @override
+  String get onbBiometrieTitle => 'Biometric login';
+
+  @override
+  String get onbBiometrieSubtitle => 'Face ID / fingerprint at every launch.';
+
+  @override
+  String get onbLevacTitle => 'Left-handed mode';
+
+  @override
+  String get onbLevacSubtitle =>
+      'Camera shutter on the left when the device is in landscape.';
+
+  @override
+  String get onbKrok3Nadpis => 'Common operations';
+
+  @override
+  String get onbKrok3Popis =>
+      'We\'ve prepared a list of typical operations. You can freely edit, delete or add more. They\'ll be offered for quick selection during intake.';
+
+  @override
+  String get onbUkonNazevLabel => 'Operation name';
+
+  @override
+  String get onbUkonCenaLabel => 'Unit price (CZK)';
+
+  @override
+  String get onbUkonCasLabel => 'Time';
+
+  @override
+  String get onbUkonHod => 'hr';
+
+  @override
+  String get onbUkonMin => 'min';
+
+  @override
+  String get onbUkonCelkovaCenaLabel => 'Total price (CZK)';
+
+  @override
+  String get onbUkonKategorieLabel => 'Category';
+
+  @override
+  String get onbPridatUkon => 'Add another operation';
+
+  @override
+  String get trialBadge => '30 DAYS FREE';
+
+  @override
+  String get trialNadpis => 'Welcome to TORKIS';
+
+  @override
+  String get trialPopis =>
+      'We\'ve started your 30-day free trial — no credit card, no commitment.';
+
+  @override
+  String get trialBenefit1 => 'Unlimited vehicle and customer records';
+
+  @override
+  String get trialBenefit2 => '10 decoded VINs';
+
+  @override
+  String get trialBenefit3 => 'Unlimited MOT validity checks';
+
+  @override
+  String get trialBenefit4 => 'Full access to all app features.';
+
+  @override
+  String get trialBenefit5 => 'No payment details. No automatic charges.';
+
+  @override
+  String get trialBenefit6 =>
+      'Your data is always yours — free export anytime.';
+
+  @override
+  String get trialBtn => 'Start using the app';
+
+  @override
+  String get mainNavNovy => 'New';
+
+  @override
+  String get mainNavMenu => 'Menu';
+
+  @override
+  String get mainNavVozidla => 'Vehicles';
+
+  @override
+  String get mainNavUkony => 'Operations';
+
+  @override
+  String get mainNavZakaznici => 'Customers';
+
+  @override
+  String get mainNavTym => 'Team';
+
+  @override
+  String get mainNavStatistiky => 'Statistics';
+
+  @override
+  String get mainNavNastaveni => 'Settings';
+
+  @override
+  String get mainNavPrijmy => 'Intakes';
+
+  @override
+  String get mainNavVin => 'VIN';
+
+  @override
+  String get mainModVozidlaSubtitle => 'Vehicles in service';
+
+  @override
+  String get mainModZakazniciSubtitle => 'Contacts & vehicle fleet';
+
+  @override
+  String get mainModHistorieLabel => 'Record history';
+
+  @override
+  String get mainModHistorieSubtitle => 'Job archive';
+
+  @override
+  String get mainModUkonySubtitle => 'Price list of services';
+
+  @override
+  String get mainModVinLabel => 'VIN decoder';
+
+  @override
+  String get mainModVinSubtitle => 'Vehicle data from VIN';
+
+  @override
+  String get mainModTymSubtitle => 'Technicians & permissions';
+
+  @override
+  String get mainModStatistikySubtitle => 'Reports & revenue';
+
+  @override
+  String get mainModNastaveniSubtitle => 'Service, invoices, integrations';
+
+  @override
+  String get mainModPredplatneLabel => 'Subscription';
+
+  @override
+  String get mainModPredplatneSubtitle => 'Plan & payments';
+
+  @override
+  String get mainModWebLabel => 'Web';
+
+  @override
+  String get mainModWebSubtitle => 'Public page';
+
+  @override
+  String get mainModulyNadpis => 'Modules';
+
+  @override
+  String get mainPrihlasenv => 'Logged in to service';
+
+  @override
+  String get mainOdhlasitSe => 'Log out';
+
+  @override
+  String get mainOdhlaseniTitle => 'Log out';
+
+  @override
+  String get mainOdhlaseniContent => 'Are you sure you want to log out?';
+
+  @override
+  String get mainZrusit => 'Cancel';
+
+  @override
+  String get mainOdhlasit => 'Log out';
+
+  @override
+  String get mainSvetlyRezim => 'Light mode';
+
+  @override
+  String get mainTmavyRezim => 'Dark mode';
 }

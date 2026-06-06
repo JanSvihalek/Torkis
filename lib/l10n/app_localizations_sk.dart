@@ -1555,4 +1555,375 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get predFeatPrioritniSla => 'Prioritná podpora s SLA';
+
+  @override
+  String get onbAresChybaIco => 'Zadajte platné 8-miestne IČO.';
+
+  @override
+  String get onbAresNacteno => 'Údaje z registra boli načítané.';
+
+  @override
+  String get onbAresNenalezeno => 'Zadané IČO nebolo v registri nájdené.';
+
+  @override
+  String onbAresChyba(String chyba) {
+    return 'Chyba pri komunikácii s registrom: $chyba';
+  }
+
+  @override
+  String get onbBiometricReason =>
+      'Potvrďte svoju totožnosť na zapnutie biometrického prihlásenia';
+
+  @override
+  String get onbDialogUpravitTyp => 'Upraviť typ';
+
+  @override
+  String get onbDialogNovyTyp => 'Nový typ záznamu';
+
+  @override
+  String get onbDialogNazevTypuHint => 'Názov typu (napr. Servis, Výkup...)';
+
+  @override
+  String get onbZrusit => 'Zrušiť';
+
+  @override
+  String get onbUlozit => 'Uložiť';
+
+  @override
+  String onbChybaUkladani(String chyba) {
+    return 'Chyba pri ukladaní: $chyba';
+  }
+
+  @override
+  String get onbChybaNazev => 'Názov servisu je povinný pre pokračovanie.';
+
+  @override
+  String get onbDokoncit => 'DOKONČIŤ NASTAVENIE';
+
+  @override
+  String get onbPokracovat => 'POKRAČOVAŤ';
+
+  @override
+  String get onbKrok1Nadpis => 'Vitajte v TORKIS!';
+
+  @override
+  String get onbKrok1Popis =>
+      'Najprv vyplníme základné informácie o vás alebo o vašej spoločnosti.';
+
+  @override
+  String get onbIcoLabel => 'IČO (vyhľadávanie v registri)';
+
+  @override
+  String get onbIcoHint => 'Napr. 12345678';
+
+  @override
+  String get onbAresLoadTooltip => 'Načítať z registra';
+
+  @override
+  String get onbNazevLabel => 'Názov servisu / Meno *';
+
+  @override
+  String get onbNazevHint => 'Zadajte názov...';
+
+  @override
+  String get onbDicLabel => 'DIČ (nepovinné)';
+
+  @override
+  String get onbDicHint => 'Napr. CZ12345678';
+
+  @override
+  String get onbRegistraceLabel => 'Zápis v registri (nepovinné)';
+
+  @override
+  String get onbRegistraceHint => 'Napr. zapísaný v ŽR u Mestského úradu...';
+
+  @override
+  String get onbSidloNadpis => 'Sídlo a kontakt';
+
+  @override
+  String get onbSidloPopis =>
+      'Údaje sa použijú na ponukách, faktúrach a v komunikácii.';
+
+  @override
+  String get onbUliceLabel => 'Ulica a č.p.';
+
+  @override
+  String get onbUliceHint => 'Napr. Hlavná 123';
+
+  @override
+  String get onbMestoLabel => 'Mesto';
+
+  @override
+  String get onbMestoHint => 'Napr. Bratislava';
+
+  @override
+  String get onbPscLabel => 'PSČ';
+
+  @override
+  String get onbTelefonLabel => 'Telefón servisu';
+
+  @override
+  String get onbTelefonHint => 'Napr. +421 777 123 456';
+
+  @override
+  String get onbKomunikaceNadpis => 'Komunikácia a vzhľad';
+
+  @override
+  String get onbEmailLabel =>
+      'E-mailová adresa (z ktorej budú odchádzať e-maily zákazníkom)';
+
+  @override
+  String get onbEmailHint => 'Napr. info@autoservis.sk';
+
+  @override
+  String get onbEmailySwitchTitle => 'Automaticky zasielať e-maily';
+
+  @override
+  String get onbEmailySwitchSubtitle =>
+      'Zákazníkom bude v ponukách a pri ukončení predoznačená možnosť odoslania PDF e-mailom.';
+
+  @override
+  String get onbAdminNadpis => 'Váš účet (administrátor)';
+
+  @override
+  String get onbAdminPopis =>
+      'Zadajte svoje meno — budete pridaní ako hlavný správca servisu.';
+
+  @override
+  String get onbJmenoLabel => 'Meno a priezvisko *';
+
+  @override
+  String get onbJmenoHint => 'Napr. Ján Novák';
+
+  @override
+  String get onbTmavyRezimTitle => 'Vynútiť tmavý režim';
+
+  @override
+  String get onbTmavyRezimSubtitle =>
+      'Aplikácia bude okamžite prepnutá do tmavého vzhľadu.';
+
+  @override
+  String get onbKrok2Nadpis => 'Prevádzka a automatizácia';
+
+  @override
+  String get onbKrok2Popis =>
+      'Nastavte správanie príjmu vozidla. Všetko možno neskôr kedykoľvek zmeniť v Nastaveniach.';
+
+  @override
+  String get onbAutoCisloTitle => 'Automaticky generovať číslo zákazky';
+
+  @override
+  String get onbAutoCisloSubtitle =>
+      'Pri príjme vozidla sa číslo zákazky predvyplní automaticky. Vypnutím umožníte ručné zadanie.';
+
+  @override
+  String get onbPodpisTitle => 'Vyžadovať podpis zákazníka';
+
+  @override
+  String get onbPodpisSubtitle =>
+      'Pri vypnutí sa krok s podpisom zobrazí bez podpisového plátna.';
+
+  @override
+  String get onbSpzTitle => 'Povinná ŠPZ vozidla';
+
+  @override
+  String get onbSpzSubtitle =>
+      'Pri vypnutí možno príjem odoslať aj bez vyplnenej ŠPZ.';
+
+  @override
+  String get onbTypyNadpis => 'Typy záznamu';
+
+  @override
+  String get onbTypyPopis =>
+      'Slúži na rozlíšenie príjmu vozidla (napr. Servis, Výkup). Prvý typ je predvolený.';
+
+  @override
+  String get onbTypyVychozi => 'predvolený';
+
+  @override
+  String get onbPridatTyp => 'Pridať typ';
+
+  @override
+  String get onbTypyHint => 'Dlhý stisk = nastaviť ako predvolený.';
+
+  @override
+  String get onbOsobniNadpis => 'Osobné nastavenia';
+
+  @override
+  String get onbBiometrieTitle => 'Biometrické prihlásenie';
+
+  @override
+  String get onbBiometrieSubtitle =>
+      'Face ID / odtlačok prsta pri každom spustení.';
+
+  @override
+  String get onbLevacTitle => 'Režim pre ľavákov';
+
+  @override
+  String get onbLevacSubtitle =>
+      'Spúšť fotoaparátu vľavo, keď je zariadenie na šírku.';
+
+  @override
+  String get onbKrok3Nadpis => 'Najčastejšie úkony';
+
+  @override
+  String get onbKrok3Popis =>
+      'Pripravili sme pre vás zoznam typických úkonov. Môžete ich ľubovoľne prepísať, zmazať alebo pridať ďalšie.';
+
+  @override
+  String get onbUkonNazevLabel => 'Názov úkonu';
+
+  @override
+  String get onbUkonCenaLabel => 'Jedn. cena (Kč)';
+
+  @override
+  String get onbUkonCasLabel => 'Čas';
+
+  @override
+  String get onbUkonHod => 'hod';
+
+  @override
+  String get onbUkonMin => 'min';
+
+  @override
+  String get onbUkonCelkovaCenaLabel => 'Celková cena (Kč)';
+
+  @override
+  String get onbUkonKategorieLabel => 'Kategória';
+
+  @override
+  String get onbPridatUkon => 'Pridať ďalší úkon';
+
+  @override
+  String get trialBadge => '30 DNÍ ZADARMO';
+
+  @override
+  String get trialNadpis => 'Vitajte v TORKIS';
+
+  @override
+  String get trialPopis =>
+      'Spustili sme vám skúšobnú dobu na 30 dní zadarmo — bez platobnej karty a bez záväzkov.';
+
+  @override
+  String get trialBenefit1 =>
+      'Neobmedzený počet záznamov vozidiel a zákazníkov';
+
+  @override
+  String get trialBenefit2 => '10 dekódovaných VINov';
+
+  @override
+  String get trialBenefit3 => 'Neobmedzený počet zistení platnosti STK';
+
+  @override
+  String get trialBenefit4 => 'Plný prístup ku všetkým funkciám aplikácie.';
+
+  @override
+  String get trialBenefit5 =>
+      'Žiadne platobné údaje. Bez automatického strhávanie.';
+
+  @override
+  String get trialBenefit6 =>
+      'Vaše dáta sú vždy vaše — export kedykoľvek zadarmo.';
+
+  @override
+  String get trialBtn => 'Začať používať aplikáciu';
+
+  @override
+  String get mainNavNovy => 'Nový';
+
+  @override
+  String get mainNavMenu => 'Menu';
+
+  @override
+  String get mainNavVozidla => 'Vozidlá';
+
+  @override
+  String get mainNavUkony => 'Úkony';
+
+  @override
+  String get mainNavZakaznici => 'Zákazníci';
+
+  @override
+  String get mainNavTym => 'Tím';
+
+  @override
+  String get mainNavStatistiky => 'Štatistiky';
+
+  @override
+  String get mainNavNastaveni => 'Nastavenia';
+
+  @override
+  String get mainNavPrijmy => 'Príjmy';
+
+  @override
+  String get mainNavVin => 'VIN';
+
+  @override
+  String get mainModVozidlaSubtitle => 'Evidencia vozidiel v servise';
+
+  @override
+  String get mainModZakazniciSubtitle => 'Kontakty a vozový park';
+
+  @override
+  String get mainModHistorieLabel => 'História záznamov';
+
+  @override
+  String get mainModHistorieSubtitle => 'Archív zákaziek';
+
+  @override
+  String get mainModUkonySubtitle => 'Cenník prác a služieb';
+
+  @override
+  String get mainModVinLabel => 'VIN dekodér';
+
+  @override
+  String get mainModVinSubtitle => 'Údaje o vozidle z VIN';
+
+  @override
+  String get mainModTymSubtitle => 'Technici a oprávnenia';
+
+  @override
+  String get mainModStatistikySubtitle => 'Prehľady a tržby';
+
+  @override
+  String get mainModNastaveniSubtitle => 'Servis, faktúry, integrácie';
+
+  @override
+  String get mainModPredplatneLabel => 'Predplatné';
+
+  @override
+  String get mainModPredplatneSubtitle => 'Plán a platby';
+
+  @override
+  String get mainModWebLabel => 'Web';
+
+  @override
+  String get mainModWebSubtitle => 'Verejná stránka';
+
+  @override
+  String get mainModulyNadpis => 'Moduly';
+
+  @override
+  String get mainPrihlasenv => 'Prihlásený v servise';
+
+  @override
+  String get mainOdhlasitSe => 'Odhlásiť sa';
+
+  @override
+  String get mainOdhlaseniTitle => 'Odhlásenie';
+
+  @override
+  String get mainOdhlaseniContent => 'Naozaj sa chcete odhlásiť?';
+
+  @override
+  String get mainZrusit => 'Zrušiť';
+
+  @override
+  String get mainOdhlasit => 'Odhlásiť';
+
+  @override
+  String get mainSvetlyRezim => 'Svetlý režim';
+
+  @override
+  String get mainTmavyRezim => 'Tmavý režim';
 }

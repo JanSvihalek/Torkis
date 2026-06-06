@@ -1562,4 +1562,376 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get predFeatPrioritniSla => 'Wsparcie priorytetowe z SLA';
+
+  @override
+  String get onbAresChybaIco => 'Wprowadź prawidłowy 8-cyfrowy numer ID firmy.';
+
+  @override
+  String get onbAresNacteno => 'Dane firmy zostały załadowane z rejestru.';
+
+  @override
+  String get onbAresNenalezeno =>
+      'Podany numer nie został znaleziony w rejestrze.';
+
+  @override
+  String onbAresChyba(String chyba) {
+    return 'Błąd komunikacji z rejestrem: $chyba';
+  }
+
+  @override
+  String get onbBiometricReason =>
+      'Potwierdź swoją tożsamość, aby włączyć logowanie biometryczne';
+
+  @override
+  String get onbDialogUpravitTyp => 'Edytuj typ';
+
+  @override
+  String get onbDialogNovyTyp => 'Nowy typ zlecenia';
+
+  @override
+  String get onbDialogNazevTypuHint => 'Nazwa typu (np. Serwis, Skup...)';
+
+  @override
+  String get onbZrusit => 'Anuluj';
+
+  @override
+  String get onbUlozit => 'Zapisz';
+
+  @override
+  String onbChybaUkladani(String chyba) {
+    return 'Błąd podczas zapisywania: $chyba';
+  }
+
+  @override
+  String get onbChybaNazev => 'Nazwa serwisu jest wymagana do kontynuowania.';
+
+  @override
+  String get onbDokoncit => 'ZAKOŃCZ KONFIGURACJĘ';
+
+  @override
+  String get onbPokracovat => 'DALEJ';
+
+  @override
+  String get onbKrok1Nadpis => 'Witamy w TORKIS!';
+
+  @override
+  String get onbKrok1Popis =>
+      'Najpierw uzupełnimy podstawowe informacje o Tobie lub Twojej firmie.';
+
+  @override
+  String get onbIcoLabel => 'ID firmy (wyszukiwanie w rejestrze)';
+
+  @override
+  String get onbIcoHint => 'np. 12345678';
+
+  @override
+  String get onbAresLoadTooltip => 'Załaduj z rejestru';
+
+  @override
+  String get onbNazevLabel => 'Nazwa serwisu / Imię i nazwisko *';
+
+  @override
+  String get onbNazevHint => 'Wpisz nazwę...';
+
+  @override
+  String get onbDicLabel => 'NIP VAT (opcjonalne)';
+
+  @override
+  String get onbDicHint => 'np. PL12345678';
+
+  @override
+  String get onbRegistraceLabel => 'Wpis do rejestru (opcjonalne)';
+
+  @override
+  String get onbRegistraceHint => 'np. zarejestrowany w CEIDG...';
+
+  @override
+  String get onbSidloNadpis => 'Adres i kontakt';
+
+  @override
+  String get onbSidloPopis =>
+      'Dane będą używane na ofertach, fakturach i w komunikacji.';
+
+  @override
+  String get onbUliceLabel => 'Ulica i numer';
+
+  @override
+  String get onbUliceHint => 'np. Główna 123';
+
+  @override
+  String get onbMestoLabel => 'Miasto';
+
+  @override
+  String get onbMestoHint => 'np. Warszawa';
+
+  @override
+  String get onbPscLabel => 'Kod pocztowy';
+
+  @override
+  String get onbTelefonLabel => 'Telefon serwisu';
+
+  @override
+  String get onbTelefonHint => 'np. +48 777 123 456';
+
+  @override
+  String get onbKomunikaceNadpis => 'Komunikacja i wygląd';
+
+  @override
+  String get onbEmailLabel =>
+      'Adres e-mail (z którego będą wysyłane e-maile do klientów)';
+
+  @override
+  String get onbEmailHint => 'np. info@serwis.pl';
+
+  @override
+  String get onbEmailySwitchTitle => 'Automatyczne wysyłanie e-maili';
+
+  @override
+  String get onbEmailySwitchSubtitle =>
+      'Na ofertach i przy zakończeniu będzie wstępnie zaznaczona opcja wysyłania PDF e-mailem.';
+
+  @override
+  String get onbAdminNadpis => 'Twoje konto (administrator)';
+
+  @override
+  String get onbAdminPopis =>
+      'Podaj swoje imię — zostaniesz dodany jako główny zarządca serwisu.';
+
+  @override
+  String get onbJmenoLabel => 'Imię i nazwisko *';
+
+  @override
+  String get onbJmenoHint => 'np. Jan Kowalski';
+
+  @override
+  String get onbTmavyRezimTitle => 'Wymuś tryb ciemny';
+
+  @override
+  String get onbTmavyRezimSubtitle =>
+      'Aplikacja zostanie natychmiast przełączona na ciemny wygląd.';
+
+  @override
+  String get onbKrok2Nadpis => 'Operacje i automatyzacja';
+
+  @override
+  String get onbKrok2Popis =>
+      'Skonfiguruj zachowanie przy przyjęciu pojazdu. Wszystko można zmienić później w Ustawieniach.';
+
+  @override
+  String get onbAutoCisloTitle => 'Automatyczne generowanie numeru zlecenia';
+
+  @override
+  String get onbAutoCisloSubtitle =>
+      'Numer zlecenia będzie automatycznie wypełniony przy przyjęciu. Wyłącz, aby umożliwić ręczne wprowadzanie.';
+
+  @override
+  String get onbPodpisTitle => 'Wymagaj podpisu klienta';
+
+  @override
+  String get onbPodpisSubtitle =>
+      'Po wyłączeniu krok z podpisem będzie wyświetlany bez płótna podpisu.';
+
+  @override
+  String get onbSpzTitle => 'Wymagaj tablicy rejestracyjnej';
+
+  @override
+  String get onbSpzSubtitle =>
+      'Po wyłączeniu przyjęcie można wysłać bez tablicy rejestracyjnej.';
+
+  @override
+  String get onbTypyNadpis => 'Typy zleceń';
+
+  @override
+  String get onbTypyPopis =>
+      'Służy do klasyfikacji przyjęcia pojazdu (np. Serwis, Skup). Pierwszy typ jest domyślny.';
+
+  @override
+  String get onbTypyVychozi => 'domyślny';
+
+  @override
+  String get onbPridatTyp => 'Dodaj typ';
+
+  @override
+  String get onbTypyHint => 'Długie naciśnięcie = ustaw jako domyślny.';
+
+  @override
+  String get onbOsobniNadpis => 'Ustawienia osobiste';
+
+  @override
+  String get onbBiometrieTitle => 'Logowanie biometryczne';
+
+  @override
+  String get onbBiometrieSubtitle =>
+      'Face ID / odcisk palca przy każdym uruchomieniu.';
+
+  @override
+  String get onbLevacTitle => 'Tryb leworęczny';
+
+  @override
+  String get onbLevacSubtitle =>
+      'Spust aparatu po lewej stronie, gdy urządzenie jest w poziomie.';
+
+  @override
+  String get onbKrok3Nadpis => 'Najczęstsze usługi';
+
+  @override
+  String get onbKrok3Popis =>
+      'Przygotowaliśmy listę typowych usług. Możesz je dowolnie edytować, usuwać lub dodawać kolejne.';
+
+  @override
+  String get onbUkonNazevLabel => 'Nazwa usługi';
+
+  @override
+  String get onbUkonCenaLabel => 'Cena jedn. (CZK)';
+
+  @override
+  String get onbUkonCasLabel => 'Czas';
+
+  @override
+  String get onbUkonHod => 'godz';
+
+  @override
+  String get onbUkonMin => 'min';
+
+  @override
+  String get onbUkonCelkovaCenaLabel => 'Cena całkowita (CZK)';
+
+  @override
+  String get onbUkonKategorieLabel => 'Kategoria';
+
+  @override
+  String get onbPridatUkon => 'Dodaj kolejną usługę';
+
+  @override
+  String get trialBadge => '30 DNI BEZPŁATNIE';
+
+  @override
+  String get trialNadpis => 'Witamy w TORKIS';
+
+  @override
+  String get trialPopis =>
+      'Uruchomiliśmy Twój 30-dniowy bezpłatny okres próbny — bez karty kredytowej i bez zobowiązań.';
+
+  @override
+  String get trialBenefit1 =>
+      'Nieograniczona liczba wpisów pojazdów i klientów';
+
+  @override
+  String get trialBenefit2 => '10 zdekodowanych numerów VIN';
+
+  @override
+  String get trialBenefit3 => 'Nieograniczone sprawdzenia ważności przeglądu';
+
+  @override
+  String get trialBenefit4 => 'Pełny dostęp do wszystkich funkcji aplikacji.';
+
+  @override
+  String get trialBenefit5 =>
+      'Brak danych płatności. Bez automatycznych obciążeń.';
+
+  @override
+  String get trialBenefit6 =>
+      'Twoje dane zawsze należą do Ciebie — bezpłatny eksport w dowolnym momencie.';
+
+  @override
+  String get trialBtn => 'Zacznij używać aplikacji';
+
+  @override
+  String get mainNavNovy => 'Nowy';
+
+  @override
+  String get mainNavMenu => 'Menu';
+
+  @override
+  String get mainNavVozidla => 'Pojazdy';
+
+  @override
+  String get mainNavUkony => 'Usługi';
+
+  @override
+  String get mainNavZakaznici => 'Klienci';
+
+  @override
+  String get mainNavTym => 'Zespół';
+
+  @override
+  String get mainNavStatistiky => 'Statystyki';
+
+  @override
+  String get mainNavNastaveni => 'Ustawienia';
+
+  @override
+  String get mainNavPrijmy => 'Przyjęcia';
+
+  @override
+  String get mainNavVin => 'VIN';
+
+  @override
+  String get mainModVozidlaSubtitle => 'Pojazdy w serwisie';
+
+  @override
+  String get mainModZakazniciSubtitle => 'Kontakty i flota pojazdów';
+
+  @override
+  String get mainModHistorieLabel => 'Historia zleceń';
+
+  @override
+  String get mainModHistorieSubtitle => 'Archiwum zleceń';
+
+  @override
+  String get mainModUkonySubtitle => 'Cennik usług';
+
+  @override
+  String get mainModVinLabel => 'Dekoder VIN';
+
+  @override
+  String get mainModVinSubtitle => 'Dane pojazdu z numeru VIN';
+
+  @override
+  String get mainModTymSubtitle => 'Technicy i uprawnienia';
+
+  @override
+  String get mainModStatistikySubtitle => 'Raporty i przychody';
+
+  @override
+  String get mainModNastaveniSubtitle => 'Serwis, faktury, integracje';
+
+  @override
+  String get mainModPredplatneLabel => 'Subskrypcja';
+
+  @override
+  String get mainModPredplatneSubtitle => 'Plan i płatności';
+
+  @override
+  String get mainModWebLabel => 'Web';
+
+  @override
+  String get mainModWebSubtitle => 'Strona publiczna';
+
+  @override
+  String get mainModulyNadpis => 'Moduły';
+
+  @override
+  String get mainPrihlasenv => 'Zalogowany w serwisie';
+
+  @override
+  String get mainOdhlasitSe => 'Wyloguj się';
+
+  @override
+  String get mainOdhlaseniTitle => 'Wylogowanie';
+
+  @override
+  String get mainOdhlaseniContent => 'Czy na pewno chcesz się wylogować?';
+
+  @override
+  String get mainZrusit => 'Anuluj';
+
+  @override
+  String get mainOdhlasit => 'Wyloguj';
+
+  @override
+  String get mainSvetlyRezim => 'Tryb jasny';
+
+  @override
+  String get mainTmavyRezim => 'Tryb ciemny';
 }
