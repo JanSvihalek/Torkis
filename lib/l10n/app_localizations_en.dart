@@ -2405,4 +2405,136 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nastDayMnogo => 'days';
+
+  @override
+  String get zamModZamestnanci => 'Employees';
+
+  @override
+  String get zamModNastaveni => 'Settings';
+
+  @override
+  String zamChyba(String chyba) {
+    return 'Error: $chyba';
+  }
+
+  @override
+  String get zamTitle => 'Team & permissions';
+
+  @override
+  String get zamSubtitle =>
+      'Manage your shop\'s members and their access to the app.';
+
+  @override
+  String get zamPrazdny => 'You don\'t have any team members yet.';
+
+  @override
+  String get zamPridatClena => 'Add team member';
+
+  @override
+  String get zamLimitTitle => 'Account limit reached';
+
+  @override
+  String zamLimitText(String plan, int limit, int pocet) {
+    return 'The $plan plan allows a maximum of $limit user accounts. You are currently using $pocet/$limit. To add more team members, upgrade your plan.';
+  }
+
+  @override
+  String get zamZrusit => 'Cancel';
+
+  @override
+  String get zamUpgradovat => 'Upgrade plan';
+
+  @override
+  String get zamNovyClen => 'New team member';
+
+  @override
+  String get zamJmenoLabel => 'Full name *';
+
+  @override
+  String get zamEmailLabel => 'Login e-mail *';
+
+  @override
+  String get zamHesloLabel => 'Login password (min. 6 characters) *';
+
+  @override
+  String get zamVychoziPrava => 'Default access permissions';
+
+  @override
+  String get zamVytvoritUcet => 'Create account';
+
+  @override
+  String get zamErrVyplnte => 'Please fill in name, e-mail and password.';
+
+  @override
+  String get zamErrHesloKratke => 'Password must be at least 6 characters.';
+
+  @override
+  String get zamUcetVytvoren => 'Account created.';
+
+  @override
+  String get zamErrOvereni => 'Authentication error.';
+
+  @override
+  String get zamErrHesloSlabe => 'The entered password is too weak.';
+
+  @override
+  String get zamErrEmailExistuje =>
+      'An account with this e-mail already exists.';
+
+  @override
+  String get zamErrEmailFormat => 'Invalid e-mail format.';
+
+  @override
+  String zamErrNeocekavana(String chyba) {
+    return 'Unexpected error: $chyba';
+  }
+
+  @override
+  String get zamPristupovaPrava => 'Access permissions';
+
+  @override
+  String get zamUlozitOpravneni => 'Save permissions';
+
+  @override
+  String get zamUdelitVse => 'Grant all';
+
+  @override
+  String get zamOdebratVse => 'Revoke all';
+
+  @override
+  String zamPocetUzivatelu(int pocet) {
+    return '$pocet users';
+  }
+
+  @override
+  String zamPocetLimit(int pocet, int limit) {
+    return '$pocet / $limit users';
+  }
+
+  @override
+  String zamPlanBezLimitu(String plan) {
+    return '$plan plan · unlimited';
+  }
+
+  @override
+  String zamPlanLimitDosazen(String plan) {
+    return '$plan plan · limit reached';
+  }
+
+  @override
+  String zamPlanZbyva(String plan, int zbyva) {
+    return '$plan plan · $zbyva remaining';
+  }
+
+  @override
+  String get zamBezJmena => 'No name';
+
+  @override
+  String get zamBezPrav => 'No extended permissions';
+
+  @override
+  String get zamBadgeAdmin => 'ADMIN';
+
+  @override
+  String get zamBadgeClen => 'MEMBER';
 }

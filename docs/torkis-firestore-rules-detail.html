@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>TORKIS — Bezpečnostní pravidla Firestore (detailní popis)</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1a2433; font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1,h2,h3 { color: #0B1A2E; line-height: 1.2; }
+  h1 { font-size: 25pt; margin: 0 0 4px; }
+  h2 { font-size: 15pt; margin: 24px 0 8px; padding-bottom: 5px; border-bottom: 2px solid #2563eb; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; color: #1d4ed8; page-break-after: avoid; }
+  p { margin: 6px 0; }
+  ul,ol { margin: 6px 0; padding-left: 20px; } li { margin: 3px 0; }
+  code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-family:"Consolas",monospace; font-size:9pt; color:#0f3a6b; }
+  pre { background:#0B1A2E; color:#e7eefb; padding:12px 14px; border-radius:8px; font-family:"Consolas",monospace; font-size:8.5pt; line-height:1.45; overflow:hidden; white-space:pre-wrap; }
+  pre .c { color:#7fa8e0; } pre .k { color:#7ee0a8; } pre .s { color:#f0c674; }
+  .cover { background: linear-gradient(135deg,#0B1A2E,#16335c); color:#fff; padding:36px 32px; border-radius:14px; margin-bottom:8px; }
+  .cover h1 { color:#fff; } .cover .sub { font-size:13pt; color:#9ec1ff; margin-top:6px; }
+  .cover .meta { font-size:9.5pt; color:#c7d6ee; margin-top:16px; }
+  .badge { display:inline-block; background:#2563eb; color:#fff; font-size:9pt; padding:2px 10px; border-radius:20px; margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:9pt; }
+  th,td { border:1px solid #d4dce6; padding:5px 8px; text-align:left; vertical-align:top; }
+  th { background:#eef2f7; color:#0B1A2E; }
+  .box { background:#f6f9fc; border:1px solid #d4dce6; border-left:4px solid #2563eb; border-radius:6px; padding:9px 13px; margin:10px 0; }
+  .box.warn { border-left-color:#e0a000; background:#fffaf0; }
+  .box.ok { border-left-color:#1f9d57; background:#f1faf4; }
+  .box.bad { border-left-color:#dc2626; background:#fdf2f2; }
+  .fig { text-align:center; margin:14px 0; page-break-inside:avoid; }
+  .fig svg { max-width:100%; height:auto; }
+  .figcap { font-size:8.5pt; color:#5b6b7e; margin-top:4px; font-style:italic; }
+  .nobreak { page-break-inside:avoid; }
+  .pagebreak { page-break-before:always; }
+  footer { margin-top:26px; padding-top:10px; border-top:1px solid #d4dce6; font-size:8pt; color:#8595a8; }
+  .legend span { display:inline-block; margin-right:14px; font-size:8.5pt; }
+  .dot { display:inline-block; width:10px; height:10px; border-radius:2px; vertical-align:middle; margin-right:4px; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="badge">Detailní technický popis · zabezpečení</div>
+  <h1>TORKIS</h1>
+  <div class="sub">Bezpečnostní pravidla Firestore — jak fungují</div>
+  <div class="meta">Verze aplikace 5.1.8 · Stav k 4. 6. 2026 · Projekt <code>visto-51cb7</code> · Ověřeno 32 automatickými testy</div>
+</div>
+
+<h2>1. Princip: kde a kdy se pravidla vyhodnocují</h2>
+<p>Bezpečnostní pravidla Firestore jsou kód, který běží na <b>serverech Google</b> u <b>každého</b> přístupu k databázi. Nejsou součástí aplikace — proto je <b>nelze obejít</b> úpravou klienta nebo přímým připojením k databázi.</p>
+<div class="fig">
+<svg viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="12">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="10" y="50" width="120" height="50" rx="9" fill="#eef2f7" stroke="#9bb4d4"/>
+  <text x="70" y="72" text-anchor="middle" font-weight="bold">Aplikace</text>
+  <text x="70" y="88" text-anchor="middle" fill="#5b6b7e" font-size="10">(klient)</text>
+
+  <rect x="190" y="50" width="130" height="50" rx="9" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="255" y="72" text-anchor="middle" font-weight="bold">Firebase Auth</text>
+  <text x="255" y="88" text-anchor="middle" fill="#5b6b7e" font-size="10">identita: kdo jsi</text>
+
+  <rect x="380" y="40" width="150" height="70" rx="9" fill="#0B1A2E" stroke="#0B1A2E"/>
+  <text x="455" y="64" text-anchor="middle" fill="#fff" font-weight="bold">Pravidla Firestore</text>
+  <text x="455" y="80" text-anchor="middle" fill="#9ec1ff" font-size="10">autorizace: co smíš</text>
+  <text x="455" y="96" text-anchor="middle" fill="#9ec1ff" font-size="9">(běží na serveru)</text>
+
+  <rect x="585" y="50" width="65" height="50" rx="9" fill="#f1faf4" stroke="#1f9d57"/>
+  <text x="617" y="79" text-anchor="middle" font-weight="bold">Data</text>
+
+  <line x1="130" y1="75" x2="188" y2="75" stroke="#2563eb" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="320" y1="75" x2="378" y2="75" stroke="#2563eb" stroke-width="2" marker-end="url(#arr)"/>
+  <line x1="530" y1="75" x2="583" y2="75" stroke="#2563eb" stroke-width="2" marker-end="url(#arr)"/>
+</svg>
+<div class="figcap">Obr. 1 — Každý požadavek projde přes server: nejdřív identita (Auth), pak autorizace (pravidla), teprve pak data.</div>
+</div>
+
+<p>Tři základní zásady našich pravidel:</p>
+<ul>
+  <li><b>Vše zakázáno, dokud to pravidlo výslovně nepovolí</b> (deny by default).</li>
+  <li><b>Izolace servisů</b> — každý vidí jen data svého <code>servis_id</code>.</li>
+  <li><b>Čtení = jednotlivý dokument (get) i dotaz (list)</b> — u dotazu navíc platí zvláštní podmínka (viz kap. 5).</li>
+</ul>
+
+<h2>2. Pomocné funkce</h2>
+<p>Pravidla stojí na několika funkcích, které se volají opakovaně:</p>
+<table>
+  <tr><th>Funkce</th><th>Vrací true, když…</th></tr>
+  <tr><td><code>signedIn()</code></td><td>uživatel je přihlášený a <b>není</b> anonymní (mechanik/majitel).</td></tr>
+  <tr><td><code>isAnonymous()</code></td><td>jde o anonymní relaci zákaznického portálu.</td></tr>
+  <tr><td><code>isOwner()</code></td><td>e-mail uživatele je e-mail vlastníka aplikace (správa předplatného).</td></tr>
+  <tr><td><code>myServisId()</code></td><td>(pomocné) přečte <code>servis_id</code> z profilu volajícího v kolekci <code>uzivatele</code>.</td></tr>
+  <tr><td><code>ownsServis(sid)</code></td><td>daný <code>servis_id</code> patří volajícímu — viz rozhodovací strom níže.</td></tr>
+  <tr><td><code>canManageStaff(sid)</code></td><td>volající je člen servisu <b>a</b> má právo <code>prava.zamestnanci</code>.</td></tr>
+</table>
+
+<h3>Klíčová funkce <code>ownsServis()</code> — anotovaný kód</h3>
+<pre><span class="c">// Patří daný servis_id přihlášenému uživateli?</span>
+<span class="k">function</span> ownsServis(sid) {
+  <span class="k">return</span> signedIn() && (
+    sid == request.auth.uid                 <span class="c">// (A) bootstrap / vlastní servis</span>
+    || (exists(/.../uzivatele/$(request.auth.uid))  <span class="c">// (B) profil existuje</span>
+        && myServisId() == sid)             <span class="c">//     a jeho servis_id sedí</span>
+  );
+}</pre>
+
+<div class="fig nobreak">
+<svg viewBox="0 0 660 300" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="11.5">
+  <defs><marker id="a2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5b6b7e"/></marker></defs>
+  <!-- start -->
+  <rect x="250" y="8" width="160" height="34" rx="17" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="330" y="30" text-anchor="middle" font-weight="bold">ownsServis(sid)?</text>
+  <!-- signedIn -->
+  <polygon points="330,58 430,90 330,122 230,90" fill="#fff" stroke="#9bb4d4"/>
+  <text x="330" y="94" text-anchor="middle">Přihlášen?</text>
+  <line x1="330" y1="42" x2="330" y2="58" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a2)"/>
+  <!-- no -> deny -->
+  <rect x="470" y="73" width="120" height="34" rx="8" fill="#fdf2f2" stroke="#dc2626"/>
+  <text x="530" y="95" text-anchor="middle" fill="#b91c1c" font-weight="bold">FALSE (deny)</text>
+  <line x1="430" y1="90" x2="470" y2="90" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a2)"/>
+  <text x="448" y="84" fill="#b91c1c" font-size="9">ne</text>
+  <!-- A: sid == uid -->
+  <polygon points="330,138 470,176 330,214 190,176" fill="#fff" stroke="#9bb4d4"/>
+  <text x="330" y="172" text-anchor="middle">(A) sid == moje uid?</text>
+  <text x="330" y="188" text-anchor="middle" font-size="9" fill="#5b6b7e">vlastní servis / onboarding</text>
+  <line x1="330" y1="122" x2="330" y2="138" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a2)"/>
+  <text x="338" y="134" fill="#1f9d57" font-size="9">ano</text>
+  <!-- A yes -> TRUE -->
+  <rect x="520" y="159" width="120" height="34" rx="8" fill="#f1faf4" stroke="#1f9d57"/>
+  <text x="580" y="181" text-anchor="middle" fill="#15803d" font-weight="bold">TRUE (allow)</text>
+  <line x1="470" y1="176" x2="520" y2="176" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a2)"/>
+  <text x="488" y="170" fill="#1f9d57" font-size="9">ano</text>
+  <!-- B: profil + myServisId == sid -->
+  <polygon points="330,230 500,268 330,306 160,268" fill="#fff" stroke="#9bb4d4"/>
+  <text x="330" y="264" text-anchor="middle">(B) profil existuje a</text>
+  <text x="330" y="280" text-anchor="middle">servis_id profilu == sid?</text>
+  <line x1="330" y1="214" x2="330" y2="230" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a2)"/>
+  <text x="338" y="226" font-size="9" fill="#5b6b7e">ne</text>
+  <!-- B yes -> true (reuse) -->
+  <line x1="500" y1="268" x2="580" y2="268" stroke="#1f9d57" stroke-width="1.6" marker-end="url(#a2)"/>
+  <line x1="580" y1="268" x2="580" y2="193" stroke="#1f9d57" stroke-width="1.6"/>
+  <text x="520" y="262" fill="#1f9d57" font-size="9">ano → TRUE</text>
+  <!-- B no -> deny -->
+  <text x="150" y="264" text-anchor="end" fill="#b91c1c" font-size="9">ne → FALSE</text>
+</svg>
+<div class="figcap">Obr. 2 — Rozhodování <code>ownsServis()</code>. Větev (A) je důležitá pro onboarding (profil ještě neexistuje), větev (B) pro zaměstnance.</div>
+</div>
+
+<div class="pagebreak"></div>
+<h2>3. Rozhodovací tok autorizace</h2>
+<p>Když přijde požadavek na čtení/zápis dokumentu, server projde tento tok:</p>
+<div class="fig nobreak">
+<svg viewBox="0 0 660 360" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="11">
+  <defs><marker id="a3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5b6b7e"/></marker></defs>
+  <rect x="250" y="6" width="170" height="30" rx="15" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="335" y="26" text-anchor="middle" font-weight="bold">Požadavek na dokument</text>
+  <line x1="335" y1="36" x2="335" y2="52" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a3)"/>
+
+  <polygon points="335,52 445,84 335,116 225,84" fill="#fff" stroke="#9bb4d4"/>
+  <text x="335" y="88" text-anchor="middle">Přihlášen (ne anonym)?</text>
+  <rect x="490" y="67" width="150" height="34" rx="8" fill="#fffaf0" stroke="#e0a000"/>
+  <text x="565" y="83" text-anchor="middle" font-size="9.5">anonym → jen portál</text>
+  <text x="565" y="96" text-anchor="middle" font-size="9.5">(kap. 7)</text>
+  <line x1="445" y1="84" x2="490" y2="84" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a3)"/>
+  <line x1="335" y1="116" x2="335" y2="132" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a3)"/>
+  <text x="343" y="128" font-size="9" fill="#1f9d57">ano</text>
+
+  <polygon points="335,132 470,170 335,208 200,170" fill="#fff" stroke="#9bb4d4"/>
+  <text x="335" y="166" text-anchor="middle">Jaká kolekce?</text>
+  <text x="335" y="182" text-anchor="middle" font-size="9" fill="#5b6b7e">tenant / uzivatele / predplatne / …</text>
+
+  <!-- tenant branch -->
+  <line x1="335" y1="208" x2="335" y2="224" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a3)"/>
+  <polygon points="335,224 500,262 335,300 170,262" fill="#fff" stroke="#9bb4d4"/>
+  <text x="335" y="258" text-anchor="middle">ownsServis(servis_id dokumentu)?</text>
+  <text x="335" y="274" text-anchor="middle" font-size="9" fill="#5b6b7e">+ u zápisu příp. canManageStaff()</text>
+
+  <rect x="150" y="320" width="160" height="34" rx="8" fill="#fdf2f2" stroke="#dc2626"/>
+  <text x="230" y="342" text-anchor="middle" fill="#b91c1c" font-weight="bold">DENY</text>
+  <rect x="360" y="320" width="160" height="34" rx="8" fill="#f1faf4" stroke="#1f9d57"/>
+  <text x="440" y="342" text-anchor="middle" fill="#15803d" font-weight="bold">ALLOW</text>
+  <line x1="290" y1="290" x2="245" y2="320" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a3)"/>
+  <text x="248" y="312" fill="#b91c1c" font-size="9">ne</text>
+  <line x1="380" y1="290" x2="425" y2="320" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a3)"/>
+  <text x="410" y="312" fill="#1f9d57" font-size="9">ano</text>
+</svg>
+<div class="figcap">Obr. 3 — Zjednodušený tok pro datové (tenantní) kolekce. Konkrétní kolekce mají dílčí pravidla z kap. 4.</div>
+</div>
+
+<h2>4. Mapa kolekcí → pravidla</h2>
+<table>
+  <tr><th>Kolekce</th><th>Klíč</th><th>Čtení</th><th>Zápis</th></tr>
+  <tr><td><code>vozidla, zakaznici,<br>ukony, faktury,<br>vin_skeny, value_skeny</code></td><td>pole <code>servis_id</code></td><td><code>ownsServis</code></td><td><code>ownsServis</code></td></tr>
+  <tr><td><code>zakazky</code></td><td>pole <code>servis_id</code></td><td><code>ownsServis</code><br>nebo anonym + portal_token</td><td><code>ownsServis</code></td></tr>
+  <tr><td><code>nastaveni_servisu</code></td><td>ID = <code>servis_id</code></td><td><code>ownsServis(id)</code></td><td><code>ownsServis(id)</code></td></tr>
+  <tr><td><code>uzivatele</code></td><td>ID = uid</td><td>vlastní nebo kolega<br>(<code>ownsServis</code>)</td><td>self (zamčené pole) /<br><code>canManageStaff</code></td></tr>
+  <tr><td><code>predplatne</code></td><td>ID = <code>servis_id</code></td><td><code>ownsServis</code> / owner</td><td>owner / jen trial</td></tr>
+  <tr><td><code>znacka</code></td><td>—</td><td>přihlášený</td><td>owner</td></tr>
+  <tr><td><code>maily</code></td><td>—</td><td>—</td><td>jen vytvořit</td></tr>
+  <tr><td><code>chybove_logy</code></td><td>—</td><td>owner</td><td>jen vytvořit</td></tr>
+  <tr><td><code>pouziti, vin_cache,<br>value_cache</code></td><td>—</td><td>✗ (jen backend)</td><td>✗ (jen backend)</td></tr>
+</table>
+<div class="legend">
+  <span><span class="dot" style="background:#1f9d57"></span>člen servisu</span>
+  <span><span class="dot" style="background:#e0a000"></span>anonymní portál</span>
+  <span><span class="dot" style="background:#0B1A2E"></span>jen backend / owner</span>
+</div>
+
+<div class="pagebreak"></div>
+<h2>5. Dotazy (list) — proč musí klient filtrovat</h2>
+<p>U dotazu, který vrací více dokumentů, pravidla <b>nefiltrují</b> výsledek — buď celý dotaz <b>povolí</b>, nebo <b>odmítnou</b>. Firestore povolí dotaz jen tehdy, je-li <b>zaručeno</b>, že vrátí pouze dokumenty splňující pravidlo. Proto musí klient sám přidat filtr <code>where('servis_id' == můj servis)</code> — jinak je dotaz zamítnut.</p>
+<div class="fig nobreak">
+<svg viewBox="0 0 660 240" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="10.5">
+  <defs><marker id="a4" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#2563eb"/></marker></defs>
+  <!-- case OK -->
+  <text x="20" y="22" font-weight="bold" fill="#15803d">✓ Správně</text>
+  <rect x="20" y="32" width="280" height="40" rx="8" fill="#eef2f7" stroke="#9bb4d4"/>
+  <text x="32" y="50" font-family="Consolas" font-size="9">vozidla.where('servis_id','==', mujServis)</text>
+  <text x="32" y="65" font-size="9" fill="#5b6b7e">klient filtruje podle svého servisu</text>
+  <line x1="300" y1="52" x2="345" y2="52" stroke="#2563eb" stroke-width="1.8" marker-end="url(#a4)"/>
+  <rect x="350" y="32" width="180" height="40" rx="8" fill="#0B1A2E"/>
+  <text x="440" y="50" text-anchor="middle" fill="#fff" font-size="9">pravidlo: servis_id == můj?</text>
+  <text x="440" y="64" text-anchor="middle" fill="#9ec1ff" font-size="9">zaručeno → OK</text>
+  <line x1="530" y1="52" x2="575" y2="52" stroke="#2563eb" stroke-width="1.8" marker-end="url(#a4)"/>
+  <rect x="580" y="35" width="68" height="34" rx="8" fill="#f1faf4" stroke="#1f9d57"/>
+  <text x="614" y="56" text-anchor="middle" fill="#15803d" font-weight="bold">ALLOW</text>
+
+  <!-- case BAD -->
+  <text x="20" y="135" font-weight="bold" fill="#b91c1c">✗ Bez filtru / cizí servis</text>
+  <rect x="20" y="145" width="280" height="40" rx="8" fill="#eef2f7" stroke="#9bb4d4"/>
+  <text x="32" y="163" font-family="Consolas" font-size="9">vozidla   (bez where)</text>
+  <text x="32" y="178" font-size="9" fill="#5b6b7e">mohl by vrátit i cizí dokumenty</text>
+  <line x1="300" y1="165" x2="345" y2="165" stroke="#2563eb" stroke-width="1.8" marker-end="url(#a4)"/>
+  <rect x="350" y="145" width="180" height="40" rx="8" fill="#0B1A2E"/>
+  <text x="440" y="163" text-anchor="middle" fill="#fff" font-size="9">pravidlo nelze zaručit</text>
+  <text x="440" y="177" text-anchor="middle" fill="#9ec1ff" font-size="9">pro všechny výsledky</text>
+  <line x1="530" y1="165" x2="575" y2="165" stroke="#2563eb" stroke-width="1.8" marker-end="url(#a4)"/>
+  <rect x="580" y="148" width="68" height="34" rx="8" fill="#fdf2f2" stroke="#dc2626"/>
+  <text x="614" y="169" text-anchor="middle" fill="#b91c1c" font-weight="bold">DENY</text>
+</svg>
+<div class="figcap">Obr. 4 — Aplikace TORKIS u všech seznamů filtruje podle <code>servis_id</code>, takže dotazy projdou; útočníkův „dej mi vše“ dotaz server odmítne.</div>
+</div>
+
+<h2>6. Onboarding — proč existuje větev „sid == uid“</h2>
+<p>Při prvním nastavení se v <b>jednom dávkovém zápisu</b> zakládá profil uživatele i nastavení servisu, úkony a trial. V té chvíli ale profil <code>uzivatele</code> ještě <b>není uložen</b>, takže by se z něj nedalo přečíst <code>servis_id</code>. Řeší to větev (A) v <code>ownsServis()</code>: zakladatel zakládá svůj servis pod <b>vlastním uid</b> (<code>servis_id == uid</code>), což pravidlo pustí i bez existujícího profilu.</p>
+<div class="fig nobreak">
+<svg viewBox="0 0 660 130" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="10">
+  <defs><marker id="a5" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#2563eb"/></marker></defs>
+  <text x="20" y="20" font-weight="bold">Dávkový zápis při onboardingu (servis_id = uid zakladatele)</text>
+  <rect x="20" y="35" width="145" height="46" rx="8" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="92" y="55" text-anchor="middle" font-size="9.5">uzivatele/{uid}</text>
+  <text x="92" y="70" text-anchor="middle" font-size="8.5" fill="#5b6b7e">role admin</text>
+  <rect x="185" y="35" width="145" height="46" rx="8" fill="#eef2f7" stroke="#9bb4d4"/>
+  <text x="257" y="55" text-anchor="middle" font-size="9.5">nastaveni_servisu</text>
+  <text x="257" y="70" text-anchor="middle" font-size="8.5" fill="#5b6b7e">/{uid}</text>
+  <rect x="350" y="35" width="120" height="46" rx="8" fill="#eef2f7" stroke="#9bb4d4"/>
+  <text x="410" y="58" text-anchor="middle" font-size="9.5">ukony…</text>
+  <rect x="490" y="35" width="150" height="46" rx="8" fill="#eef2f7" stroke="#9bb4d4"/>
+  <text x="565" y="55" text-anchor="middle" font-size="9.5">predplatne/{uid}</text>
+  <text x="565" y="70" text-anchor="middle" font-size="8.5" fill="#5b6b7e">jen trial</text>
+  <text x="330" y="108" text-anchor="middle" fill="#15803d" font-size="9.5">vše projde přes větev (A): servis_id == request.auth.uid — profil zatím nemusí existovat</text>
+</svg>
+<div class="figcap">Obr. 5 — Bootstrap onboardingu: jeden dávkový zápis, povolený díky shodě servis_id s uid zakladatele.</div>
+</div>
+
+<h2>7. Profil uživatele: vlastní úpravy vs. správa, blok eskalace</h2>
+<p>Pravidlo pro úpravu profilu rozlišuje, zda uživatel mění <b>sebe</b>, nebo <b>někoho jiného</b>:</p>
+<div class="fig nobreak">
+<svg viewBox="0 0 660 210" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="10.5">
+  <defs><marker id="a6" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#5b6b7e"/></marker></defs>
+  <rect x="255" y="6" width="150" height="30" rx="15" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="330" y="26" text-anchor="middle" font-weight="bold">Úprava uzivatele/{uid}</text>
+  <polygon points="330,46 430,78 330,110 230,78" fill="#fff" stroke="#9bb4d4"/>
+  <text x="330" y="82" text-anchor="middle">Měním sám sebe?</text>
+  <line x1="330" y1="36" x2="330" y2="46" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a6)"/>
+
+  <!-- self -->
+  <rect x="40" y="130" width="250" height="64" rx="8" fill="#f1faf4" stroke="#1f9d57"/>
+  <text x="165" y="150" text-anchor="middle" font-weight="bold" fill="#15803d">ANO — povoleno,</text>
+  <text x="165" y="167" text-anchor="middle" font-size="9.5">ale servis_id, role a prava</text>
+  <text x="165" y="182" text-anchor="middle" font-size="9.5">se NESMÍ změnit (zámek)</text>
+  <line x1="290" y1="78" x2="165" y2="130" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a6)"/>
+  <text x="225" y="104" fill="#1f9d57" font-size="9">ano</text>
+
+  <!-- other -->
+  <rect x="380" y="130" width="250" height="64" rx="8" fill="#fff7ed" stroke="#e0a000"/>
+  <text x="505" y="150" text-anchor="middle" font-weight="bold" fill="#b45309">NE (cizí profil) —</text>
+  <text x="505" y="167" text-anchor="middle" font-size="9.5">jen pokud mám právo</text>
+  <text x="505" y="182" text-anchor="middle" font-size="9.5">canManageStaff(servis)</text>
+  <line x1="370" y1="78" x2="505" y2="130" stroke="#5b6b7e" stroke-width="1.6" marker-end="url(#a6)"/>
+  <text x="430" y="104" fill="#b45309" font-size="9">ne</text>
+</svg>
+<div class="figcap">Obr. 6 — Self-update nesmí měnit <code>role</code>/<code>servis_id</code>/<code>prava</code> → uživatel se nemůže sám povýšit ani přeskočit do cizího servisu.</div>
+</div>
+<div class="box bad"><p><b>Zablokovaný útok:</b> zaměstnanec by si chtěl nastavit <code>role: admin</code> nebo <code>servis_id</code> jiného servisu. Pravidlo to odmítne — pole jsou při úpravě vlastního profilu zamčená a správu cizích profilů má jen pověřený správce.</p></div>
+
+<h2>8. Zákaznický portál (anonymní přístup)</h2>
+<p>Zákazník otevře svou zakázku přes odkaz s jednorázovým tokenem. Přihlásí se <b>anonymně</b> a pravidla mu povolí <b>jen</b>:</p>
+<div class="fig nobreak">
+<svg viewBox="0 0 660 130" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="10.5">
+  <defs><marker id="a7" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#e0a000"/></marker></defs>
+  <rect x="20" y="45" width="150" height="44" rx="8" fill="#fffaf0" stroke="#e0a000"/>
+  <text x="95" y="64" text-anchor="middle" font-size="9.5" font-weight="bold">Anonymní zákazník</text>
+  <text x="95" y="79" text-anchor="middle" font-size="8.5" fill="#5b6b7e">odkaz + token</text>
+  <line x1="170" y1="67" x2="215" y2="67" stroke="#e0a000" stroke-width="1.8" marker-end="url(#a7)"/>
+  <rect x="220" y="20" width="200" height="40" rx="8" fill="#f1faf4" stroke="#1f9d57"/>
+  <text x="320" y="38" text-anchor="middle" font-size="9.5">číst zakázku s portal_tokenem</text>
+  <text x="320" y="52" text-anchor="middle" font-size="9.5">a schválit/zamítnout nacenění</text>
+  <rect x="220" y="72" width="200" height="40" rx="8" fill="#f1faf4" stroke="#1f9d57"/>
+  <text x="320" y="90" text-anchor="middle" font-size="9.5">číst a psát zprávy</text>
+  <text x="320" y="104" text-anchor="middle" font-size="9.5">jen své zakázky</text>
+  <line x1="170" y1="67" x2="215" y2="40" stroke="#e0a000" stroke-width="1.4" marker-end="url(#a7)"/>
+  <line x1="170" y1="67" x2="215" y2="92" stroke="#e0a000" stroke-width="1.4" marker-end="url(#a7)"/>
+  <rect x="450" y="45" width="195" height="44" rx="8" fill="#fdf2f2" stroke="#dc2626"/>
+  <text x="547" y="64" text-anchor="middle" font-size="9.5" fill="#b91c1c" font-weight="bold">vše ostatní = zakázáno</text>
+  <text x="547" y="79" text-anchor="middle" font-size="8.5" fill="#b91c1c">zákazníci, faktury, nastavení…</text>
+  <line x1="420" y1="67" x2="448" y2="67" stroke="#dc2626" stroke-width="1.6" marker-end="url(#a7)"/>
+</svg>
+<div class="figcap">Obr. 7 — Anonymní portál má extrémně úzký přístup, omezený na jednu zakázku a její zprávy.</div>
+</div>
+
+<h2>9. Serverové kolekce a „vše ostatní zakázáno“</h2>
+<p>Kolekce, které drží limity placených funkcí — počítadlo využití (<code>pouziti</code>) a cache (<code>vin_cache</code>, <code>value_cache</code>) — klient <b>nesmí číst ani zapisovat</b>. Mění je jen backend (Cloud Functions přes Admin SDK, který pravidla obchází, ale je dostupný jen serveru). Cokoli, co není ve výše uvedených pravidlech, je <b>ve výchozím stavu zamítnuto</b> — nová kolekce tedy není omylem otevřená.</p>
+
+<h2>10. Ověřování pravidel (testy)</h2>
+<p>Pravidla jsou pokryta <b>32 automatickými testy</b> v lokálním Firestore emulátoru (izolace servisů, dotazy, onboarding, eskalace, serverové kolekce, portál). Postup při změně: upravit pravidla → spustit testy v emulátoru → teprve pak nasadit (<code>firebase deploy --only firestore:rules</code>). Testy jsou ve složce <code>tools/rules_test/</code>.</p>
+
+<div class="box ok"><p><b>Shrnutí:</b> Pravidla běží na serveru, ve výchozím stavu vše zakazují a otevírají přístup výhradně členům správného servisu. Onboarding je ošetřen speciální bootstrap větví, samostatně je ošetřena správa uživatelů (s blokem eskalace práv), zákaznický portál i serverové kolekce. Vše je ověřeno automatickými testy.</p></div>
+
+<footer>
+TORKIS — detailní popis bezpečnostních pravidel Firestore. Vygenerováno 4. 6. 2026 (verze aplikace 5.1.8). Diagramy jsou ilustrativní; závazný je vždy aktuální soubor <code>firestore.rules</code>.
+</footer>
+
+</body>
+</html>

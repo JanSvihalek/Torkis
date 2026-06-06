@@ -2433,4 +2433,137 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get nastDayMnogo => 'Tage';
+
+  @override
+  String get zamModZamestnanci => 'Mitarbeiter';
+
+  @override
+  String get zamModNastaveni => 'Einstellungen';
+
+  @override
+  String zamChyba(String chyba) {
+    return 'Fehler: $chyba';
+  }
+
+  @override
+  String get zamTitle => 'Team & Berechtigungen';
+
+  @override
+  String get zamSubtitle =>
+      'Verwalten Sie die Mitglieder Ihrer Werkstatt und deren Zugriff auf die App.';
+
+  @override
+  String get zamPrazdny => 'Sie haben noch keine Teammitglieder.';
+
+  @override
+  String get zamPridatClena => 'Teammitglied hinzufügen';
+
+  @override
+  String get zamLimitTitle => 'Kontolimit erreicht';
+
+  @override
+  String zamLimitText(String plan, int limit, int pocet) {
+    return 'Der Tarif $plan erlaubt maximal $limit Benutzerkonten. Sie nutzen derzeit $pocet/$limit. Um weitere Teammitglieder hinzuzufügen, führen Sie ein Upgrade durch.';
+  }
+
+  @override
+  String get zamZrusit => 'Abbrechen';
+
+  @override
+  String get zamUpgradovat => 'Tarif upgraden';
+
+  @override
+  String get zamNovyClen => 'Neues Teammitglied';
+
+  @override
+  String get zamJmenoLabel => 'Vor- und Nachname *';
+
+  @override
+  String get zamEmailLabel => 'Anmelde-E-Mail *';
+
+  @override
+  String get zamHesloLabel => 'Anmeldepasswort (mind. 6 Zeichen) *';
+
+  @override
+  String get zamVychoziPrava => 'Standard-Zugriffsrechte';
+
+  @override
+  String get zamVytvoritUcet => 'Konto erstellen';
+
+  @override
+  String get zamErrVyplnte => 'Bitte Name, E-Mail und Passwort ausfüllen.';
+
+  @override
+  String get zamErrHesloKratke =>
+      'Das Passwort muss mindestens 6 Zeichen lang sein.';
+
+  @override
+  String get zamUcetVytvoren => 'Konto erstellt.';
+
+  @override
+  String get zamErrOvereni => 'Authentifizierungsfehler.';
+
+  @override
+  String get zamErrHesloSlabe => 'Das eingegebene Passwort ist zu schwach.';
+
+  @override
+  String get zamErrEmailExistuje =>
+      'Ein Konto mit dieser E-Mail existiert bereits.';
+
+  @override
+  String get zamErrEmailFormat => 'Ungültiges E-Mail-Format.';
+
+  @override
+  String zamErrNeocekavana(String chyba) {
+    return 'Unerwarteter Fehler: $chyba';
+  }
+
+  @override
+  String get zamPristupovaPrava => 'Zugriffsrechte';
+
+  @override
+  String get zamUlozitOpravneni => 'Berechtigungen speichern';
+
+  @override
+  String get zamUdelitVse => 'Alle gewähren';
+
+  @override
+  String get zamOdebratVse => 'Alle entziehen';
+
+  @override
+  String zamPocetUzivatelu(int pocet) {
+    return '$pocet Benutzer';
+  }
+
+  @override
+  String zamPocetLimit(int pocet, int limit) {
+    return '$pocet / $limit Benutzer';
+  }
+
+  @override
+  String zamPlanBezLimitu(String plan) {
+    return 'Tarif $plan · unbegrenzt';
+  }
+
+  @override
+  String zamPlanLimitDosazen(String plan) {
+    return 'Tarif $plan · Limit erreicht';
+  }
+
+  @override
+  String zamPlanZbyva(String plan, int zbyva) {
+    return 'Tarif $plan · $zbyva übrig';
+  }
+
+  @override
+  String get zamBezJmena => 'Kein Name';
+
+  @override
+  String get zamBezPrav => 'Keine erweiterten Rechte';
+
+  @override
+  String get zamBadgeAdmin => 'ADMIN';
+
+  @override
+  String get zamBadgeClen => 'MITGLIED';
 }

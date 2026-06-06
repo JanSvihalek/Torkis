@@ -4543,6 +4543,234 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'dní'**
   String get nastDayMnogo;
+
+  /// No description provided for @zamModZamestnanci.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zaměstnanci'**
+  String get zamModZamestnanci;
+
+  /// No description provided for @zamModNastaveni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nastavení'**
+  String get zamModNastaveni;
+
+  /// No description provided for @zamChyba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba: {chyba}'**
+  String zamChyba(String chyba);
+
+  /// No description provided for @zamTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tým a oprávnění'**
+  String get zamTitle;
+
+  /// No description provided for @zamSubtitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spravujte členy svého servisu a jejich přístup do aplikace.'**
+  String get zamSubtitle;
+
+  /// No description provided for @zamPrazdny.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím nemáte žádné členy týmu.'**
+  String get zamPrazdny;
+
+  /// No description provided for @zamPridatClena.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat člena týmu'**
+  String get zamPridatClena;
+
+  /// No description provided for @zamLimitTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dosažen limit účtů'**
+  String get zamLimitTitle;
+
+  /// No description provided for @zamLimitText.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plán {plan} umožňuje maximálně {limit} uživatelských účtů. Aktuálně využíváte {pocet}/{limit}. Pro přidání dalších členů týmu upgradujte plán.'**
+  String zamLimitText(String plan, int limit, int pocet);
+
+  /// No description provided for @zamZrusit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zrušit'**
+  String get zamZrusit;
+
+  /// No description provided for @zamUpgradovat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Upgradovat plán'**
+  String get zamUpgradovat;
+
+  /// No description provided for @zamNovyClen.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nový člen týmu'**
+  String get zamNovyClen;
+
+  /// No description provided for @zamJmenoLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jméno a příjmení *'**
+  String get zamJmenoLabel;
+
+  /// No description provided for @zamEmailLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přihlašovací e-mail *'**
+  String get zamEmailLabel;
+
+  /// No description provided for @zamHesloLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přihlašovací heslo (min. 6 znaků) *'**
+  String get zamHesloLabel;
+
+  /// No description provided for @zamVychoziPrava.
+  ///
+  /// In cs, this message translates to:
+  /// **'Výchozí přístupová práva'**
+  String get zamVychoziPrava;
+
+  /// No description provided for @zamVytvoritUcet.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vytvořit účet'**
+  String get zamVytvoritUcet;
+
+  /// No description provided for @zamErrVyplnte.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyplňte prosím jméno, e-mail i heslo.'**
+  String get zamErrVyplnte;
+
+  /// No description provided for @zamErrHesloKratke.
+  ///
+  /// In cs, this message translates to:
+  /// **'Heslo musí mít alespoň 6 znaků.'**
+  String get zamErrHesloKratke;
+
+  /// No description provided for @zamUcetVytvoren.
+  ///
+  /// In cs, this message translates to:
+  /// **'Účet vytvořen.'**
+  String get zamUcetVytvoren;
+
+  /// No description provided for @zamErrOvereni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba ověření.'**
+  String get zamErrOvereni;
+
+  /// No description provided for @zamErrHesloSlabe.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zadané heslo je příliš slabé.'**
+  String get zamErrHesloSlabe;
+
+  /// No description provided for @zamErrEmailExistuje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Účet s tímto e-mailem již existuje.'**
+  String get zamErrEmailExistuje;
+
+  /// No description provided for @zamErrEmailFormat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neplatný formát e-mailu.'**
+  String get zamErrEmailFormat;
+
+  /// No description provided for @zamErrNeocekavana.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neočekávaná chyba: {chyba}'**
+  String zamErrNeocekavana(String chyba);
+
+  /// No description provided for @zamPristupovaPrava.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přístupová práva'**
+  String get zamPristupovaPrava;
+
+  /// No description provided for @zamUlozitOpravneni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Uložit oprávnění'**
+  String get zamUlozitOpravneni;
+
+  /// No description provided for @zamUdelitVse.
+  ///
+  /// In cs, this message translates to:
+  /// **'Udělit vše'**
+  String get zamUdelitVse;
+
+  /// No description provided for @zamOdebratVse.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odebrat vše'**
+  String get zamOdebratVse;
+
+  /// No description provided for @zamPocetUzivatelu.
+  ///
+  /// In cs, this message translates to:
+  /// **'{pocet} uživatelů'**
+  String zamPocetUzivatelu(int pocet);
+
+  /// No description provided for @zamPocetLimit.
+  ///
+  /// In cs, this message translates to:
+  /// **'{pocet} / {limit} uživatelů'**
+  String zamPocetLimit(int pocet, int limit);
+
+  /// No description provided for @zamPlanBezLimitu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plán {plan} · bez limitu'**
+  String zamPlanBezLimitu(String plan);
+
+  /// No description provided for @zamPlanLimitDosazen.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plán {plan} · limit dosažen'**
+  String zamPlanLimitDosazen(String plan);
+
+  /// No description provided for @zamPlanZbyva.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plán {plan} · zbývá {zbyva}'**
+  String zamPlanZbyva(String plan, int zbyva);
+
+  /// No description provided for @zamBezJmena.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bez jména'**
+  String get zamBezJmena;
+
+  /// No description provided for @zamBezPrav.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bez rozšířených práv'**
+  String get zamBezPrav;
+
+  /// No description provided for @zamBadgeAdmin.
+  ///
+  /// In cs, this message translates to:
+  /// **'ADMIN'**
+  String get zamBadgeAdmin;
+
+  /// No description provided for @zamBadgeClen.
+  ///
+  /// In cs, this message translates to:
+  /// **'ČLEN'**
+  String get zamBadgeClen;
 }
 
 class _AppLocalizationsDelegate

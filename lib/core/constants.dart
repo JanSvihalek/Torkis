@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.3.1';
+const String kAppVerze = '5.3.2';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -156,6 +156,29 @@ const Map<String, String?> navIdToModulKlic = {
   'menu': null,
   'vin_dekoder': null,
 };
+
+/// Moduly, na které lze členům týmu udělovat individuální oprávnění.
+/// Admin má vždy přístup ke všem; 'menu' je vždy dostupné, proto v seznamu není.
+const List<String> kGrantableModuly = [
+  'prijem',
+  'vozidla',
+  'zakaznici',
+  'historie_prijmu',
+  'ukony',
+  'vin_dekoder',
+  'statistiky',
+  'zamestnanci',
+  'nastaveni',
+];
+
+/// Citlivé moduly, které jsou novému členovi týmu ve výchozím stavu zakázané.
+const Set<String> kCitliveModuly = {'statistiky', 'zamestnanci', 'nastaveni'};
+
+/// Výchozí oprávnění pro nového člena týmu: provozní moduly zapnuté,
+/// citlivé oblasti (statistiky, správa týmu, nastavení) vypnuté.
+Map<String, bool> defaultZamestnanecPrava() => {
+      for (final m in kGrantableModuly) m: !kCitliveModuly.contains(m),
+    };
 
 // Globální stav předplatného (nastaven v auth_gate.dart při přihlášení)
 String globalPlanTyp = 'basic';

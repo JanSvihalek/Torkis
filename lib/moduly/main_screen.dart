@@ -36,6 +36,12 @@ bool maPristup(String navId) {
   final modulKlic = navIdToModulKlic[navId];
   if (modulKlic != null && !(globalModuly[modulKlic] ?? false)) return false;
 
+  // 3. Individuální oprávnění člena týmu (admin má vždy přístup).
+  //    Chybějící klíč = povoleno (zpětná kompatibilita se staršími účty).
+  if (globalUserRole != 'admin' && kGrantableModuly.contains(navId)) {
+    if (!(globalUserPrava[navId] ?? true)) return false;
+  }
+
   return true;
 }
 
@@ -344,8 +350,9 @@ class MenuPage extends StatelessWidget {
       if (maPristup('ukony'))
         _ModuleEntry(l10n.mainNavUkony, Icons.playlist_add_check_rounded, const UkonyPage(),
             subtitle: l10n.mainModUkonySubtitle, countKey: 'ukony'),
-      _ModuleEntry(l10n.mainModVinLabel, Icons.travel_explore_rounded, const VinDekoderPage(),
-          subtitle: l10n.mainModVinSubtitle),
+      if (maPristup('vin_dekoder'))
+        _ModuleEntry(l10n.mainModVinLabel, Icons.travel_explore_rounded, const VinDekoderPage(),
+            subtitle: l10n.mainModVinSubtitle),
       if (maPristup('zamestnanci'))
         _ModuleEntry(l10n.mainNavTym, Icons.badge_outlined, const ZamestnanciPage(),
             subtitle: l10n.mainModTymSubtitle, countKey: 'uzivatele'),

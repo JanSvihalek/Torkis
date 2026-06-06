@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>TORKIS — Přihlášení a zabezpečení</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1a2433;
+    font-size: 11pt;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1, h2, h3 { color: #0B1A2E; line-height: 1.2; }
+  h1 { font-size: 26pt; margin: 0 0 4px; letter-spacing: 0.5px; }
+  h2 {
+    font-size: 15pt;
+    margin: 26px 0 8px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #2563eb;
+  }
+  h3 { font-size: 12pt; margin: 16px 0 4px; color: #1d4ed8; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  code {
+    background: #eef2f7;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: "Consolas", monospace;
+    font-size: 9.5pt;
+    color: #0f3a6b;
+  }
+  .cover {
+    background: linear-gradient(135deg, #0B1A2E 0%, #16335c 100%);
+    color: #fff;
+    padding: 40px 36px;
+    border-radius: 14px;
+    margin-bottom: 8px;
+  }
+  .cover h1 { color: #fff; }
+  .cover .sub { font-size: 13pt; color: #9ec1ff; margin-top: 6px; }
+  .cover .meta { font-size: 10pt; color: #c7d6ee; margin-top: 18px; }
+  .badge {
+    display: inline-block;
+    background: #2563eb;
+    color: #fff;
+    font-size: 9pt;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10pt; }
+  th, td { border: 1px solid #d4dce6; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #eef2f7; color: #0B1A2E; }
+  .box {
+    background: #f6f9fc;
+    border: 1px solid #d4dce6;
+    border-left: 4px solid #2563eb;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 10px 0;
+  }
+  .box.warn { border-left-color: #e0a000; background: #fffaf0; }
+  .box.ok { border-left-color: #1f9d57; background: #f1faf4; }
+  .step {
+    background: #f6f9fc;
+    border: 1px solid #d4dce6;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin: 7px 0;
+  }
+  .step b { color: #1d4ed8; }
+  .small { font-size: 9pt; color: #5b6b7e; }
+  .nobreak { page-break-inside: avoid; }
+  footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #d4dce6; font-size: 8.5pt; color: #8595a8; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="badge">Technický popis</div>
+  <h1>TORKIS</h1>
+  <div class="sub">Přihlášení do aplikace a zabezpečení dat</div>
+  <div class="meta">Verze aplikace 5.1.8 &nbsp;•&nbsp; Stav k 4. 6. 2026 &nbsp;•&nbsp; Firebase projekt <code>visto-51cb7</code></div>
+</div>
+
+<h2>1. Přehled</h2>
+<p>Aplikace TORKIS používá pro ověřování uživatelů službu <b>Firebase Authentication</b> a data ukládá do <b>Cloud Firestore</b>. Přístup k datům je řízen ve dvou vrstvách:</p>
+<ul>
+  <li><b>Identita</b> — kdo je uživatel (přihlášení e-mailem, Googlem, Apple ID, biometrické odemčení).</li>
+  <li><b>Autorizace</b> — k jakým datům smí. Vynucují ji <b>bezpečnostní pravidla Firestore</b> na serveru, takže je nelze obejít úpravou aplikace.</li>
+</ul>
+<p>Každý uživatel patří k jednomu <b>servisu</b> (identifikátor <code>servis_id</code>). Vidí a upravuje pouze data svého servisu.</p>
+
+<h2>2. Způsoby přihlášení</h2>
+<table>
+  <tr><th>Metoda</th><th>Platforma</th><th>Popis</th></tr>
+  <tr><td><b>E-mail a heslo</b></td><td>iOS, Android, web</td><td>Klasická registrace i přihlášení. Hesla spravuje Firebase (nikdy se neukládají v čitelné podobě).</td></tr>
+  <tr><td><b>Google</b></td><td>iOS, Android</td><td>Přihlášení Google účtem (balíček <code>google_sign_in</code> → ověření tokenu ve Firebase).</td></tr>
+  <tr><td><b>Apple ID</b></td><td>iOS</td><td>Nativní „Sign in with Apple“ (<code>signInWithProvider</code>). Na Androidu se nenabízí.</td></tr>
+  <tr><td><b>Biometrie</b><br>(Face ID / otisk)</td><td>iOS, Android</td><td>Rychlé opětovné přihlášení a zámek aplikace. Volitelné, zapíná se v nastavení.</td></tr>
+</table>
+
+<h3>Biometrické přihlášení — jak funguje</h3>
+<p>Biometrie <b>nenahrazuje</b> přihlášení, ale zrychluje opětovný vstup. Při zapnutí se po prvním přihlášení heslem uloží přihlašovací údaje do <b>šifrovaného úložiště zařízení</b> (<code>flutter_secure_storage</code> — na iOS Keychain, na Androidu KeyStore). Při dalším spuštění aplikace ověří otisk/obličej přes systém a údaje použije k tichému přihlášení. Bez úspěšného biometrického ověření se do aplikace nedostane.</p>
+
+<h2>3. Tok přihlášení (kontrola při spuštění)</h2>
+<p>O směrování se stará komponenta <b>AuthGate</b>, která naslouchá stavu přihlášení z Firebase:</p>
+<div class="step"><b>1. Nepřihlášen</b> → zobrazí se přihlašovací obrazovka.</div>
+<div class="step"><b>2. Anonymní relace</b> (ze zákaznického portálu) → automaticky odhlášena, zobrazí se přihlášení.</div>
+<div class="step"><b>3. Přihlášen, ale bez profilu</b> → spustí se průvodce prvním nastavením (onboarding).</div>
+<div class="step"><b>4. Přihlášen s profilem</b> → načtou se údaje servisu, role a oprávnění, ověří se předplatné a aktivuje se biometrický zámek (pokud je zapnutý).</div>
+<div class="step"><b>5. Neaktivní předplatné / trial</b> → zobrazí se obrazovka s předplatným (paywall).</div>
+
+<h2>4. Registrace a první nastavení (onboarding)</h2>
+<p>Nový uživatel (bez profilu v databázi) projde průvodcem, který:</p>
+<ul>
+  <li>založí <b>servis</b> a jeho nastavení (název, IČO/ARES, kontakt, automatizace),</li>
+  <li>vytvoří <b>účet majitele</b> s rolí <code>admin</code> a právem spravovat zaměstnance,</li>
+  <li>přednastaví katalog úkonů,</li>
+  <li>založí <b>30denní zkušební období</b> (trial) zdarma bez platební karty.</li>
+</ul>
+<p>Tento postup je shodný pro registraci e-mailem i pro první přihlášení přes Google/Apple.</p>
+
+<h2>5. Vícuživatelský model</h2>
+<p>K jednomu servisu může patřit více uživatelů. Profil každého uživatele (kolekce <code>uzivatele</code>) obsahuje:</p>
+<ul>
+  <li><code>servis_id</code> — ke kterému servisu patří (u zakladatele se rovná jeho vlastnímu ID),</li>
+  <li><code>role</code> — např. <code>admin</code> nebo <code>zamestnanec</code>,</li>
+  <li><code>prava</code> — jemnější oprávnění, např. správa zaměstnanců a nastavení.</li>
+</ul>
+<p>Zaměstnance přidává správce s právem <code>zamestnanci</code>; nový účet dostane stejné <code>servis_id</code>, takže okamžitě vidí vozidla, zákazníky a zakázky servisu.</p>
+
+<h2>6. Zabezpečení dat (pravidla Firestore)</h2>
+<p>Pravidla běží <b>na serveru Google</b> a platí pro každý přístup k datům — i kdyby se někdo pokusil obejít aplikaci a připojit se k databázi přímo. Klíčové principy:</p>
+
+<h3>Izolace servisu</h3>
+<p>U datových kolekcí (<code>vozidla</code>, <code>zakaznici</code>, <code>zakazky</code>, <code>ukony</code>, <code>faktury</code>, <code>vin_skeny</code>, <code>value_skeny</code>, <code>nastaveni_servisu</code>) platí: <b>číst a zapisovat smí jen člen příslušného servisu.</b> Server odvodí <code>servis_id</code> volajícího z jeho profilu a porovná ho s daty. Cizí servis je zcela nepřístupný.</p>
+
+<h3>Role a oprávnění</h3>
+<ul>
+  <li>Běžný uživatel pracuje pouze s daty svého servisu.</li>
+  <li>Správu zaměstnanců (přidání/úprava/odebrání účtů) smí jen uživatel s právem <code>zamestnanci</code>.</li>
+  <li>Vlastník aplikace má vyhrazená oprávnění pro ruční správu předplatného.</li>
+</ul>
+
+<h3>Ochrana proti zneužití (eskalaci práv)</h3>
+<div class="box ok"><p>Uživatel si <b>nemůže</b> sám změnit své <code>servis_id</code>, <code>role</code> ani <code>prava</code> — tím je zablokováno „povýšení sebe sama“ nebo přeskočení do cizího servisu. Cizí profily ve svém servisu mění jen pověřený správce.</p></div>
+
+<h3>Serverové kolekce (jen backend)</h3>
+<p>Citlivé kolekce, které určují limity placených funkcí — počítadlo využití (<code>pouziti</code>), cache VIN a tržní hodnoty (<code>vin_cache</code>, <code>value_cache</code>) a placené plány (<code>predplatne</code>) — <b>klient nesmí zapisovat</b>. Mění je pouze backend (Cloud Functions) a ověřené webhooky, aby nešlo limity obejít.</p>
+
+<h3>Předplatné a trial</h3>
+<p>Klient smí založit jen <b>zkušební</b> plán (při onboardingu). Placené plány zapisuje výhradně platební systém (RevenueCat) přes serverový webhook. Aktivnost předplatného se ověřuje při každém přihlášení; bez platného plánu/trialu se zobrazí paywall.</p>
+
+<h3>Zákaznický portál (anonymní přístup)</h3>
+<p>Zákazník servisu může přes odkaz s jednorázovým tokenem anonymně otevřít svou zakázku, schválit/zamítnout nacenění a posílat zprávy. Tento anonymní přístup je <b>striktně omezen</b> jen na danou zakázku a její zprávy — k žádným jiným datům (zákazníci, faktury, nastavení) se nedostane.</p>
+
+<h2>7. Backend (Cloud Functions)</h2>
+<p>Serverové funkce běží s administrátorským oprávněním (Admin SDK), které pravidla obchází, ale je dostupné jen Googlem ověřenému serverovému prostředí — ne klientovi. Funkce řeší např. počítání využití drahých API a zpracování plateb.</p>
+
+<h2>8. Co zatím není vynuceno (doporučení do budoucna)</h2>
+<div class="box warn">
+<ul style="margin:0;">
+  <li><b>Ověření e-mailu</b> — aplikace zatím nevyžaduje potvrzení e-mailové adresy. Vhodné doplnit pro registraci e-mailem.</li>
+  <li><b>SHA-1 pro Google na Androidu</b> je aktuálně z ladicího (debug) klíče. Před vydáním na Google Play je nutné přidat SHA-1 z „Play App Signing“.</li>
+  <li><b>Správa zaměstnanců na úrovni rolí</b> je vázaná na právo <code>zamestnanci</code>; případné jemnější rozlišení (více úrovní rolí) lze doplnit.</li>
+</ul>
+</div>
+
+<div class="box">
+<p><b>Shrnutí:</b> Identitu řeší Firebase (e-mail, Google, Apple, biometrie), autorizaci vynucují serverová pravidla Firestore s úplnou izolací mezi servisy, ochranou proti eskalaci práv a serverově chráněnými kolekcemi pro placené funkce.</p>
+</div>
+
+<footer>
+TORKIS — interní technický popis přihlášení a zabezpečení. Vygenerováno 4. 6. 2026. Dokument popisuje aktuální stav implementace a může se s vývojem aplikace měnit.
+</footer>
+
+</body>
+</html>

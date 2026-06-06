@@ -888,5 +888,67 @@
   "nastZobrazitPlany": "Zobrazit plány",
   "nastDayJeden": "den",
   "nastDayNeco": "dny",
-  "nastDayMnogo": "dní"
+  "nastDayMnogo": "dní",
+  "zamModZamestnanci": "Zaměstnanci",
+  "zamModNastaveni": "Nastavení",
+  "zamChyba": "Chyba: {chyba}",
+  "@zamChyba": { "placeholders": { "chyba": { "type": "String" } } },
+  "zamTitle": "Tým a oprávnění",
+  "zamSubtitle": "Spravujte členy svého servisu a jejich přístup do aplikace.",
+  "zamPrazdny": "Zatím nemáte žádné členy týmu.",
+  "zamPridatClena": "Přidat člena týmu",
+  "zamLimitTitle": "Dosažen limit účtů",
+  "zamLimitText": "Plán {plan} umožňuje maximálně {limit} uživatelských účtů. Aktuálně využíváte {pocet}/{limit}. Pro přidání dalších členů týmu upgradujte plán.",
+  "@zamLimitText": {
+    "placeholders": {
+      "plan": { "type": "String" },
+      "limit": { "type": "int" },
+      "pocet": { "type": "int" }
+    }
+  },
+  "zamZrusit": "Zrušit",
+  "zamUpgradovat": "Upgradovat plán",
+  "zamNovyClen": "Nový člen týmu",
+  "zamJmenoLabel": "Jméno a příjmení *",
+  "zamEmailLabel": "Přihlašovací e-mail *",
+  "zamHesloLabel": "Přihlašovací heslo (min. 6 znaků) *",
+  "zamVychoziPrava": "Výchozí přístupová práva",
+  "zamVytvoritUcet": "Vytvořit účet",
+  "zamErrVyplnte": "Vyplňte prosím jméno, e-mail i heslo.",
+  "zamErrHesloKratke": "Heslo musí mít alespoň 6 znaků.",
+  "zamUcetVytvoren": "Účet vytvořen.",
+  "zamErrOvereni": "Chyba ověření.",
+  "zamErrHesloSlabe": "Zadané heslo je příliš slabé.",
+  "zamErrEmailExistuje": "Účet s tímto e-mailem již existuje.",
+  "zamErrEmailFormat": "Neplatný formát e-mailu.",
+  "zamErrNeocekavana": "Neočekávaná chyba: {chyba}",
+  "@zamErrNeocekavana": { "placeholders": { "chyba": { "type": "String" } } },
+  "zamPristupovaPrava": "Přístupová práva",
+  "zamUlozitOpravneni": "Uložit oprávnění",
+  "zamUdelitVse": "Udělit vše",
+  "zamOdebratVse": "Odebrat vše",
+  "zamPocetUzivatelu": "{pocet} uživatelů",
+  "@zamPocetUzivatelu": { "placeholders": { "pocet": { "type": "int" } } },
+  "zamPocetLimit": "{pocet} / {limit} uživatelů",
+  "@zamPocetLimit": {
+    "placeholders": {
+      "pocet": { "type": "int" },
+      "limit": { "type": "int" }
+    }
+  },
+  "zamPlanBezLimitu": "Plán {plan} · bez limitu",
+  "@zamPlanBezLimitu": { "placeholders": { "plan": { "type": "String" } } },
+  "zamPlanLimitDosazen": "Plán {plan} · limit dosažen",
+  "@zamPlanLimitDosazen": { "placeholders": { "plan": { "type": "String" } } },
+  "zamPlanZbyva": "Plán {plan} · zbývá {zbyva}",
+  "@zamPlanZbyva": {
+    "placeholders": {
+      "plan": { "type": "String" },
+      "zbyva": { "type": "int" }
+    }
+  },
+  "zamBezJmena": "Bez jména",
+  "zamBezPrav": "Bez rozšířených práv",
+  "zamBadgeAdmin": "ADMIN",
+  "zamBadgeClen": "ČLEN"
 }

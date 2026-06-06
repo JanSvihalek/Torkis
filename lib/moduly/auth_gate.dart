@@ -16,6 +16,11 @@ String? globalServisId;
 String? globalUserRole;
 String? globalUserJmeno;
 
+/// Individuální oprávnění přihlášeného člena týmu na jednotlivé moduly.
+/// Vynucuje se v [maPristup]. Admin tuto mapu obchází (má vždy vše).
+/// Chybějící klíč = povoleno (zpětná kompatibilita se staršími účty).
+Map<String, bool> globalUserPrava = {};
+
 // Sdružená data pro přihlášení (uživatel + předplatné)
 class _AuthData {
   final DocumentSnapshot userDoc;
@@ -189,6 +194,11 @@ class AuthGate extends StatelessWidget {
               globalServisId = userData['servis_id'];
               globalUserRole = userData['role'];
               globalUserJmeno = userData['jmeno']?.toString();
+
+              final rawPrava = userData['prava'];
+              globalUserPrava = rawPrava is Map
+                  ? rawPrava.map((k, v) => MapEntry('$k', v == true))
+                  : <String, bool>{};
 
               final tmavyRezim =
                   userData['tmavy_rezim'] as bool? ?? false;

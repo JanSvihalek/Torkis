@@ -223,7 +223,7 @@ class AppLocalizationsSk extends AppLocalizations {
       'Spustili sme vám skúšobnú dobu na 30 dní zdarma — bez platobnej karty a bez záväzkov.';
 
   @override
-  String get trialWelcomePill => '30 DNÍ ZDARMA';
+  String get trialWelcomePill => '30 DNÍ ZADARMO';
 
   @override
   String get trialWelcomeFooter =>
@@ -893,7 +893,7 @@ class AppLocalizationsSk extends AppLocalizations {
   String get vinFieldVykon => 'Výkon';
 
   @override
-  String get vinFieldTocivyMoment => 'Max. točivý moment';
+  String get vinFieldTocivyMoment => 'Max. krútiaci moment';
 
   @override
   String get vinFieldPalivo => 'Palivo';
@@ -929,7 +929,7 @@ class AppLocalizationsSk extends AppLocalizations {
   String get vinFieldTaznaHmotnost => 'Ťažná hmotnosť';
 
   @override
-  String get vinFieldRozvorNaprav => 'Rozvor náprav';
+  String get vinFieldRozvorNaprav => 'Rázvor náprav';
 
   @override
   String get vinFieldDelka => 'Dĺžka';
@@ -2327,7 +2327,7 @@ class AppLocalizationsSk extends AppLocalizations {
   String get nastOddelovacPomlcka => 'Pomlčka (-)';
 
   @override
-  String get nastOddelovacLomitko => 'Lomítko (/)';
+  String get nastOddelovacLomitko => 'Lomka (/)';
 
   @override
   String get nastOddelovacPodtrzitko => 'Podčiarkovník (_)';
@@ -2412,4 +2412,135 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get nastDayMnogo => 'dní';
+
+  @override
+  String get zamModZamestnanci => 'Zamestnanci';
+
+  @override
+  String get zamModNastaveni => 'Nastavenia';
+
+  @override
+  String zamChyba(String chyba) {
+    return 'Chyba: $chyba';
+  }
+
+  @override
+  String get zamTitle => 'Tím a oprávnenia';
+
+  @override
+  String get zamSubtitle =>
+      'Spravujte členov svojho servisu a ich prístup do aplikácie.';
+
+  @override
+  String get zamPrazdny => 'Zatiaľ nemáte žiadnych členov tímu.';
+
+  @override
+  String get zamPridatClena => 'Pridať člena tímu';
+
+  @override
+  String get zamLimitTitle => 'Dosiahnutý limit účtov';
+
+  @override
+  String zamLimitText(String plan, int limit, int pocet) {
+    return 'Plán $plan umožňuje maximálne $limit používateľských účtov. Aktuálne využívate $pocet/$limit. Pre pridanie ďalších členov tímu inovujte plán.';
+  }
+
+  @override
+  String get zamZrusit => 'Zrušiť';
+
+  @override
+  String get zamUpgradovat => 'Inovovať plán';
+
+  @override
+  String get zamNovyClen => 'Nový člen tímu';
+
+  @override
+  String get zamJmenoLabel => 'Meno a priezvisko *';
+
+  @override
+  String get zamEmailLabel => 'Prihlasovací e-mail *';
+
+  @override
+  String get zamHesloLabel => 'Prihlasovacie heslo (min. 6 znakov) *';
+
+  @override
+  String get zamVychoziPrava => 'Predvolené prístupové práva';
+
+  @override
+  String get zamVytvoritUcet => 'Vytvoriť účet';
+
+  @override
+  String get zamErrVyplnte => 'Vyplňte prosím meno, e-mail aj heslo.';
+
+  @override
+  String get zamErrHesloKratke => 'Heslo musí mať aspoň 6 znakov.';
+
+  @override
+  String get zamUcetVytvoren => 'Účet vytvorený.';
+
+  @override
+  String get zamErrOvereni => 'Chyba overenia.';
+
+  @override
+  String get zamErrHesloSlabe => 'Zadané heslo je príliš slabé.';
+
+  @override
+  String get zamErrEmailExistuje => 'Účet s týmto e-mailom už existuje.';
+
+  @override
+  String get zamErrEmailFormat => 'Neplatný formát e-mailu.';
+
+  @override
+  String zamErrNeocekavana(String chyba) {
+    return 'Neočakávaná chyba: $chyba';
+  }
+
+  @override
+  String get zamPristupovaPrava => 'Prístupové práva';
+
+  @override
+  String get zamUlozitOpravneni => 'Uložiť oprávnenia';
+
+  @override
+  String get zamUdelitVse => 'Udeliť všetko';
+
+  @override
+  String get zamOdebratVse => 'Odobrať všetko';
+
+  @override
+  String zamPocetUzivatelu(int pocet) {
+    return '$pocet používateľov';
+  }
+
+  @override
+  String zamPocetLimit(int pocet, int limit) {
+    return '$pocet / $limit používateľov';
+  }
+
+  @override
+  String zamPlanBezLimitu(String plan) {
+    return 'Plán $plan · bez limitu';
+  }
+
+  @override
+  String zamPlanLimitDosazen(String plan) {
+    return 'Plán $plan · limit dosiahnutý';
+  }
+
+  @override
+  String zamPlanZbyva(String plan, int zbyva) {
+    return 'Plán $plan · zostáva $zbyva';
+  }
+
+  @override
+  String get zamBezJmena => 'Bez mena';
+
+  @override
+  String get zamBezPrav => 'Bez rozšírených práv';
+
+  @override
+  String get zamBadgeAdmin => 'ADMIN';
+
+  @override
+  String get zamBadgeClen => 'ČLEN';
 }

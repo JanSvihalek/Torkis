@@ -2421,4 +2421,135 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get nastDayMnogo => 'dni';
+
+  @override
+  String get zamModZamestnanci => 'Pracownicy';
+
+  @override
+  String get zamModNastaveni => 'Ustawienia';
+
+  @override
+  String zamChyba(String chyba) {
+    return 'Błąd: $chyba';
+  }
+
+  @override
+  String get zamTitle => 'Zespół i uprawnienia';
+
+  @override
+  String get zamSubtitle =>
+      'Zarządzaj członkami swojego serwisu i ich dostępem do aplikacji.';
+
+  @override
+  String get zamPrazdny => 'Nie masz jeszcze żadnych członków zespołu.';
+
+  @override
+  String get zamPridatClena => 'Dodaj członka zespołu';
+
+  @override
+  String get zamLimitTitle => 'Osiągnięto limit kont';
+
+  @override
+  String zamLimitText(String plan, int limit, int pocet) {
+    return 'Plan $plan umożliwia maksymalnie $limit kont użytkowników. Obecnie używasz $pocet/$limit. Aby dodać więcej członków zespołu, zaktualizuj plan.';
+  }
+
+  @override
+  String get zamZrusit => 'Anuluj';
+
+  @override
+  String get zamUpgradovat => 'Zaktualizuj plan';
+
+  @override
+  String get zamNovyClen => 'Nowy członek zespołu';
+
+  @override
+  String get zamJmenoLabel => 'Imię i nazwisko *';
+
+  @override
+  String get zamEmailLabel => 'E-mail logowania *';
+
+  @override
+  String get zamHesloLabel => 'Hasło logowania (min. 6 znaków) *';
+
+  @override
+  String get zamVychoziPrava => 'Domyślne uprawnienia dostępu';
+
+  @override
+  String get zamVytvoritUcet => 'Utwórz konto';
+
+  @override
+  String get zamErrVyplnte => 'Wypełnij imię, e-mail i hasło.';
+
+  @override
+  String get zamErrHesloKratke => 'Hasło musi mieć co najmniej 6 znaków.';
+
+  @override
+  String get zamUcetVytvoren => 'Konto utworzone.';
+
+  @override
+  String get zamErrOvereni => 'Błąd uwierzytelniania.';
+
+  @override
+  String get zamErrHesloSlabe => 'Wprowadzone hasło jest zbyt słabe.';
+
+  @override
+  String get zamErrEmailExistuje => 'Konto z tym adresem e-mail już istnieje.';
+
+  @override
+  String get zamErrEmailFormat => 'Nieprawidłowy format e-mail.';
+
+  @override
+  String zamErrNeocekavana(String chyba) {
+    return 'Nieoczekiwany błąd: $chyba';
+  }
+
+  @override
+  String get zamPristupovaPrava => 'Uprawnienia dostępu';
+
+  @override
+  String get zamUlozitOpravneni => 'Zapisz uprawnienia';
+
+  @override
+  String get zamUdelitVse => 'Przyznaj wszystko';
+
+  @override
+  String get zamOdebratVse => 'Odbierz wszystko';
+
+  @override
+  String zamPocetUzivatelu(int pocet) {
+    return '$pocet użytkowników';
+  }
+
+  @override
+  String zamPocetLimit(int pocet, int limit) {
+    return '$pocet / $limit użytkowników';
+  }
+
+  @override
+  String zamPlanBezLimitu(String plan) {
+    return 'Plan $plan · bez limitu';
+  }
+
+  @override
+  String zamPlanLimitDosazen(String plan) {
+    return 'Plan $plan · limit osiągnięty';
+  }
+
+  @override
+  String zamPlanZbyva(String plan, int zbyva) {
+    return 'Plan $plan · pozostało $zbyva';
+  }
+
+  @override
+  String get zamBezJmena => 'Brak nazwy';
+
+  @override
+  String get zamBezPrav => 'Brak rozszerzonych uprawnień';
+
+  @override
+  String get zamBadgeAdmin => 'ADMIN';
+
+  @override
+  String get zamBadgeClen => 'CZŁONEK';
 }

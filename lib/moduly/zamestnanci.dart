@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import '../core/constants.dart';
 import '../core/design_tokens.dart';
 import '../core/torkis_ui.dart';
+import '../l10n/app_localizations.dart';
 import 'auth_gate.dart'; // Kvůli globalServisId
 import 'predplatne_page.dart';
 
@@ -18,11 +19,12 @@ class ZamestnanciPage extends StatefulWidget {
 
 class _ZamestnanciPageState extends State<ZamestnanciPage> {
   String _prelozModul(String modul) {
+    final l10n = AppLocalizations.of(context);
     switch (modul) {
       case 'zamestnanci':
-        return 'Zaměstnanci';
+        return l10n.zamModZamestnanci;
       case 'nastaveni':
-        return 'Nastavení';
+        return l10n.zamModNastaveni;
       default:
         return modul;
     }
@@ -31,6 +33,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: tok.bg,
@@ -42,7 +45,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return Center(child: Text('Chyba: ${snapshot.error}'));
+              return Center(child: Text(l10n.zamChyba(snapshot.error.toString())));
             }
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -55,10 +58,9 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const TorkisPageTitle(
-                  title: 'Tým a oprávnění',
-                  subtitle:
-                      'Spravujte členy svého servisu a jejich přístup do aplikace.',
+                TorkisPageTitle(
+                  title: l10n.zamTitle,
+                  subtitle: l10n.zamSubtitle,
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
@@ -72,7 +74,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                 Expanded(
                   child: docs.isEmpty
                       ? Center(
-                          child: Text('Zatím nemáte žádné členy týmu.',
+                          child: Text(l10n.zamPrazdny,
                               style: TextStyle(color: tok.textSecondary)),
                         )
                       : ListView.builder(
@@ -115,8 +117,8 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                 _showAddZamestnanecDialog(context);
               }
             },
-            label: const Text('Přidat člena týmu',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            label: Text(AppLocalizations.of(context).zamPridatClena,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
             icon: Icon(
                 dosazenLimit ? Icons.lock_outline : Icons.person_add_rounded),
             backgroundColor:
@@ -130,17 +132,18 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
 
   void _showLimitReachedDialog(BuildContext context, int pocet, int limit) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: tok.surface,
-        title: const Text('Dosažen limit účtů'),
+        title: Text(l10n.zamLimitTitle),
         content: Text(
-            'Plán ${globalPlanTyp.toUpperCase()} umožňuje maximálně $limit uživatelských účtů. Aktuálně využíváte $pocet/$limit. Pro přidání dalších členů týmu upgradujte plán.'),
+            l10n.zamLimitText(globalPlanTyp.toUpperCase(), limit, pocet)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Zrušit'),
+            child: Text(l10n.zamZrusit),
           ),
           ElevatedButton(
             onPressed: () {
@@ -155,7 +158,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
               backgroundColor: TokColors.accent,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Upgradovat plán'),
+            child: Text(l10n.zamUpgradovat),
           ),
         ],
       ),
@@ -168,10 +171,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
     final emailCtrl = TextEditingController();
     final hesloCtrl = TextEditingController();
 
-    Map<String, bool> novaPrava = {
-      'zamestnanci': false,
-      'nastaveni': false,
-    };
+    Map<String, bool> novaPrava = defaultZamestnanecPrava();
 
     bool isSaving = false;
     bool hesloSkryte = true;
@@ -183,6 +183,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           final tok = context.tok;
+          final l10n = AppLocalizations.of(context);
 
           return Container(
             height: MediaQuery.of(context).size.height * 0.90,
@@ -207,7 +208,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                   ),
                 ),
                 const SizedBox(height: TokSpace.lg),
-                Text('Nový člen týmu',
+                Text(l10n.zamNovyClen,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -216,16 +217,16 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                 const SizedBox(height: TokSpace.lg),
                 TextField(
                   controller: jmenoCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Jméno a příjmení *',
+                  decoration: InputDecoration(
+                    labelText: l10n.zamJmenoLabel,
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Přihlašovací e-mail *',
+                  decoration: InputDecoration(
+                    labelText: l10n.zamEmailLabel,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -233,7 +234,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                   controller: hesloCtrl,
                   obscureText: hesloSkryte,
                   decoration: InputDecoration(
-                    labelText: 'Přihlašovací heslo (min. 6 znaků) *',
+                    labelText: l10n.zamHesloLabel,
                     suffixIcon: IconButton(
                       icon: Icon(hesloSkryte
                           ? Icons.visibility_off_rounded
@@ -244,7 +245,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                   ),
                 ),
                 const SizedBox(height: TokSpace.lg),
-                Text('Výchozí přístupová práva',
+                Text(l10n.zamVychoziPrava,
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -253,20 +254,12 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                 const SizedBox(height: 8),
                 Expanded(
                   child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        _buildPravoSwitch(setModalState, 'Správa zaměstnanců',
-                            'zamestnanci', novaPrava, Icons.people_alt_outlined),
-                        _buildPravoSwitch(setModalState,
-                            'Nastavení servisu (IČO, atd.)', 'nastaveni',
-                            novaPrava, Icons.settings_outlined),
-                      ],
-                    ),
+                    child: _pravaSekce(setModalState, novaPrava),
                   ),
                 ),
                 const SizedBox(height: TokSpace.sm),
                 TorkisPrimaryButton(
-                  label: 'Vytvořit účet',
+                  label: l10n.zamVytvoritUcet,
                   loading: isSaving,
                   trailingIcon: null,
                   onPressed: isSaving
@@ -276,9 +269,8 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                               emailCtrl.text.trim().isEmpty ||
                               hesloCtrl.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Vyplňte prosím jméno, e-mail i heslo.'),
+                              SnackBar(
+                                content: Text(l10n.zamErrVyplnte),
                                 backgroundColor: TokColors.danger,
                               ),
                             );
@@ -286,9 +278,8 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                           }
                           if (hesloCtrl.text.trim().length < 6) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content:
-                                    Text('Heslo musí mít alespoň 6 znaků.'),
+                              SnackBar(
+                                content: Text(l10n.zamErrHesloKratke),
                                 backgroundColor: TokColors.warning,
                               ),
                             );
@@ -344,22 +335,21 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Účet vytvořen.'),
+                                SnackBar(
+                                  content: Text(l10n.zamUcetVytvoren),
                                   backgroundColor: TokColors.success,
                                 ),
                               );
                             }
                           } on FirebaseAuthException catch (e) {
                             setModalState(() => isSaving = false);
-                            String errMsg = 'Chyba ověření.';
+                            String errMsg = l10n.zamErrOvereni;
                             if (e.code == 'weak-password') {
-                              errMsg = 'Zadané heslo je příliš slabé.';
+                              errMsg = l10n.zamErrHesloSlabe;
                             } else if (e.code == 'email-already-in-use') {
-                              errMsg =
-                                  'Účet s tímto e-mailem již existuje.';
+                              errMsg = l10n.zamErrEmailExistuje;
                             } else if (e.code == 'invalid-email') {
-                              errMsg = 'Neplatný formát e-mailu.';
+                              errMsg = l10n.zamErrEmailFormat;
                             }
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -373,7 +363,7 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                    content: Text('Neočekávaná chyba: $e'),
+                                    content: Text(l10n.zamErrNeocekavana(e.toString())),
                                     backgroundColor: TokColors.danger),
                               );
                             }
@@ -391,9 +381,10 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
 
   void _showEditPravaDialog(BuildContext context, String docId, String jmeno,
       Map<String, dynamic> aktualniPrava) {
+    // Chybějící klíč = povoleno (zpětná kompatibilita se staršími účty,
+    // shodně se sémantikou vynucení v maPristup).
     Map<String, bool> lokalniPrava = {
-      'zamestnanci': aktualniPrava['zamestnanci'] ?? false,
-      'nastaveni': aktualniPrava['nastaveni'] ?? false,
+      for (final m in kGrantableModuly) m: aktualniPrava[m] ?? true,
     };
 
     showModalBottomSheet(
@@ -403,65 +394,68 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) {
           final tok = context.tok;
-          return Container(
-            decoration: BoxDecoration(
-              color: tok.surface,
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+          final l10n = AppLocalizations.of(context);
+          return ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            padding: const EdgeInsets.fromLTRB(
-                TokSpace.xl, TokSpace.md, TokSpace.xl, TokSpace.xl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: tok.line,
-                      borderRadius: BorderRadius.circular(10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: tok.surface,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                  TokSpace.xl, TokSpace.md, TokSpace.xl, TokSpace.xl),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: tok.line,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: TokSpace.lg),
-                Text('Přístupová práva',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: tok.textSecondary,
-                        letterSpacing: 1.2)),
-                const SizedBox(height: 4),
-                Text(jmeno,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: tok.textPrimary,
-                    )),
-                const SizedBox(height: TokSpace.lg),
-                _buildPravoSwitch(setModalState, 'Správa zaměstnanců',
-                    'zamestnanci', lokalniPrava, Icons.people_alt_outlined),
-                _buildPravoSwitch(
-                    setModalState,
-                    'Nastavení servisu (IČO, atd.)',
-                    'nastaveni',
-                    lokalniPrava,
-                    Icons.settings_outlined),
-                const SizedBox(height: TokSpace.lg),
-                TorkisPrimaryButton(
-                  label: 'Uložit oprávnění',
-                  trailingIcon: null,
-                  onPressed: () async {
-                    await FirebaseFirestore.instance
-                        .collection('uzivatele')
-                        .doc(docId)
-                        .update({'prava': lokalniPrava});
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                ),
-                SizedBox(height: MediaQuery.of(context).padding.bottom),
-              ],
+                  const SizedBox(height: TokSpace.lg),
+                  Text(l10n.zamPristupovaPrava,
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: tok.textSecondary,
+                          letterSpacing: 1.2)),
+                  const SizedBox(height: 4),
+                  Text(jmeno,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: tok.textPrimary,
+                      )),
+                  const SizedBox(height: TokSpace.lg),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: _pravaSekce(setModalState, lokalniPrava),
+                    ),
+                  ),
+                  const SizedBox(height: TokSpace.lg),
+                  TorkisPrimaryButton(
+                    label: l10n.zamUlozitOpravneni,
+                    trailingIcon: null,
+                    onPressed: () async {
+                      await FirebaseFirestore.instance
+                          .collection('uzivatele')
+                          .doc(docId)
+                          .update({'prava': lokalniPrava});
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom),
+                ],
+              ),
             ),
           );
         },
@@ -469,9 +463,72 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
     );
   }
 
+  // Lokalizovaný název + ikona pro modul s oprávněním.
+  ({String nazev, IconData ikona}) _modulVizual(
+      AppLocalizations l10n, String key) {
+    switch (key) {
+      case 'prijem':
+        return (nazev: l10n.nastModPrijem, ikona: Icons.add_circle_outline_rounded);
+      case 'vozidla':
+        return (nazev: l10n.nastModVozidla, ikona: Icons.directions_car_outlined);
+      case 'zakaznici':
+        return (nazev: l10n.nastModZakaznici, ikona: Icons.people_alt_outlined);
+      case 'historie_prijmu':
+        return (nazev: l10n.nastModHistorie, ikona: Icons.history_rounded);
+      case 'ukony':
+        return (nazev: l10n.nastModUkony, ikona: Icons.playlist_add_check_circle_outlined);
+      case 'vin_dekoder':
+        return (nazev: l10n.nastModVin, ikona: Icons.travel_explore_outlined);
+      case 'statistiky':
+        return (nazev: l10n.nastModStatistiky, ikona: Icons.bar_chart_outlined);
+      case 'zamestnanci':
+        return (nazev: l10n.nastModTym, ikona: Icons.badge_outlined);
+      case 'nastaveni':
+        return (nazev: l10n.nastModNastaveni, ikona: Icons.settings_outlined);
+      default:
+        return (nazev: key, ikona: Icons.help_outline_rounded);
+    }
+  }
+
+  // Hromadné tlačítko „Udělit/Odebrat vše" + přepínač pro každý modul.
+  Widget _pravaSekce(StateSetter setModalState, Map<String, bool> prava) {
+    final l10n = AppLocalizations.of(context);
+    final vseUdeleno = kGrantableModuly.every((m) => prava[m] ?? false);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: () => setModalState(() {
+              final novaHodnota = !vseUdeleno;
+              for (final m in kGrantableModuly) {
+                prava[m] = novaHodnota;
+              }
+            }),
+            icon: Icon(
+                vseUdeleno
+                    ? Icons.remove_done_rounded
+                    : Icons.done_all_rounded,
+                size: 18),
+            label: Text(vseUdeleno ? l10n.zamOdebratVse : l10n.zamUdelitVse),
+          ),
+        ),
+        const SizedBox(height: 4),
+        for (final modul in kGrantableModuly)
+          Builder(builder: (_) {
+            final v = _modulVizual(l10n, modul);
+            return _buildPravoSwitch(
+                setModalState, v.nazev, modul, prava, v.ikona);
+          }),
+      ],
+    );
+  }
+
   Widget _buildPravoSwitch(StateSetter setState, String label, String key,
       Map<String, bool> prava, IconData icon) {
     final tok = context.tok;
+    final hodnota = prava[key] ?? false;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
@@ -488,9 +545,8 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                 color: tok.textPrimary,
               )),
           secondary: Icon(icon,
-              color:
-                  prava[key]! ? TokColors.accent : tok.textSecondary),
-          value: prava[key]!,
+              color: hodnota ? TokColors.accent : tok.textSecondary),
+          value: hodnota,
           activeThumbColor: TokColors.accent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(TokRadius.md),
@@ -518,6 +574,7 @@ class _UserQuotaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final unlimited = limit == null;
     final dosazen = !unlimited && pocet >= limit!;
     final progress = unlimited ? 0.0 : (pocet / limit!).clamp(0.0, 1.0);
@@ -554,8 +611,8 @@ class _UserQuotaCard extends StatelessWidget {
                   children: [
                     Text(
                       unlimited
-                          ? '$pocet uživatelů'
-                          : '$pocet / $limit uživatelů',
+                          ? l10n.zamPocetUzivatelu(pocet)
+                          : l10n.zamPocetLimit(pocet, limit!),
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -566,10 +623,11 @@ class _UserQuotaCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       unlimited
-                          ? 'Plán ${plan.toUpperCase()} · bez limitu'
+                          ? l10n.zamPlanBezLimitu(plan.toUpperCase())
                           : dosazen
-                              ? 'Plán ${plan.toUpperCase()} · limit dosažen'
-                              : 'Plán ${plan.toUpperCase()} · zbývá ${limit! - pocet}',
+                              ? l10n.zamPlanLimitDosazen(plan.toUpperCase())
+                              : l10n.zamPlanZbyva(
+                                  plan.toUpperCase(), limit! - pocet),
                       style: TextStyle(
                           fontSize: 12, color: tok.textSecondary),
                     ),
@@ -612,7 +670,8 @@ class _UserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
-    final String jmeno = data['jmeno'] ?? 'Bez jména';
+    final l10n = AppLocalizations.of(context);
+    final String jmeno = data['jmeno'] ?? l10n.zamBezJmena;
     final String email = data['email'] ?? '-';
     final String role = data['role'] ?? 'zamestnanec';
     final bool jeAdmin = role == 'admin';
@@ -628,7 +687,7 @@ class _UserCard extends StatelessWidget {
     });
 
     final podnadpis = aktivniModuly.isEmpty
-        ? 'Bez rozšířených práv'
+        ? l10n.zamBezPrav
         : aktivniModuly.join(' · ');
 
     return Container(
@@ -689,7 +748,7 @@ class _UserCard extends StatelessWidget {
                             BorderRadius.circular(TokRadius.round),
                       ),
                       child: Text(
-                        jeAdmin ? 'ADMIN' : 'ČLEN',
+                        jeAdmin ? l10n.zamBadgeAdmin : l10n.zamBadgeClen,
                         style: TextStyle(
                           fontSize: 9,
                           fontWeight: FontWeight.w700,

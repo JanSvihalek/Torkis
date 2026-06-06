@@ -2410,4 +2410,135 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get nastDayMnogo => 'dní';
+
+  @override
+  String get zamModZamestnanci => 'Zaměstnanci';
+
+  @override
+  String get zamModNastaveni => 'Nastavení';
+
+  @override
+  String zamChyba(String chyba) {
+    return 'Chyba: $chyba';
+  }
+
+  @override
+  String get zamTitle => 'Tým a oprávnění';
+
+  @override
+  String get zamSubtitle =>
+      'Spravujte členy svého servisu a jejich přístup do aplikace.';
+
+  @override
+  String get zamPrazdny => 'Zatím nemáte žádné členy týmu.';
+
+  @override
+  String get zamPridatClena => 'Přidat člena týmu';
+
+  @override
+  String get zamLimitTitle => 'Dosažen limit účtů';
+
+  @override
+  String zamLimitText(String plan, int limit, int pocet) {
+    return 'Plán $plan umožňuje maximálně $limit uživatelských účtů. Aktuálně využíváte $pocet/$limit. Pro přidání dalších členů týmu upgradujte plán.';
+  }
+
+  @override
+  String get zamZrusit => 'Zrušit';
+
+  @override
+  String get zamUpgradovat => 'Upgradovat plán';
+
+  @override
+  String get zamNovyClen => 'Nový člen týmu';
+
+  @override
+  String get zamJmenoLabel => 'Jméno a příjmení *';
+
+  @override
+  String get zamEmailLabel => 'Přihlašovací e-mail *';
+
+  @override
+  String get zamHesloLabel => 'Přihlašovací heslo (min. 6 znaků) *';
+
+  @override
+  String get zamVychoziPrava => 'Výchozí přístupová práva';
+
+  @override
+  String get zamVytvoritUcet => 'Vytvořit účet';
+
+  @override
+  String get zamErrVyplnte => 'Vyplňte prosím jméno, e-mail i heslo.';
+
+  @override
+  String get zamErrHesloKratke => 'Heslo musí mít alespoň 6 znaků.';
+
+  @override
+  String get zamUcetVytvoren => 'Účet vytvořen.';
+
+  @override
+  String get zamErrOvereni => 'Chyba ověření.';
+
+  @override
+  String get zamErrHesloSlabe => 'Zadané heslo je příliš slabé.';
+
+  @override
+  String get zamErrEmailExistuje => 'Účet s tímto e-mailem již existuje.';
+
+  @override
+  String get zamErrEmailFormat => 'Neplatný formát e-mailu.';
+
+  @override
+  String zamErrNeocekavana(String chyba) {
+    return 'Neočekávaná chyba: $chyba';
+  }
+
+  @override
+  String get zamPristupovaPrava => 'Přístupová práva';
+
+  @override
+  String get zamUlozitOpravneni => 'Uložit oprávnění';
+
+  @override
+  String get zamUdelitVse => 'Udělit vše';
+
+  @override
+  String get zamOdebratVse => 'Odebrat vše';
+
+  @override
+  String zamPocetUzivatelu(int pocet) {
+    return '$pocet uživatelů';
+  }
+
+  @override
+  String zamPocetLimit(int pocet, int limit) {
+    return '$pocet / $limit uživatelů';
+  }
+
+  @override
+  String zamPlanBezLimitu(String plan) {
+    return 'Plán $plan · bez limitu';
+  }
+
+  @override
+  String zamPlanLimitDosazen(String plan) {
+    return 'Plán $plan · limit dosažen';
+  }
+
+  @override
+  String zamPlanZbyva(String plan, int zbyva) {
+    return 'Plán $plan · zbývá $zbyva';
+  }
+
+  @override
+  String get zamBezJmena => 'Bez jména';
+
+  @override
+  String get zamBezPrav => 'Bez rozšířených práv';
+
+  @override
+  String get zamBadgeAdmin => 'ADMIN';
+
+  @override
+  String get zamBadgeClen => 'ČLEN';
 }
