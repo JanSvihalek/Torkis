@@ -644,6 +644,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prijemPodpisSjednaneUkony => 'Agreed jobs:';
 
   @override
+  String get prijemRekapZaznam => 'Record';
+
+  @override
   String get prijemPodpisEmailToggle => 'Send copy of protocol by e-mail';
 
   @override
@@ -2500,6 +2503,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get zamOdebratVse => 'Revoke all';
+
+  @override
+  String get zamOdstranit => 'Remove';
+
+  @override
+  String get zamOdstranitTitle => 'Remove team member?';
+
+  @override
+  String zamOdstranitText(String jmeno) {
+    return 'Do you really want to remove $jmeno? They will lose access to the app. This action cannot be undone.';
+  }
+
+  @override
+  String get zamClenOdstranen => 'Team member removed.';
 
   @override
   String zamPocetUzivatelu(int pocet) {

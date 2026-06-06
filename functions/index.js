@@ -19,6 +19,7 @@ const crypto = require("crypto");
 const {onCall, onRequest, HttpsError} = require("firebase-functions/v2/https");
 const {defineSecret} = require("firebase-functions/params");
 const {initializeApp} = require("firebase-admin/app");
+const {getAuth} = require("firebase-admin/auth");
 const {getFirestore, FieldValue, Timestamp} =
     require("firebase-admin/firestore");
 
@@ -292,6 +293,79 @@ exports.stkVin = onCall(
 
       await cacheRef.set({vin, raw, cachedAt: FieldValue.serverTimestamp()});
       return {raw, fromCache: false};
+    },
+);
+
+// ─────────────────────────────────────────────────────────────────────────
+// SPRÁVA TÝMU — úplné odstranění člena (Auth účet + Firestore profil)
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Úplné odstranění člena týmu: smaže jeho Firebase Auth účet i Firestore profil.
+ * Na rozdíl od klientského smazání (jen Firestore dokument) uvolní i e-mail,
+ * takže stejnou adresu lze později znovu přidat a uživatel po přihlášení
+ * neskončí omylem v onboardingu.
+ *
+ * Oprávnění (zrcadlí firestore.rules → canManageStaff + allow delete):
+ *   - volající je přihlášený člen servisu s právem 'zamestnanci',
+ *   - mazaný uživatel patří do STEJNÉHO servisu,
+ *   - nelze smazat sám sebe.
+ */
+exports.deleteZamestnanec = onCall(
+    {region: REGION},
+    async (request) => {
+      const auth = request.auth;
+      if (!auth) {
+        throw new HttpsError("unauthenticated", "Vyžadováno přihlášení.");
+      }
+      const targetUid =
+          request.data && typeof request.data.uid === "string" ?
+              request.data.uid.trim() : "";
+      if (!targetUid) {
+        throw new HttpsError("invalid-argument", "Chybí uid člena ke smazání.");
+      }
+      if (targetUid === auth.uid) {
+        throw new HttpsError(
+            "failed-precondition", "Nelze odstranit vlastní účet.");
+      }
+
+      // Volající: ověř, že smí spravovat zaměstnance (právo 'zamestnanci').
+      const callerDoc = await db.collection("uzivatele").doc(auth.uid).get();
+      if (!callerDoc.exists) {
+        throw new HttpsError(
+            "failed-precondition", "Profil uživatele nenalezen.");
+      }
+      const callerServisId = callerDoc.get("servis_id");
+      const callerPrava = callerDoc.get("prava") || {};
+      if (!callerServisId || callerPrava.zamestnanci !== true) {
+        throw new HttpsError(
+            "permission-denied", "Nemáte oprávnění spravovat tým.");
+      }
+
+      // Cíl: musí existovat a patřit do stejného servisu.
+      const targetDoc = await db.collection("uzivatele").doc(targetUid).get();
+      if (!targetDoc.exists) {
+        throw new HttpsError("not-found", "Člen týmu nenalezen.");
+      }
+      if (targetDoc.get("servis_id") !== callerServisId) {
+        throw new HttpsError(
+            "permission-denied", "Člen nepatří do vašeho servisu.");
+      }
+
+      // 1) Smazání Auth účtu (uvolní e-mail). Pokud už neexistuje, pokračujeme.
+      try {
+        await getAuth().deleteUser(targetUid);
+      } catch (e) {
+        if (e.code !== "auth/user-not-found") {
+          throw new HttpsError(
+              "internal", "Nepodařilo se smazat přihlašovací účet.", e.message);
+        }
+      }
+
+      // 2) Smazání Firestore profilu (tím zaniká členství i přístup k datům).
+      await db.collection("uzivatele").doc(targetUid).delete();
+
+      return {success: true};
     },
 );
 

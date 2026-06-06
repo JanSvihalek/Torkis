@@ -648,6 +648,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get prijemPodpisSjednaneUkony => 'Uzgodnione prace:';
 
   @override
+  String get prijemRekapZaznam => 'Zapis';
+
+  @override
   String get prijemPodpisEmailToggle => 'Wyślij kopię protokołu e-mailem';
 
   @override
@@ -2515,6 +2518,20 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get zamOdebratVse => 'Odbierz wszystko';
+
+  @override
+  String get zamOdstranit => 'Usuń';
+
+  @override
+  String get zamOdstranitTitle => 'Usunąć członka zespołu?';
+
+  @override
+  String zamOdstranitText(String jmeno) {
+    return 'Czy na pewno chcesz usunąć członka $jmeno? Utraci dostęp do aplikacji. Tej operacji nie można cofnąć.';
+  }
+
+  @override
+  String get zamClenOdstranen => 'Członek zespołu został usunięty.';
 
   @override
   String zamPocetUzivatelu(int pocet) {

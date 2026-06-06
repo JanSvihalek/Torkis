@@ -73,6 +73,13 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
 
   // KROK 2: Provoz a automatizace
   bool _autoCisloZakazky = true;
+  // Formát automaticky generovaného čísla zakázky (typDokladu = 'zakazka').
+  // Stejné klíče čte generátor v prijem_vozidla.dart i konfigurátor v nastavení.
+  String _cisloPrefix = 'ZAK';
+  String _cisloRokFormat = '{YYYY}'; // '{YYYY}', '{YY}', ''
+  String _cisloMesicFormat = '{MM}'; // '{MM}', ''
+  String _cisloOddelovac = '-'; // '-', '/', '_', ''
+  double _cisloDelka = 5.0; // 3 až 6
   bool _podpisPovolen = true;
   bool _spzPovinne = true;
   final List<String> _typyZaznamu = ['Servis', 'Výkup'];
@@ -291,6 +298,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               'email_servisu': _emailServisuController.text.trim(),
               'default_odesilat_emaily': _defaultOdeslatEmaily,
               'auto_cislo_zakazky': _autoCisloZakazky,
+              // Formát čísla zakázky (čte generátor v prijem_vozidla.dart).
+              'prefix_zakazka': _cisloPrefix.trim().toUpperCase(),
+              'cfg_rok_zakazka': _cisloRokFormat,
+              'cfg_mesic_zakazka': _cisloMesicFormat,
+              'cfg_oddelovac_zakazka': _cisloOddelovac,
+              'cfg_delka_zakazka': _cisloDelka.toInt(),
               'podpis_povolen': _podpisPovolen,
               'spz_povinne': _spzPovinne,
               'typy_zaznamu': _typyZaznamu,
@@ -568,6 +581,163 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     );
   }
 
+  // Maska formátu (interní zápis), shodná s konfigurátorem v nastavení.
+  String _cisloMaska() {
+    final casti = <String>[];
+    if (_cisloPrefix.isNotEmpty) casti.add('{PREFIX}');
+    if (_cisloRokFormat.isNotEmpty) casti.add(_cisloRokFormat);
+    if (_cisloMesicFormat.isNotEmpty) casti.add(_cisloMesicFormat);
+    casti.add('{NUM${_cisloDelka.toInt()}}');
+    return casti.join(_cisloOddelovac);
+  }
+
+  // Živý náhled čísla pro aktuální datum (bez závislosti na intl).
+  String _cisloNahled() {
+    final ted = DateTime.now();
+    final delka = _cisloDelka.toInt();
+    String n = _cisloMaska();
+    n = n.replaceAll('{PREFIX}', _cisloPrefix.toUpperCase());
+    n = n.replaceAll('{YYYY}', ted.year.toString());
+    n = n.replaceAll('{YY}', (ted.year % 100).toString().padLeft(2, '0'));
+    n = n.replaceAll('{MM}', ted.month.toString().padLeft(2, '0'));
+    n = n.replaceAll('{NUM$delka}', '1'.padLeft(delka, '0'));
+    return n;
+  }
+
+  // Konfigurátor formátu čísla zakázky — zobrazí se pod přepínačem auto-čísla.
+  Widget _buildFormatCisla(bool isDark, AppLocalizations l10n) {
+    final fill = isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white;
+    InputDecoration dek(String label) => InputDecoration(
+          labelText: label,
+          isDense: true,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          filled: true,
+          fillColor: fill,
+        );
+    return Container(
+      margin: const EdgeInsets.only(top: 2, bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(l10n.nastFormatZakazek,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 12),
+          // Živý náhled
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.blue.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              children: [
+                Text(l10n.nastNahledLabel,
+                    style: const TextStyle(
+                        color: Colors.blue,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                Text(_cisloNahled(),
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                        color: Colors.blue)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  initialValue: _cisloPrefix,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: dek(l10n.nastPrefix),
+                  onChanged: (val) => setState(() => _cisloPrefix = val.trim()),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _cisloOddelovac,
+                  decoration: dek(l10n.nastOddelovac),
+                  items: [
+                    DropdownMenuItem(
+                        value: '-', child: Text(l10n.nastOddelovacPomlcka)),
+                    DropdownMenuItem(
+                        value: '/', child: Text(l10n.nastOddelovacLomitko)),
+                    DropdownMenuItem(
+                        value: '_', child: Text(l10n.nastOddelovacPodtrzitko)),
+                    DropdownMenuItem(
+                        value: '', child: Text(l10n.nastOddelovacBez)),
+                  ],
+                  onChanged: (val) =>
+                      setState(() => _cisloOddelovac = val ?? ''),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _cisloRokFormat,
+                  decoration: dek(l10n.nastRokFormat),
+                  items: [
+                    DropdownMenuItem(
+                        value: '{YYYY}', child: Text(l10n.nastRok4)),
+                    DropdownMenuItem(value: '{YY}', child: Text(l10n.nastRok2)),
+                    DropdownMenuItem(value: '', child: Text(l10n.nastBezRoku)),
+                  ],
+                  onChanged: (val) =>
+                      setState(() => _cisloRokFormat = val ?? ''),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _cisloMesicFormat,
+                  decoration: dek(l10n.nastMesicFormat),
+                  items: [
+                    DropdownMenuItem(
+                        value: '{MM}', child: Text(l10n.nastMesic2)),
+                    DropdownMenuItem(
+                        value: '', child: Text(l10n.nastBezMesice)),
+                  ],
+                  onChanged: (val) =>
+                      setState(() => _cisloMesicFormat = val ?? ''),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(l10n.nastDelkaCitadla(_cisloDelka.toInt()),
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Slider(
+            value: _cisloDelka,
+            min: 3,
+            max: 6,
+            divisions: 3,
+            activeColor: Colors.blue,
+            label: _cisloDelka.toInt().toString(),
+            onChanged: (val) => setState(() => _cisloDelka = val),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── KROK 1: Základní informace ──────────────────────────────────────────
   // IČO (ARES lookup), název servisu, DIČ, zápis v rejstříku, sídlo a kontakt,
   // e-mail, přepínač e-mailů, tmavý režim, jméno majitele (admin účet).
@@ -833,6 +1003,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             subtitle: l10n.onbAutoCisloSubtitle,
             value: _autoCisloZakazky,
             onChanged: (v) => setState(() => _autoCisloZakazky = v)),
+        if (_autoCisloZakazky) _buildFormatCisla(isDark, l10n),
         _onbSwitch(isDark,
             title: l10n.onbPodpisTitle,
             subtitle: l10n.onbPodpisSubtitle,

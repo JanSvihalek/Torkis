@@ -650,6 +650,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get prijemPodpisSjednaneUkony => 'Vereinbarte Arbeiten:';
 
   @override
+  String get prijemRekapZaznam => 'Datensatz';
+
+  @override
   String get prijemPodpisEmailToggle =>
       'Kopie des Protokolls per E-Mail senden';
 
@@ -2529,6 +2532,20 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get zamOdebratVse => 'Alle entziehen';
+
+  @override
+  String get zamOdstranit => 'Entfernen';
+
+  @override
+  String get zamOdstranitTitle => 'Teammitglied entfernen?';
+
+  @override
+  String zamOdstranitText(String jmeno) {
+    return 'Möchten Sie $jmeno wirklich entfernen? Die Person verliert den Zugriff auf die App. Diese Aktion kann nicht rückgängig gemacht werden.';
+  }
+
+  @override
+  String get zamClenOdstranen => 'Teammitglied entfernt.';
 
   @override
   String zamPocetUzivatelu(int pocet) {

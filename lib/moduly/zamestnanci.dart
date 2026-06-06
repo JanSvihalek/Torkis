@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -91,6 +92,8 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
                               prelozModul: _prelozModul,
                               onEdit: (id, jmeno, prava) =>
                                   _showEditPravaDialog(context, id, jmeno, prava),
+                              onDelete: (id, jmeno) =>
+                                  _showDeleteZamestnanecDialog(context, id, jmeno),
                             );
                           },
                         ),
@@ -463,6 +466,73 @@ class _ZamestnanciPageState extends State<ZamestnanciPage> {
     );
   }
 
+  // --- DIALOG PRO ODSTRANĚNÍ ČLENA TÝMU ---
+  // Smaže profil v Firestore (tím zaniká členství i přístup k datům dle pravidel).
+  // Auth účet z klienta smazat nelze — zůstane osiřelý, dokud ho neodstraní
+  // backend (Admin SDK).
+  void _showDeleteZamestnanecDialog(
+      BuildContext context, String docId, String jmeno) {
+    final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: tok.surface,
+        title: Text(l10n.zamOdstranitTitle),
+        content: Text(l10n.zamOdstranitText(jmeno)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.zamZrusit),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                // Backend (Admin SDK) smaže Auth účet i Firestore profil —
+                // uvolní e-mail pro případné opětovné přidání.
+                await FirebaseFunctions.instanceFor(region: 'europe-west3')
+                    .httpsCallable('deleteZamestnanec')
+                    .call({'uid': docId});
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.zamClenOdstranen),
+                      backgroundColor: TokColors.success,
+                    ),
+                  );
+                }
+              } on FirebaseFunctionsException catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.message ?? l10n.zamErrOvereni),
+                      backgroundColor: TokColors.danger,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.zamErrNeocekavana(e.toString())),
+                      backgroundColor: TokColors.danger,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: TokColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(l10n.zamOdstranit),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Lokalizovaný název + ikona pro modul s oprávněním.
   ({String nazev, IconData ikona}) _modulVizual(
       AppLocalizations l10n, String key) {
@@ -659,12 +729,14 @@ class _UserCard extends StatelessWidget {
   final String docId;
   final String Function(String) prelozModul;
   final void Function(String, String, Map<String, dynamic>) onEdit;
+  final void Function(String docId, String jmeno) onDelete;
 
   const _UserCard({
     required this.data,
     required this.docId,
     required this.prelozModul,
     required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -783,10 +855,22 @@ class _UserCard extends StatelessWidget {
             Icon(Icons.lock_outline_rounded,
                 color: tok.textMuted, size: 18)
           else
-            IconButton(
-              icon: const Icon(Icons.edit_outlined,
-                  size: 18, color: TokColors.accent),
-              onPressed: () => onEdit(docId, jmeno, prava),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.edit_outlined,
+                      size: 18, color: TokColors.accent),
+                  onPressed: () => onEdit(docId, jmeno, prava),
+                ),
+                IconButton(
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.delete_outline_rounded,
+                      size: 18, color: TokColors.danger),
+                  onPressed: () => onDelete(docId, jmeno),
+                ),
+              ],
             ),
         ],
       ),

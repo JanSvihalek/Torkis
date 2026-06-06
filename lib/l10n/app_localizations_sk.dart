@@ -646,6 +646,9 @@ class AppLocalizationsSk extends AppLocalizations {
   String get prijemPodpisSjednaneUkony => 'Dohodnuté úkony:';
 
   @override
+  String get prijemRekapZaznam => 'Záznam';
+
+  @override
   String get prijemPodpisEmailToggle => 'Odoslať kópiu protokolu e-mailom';
 
   @override
@@ -2506,6 +2509,20 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get zamOdebratVse => 'Odobrať všetko';
+
+  @override
+  String get zamOdstranit => 'Odstrániť';
+
+  @override
+  String get zamOdstranitTitle => 'Odstrániť člena tímu?';
+
+  @override
+  String zamOdstranitText(String jmeno) {
+    return 'Naozaj chcete odstrániť člena $jmeno? Stratí prístup do aplikácie. Túto akciu nie je možné vrátiť späť.';
+  }
+
+  @override
+  String get zamClenOdstranen => 'Člen tímu bol odstránený.';
 
   @override
   String zamPocetUzivatelu(int pocet) {

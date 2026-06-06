@@ -1286,6 +1286,12 @@ abstract class AppLocalizations {
   /// **'Sjednané úkony:'**
   String get prijemPodpisSjednaneUkony;
 
+  /// No description provided for @prijemRekapZaznam.
+  ///
+  /// In cs, this message translates to:
+  /// **'Záznam'**
+  String get prijemRekapZaznam;
+
   /// No description provided for @prijemPodpisEmailToggle.
   ///
   /// In cs, this message translates to:
@@ -4717,6 +4723,30 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Odebrat vše'**
   String get zamOdebratVse;
+
+  /// No description provided for @zamOdstranit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odstranit'**
+  String get zamOdstranit;
+
+  /// No description provided for @zamOdstranitTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odstranit člena týmu?'**
+  String get zamOdstranitTitle;
+
+  /// No description provided for @zamOdstranitText.
+  ///
+  /// In cs, this message translates to:
+  /// **'Opravdu chcete odstranit člena {jmeno}? Ztratí přístup do aplikace. Tuto akci nelze vrátit zpět.'**
+  String zamOdstranitText(String jmeno);
+
+  /// No description provided for @zamClenOdstranen.
+  ///
+  /// In cs, this message translates to:
+  /// **'Člen týmu byl odstraněn.'**
+  String get zamClenOdstranen;
 
   /// No description provided for @zamPocetUzivatelu.
   ///
