@@ -1925,4 +1925,150 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get mainTmavyRezim => 'Tmavý režim';
+
+  @override
+  String get histZpracovava => 'Zpracovává se...';
+
+  @override
+  String get histNadpis => 'Historie záznamů';
+
+  @override
+  String get histPodnadpis =>
+      'Přehled všech přijatých vozidel a jejich protokolů.';
+
+  @override
+  String get histHledat => 'Hledat SPZ, zákazníka nebo vozidlo...';
+
+  @override
+  String histChyba(String chyba) {
+    return 'Chyba: $chyba';
+  }
+
+  @override
+  String get histPrazdne => 'Zatím žádné záznamy o příjmu.';
+
+  @override
+  String get histNespecifikovano => 'Nespecifikováno';
+
+  @override
+  String get histPrijal => 'Přijal';
+
+  @override
+  String histFoto(int pocet) {
+    return '$pocet foto';
+  }
+
+  @override
+  String get histPodepsano => 'Podepsáno';
+
+  @override
+  String get histDetailNadpis => 'Detail příjmu';
+
+  @override
+  String histChybaTisku(String chyba) {
+    return 'Chyba při tisku: $chyba';
+  }
+
+  @override
+  String histChybaZobrazeni(String chyba) {
+    return 'Chyba při zobrazení: $chyba';
+  }
+
+  @override
+  String histProtokol(String cislo) {
+    return 'Protokol $cislo';
+  }
+
+  @override
+  String get histZobrazitProtokol => 'Zobrazit protokol';
+
+  @override
+  String get histTisknoutProtokol => 'Tisknout protokol';
+
+  @override
+  String get histTisknoutBtn => 'Tisk';
+
+  @override
+  String get histSekceVozidlo => 'Vozidlo';
+
+  @override
+  String get histPoleSPZ => 'SPZ';
+
+  @override
+  String get histPoleZnackaModel => 'Značka & Model';
+
+  @override
+  String get histPoleVin => 'VIN';
+
+  @override
+  String get histPoleRokVyroby => 'Rok výroby';
+
+  @override
+  String get histPolePalivo => 'Palivo';
+
+  @override
+  String get histPolePrevodovka => 'Převodovka';
+
+  @override
+  String get histPoleMotorizace => 'Motorizace';
+
+  @override
+  String get histSekceZakaznik => 'Zákazník';
+
+  @override
+  String get histPoleJmeno => 'Jméno';
+
+  @override
+  String get histPoleTelefon => 'Telefon';
+
+  @override
+  String get histPoleEmail => 'E-mail';
+
+  @override
+  String get histPoleAdresa => 'Adresa';
+
+  @override
+  String get histPoleIco => 'IČO';
+
+  @override
+  String get histPoleDic => 'DIČ';
+
+  @override
+  String get histSekceStav => 'Stav při příjmu';
+
+  @override
+  String get histPoleTachometr => 'Tachometr';
+
+  @override
+  String get histPoleNadrz => 'Stav nádrže';
+
+  @override
+  String get histPoleStk => 'STK';
+
+  @override
+  String get histPolePoskozeni => 'Poškození';
+
+  @override
+  String get histPolePneuLP => 'Pneumatiky LP / PP';
+
+  @override
+  String get histPolePneuLZ => 'Pneumatiky LZ / PZ';
+
+  @override
+  String get histSekcePozadavky => 'Požadavky zákazníka';
+
+  @override
+  String get histSekcePoznamky => 'Poznámky';
+
+  @override
+  String get histSekceFoto => 'Fotodokumentace';
+
+  @override
+  String get histZadneFoto => 'Nebyly pořízeny žádné fotografie.';
+
+  @override
+  String get histSekcePodpis => 'Podpis zákazníka';
+
+  @override
+  String get histPodpisNedostupny => 'Podpis není k dispozici';
 }

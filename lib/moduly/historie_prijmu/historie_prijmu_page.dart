@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../auth_gate.dart';
 import '../../core/constants.dart';
 import '../../core/shared_widgets.dart';
+import '../../l10n/app_localizations.dart';
 import 'prijem_detail.dart';
 
 class HistoriePrijmuPage extends StatefulWidget {
@@ -16,8 +17,8 @@ class HistoriePrijmuPage extends StatefulWidget {
 class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
   String _searchQuery = '';
 
-  String _formatDateHeader(dynamic timestamp) {
-    if (timestamp == null) return 'Zpracovává se...';
+  String _formatDateHeader(dynamic timestamp, AppLocalizations l10n) {
+    if (timestamp == null) return l10n.histZpracovava;
     final dt = (timestamp as Timestamp).toDate();
     return DateFormat('dd. MM. yyyy  HH:mm').format(dt);
   }
@@ -32,6 +33,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     if (globalServisId == null) {
       return const Center(child: CircularProgressIndicator());
@@ -45,14 +47,14 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Historie záznamů',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              Text(
+                l10n.histNadpis,
+                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Přehled všech přijatých vozidel a jejich protokolů.',
-                style: TextStyle(color: Colors.grey),
+              Text(
+                l10n.histPodnadpis,
+                style: const TextStyle(color: Colors.grey),
               ),
               const SizedBox(height: 15),
               Container(
@@ -71,7 +73,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                   onChanged: (v) =>
                       setState(() => _searchQuery = v.toLowerCase()),
                   decoration: InputDecoration(
-                    hintText: 'Hledat SPZ, zákazníka nebo vozidlo...',
+                    hintText: l10n.histHledat,
                     prefixIcon: const Icon(Icons.search, color: Colors.blue),
                     filled: true,
                     fillColor: isDark
@@ -109,7 +111,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('Chyba: ${snapshot.error}'));
+                return Center(child: Text(l10n.histChyba(snapshot.error.toString())));
               }
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -140,10 +142,10 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
               });
 
               if (docs.isEmpty) {
-                return const Center(
+                return Center(
                   child: Text(
-                    'Zatím žádné záznamy o příjmu.',
-                    style: TextStyle(color: Colors.grey),
+                    l10n.histPrazdne,
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 );
               }
@@ -266,7 +268,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      _formatDateHeader(data['cas_prijeti']),
+                                      _formatDateHeader(data['cas_prijeti'], l10n),
                                       style: TextStyle(
                                         color:
                                             Colors.white.withValues(alpha: 0.6),
@@ -290,7 +292,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        'Přijal',
+                                        l10n.histPrijal,
                                         style: TextStyle(
                                           color: Colors.white
                                               .withValues(alpha: 0.5),
@@ -360,7 +362,7 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                       child: Text(
                                         znacka.isNotEmpty
                                             ? '$znacka $model'.trim()
-                                            : 'Nespecifikováno',
+                                            : l10n.histNespecifikovano,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
@@ -478,10 +480,10 @@ class _HistoriePrijmuPageState extends State<HistoriePrijmuPage> {
                                     children: [
                                       if (pocetFotek > 0)
                                         buildBadge(Icons.photo_library,
-                                            '$pocetFotek foto', Colors.blue),
+                                            l10n.histFoto(pocetFotek), Colors.blue),
                                       if (maPodpis) ...[
                                         const SizedBox(width: 6),
-                                        buildBadge(Icons.draw, 'Podepsáno',
+                                        buildBadge(Icons.draw, l10n.histPodepsano,
                                             Colors.green),
                                       ],
                                       const Spacer(),

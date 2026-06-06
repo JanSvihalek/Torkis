@@ -1934,4 +1934,150 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get mainTmavyRezim => 'Tryb ciemny';
+
+  @override
+  String get histZpracovava => 'Przetwarzanie...';
+
+  @override
+  String get histNadpis => 'Historia przyjęć';
+
+  @override
+  String get histPodnadpis =>
+      'Przegląd wszystkich przyjętych pojazdów i ich protokołów.';
+
+  @override
+  String get histHledat => 'Szukaj po tablicy, kliencie lub pojeździe...';
+
+  @override
+  String histChyba(String chyba) {
+    return 'Błąd: $chyba';
+  }
+
+  @override
+  String get histPrazdne => 'Brak zapisów.';
+
+  @override
+  String get histNespecifikovano => 'Nieokreślono';
+
+  @override
+  String get histPrijal => 'Przyjął';
+
+  @override
+  String histFoto(int pocet) {
+    return '$pocet zdjęcie';
+  }
+
+  @override
+  String get histPodepsano => 'Podpisano';
+
+  @override
+  String get histDetailNadpis => 'Szczegóły przyjęcia';
+
+  @override
+  String histChybaTisku(String chyba) {
+    return 'Błąd druku: $chyba';
+  }
+
+  @override
+  String histChybaZobrazeni(String chyba) {
+    return 'Błąd wyświetlania: $chyba';
+  }
+
+  @override
+  String histProtokol(String cislo) {
+    return 'Protokół $cislo';
+  }
+
+  @override
+  String get histZobrazitProtokol => 'Pokaż protokół';
+
+  @override
+  String get histTisknoutProtokol => 'Drukuj protokół';
+
+  @override
+  String get histTisknoutBtn => 'Drukuj';
+
+  @override
+  String get histSekceVozidlo => 'Pojazd';
+
+  @override
+  String get histPoleSPZ => 'Nr rejestracyjny';
+
+  @override
+  String get histPoleZnackaModel => 'Marka & Model';
+
+  @override
+  String get histPoleVin => 'VIN';
+
+  @override
+  String get histPoleRokVyroby => 'Rok produkcji';
+
+  @override
+  String get histPolePalivo => 'Paliwo';
+
+  @override
+  String get histPolePrevodovka => 'Skrzynia biegów';
+
+  @override
+  String get histPoleMotorizace => 'Silnik';
+
+  @override
+  String get histSekceZakaznik => 'Klient';
+
+  @override
+  String get histPoleJmeno => 'Imię i nazwisko';
+
+  @override
+  String get histPoleTelefon => 'Telefon';
+
+  @override
+  String get histPoleEmail => 'E-mail';
+
+  @override
+  String get histPoleAdresa => 'Adres';
+
+  @override
+  String get histPoleIco => 'NIP';
+
+  @override
+  String get histPoleDic => 'REGON';
+
+  @override
+  String get histSekceStav => 'Stan przy przyjęciu';
+
+  @override
+  String get histPoleTachometr => 'Przebieg';
+
+  @override
+  String get histPoleNadrz => 'Poziom paliwa';
+
+  @override
+  String get histPoleStk => 'Przegląd';
+
+  @override
+  String get histPolePoskozeni => 'Uszkodzenia';
+
+  @override
+  String get histPolePneuLP => 'Opony PL / PP';
+
+  @override
+  String get histPolePneuLZ => 'Opony TL / TP';
+
+  @override
+  String get histSekcePozadavky => 'Życzenia klienta';
+
+  @override
+  String get histSekcePoznamky => 'Uwagi';
+
+  @override
+  String get histSekceFoto => 'Dokumentacja fotograficzna';
+
+  @override
+  String get histZadneFoto => 'Brak zdjęć.';
+
+  @override
+  String get histSekcePodpis => 'Podpis klienta';
+
+  @override
+  String get histPodpisNedostupny => 'Podpis niedostępny';
 }

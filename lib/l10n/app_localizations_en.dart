@@ -1921,4 +1921,150 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mainTmavyRezim => 'Dark mode';
+
+  @override
+  String get histZpracovava => 'Processing...';
+
+  @override
+  String get histNadpis => 'Service history';
+
+  @override
+  String get histPodnadpis =>
+      'Overview of all received vehicles and their records.';
+
+  @override
+  String get histHledat => 'Search by plate, customer or vehicle...';
+
+  @override
+  String histChyba(String chyba) {
+    return 'Error: $chyba';
+  }
+
+  @override
+  String get histPrazdne => 'No records yet.';
+
+  @override
+  String get histNespecifikovano => 'Unspecified';
+
+  @override
+  String get histPrijal => 'Received by';
+
+  @override
+  String histFoto(int pocet) {
+    return '$pocet photo';
+  }
+
+  @override
+  String get histPodepsano => 'Signed';
+
+  @override
+  String get histDetailNadpis => 'Intake detail';
+
+  @override
+  String histChybaTisku(String chyba) {
+    return 'Print error: $chyba';
+  }
+
+  @override
+  String histChybaZobrazeni(String chyba) {
+    return 'Display error: $chyba';
+  }
+
+  @override
+  String histProtokol(String cislo) {
+    return 'Record $cislo';
+  }
+
+  @override
+  String get histZobrazitProtokol => 'View record';
+
+  @override
+  String get histTisknoutProtokol => 'Print record';
+
+  @override
+  String get histTisknoutBtn => 'Print';
+
+  @override
+  String get histSekceVozidlo => 'Vehicle';
+
+  @override
+  String get histPoleSPZ => 'Plate';
+
+  @override
+  String get histPoleZnackaModel => 'Make & Model';
+
+  @override
+  String get histPoleVin => 'VIN';
+
+  @override
+  String get histPoleRokVyroby => 'Year';
+
+  @override
+  String get histPolePalivo => 'Fuel';
+
+  @override
+  String get histPolePrevodovka => 'Transmission';
+
+  @override
+  String get histPoleMotorizace => 'Engine';
+
+  @override
+  String get histSekceZakaznik => 'Customer';
+
+  @override
+  String get histPoleJmeno => 'Name';
+
+  @override
+  String get histPoleTelefon => 'Phone';
+
+  @override
+  String get histPoleEmail => 'E-mail';
+
+  @override
+  String get histPoleAdresa => 'Address';
+
+  @override
+  String get histPoleIco => 'Company ID';
+
+  @override
+  String get histPoleDic => 'Tax ID';
+
+  @override
+  String get histSekceStav => 'Condition at intake';
+
+  @override
+  String get histPoleTachometr => 'Odometer';
+
+  @override
+  String get histPoleNadrz => 'Fuel level';
+
+  @override
+  String get histPoleStk => 'MOT';
+
+  @override
+  String get histPolePoskozeni => 'Damage';
+
+  @override
+  String get histPolePneuLP => 'Tyres FL / FR';
+
+  @override
+  String get histPolePneuLZ => 'Tyres RL / RR';
+
+  @override
+  String get histSekcePozadavky => 'Customer requests';
+
+  @override
+  String get histSekcePoznamky => 'Notes';
+
+  @override
+  String get histSekceFoto => 'Photo documentation';
+
+  @override
+  String get histZadneFoto => 'No photos taken.';
+
+  @override
+  String get histSekcePodpis => 'Customer signature';
+
+  @override
+  String get histPodpisNedostupny => 'Signature not available';
 }

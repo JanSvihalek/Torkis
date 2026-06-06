@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import '../../core/pdf_generator.dart';
 import '../../core/design_tokens.dart';
 import '../../core/constants.dart';
+import '../../l10n/app_localizations.dart';
 import '../vozidla/vozidlo_detail.dart';
 import '../zakaznici/zakaznik_detail.dart';
 
@@ -65,6 +66,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   }
 
   Future<void> _tiskniProtokol() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isTisku = true);
     try {
       final pdfBytes = await _generatePdfBytes();
@@ -75,7 +77,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Chyba při tisku: $e'),
+            content: Text(l10n.histChybaTisku(e.toString())),
             backgroundColor: Colors.red));
       }
     } finally {
@@ -84,6 +86,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   }
 
   Future<void> _zobrazitProtokol() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isTisku = true);
     try {
       final pdfBytes = await _generatePdfBytes();
@@ -94,7 +97,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
           builder: (_) => Scaffold(
             appBar: AppBar(
               title: Text(
-                  'Protokol ${widget.data['cislo_zakazky'] ?? ''}'),
+                  l10n.histProtokol(widget.data['cislo_zakazky']?.toString() ?? '')),
             ),
             body: PdfPreview(
               build: (_) async => pdfBytes,
@@ -108,7 +111,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Chyba při zobrazení: $e'),
+            content: Text(l10n.histChybaZobrazeni(e.toString())),
             backgroundColor: Colors.red));
       }
     } finally {
@@ -119,6 +122,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     final d = widget.data;
     final zakaznik = d['zakaznik'] as Map<String, dynamic>? ?? {};
 
@@ -126,7 +130,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
       backgroundColor: context.tok.bg,
       appBar: AppBar(
         title: Text(
-          d['spz']?.toString() ?? 'Detail příjmu',
+          d['spz']?.toString() ?? l10n.histDetailNadpis,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
@@ -134,7 +138,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.visibility_outlined),
-            tooltip: 'Zobrazit protokol',
+            tooltip: l10n.histZobrazitProtokol,
             onPressed: _isTisku ? null : _zobrazitProtokol,
           ),
           IconButton(
@@ -144,12 +148,12 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.print_outlined),
-            tooltip: 'Tisknout protokol',
+            tooltip: l10n.histTisknoutProtokol,
             onPressed: _isTisku ? null : _tiskniProtokol,
           ),
         ],
       ),
-      body: _buildProtokolTab(isDark, d, zakaznik),
+      body: _buildProtokolTab(isDark, d, zakaznik, l10n),
     );
   }
 
@@ -157,6 +161,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     bool isDark,
     Map<String, dynamic> d,
     Map<String, dynamic> zakaznik,
+    AppLocalizations l10n,
   ) {
     final stavVozidla = d['stav_vozidla'] as Map<String, dynamic>? ?? {};
     final fotoUrls = d['fotografie_urls'] as Map<String, dynamic>? ?? {};
@@ -249,7 +254,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Přijal',
+                      Text(l10n.histPrijal,
                           style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.5),
                               fontSize: 12)),
@@ -291,7 +296,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
           _sectionCard(isDark,
               icon: Icons.directions_car,
               color: Colors.blue,
-              title: 'Vozidlo',
+              title: l10n.histSekceVozidlo,
               onTap: () {
                 final servisId = d['servis_id']?.toString() ?? '';
                 final spz = d['spz']?.toString() ?? '';
@@ -305,20 +310,20 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                 );
               },
               children: [
-                _infoRow('SPZ', d['spz']),
-                _infoRow('Značka & Model',
+                _infoRow(l10n.histPoleSPZ, d['spz']),
+                _infoRow(l10n.histPoleZnackaModel,
                     '${d['znacka'] ?? ''} ${d['model'] ?? ''}'.trim()),
-                _infoRow('VIN', d['vin']),
-                _infoRow('Rok výroby', d['rok_vyroby']),
-                _infoRow('Palivo', d['palivo_typ']),
-                _infoRow('Převodovka', d['prevodovka']),
-                _infoRow('Motorizace', d['motorizace']),
+                _infoRow(l10n.histPoleVin, d['vin']),
+                _infoRow(l10n.histPoleRokVyroby, d['rok_vyroby']),
+                _infoRow(l10n.histPolePalivo, d['palivo_typ']),
+                _infoRow(l10n.histPolePrevodovka, d['prevodovka']),
+                _infoRow(l10n.histPoleMotorizace, d['motorizace']),
               ]),
           const SizedBox(height: 15),
           _sectionCard(isDark,
               icon: Icons.person,
               color: Colors.teal,
-              title: 'Zákazník',
+              title: l10n.histSekceZakaznik,
               onTap: zakaznik.isNotEmpty
                   ? () => Navigator.push(
                         context,
@@ -329,52 +334,52 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                       )
                   : null,
               children: [
-                _infoRow('Jméno', zakaznik['jmeno']),
-                _infoRow('Telefon', zakaznik['telefon']),
-                _infoRow('E-mail', zakaznik['email']),
-                _infoRow('Adresa', zakaznik['adresa']),
-                _infoRow('IČO', zakaznik['ico']),
-                _infoRow('DIČ', zakaznik['dic']),
+                _infoRow(l10n.histPoleJmeno, zakaznik['jmeno']),
+                _infoRow(l10n.histPoleTelefon, zakaznik['telefon']),
+                _infoRow(l10n.histPoleEmail, zakaznik['email']),
+                _infoRow(l10n.histPoleAdresa, zakaznik['adresa']),
+                _infoRow(l10n.histPoleIco, zakaznik['ico']),
+                _infoRow(l10n.histPoleDic, zakaznik['dic']),
               ]),
           const SizedBox(height: 15),
           _sectionCard(isDark,
               icon: Icons.fact_check_outlined,
               color: Colors.orange,
-              title: 'Stav při příjmu',
+              title: l10n.histSekceStav,
               children: [
                 _infoRow(
-                  'Tachometr',
+                  l10n.histPoleTachometr,
                   stavVozidla['tachometr'] != null &&
                           stavVozidla['tachometr'].toString().isNotEmpty
                       ? '${stavVozidla['tachometr']} km'
                       : null,
                 ),
                 _infoRow(
-                  'Stav nádrže',
+                  l10n.histPoleNadrz,
                   stavVozidla['nadrz'] != null
                       ? '${(stavVozidla['nadrz'] as num).toStringAsFixed(0)} %'
                       : null,
                 ),
                 _infoRow(
-                  'STK',
+                  l10n.histPoleStk,
                   (stavVozidla['stk_mesic']?.toString() ?? '').isNotEmpty ||
                           (stavVozidla['stk_rok']?.toString() ?? '').isNotEmpty
                       ? '${stavVozidla['stk_mesic'] ?? '-'} / ${stavVozidla['stk_rok'] ?? '-'}'
                       : null,
                 ),
                 _infoRow(
-                  'Poškození',
+                  l10n.histPolePoskozeni,
                   (stavVozidla['poskozeni'] as List<dynamic>? ?? []).join(', '),
                 ),
                 _infoRow(
-                  'Pneumatiky LP / PP',
+                  l10n.histPolePneuLP,
                   (stavVozidla['pneu_lp']?.toString() ?? '').isNotEmpty ||
                           (stavVozidla['pneu_pp']?.toString() ?? '').isNotEmpty
                       ? '${stavVozidla['pneu_lp'] ?? '-'} / ${stavVozidla['pneu_pp'] ?? '-'}'
                       : null,
                 ),
                 _infoRow(
-                  'Pneumatiky LZ / PZ',
+                  l10n.histPolePneuLZ,
                   (stavVozidla['pneu_lz']?.toString() ?? '').isNotEmpty ||
                           (stavVozidla['pneu_pz']?.toString() ?? '').isNotEmpty
                       ? '${stavVozidla['pneu_lz'] ?? '-'} / ${stavVozidla['pneu_pz'] ?? '-'}'
@@ -386,7 +391,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             _sectionCard(isDark,
                 icon: Icons.build_circle_outlined,
                 color: Colors.deepOrange,
-                title: 'Požadavky zákazníka',
+                title: l10n.histSekcePozadavky,
                 children: pozadavky
                     .map((p) => Padding(
                           padding: const EdgeInsets.only(bottom: 6),
@@ -407,14 +412,14 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             _sectionCard(isDark,
                 icon: Icons.notes,
                 color: Colors.blueGrey,
-                title: 'Poznámky',
+                title: l10n.histSekcePoznamky,
                 children: [Text(d['poznamky'].toString())]),
           ],
           const SizedBox(height: 15),
-          _buildFotoSection(isDark, fotoUrls),
+          _buildFotoSection(isDark, fotoUrls, l10n),
           if (podpisUrl.isNotEmpty) ...[
             const SizedBox(height: 15),
-            _buildPodpisSection(isDark, podpisUrl),
+            _buildPodpisSection(isDark, podpisUrl, l10n),
           ],
           const SizedBox(height: 20),
           Row(
@@ -428,7 +433,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.visibility_outlined),
-                  label: const Text('Zobrazit protokol'),
+                  label: Text(l10n.histZobrazitProtokol),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -441,7 +446,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _isTisku ? null : _tiskniProtokol,
                   icon: const Icon(Icons.print_outlined),
-                  label: const Text('Tisk'),
+                  label: Text(l10n.histTisknoutBtn),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -535,7 +540,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   }
 
   Widget _buildFotoSection(
-      bool isDark, Map<String, dynamic> fotoUrls) {
+      bool isDark, Map<String, dynamic> fotoUrls, AppLocalizations l10n) {
     final entries = fotoUrls.entries
         .where((e) => (e.value as List<dynamic>? ?? []).isNotEmpty)
         .toList();
@@ -551,13 +556,13 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.photo_library_outlined,
+              const Icon(Icons.photo_library_outlined,
                   color: Colors.purple, size: 20),
-              SizedBox(width: 8),
-              Text('Fotodokumentace',
-                  style: TextStyle(
+              const SizedBox(width: 8),
+              Text(l10n.histSekceFoto,
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       color: Colors.purple)),
@@ -565,15 +570,15 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
           ),
           const Divider(height: 20),
           if (entries.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  Icon(Icons.no_photography_outlined,
+                  const Icon(Icons.no_photography_outlined,
                       color: Colors.grey, size: 18),
-                  SizedBox(width: 8),
-                  Text('Nebyly pořízeny žádné fotografie.',
-                      style: TextStyle(color: Colors.grey)),
+                  const SizedBox(width: 8),
+                  Text(l10n.histZadneFoto,
+                      style: const TextStyle(color: Colors.grey)),
                 ],
               ),
             ),
@@ -638,7 +643,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     );
   }
 
-  Widget _buildPodpisSection(bool isDark, String podpisUrl) {
+  Widget _buildPodpisSection(bool isDark, String podpisUrl, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? TokColors.darkSurface : Colors.white,
@@ -650,12 +655,12 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.draw_outlined, color: Colors.indigo, size: 20),
-              SizedBox(width: 8),
-              Text('Podpis zákazníka',
-                  style: TextStyle(
+              const Icon(Icons.draw_outlined, color: Colors.indigo, size: 20),
+              const SizedBox(width: 8),
+              Text(l10n.histSekcePodpis,
+                  style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       color: Colors.indigo)),
@@ -674,9 +679,9 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
               child: Image.network(
                 podpisUrl,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Center(
-                    child: Text('Podpis není k dispozici',
-                        style: TextStyle(color: Colors.grey))),
+                errorBuilder: (_, __, ___) => Center(
+                    child: Text(l10n.histPodpisNedostupny,
+                        style: const TextStyle(color: Colors.grey))),
               ),
             ),
           ),

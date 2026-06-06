@@ -3643,6 +3643,276 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Tmavý režim'**
   String get mainTmavyRezim;
+
+  /// No description provided for @histZpracovava.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zpracovává se...'**
+  String get histZpracovava;
+
+  /// No description provided for @histNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Historie záznamů'**
+  String get histNadpis;
+
+  /// No description provided for @histPodnadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přehled všech přijatých vozidel a jejich protokolů.'**
+  String get histPodnadpis;
+
+  /// No description provided for @histHledat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hledat SPZ, zákazníka nebo vozidlo...'**
+  String get histHledat;
+
+  /// No description provided for @histChyba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba: {chyba}'**
+  String histChyba(String chyba);
+
+  /// No description provided for @histPrazdne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím žádné záznamy o příjmu.'**
+  String get histPrazdne;
+
+  /// No description provided for @histNespecifikovano.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nespecifikováno'**
+  String get histNespecifikovano;
+
+  /// No description provided for @histPrijal.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přijal'**
+  String get histPrijal;
+
+  /// No description provided for @histFoto.
+  ///
+  /// In cs, this message translates to:
+  /// **'{pocet} foto'**
+  String histFoto(int pocet);
+
+  /// No description provided for @histPodepsano.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podepsáno'**
+  String get histPodepsano;
+
+  /// No description provided for @histDetailNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Detail příjmu'**
+  String get histDetailNadpis;
+
+  /// No description provided for @histChybaTisku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba při tisku: {chyba}'**
+  String histChybaTisku(String chyba);
+
+  /// No description provided for @histChybaZobrazeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba při zobrazení: {chyba}'**
+  String histChybaZobrazeni(String chyba);
+
+  /// No description provided for @histProtokol.
+  ///
+  /// In cs, this message translates to:
+  /// **'Protokol {cislo}'**
+  String histProtokol(String cislo);
+
+  /// No description provided for @histZobrazitProtokol.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zobrazit protokol'**
+  String get histZobrazitProtokol;
+
+  /// No description provided for @histTisknoutProtokol.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tisknout protokol'**
+  String get histTisknoutProtokol;
+
+  /// No description provided for @histTisknoutBtn.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tisk'**
+  String get histTisknoutBtn;
+
+  /// No description provided for @histSekceVozidlo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo'**
+  String get histSekceVozidlo;
+
+  /// No description provided for @histPoleSPZ.
+  ///
+  /// In cs, this message translates to:
+  /// **'SPZ'**
+  String get histPoleSPZ;
+
+  /// No description provided for @histPoleZnackaModel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Značka & Model'**
+  String get histPoleZnackaModel;
+
+  /// No description provided for @histPoleVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN'**
+  String get histPoleVin;
+
+  /// No description provided for @histPoleRokVyroby.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rok výroby'**
+  String get histPoleRokVyroby;
+
+  /// No description provided for @histPolePalivo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Palivo'**
+  String get histPolePalivo;
+
+  /// No description provided for @histPolePrevodovka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Převodovka'**
+  String get histPolePrevodovka;
+
+  /// No description provided for @histPoleMotorizace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Motorizace'**
+  String get histPoleMotorizace;
+
+  /// No description provided for @histSekceZakaznik.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník'**
+  String get histSekceZakaznik;
+
+  /// No description provided for @histPoleJmeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jméno'**
+  String get histPoleJmeno;
+
+  /// No description provided for @histPoleTelefon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Telefon'**
+  String get histPoleTelefon;
+
+  /// No description provided for @histPoleEmail.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mail'**
+  String get histPoleEmail;
+
+  /// No description provided for @histPoleAdresa.
+  ///
+  /// In cs, this message translates to:
+  /// **'Adresa'**
+  String get histPoleAdresa;
+
+  /// No description provided for @histPoleIco.
+  ///
+  /// In cs, this message translates to:
+  /// **'IČO'**
+  String get histPoleIco;
+
+  /// No description provided for @histPoleDic.
+  ///
+  /// In cs, this message translates to:
+  /// **'DIČ'**
+  String get histPoleDic;
+
+  /// No description provided for @histSekceStav.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav při příjmu'**
+  String get histSekceStav;
+
+  /// No description provided for @histPoleTachometr.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tachometr'**
+  String get histPoleTachometr;
+
+  /// No description provided for @histPoleNadrz.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stav nádrže'**
+  String get histPoleNadrz;
+
+  /// No description provided for @histPoleStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'STK'**
+  String get histPoleStk;
+
+  /// No description provided for @histPolePoskozeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Poškození'**
+  String get histPolePoskozeni;
+
+  /// No description provided for @histPolePneuLP.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pneumatiky LP / PP'**
+  String get histPolePneuLP;
+
+  /// No description provided for @histPolePneuLZ.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pneumatiky LZ / PZ'**
+  String get histPolePneuLZ;
+
+  /// No description provided for @histSekcePozadavky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Požadavky zákazníka'**
+  String get histSekcePozadavky;
+
+  /// No description provided for @histSekcePoznamky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Poznámky'**
+  String get histSekcePoznamky;
+
+  /// No description provided for @histSekceFoto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Fotodokumentace'**
+  String get histSekceFoto;
+
+  /// No description provided for @histZadneFoto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nebyly pořízeny žádné fotografie.'**
+  String get histZadneFoto;
+
+  /// No description provided for @histSekcePodpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podpis zákazníka'**
+  String get histSekcePodpis;
+
+  /// No description provided for @histPodpisNedostupny.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podpis není k dispozici'**
+  String get histPodpisNedostupny;
 }
 
 class _AppLocalizationsDelegate
