@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../core/constants.dart';
 import '../core/design_tokens.dart';
+import '../l10n/app_localizations.dart';
 import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
 import 'main_screen.dart'; // Kvůli navOrderNotifier
 import 'app_logger.dart'; // Přidán náš logger pro odchytávání chyb
@@ -134,6 +135,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _saveSettings() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSaving = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -174,8 +176,8 @@ class _SettingsPageState extends State<SettingsPage> {
         await prefs.setBool('tmavy_rezim', _tmavyRezim);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Nastavení uloženo.'),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(l10n.nastUlozeno),
               backgroundColor: Colors.green));
         }
       }
@@ -183,7 +185,7 @@ class _SettingsPageState extends State<SettingsPage> {
       await AppLogger.logError('Ukládání hlavního nastavení servisu', e, stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red));
+            .showSnackBar(SnackBar(content: Text(l10n.nastChyba(e.toString())), backgroundColor: Colors.red));
       }
     }
     setState(() => _isSaving = false);
@@ -191,10 +193,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
 
   Future<void> _toggleBiometric(bool value) async {
+    final l10n = AppLocalizations.of(context);
     if (value) {
       final auth = LocalAuthentication();
       final ok = await auth.authenticate(
-        localizedReason: 'Potvrďte svou totožnost pro zapnutí biometrického přihlášení',
+        localizedReason: l10n.nastBiometricReason,
         options: const AuthenticationOptions(stickyAuth: true),
       );
       if (!ok) return;
@@ -216,8 +219,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _ukazatVyberJazyka(BuildContext context, bool isDark) {
-    const jazyky = [
-      (kod: null,  vlajka: '🌐', nazev: 'Systémový jazyk'),
+    final l10n = AppLocalizations.of(context);
+    final jazyky = [
+      (kod: null as String?,  vlajka: '🌐', nazev: l10n.nastSystJazyk),
       (kod: 'cs',  vlajka: '🇨🇿', nazev: 'Čeština'),
       (kod: 'en',  vlajka: '🇬🇧', nazev: 'English'),
       (kod: 'de',  vlajka: '🇩🇪', nazev: 'Deutsch'),
@@ -229,8 +233,8 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Jazyk aplikace',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          title: Text(l10n.nastJazyk,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: jazyky.map((j) => RadioListTile<String?>(
@@ -249,7 +253,7 @@ class _SettingsPageState extends State<SettingsPage> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Zrušit'),
+              child: Text(l10n.nastZrusit),
             ),
           ],
         ),
@@ -294,16 +298,17 @@ class _SettingsPageState extends State<SettingsPage> {
   void _otevritDialogTypuZaznamu({String? initialText, int? editIndex}) {
     final ctrl = TextEditingController(text: initialText ?? '');
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
-        title: Text(editIndex != null ? 'Upravit typ' : 'Nový typ záznamu'),
+        title: Text(editIndex != null ? l10n.nastUpravitTyp : l10n.nastNovyTyp),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           decoration: InputDecoration(
-            hintText: 'Název typu (např. Servis, Výkup...)',
+            hintText: l10n.nastTypHint,
             filled: true,
             fillColor:
                 isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
@@ -315,7 +320,7 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Zrušit'),
+            child: Text(l10n.nastZrusit),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -334,7 +339,7 @@ class _SettingsPageState extends State<SettingsPage> {
               await _ulozitTypyZaznamu();
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Uložit'),
+            child: Text(l10n.nastUlozitBtn),
           ),
         ],
       ),
@@ -344,17 +349,18 @@ class _SettingsPageState extends State<SettingsPage> {
   void _otevritDialogSablony({String? initialText, int? editIndex}) {
     final ctrl = TextEditingController(text: initialText ?? '');
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
-        title: Text(editIndex != null ? 'Upravit šablonu' : 'Nová šablona'),
+        title: Text(editIndex != null ? l10n.nastUpravitSablonu : l10n.nastNovaSablona),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           maxLines: 3,
           decoration: InputDecoration(
-            hintText: 'Text zprávy...',
+            hintText: l10n.nastSablonaHint,
             filled: true,
             fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
             border: OutlineInputBorder(
@@ -365,7 +371,7 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Zrušit'),
+            child: Text(l10n.nastZrusit),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -381,7 +387,7 @@ class _SettingsPageState extends State<SettingsPage> {
               await _ulozitSablony();
               if (ctx.mounted) Navigator.pop(ctx);
             },
-            child: const Text('Uložit'),
+            child: Text(l10n.nastUlozitBtn),
           ),
         ],
       ),
@@ -417,19 +423,20 @@ class _SettingsPageState extends State<SettingsPage> {
 
   // --- FUNKCE PRO VYKRESLENÍ DIALOGU NA PŘESKLÁDÁNÍ A PŘIDÁVÁNÍ MODULŮ ---
   void _ukazatReorderingDialog(BuildContext context, bool isDark) {
+    final l10n = AppLocalizations.of(context);
     List<String> lokalniPoradi = List.from(navOrderNotifier.value);
 
     final Map<String, Map<String, dynamic>> vizual = {
-      'prijem': {'nazev': 'Příjem vozidla', 'ikona': Icons.add_circle_outline_rounded},
-      'historie_prijmu': {'nazev': 'Historie příjmů', 'ikona': Icons.history_rounded},
-      'menu': {'nazev': 'Menu (Ostatní moduly)', 'ikona': Icons.grid_view},
-      'vozidla': {'nazev': 'Vozidla', 'ikona': Icons.directions_car_outlined},
-      'ukony': {'nazev': 'Úkony', 'ikona': Icons.playlist_add_check_circle_outlined},
-      'zakaznici': {'nazev': 'Zákazníci', 'ikona': Icons.people_alt_outlined},
-      'zamestnanci': {'nazev': 'Tým a práva', 'ikona': Icons.badge_outlined},
-      'statistiky': {'nazev': 'Statistiky', 'ikona': Icons.bar_chart_outlined},
-      'nastaveni': {'nazev': 'Nastavení', 'ikona': Icons.settings_outlined},
-      'vin_dekoder': {'nazev': 'VIN dekodér', 'ikona': Icons.travel_explore_outlined},
+      'prijem': {'nazev': l10n.nastModPrijem, 'ikona': Icons.add_circle_outline_rounded},
+      'historie_prijmu': {'nazev': l10n.nastModHistorie, 'ikona': Icons.history_rounded},
+      'menu': {'nazev': l10n.nastModMenu, 'ikona': Icons.grid_view},
+      'vozidla': {'nazev': l10n.nastModVozidla, 'ikona': Icons.directions_car_outlined},
+      'ukony': {'nazev': l10n.nastModUkony, 'ikona': Icons.playlist_add_check_circle_outlined},
+      'zakaznici': {'nazev': l10n.nastModZakaznici, 'ikona': Icons.people_alt_outlined},
+      'zamestnanci': {'nazev': l10n.nastModTym, 'ikona': Icons.badge_outlined},
+      'statistiky': {'nazev': l10n.nastModStatistiky, 'ikona': Icons.bar_chart_outlined},
+      'nastaveni': {'nazev': l10n.nastModNastaveni, 'ikona': Icons.settings_outlined},
+      'vin_dekoder': {'nazev': l10n.nastModVin, 'ikona': Icons.travel_explore_outlined},
     };
 
     showModalBottomSheet(
@@ -456,9 +463,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Přizpůsobit spodní lištu', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(l10n.nastPrizpusobitListu, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 5),
-                  const Text('Můžete mít aktivních 2 až 5 záložek. Přetažením změníte pořadí.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  Text(l10n.nastListaPopis, style: const TextStyle(color: Colors.grey, fontSize: 13)),
                   const SizedBox(height: 15),
                   
                   Expanded(
@@ -487,8 +494,8 @@ class _SettingsPageState extends State<SettingsPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   if (lokalniPoradi[i] == 'menu')
-                                    const Tooltip(
-                                      message: 'Menu nelze odebrat',
+                                    Tooltip(
+                                      message: l10n.nastMenuNelzeOdebrat,
                                       child: Padding(
                                         padding: EdgeInsets.symmetric(horizontal: 12),
                                         child: Icon(Icons.lock_outline, color: Colors.grey, size: 20),
@@ -524,7 +531,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               builder: (ctx) {
                                 final dostupne = vizual.keys.where((k) => !lokalniPoradi.contains(k)).toList();
                                 return AlertDialog(
-                                  title: const Text('Vyberte modul pro lištu'),
+                                  title: Text(l10n.nastVybrModul),
                                   content: SizedBox(
                                     width: double.maxFinite,
                                     child: ListView.builder(
@@ -547,14 +554,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ),
                                   ),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('ZAVŘÍT')),
+                                    TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l10n.nastZavrit)),
                                   ],
                                 );
                               }
                             );
                           },
                           icon: const Icon(Icons.add),
-                          label: const Text('Přidat další záložku (max 5)'),
+                          label: Text(l10n.nastPridatZalozku),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))
@@ -573,7 +580,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         padding: const EdgeInsets.symmetric(vertical: 15),
                       ),
-                      child: const Text('HOTOVO', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(l10n.nastHotovo, style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -588,6 +595,7 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
 
     if (_isLoading) return const Center(child: CircularProgressIndicator());
 
@@ -602,14 +610,14 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(_isAdmin ? 'Firemní nastavení' : 'Můj profil',
+                    Text(_isAdmin ? l10n.nastTitulAdmin : l10n.nastTitulUzivatel,
                         style: const TextStyle(
                             fontSize: 22, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     Text(
                         _isAdmin
-                            ? 'Správa údajů servisu a ceníku.'
-                            : 'Základní nastavení vašeho účtu.',
+                            ? l10n.nastPodtitulAdmin
+                            : l10n.nastPodtitulUzivatel,
                         style:
                             const TextStyle(color: Colors.grey, fontSize: 13)),
                   ],
@@ -624,8 +632,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
                     : const Icon(Icons.check_circle),
-                label: const Text('ULOŽIT',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                label: Text(l10n.nastUlozit,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
@@ -656,64 +664,63 @@ class _SettingsPageState extends State<SettingsPage> {
               // ---------------------------------------------
               if (_isAdmin) ...[
                 _buildCard(
-                  title: 'Firemní údaje',
+                  title: l10n.nastFiremniUdaje,
                   icon: Icons.business,
                   color: Colors.blue,
                   isDark: isDark,
                   children: [
-                    _buildInput(_nazevCtrl, 'Obchodní jméno / Název servisu',
+                    _buildInput(_nazevCtrl, l10n.nastObchodniJmeno,
                         Icons.store, isDark),
                     Row(
                       children: [
                         Expanded(
                             child: _buildInput(
-                                _icoCtrl, 'IČO', Icons.numbers, isDark)),
+                                _icoCtrl, l10n.nastIco, Icons.numbers, isDark)),
                         const SizedBox(width: 10),
                         Expanded(
                             child: _buildInput(
-                                _dicCtrl, 'DIČ', Icons.badge, isDark)),
+                                _dicCtrl, l10n.nastDic, Icons.badge, isDark)),
                       ],
                     ),
                     _buildInput(
                         _registraceCtrl,
-                        'Zápis v rejstříku (spisová značka)',
+                        l10n.nastRejstrik,
                         Icons.gavel,
                         isDark),
                   ],
                 ),
                 _buildCard(
-                  title: 'Sídlo a kontakt',
+                  title: l10n.nastSidloKontakt,
                   icon: Icons.location_on,
                   color: Colors.orange,
                   isDark: isDark,
                   children: [
-                    _buildInput(_adresaCtrl, 'Ulice a č.p.', Icons.map, isDark),
+                    _buildInput(_adresaCtrl, l10n.nastUlice, Icons.map, isDark),
                     Row(
                       children: [
                         Expanded(
                             flex: 2,
-                            child: _buildInput(_mestoCtrl, 'Město',
+                            child: _buildInput(_mestoCtrl, l10n.nastMesto,
                                 Icons.location_city, isDark)),
                         const SizedBox(width: 10),
                         Expanded(
                             flex: 1,
-                            child: _buildInput(_pscCtrl, 'PSČ',
+                            child: _buildInput(_pscCtrl, l10n.nastPsc,
                                 Icons.mark_email_unread, isDark)),
                       ],
                     ),
                     _buildInput(
-                        _telefonCtrl, 'Telefon servisu', Icons.phone, isDark),
-                    _buildInput(_emailCtrl, 'E-mail pro komunikaci',
+                        _telefonCtrl, l10n.nastTelefon, Icons.phone, isDark),
+                    _buildInput(_emailCtrl, l10n.nastEmail,
                         Icons.email, isDark),
                   ],
                 ),
                 _buildCard(
-                  title: 'Číslování a automatizace',
+                  title: l10n.nastCislovani,
                   icon: Icons.settings_suggest,
                   color: Colors.purple,
                   isDark: isDark,
                   children: [
-                    // NOVÁ TLAČÍTKA PRO KONFIGURÁTOR MÍSTO TEXTOVÝCH POLÍ
                     Container(
                       decoration: BoxDecoration(
                         color: isDark ? TokColors.darkSurface : Colors.white,
@@ -722,7 +729,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       child: ListTile(
                         leading: const Icon(Icons.build_circle_outlined, color: Colors.blue),
-                        title: const Text('Formát čísla zakázek', style: TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(l10n.nastFormatZakazek, style: const TextStyle(fontWeight: FontWeight.bold)),
                         trailing: const Icon(Icons.edit, size: 18),
                         onTap: () => _otevritKonfiguratorCislovani('zakazka', isDark),
                       ),
@@ -730,16 +737,13 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 15),
                     Container(
                       decoration: BoxDecoration(
-                          color: isDark
-                              ? TokColors.darkSurface
-                              : Colors.grey[100],
+                          color: isDark ? TokColors.darkSurface : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10)),
                       child: SwitchListTile(
-                        title: const Text('Automaticky zasílat e-maily',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: const Text(
-                            'Přednastaví odesílání PDF nabídek a faktur.',
-                            style: TextStyle(fontSize: 12)),
+                        title: Text(l10n.nastAutoEmail,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(l10n.nastAutoEmailSub,
+                            style: const TextStyle(fontSize: 12)),
                         value: _defaultEmail,
                         activeColor: Colors.blue,
                         onChanged: (v) => setState(() => _defaultEmail = v),
@@ -748,58 +752,46 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 15),
                     Container(
                       decoration: BoxDecoration(
-                          color: isDark
-                              ? TokColors.darkSurface
-                              : Colors.grey[100],
+                          color: isDark ? TokColors.darkSurface : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10)),
                       child: SwitchListTile(
-                        title: const Text('Automaticky generovat číslo zakázky',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: const Text(
-                            'Při příjmu vozidla se číslo zakázky předvyplní automaticky. Vypnutím umožníte ruční zadání.',
-                            style: TextStyle(fontSize: 12)),
+                        title: Text(l10n.nastAutoCislo,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(l10n.nastAutoCisloSub,
+                            style: const TextStyle(fontSize: 12)),
                         value: _autoCisloZakazky,
                         activeColor: Colors.blue,
-                        onChanged: (v) =>
-                            setState(() => _autoCisloZakazky = v),
+                        onChanged: (v) => setState(() => _autoCisloZakazky = v),
                       ),
                     ),
                     const SizedBox(height: 15),
                     Container(
                       decoration: BoxDecoration(
-                          color: isDark
-                              ? TokColors.darkSurface
-                              : Colors.grey[100],
+                          color: isDark ? TokColors.darkSurface : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10)),
                       child: SwitchListTile(
-                        title: const Text('Vyžadovat podpis zákazníka',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: const Text(
-                            'Při vypnutí se krok s podpisem v příjmu zobrazí bez podpisového plátna.',
-                            style: TextStyle(fontSize: 12)),
+                        title: Text(l10n.nastPodpisPovolen,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(l10n.nastPodpisPovolenSub,
+                            style: const TextStyle(fontSize: 12)),
                         value: _podpisPovolen,
                         activeColor: Colors.blue,
-                        onChanged: (v) =>
-                            setState(() => _podpisPovolen = v),
+                        onChanged: (v) => setState(() => _podpisPovolen = v),
                       ),
                     ),
                     const SizedBox(height: 15),
                     Container(
                       decoration: BoxDecoration(
-                          color: isDark
-                              ? TokColors.darkSurface
-                              : Colors.grey[100],
+                          color: isDark ? TokColors.darkSurface : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10)),
                       child: SwitchListTile(
-                        title: const Text('Povinná SPZ vozidla',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: const Text(
-                            'Při vypnutí lze příjem odeslat i bez vyplněné SPZ (např. vozidla bez registrace).',
-                            style: TextStyle(fontSize: 12)),
+                        title: Text(l10n.nastSpzPovinne,
+                            style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text(l10n.nastSpzPovinneSub,
+                            style: const TextStyle(fontSize: 12)),
                         value: _spzPovinne,
                         activeColor: Colors.blue,
-                        onChanged: (v) =>
-                            setState(() => _spzPovinne = v),
+                        onChanged: (v) => setState(() => _spzPovinne = v),
                       ),
                     ),
                   ],
@@ -810,21 +802,21 @@ class _SettingsPageState extends State<SettingsPage> {
               // ŠABLONY ZPRÁV
               // ---------------------------------------------
               _buildCard(
-                title: 'Šablony zpráv',
+                title: l10n.nastSablony,
                 icon: Icons.chat_bubble_outline,
                 color: Colors.teal,
                 isDark: isDark,
                 children: [
-                  const Text(
-                    'Přednastavené texty zobrazené jako chipy při psaní zprávy zákazníkovi.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    l10n.nastSablonyPopis,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 12),
                   if (_sablonyZprav.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(
-                        'Zatím žádné šablony. Přidejte první.',
+                        l10n.nastSablonyPrazdne,
                         style: TextStyle(color: Colors.grey[400], fontSize: 13),
                       ),
                     ),
@@ -876,7 +868,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: OutlinedButton.icon(
                       onPressed: () => _otevritDialogSablony(),
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Přidat šablonu'),
+                      label: Text(l10n.nastPridatSablonu),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.teal,
                         side: const BorderSide(color: Colors.teal),
@@ -889,14 +881,14 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
 
               _buildCard(
-                title: 'Typy záznamu',
+                title: l10n.nastTypyZaznamu,
                 icon: Icons.label_outline,
                 color: Colors.indigo,
                 isDark: isDark,
                 children: [
-                  const Text(
-                    'Typy záznamu slouží k rozlišení příjmu vozidla (např. Servis, Výkup). První přidaný typ je výchozí.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    l10n.nastTypyZaznamuPopis,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   const SizedBox(height: 12),
                   for (int i = 0; i < _typyZaznamu.length; i++)
@@ -922,11 +914,11 @@ class _SettingsPageState extends State<SettingsPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (_defaultTypZaznamu == _typyZaznamu[i])
-                              const Padding(
-                                padding: EdgeInsets.only(right: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 4),
                                 child: Chip(
-                                  label: Text('výchozí',
-                                      style: TextStyle(fontSize: 11)),
+                                  label: Text(l10n.nastVychozi,
+                                      style: const TextStyle(fontSize: 11)),
                                   visualDensity: VisualDensity.compact,
                                   padding: EdgeInsets.zero,
                                 ),
@@ -969,7 +961,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: OutlinedButton.icon(
                       onPressed: () => _otevritDialogTypuZaznamu(),
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Přidat typ'),
+                      label: Text(l10n.nastPridatTyp),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.indigo,
                         side: const BorderSide(color: Colors.indigo),
@@ -979,9 +971,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Dlouhý stisk = nastavit jako výchozí.',
-                    style: TextStyle(fontSize: 11, color: Colors.grey),
+                  Text(
+                    l10n.nastLongPress,
+                    style: const TextStyle(fontSize: 11, color: Colors.grey),
                   ),
                 ],
               ),
@@ -990,7 +982,7 @@ class _SettingsPageState extends State<SettingsPage> {
               // SEKCE PRO VŠECHNY UŽIVATELE (VZHLED A ODHLÁŠENÍ)
               // ---------------------------------------------
               _buildCard(
-                title: 'Osobní nastavení',
+                title: l10n.nastOsobni,
                 icon: Icons.person,
                 color: Colors.pinkAccent,
                 isDark: isDark,
@@ -1012,8 +1004,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         child: const Icon(Icons.view_column, color: Colors.blue),
                       ),
-                      title: const Text('Přizpůsobit spodní lištu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: const Text('Přidejte si zástupce nebo změňte pořadí.', style: TextStyle(fontSize: 11)),
+                      title: Text(l10n.nastPrizpusobitListu, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text(l10n.nastPrizpusobitListuSub, style: const TextStyle(fontSize: 11)),
                       trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
                       onTap: () => _ukazatReorderingDialog(context, isDark),
                     ),
@@ -1021,17 +1013,15 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 5),
                   Container(
                     decoration: BoxDecoration(
-                      color:
-                          isDark ? TokColors.darkSurface : Colors.white,
+                      color: isDark ? TokColors.darkSurface : Colors.white,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.grey.withOpacity(0.2)),
                     ),
                     child: SwitchListTile(
-                      title: const Text('Vynutit tmavý režim',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: const Text(
-                          'Aplikace bude tmavá bez ohledu na systém.',
-                          style: TextStyle(fontSize: 11)),
+                      title: Text(l10n.nastTmavyRezim,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text(l10n.nastTmavyRezimSub,
+                          style: const TextStyle(fontSize: 11)),
                       value: _tmavyRezim,
                       activeColor: Colors.blue,
                       onChanged: (v) => setState(() => _tmavyRezim = v),
@@ -1047,11 +1037,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       child: SwitchListTile(
                         secondary: const Icon(Icons.fingerprint, color: Colors.blue),
-                        title: const Text('Biometrické přihlášení',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: const Text(
-                            'Face ID / otisk prstu při každém spuštění.',
-                            style: TextStyle(fontSize: 11)),
+                        title: Text(l10n.nastBiometrie,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        subtitle: Text(l10n.nastBiometrieSub,
+                            style: const TextStyle(fontSize: 11)),
                         value: _biometricEnabled,
                         activeColor: Colors.blue,
                         onChanged: _toggleBiometric,
@@ -1066,14 +1055,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       border: Border.all(color: Colors.grey.withOpacity(0.2)),
                     ),
                     child: SwitchListTile(
-                      secondary:
-                          const Icon(Icons.pan_tool_alt, color: Colors.blue),
-                      title: const Text('Režim pro leváky',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: const Text(
-                          'Spoušť fotoaparátu vlevo, když je zařízení na šířku.',
-                          style: TextStyle(fontSize: 11)),
+                      secondary: const Icon(Icons.pan_tool_alt, color: Colors.blue),
+                      title: Text(l10n.nastLeVaci,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text(l10n.nastLeVaciSub,
+                          style: const TextStyle(fontSize: 11)),
                       value: _spoustVlevo,
                       activeColor: Colors.blue,
                       onChanged: _toggleSpoustVlevo,
@@ -1088,11 +1074,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     child: ListTile(
                       leading: const Icon(Icons.language_rounded, color: Colors.blue),
-                      title: const Text('Jazyk aplikace',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      title: Text(l10n.nastJazyk,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                       subtitle: Text(
                         _jazyk == null
-                            ? 'Systémový jazyk'
+                            ? l10n.nastSystJazyk
                             : const {
                                 'cs': '🇨🇿 Čeština',
                                 'en': '🇬🇧 English',
@@ -1282,11 +1268,12 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
 
   Future<void> _ulozitNastaveni() async {
     if (globalServisId == null) return;
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSaving = true);
-    
+
     try {
       final maska = _vygenerujMasku();
-      
+
       // Uložíme jak finální masku pro generování, tak jednotlivé dílky pro budoucí úpravy v tomto konfigurátoru
       await FirebaseFirestore.instance.collection('nastaveni_servisu').doc(globalServisId).set({
         'maska_${widget.typDokladu}': maska,
@@ -1300,12 +1287,12 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
 
       if (mounted) {
         Navigator.pop(context); // Zavřít BottomSheet
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Formát číslování byl úspěšně uložen.'), backgroundColor: Colors.green));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nastFormatUlozen), backgroundColor: Colors.green));
       }
     } catch (e, stackTrace) {
       await AppLogger.logError('Uložení masky číslování (${widget.typDokladu})', e, stackTrace);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Chyba: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.nastChyba(e.toString())), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -1315,7 +1302,8 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    final l10n = AppLocalizations.of(context);
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.85, // Vyšší sheet kvůli klávesnici
       decoration: BoxDecoration(
@@ -1333,9 +1321,9 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
             ),
           ),
           const SizedBox(height: 20),
-          Text('Formát čísla pro: ${widget.typDokladu.toUpperCase()}', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          Text(l10n.nastFormatTitle(widget.typDokladu.toUpperCase()), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          
+
           // Náhledový štítek
           Container(
             width: double.infinity,
@@ -1347,11 +1335,11 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
             ),
             child: Column(
               children: [
-                const Text('Náhled budoucího dokladu:', style: TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold)),
+                Text(l10n.nastNahledLabel, style: const TextStyle(color: Colors.blue, fontSize: 13, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
                 Text(_vygenerujNahled(), style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 2, color: Colors.blue)),
                 const SizedBox(height: 10),
-                Text('Interní maska: ${_vygenerujMasku()}', style: GoogleFonts.ibmPlexMono(color: Colors.grey, fontSize: 11)),
+                Text(l10n.nastInternaMaska(_vygenerujMasku()), style: GoogleFonts.ibmPlexMono(color: Colors.grey, fontSize: 11)),
               ],
             ),
           ),
@@ -1370,7 +1358,7 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                           initialValue: _prefix,
                           textCapitalization: TextCapitalization.characters,
                           decoration: InputDecoration(
-                            labelText: 'Prefix (Značka)', 
+                            labelText: l10n.nastPrefix,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             filled: true,
                             fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
@@ -1383,16 +1371,16 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                         child: DropdownButtonFormField<String>(
                           value: _oddelovac,
                           decoration: InputDecoration(
-                            labelText: 'Oddělovač', 
+                            labelText: l10n.nastOddelovac,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             filled: true,
                             fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                           ),
-                          items: const [
-                            DropdownMenuItem(value: '-', child: Text('Pomlčka (-)')),
-                            DropdownMenuItem(value: '/', child: Text('Lomítko (/)')),
-                            DropdownMenuItem(value: '_', child: Text('Podtržítko (_)')),
-                            DropdownMenuItem(value: '', child: Text('Bez oddělovače')),
+                          items: [
+                            DropdownMenuItem(value: '-', child: Text(l10n.nastOddelovacPomlcka)),
+                            DropdownMenuItem(value: '/', child: Text(l10n.nastOddelovacLomitko)),
+                            DropdownMenuItem(value: '_', child: Text(l10n.nastOddelovacPodtrzitko)),
+                            DropdownMenuItem(value: '', child: Text(l10n.nastOddelovacBez)),
                           ],
                           onChanged: (val) => setState(() => _oddelovac = val!),
                         ),
@@ -1406,15 +1394,15 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                         child: DropdownButtonFormField<String>(
                           value: _rokFormat,
                           decoration: InputDecoration(
-                            labelText: 'Formát roku', 
+                            labelText: l10n.nastRokFormat,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             filled: true,
                             fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                           ),
-                          items: const [
-                            DropdownMenuItem(value: '{YYYY}', child: Text('4 cifry (2026)')),
-                            DropdownMenuItem(value: '{YY}', child: Text('2 cifry (26)')),
-                            DropdownMenuItem(value: '', child: Text('Bez roku')),
+                          items: [
+                            DropdownMenuItem(value: '{YYYY}', child: Text(l10n.nastRok4)),
+                            DropdownMenuItem(value: '{YY}', child: Text(l10n.nastRok2)),
+                            DropdownMenuItem(value: '', child: Text(l10n.nastBezRoku)),
                           ],
                           onChanged: (val) => setState(() => _rokFormat = val!),
                         ),
@@ -1424,14 +1412,14 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                         child: DropdownButtonFormField<String>(
                           value: _mesicFormat,
                           decoration: InputDecoration(
-                            labelText: 'Formát měsíce', 
+                            labelText: l10n.nastMesicFormat,
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                             filled: true,
                             fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[50],
                           ),
-                          items: const [
-                            DropdownMenuItem(value: '{MM}', child: Text('2 cifry (04)')),
-                            DropdownMenuItem(value: '', child: Text('Bez měsíce')),
+                          items: [
+                            DropdownMenuItem(value: '{MM}', child: Text(l10n.nastMesic2)),
+                            DropdownMenuItem(value: '', child: Text(l10n.nastBezMesice)),
                           ],
                           onChanged: (val) => setState(() => _mesicFormat = val!),
                         ),
@@ -1439,7 +1427,7 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                     ],
                   ),
                   const SizedBox(height: 25),
-                  Text('Délka pořadového čísla na konci: ${_delkaPocitadla.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text(l10n.nastDelkaCitadla(_delkaPocitadla.toInt()), style: const TextStyle(fontWeight: FontWeight.bold)),
                   Slider(
                     value: _delkaPocitadla,
                     min: 3,
@@ -1457,11 +1445,11 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                       borderRadius: BorderRadius.circular(10),
                       border: const Border(left: BorderSide(color: Colors.orange, width: 4)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.info_outline, color: Colors.orange),
-                        SizedBox(width: 10),
-                        Expanded(child: Text('Pokud změníte formát v průběhu roku, stávající doklady zůstanou nedotčeny a nová řada začne navazovat od aktuálního čísla v databázi.', style: TextStyle(fontSize: 12))),
+                        const Icon(Icons.info_outline, color: Colors.orange),
+                        const SizedBox(width: 10),
+                        Expanded(child: Text(l10n.nastInfoZmenaFormatu, style: const TextStyle(fontSize: 12))),
                       ],
                     ),
                   ),
@@ -1469,7 +1457,7 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
               ),
             ),
           ),
-          
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 10),
@@ -1478,10 +1466,10 @@ class _FormatCislovaniSheetState extends State<_FormatCislovaniSheet> {
                 child: ElevatedButton.icon(
                   onPressed: _isSaving ? null : _ulozitNastaveni,
                   icon: _isSaving ? const SizedBox(width: 15, height: 15, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.save),
-                  label: const Text('ULOŽIT FORMÁT', style: TextStyle(fontWeight: FontWeight.bold)),
+                  label: Text(l10n.nastUlozitFormat, style: const TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue, 
-                    foregroundColor: Colors.white, 
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
                   ),
@@ -1504,6 +1492,7 @@ class _SubscriptionStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
@@ -1595,9 +1584,9 @@ class _SubscriptionStatusCard extends StatelessWidget {
                         Text(
                           isTrial
                               ? (vyprseno
-                                  ? 'Zkušební doba vypršela'
-                                  : 'Zkušební doba zdarma')
-                              : 'Plán ${planTyp.toUpperCase()}',
+                                  ? l10n.nastTrialVyprselo
+                                  : l10n.nastTrialAktivni)
+                              : l10n.nastPlanNazev(planTyp.toUpperCase()),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -1609,11 +1598,11 @@ class _SubscriptionStatusCard extends StatelessWidget {
                         Text(
                           isTrial
                               ? (vyprseno
-                                  ? 'Vyberte plán pro pokračování'
-                                  : 'Zbývá ${zbyvajiciDni!} ${_dayWord(zbyvajiciDni)} · bez závazku')
+                                  ? l10n.nastTrialVyberPlan
+                                  : l10n.nastTrialZbyva(zbyvajiciDni!, _dayWord(zbyvajiciDni, l10n)))
                               : (platnostDo != null
-                                  ? 'Platnost do ${DateFormat('d. M. yyyy').format(platnostDo)}'
-                                  : 'Aktivní'),
+                                  ? l10n.nastPlatnostDo(DateFormat('d. M. yyyy').format(platnostDo))
+                                  : l10n.nastAktivni),
                           style: TextStyle(
                               fontSize: 12, color: tok.textSecondary),
                         ),
@@ -1653,7 +1642,7 @@ class _SubscriptionStatusCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      vyprseno ? 'Vybrat plán' : 'Zobrazit plány',
+                      vyprseno ? l10n.nastVybratPlan : l10n.nastZobrazitPlany,
                       style: const TextStyle(
                           fontSize: 14, fontWeight: FontWeight.w600),
                     ),
@@ -1667,9 +1656,9 @@ class _SubscriptionStatusCard extends StatelessWidget {
     );
   }
 
-  String _dayWord(int n) {
-    if (n == 1) return 'den';
-    if (n >= 2 && n <= 4) return 'dny';
-    return 'dní';
+  String _dayWord(int n, AppLocalizations l10n) {
+    if (n == 1) return l10n.nastDayJeden;
+    if (n >= 2 && n <= 4) return l10n.nastDayNeco;
+    return l10n.nastDayMnogo;
   }
 }

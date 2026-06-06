@@ -2072,4 +2072,344 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get histPodpisNedostupny => 'Podpis nie je k dispozícii';
+
+  @override
+  String get nastUlozit => 'ULOŽIŤ';
+
+  @override
+  String get nastUlozeno => 'Nastavenia uložené.';
+
+  @override
+  String nastChyba(String chyba) {
+    return 'Chyba: $chyba';
+  }
+
+  @override
+  String get nastZrusit => 'Zrušiť';
+
+  @override
+  String get nastUlozitBtn => 'Uložiť';
+
+  @override
+  String get nastZavrit => 'ZAVRIEŤ';
+
+  @override
+  String get nastHotovo => 'HOTOVO';
+
+  @override
+  String get nastTitulAdmin => 'Firemné nastavenia';
+
+  @override
+  String get nastTitulUzivatel => 'Môj profil';
+
+  @override
+  String get nastPodtitulAdmin => 'Správa údajov servisu a cenníka.';
+
+  @override
+  String get nastPodtitulUzivatel => 'Základné nastavenia vášho účtu.';
+
+  @override
+  String get nastFiremniUdaje => 'Firemné údaje';
+
+  @override
+  String get nastObchodniJmeno => 'Obchodné meno / Názov servisu';
+
+  @override
+  String get nastIco => 'IČO';
+
+  @override
+  String get nastDic => 'DIČ';
+
+  @override
+  String get nastRejstrik => 'Zápis v registri (spisová značka)';
+
+  @override
+  String get nastSidloKontakt => 'Sídlo a kontakt';
+
+  @override
+  String get nastUlice => 'Ulica a č.p.';
+
+  @override
+  String get nastMesto => 'Mesto';
+
+  @override
+  String get nastPsc => 'PSČ';
+
+  @override
+  String get nastTelefon => 'Telefón servisu';
+
+  @override
+  String get nastEmail => 'E-mail pre komunikáciu';
+
+  @override
+  String get nastCislovani => 'Číslovanie a automatizácia';
+
+  @override
+  String get nastFormatZakazek => 'Formát čísla zákazky';
+
+  @override
+  String get nastAutoEmail => 'Automaticky posielať e-maily';
+
+  @override
+  String get nastAutoEmailSub => 'Prednastaví odosielanie PDF ponúk a faktúr.';
+
+  @override
+  String get nastAutoCislo => 'Automaticky generovať číslo zákazky';
+
+  @override
+  String get nastAutoCisloSub =>
+      'Pri príjme vozidla sa číslo zákazky predvyplní automaticky. Vypnutím umožníte ručné zadanie.';
+
+  @override
+  String get nastPodpisPovolen => 'Vyžadovať podpis zákazníka';
+
+  @override
+  String get nastPodpisPovolenSub =>
+      'Pri vypnutí sa krok s podpisom v príjme zobrazí bez podpisového plátna.';
+
+  @override
+  String get nastSpzPovinne => 'Povinné EČV vozidla';
+
+  @override
+  String get nastSpzPovinneSub =>
+      'Pri vypnutí možno príjem odoslať aj bez vyplneného EČV.';
+
+  @override
+  String get nastSablony => 'Šablóny správ';
+
+  @override
+  String get nastSablonyPopis =>
+      'Preddefinované texty zobrazené ako chipy pri písaní správy zákazníkovi.';
+
+  @override
+  String get nastSablonyPrazdne => 'Zatiaľ žiadne šablóny. Pridajte prvú.';
+
+  @override
+  String get nastPridatSablonu => 'Pridať šablónu';
+
+  @override
+  String get nastUpravitSablonu => 'Upraviť šablónu';
+
+  @override
+  String get nastNovaSablona => 'Nová šablóna';
+
+  @override
+  String get nastSablonaHint => 'Text správy...';
+
+  @override
+  String get nastTypyZaznamu => 'Typy záznamu';
+
+  @override
+  String get nastTypyZaznamuPopis =>
+      'Typy záznamu slúžia na rozlíšenie príjmu vozidla (napr. Servis, Výkup). Prvý pridaný typ je predvolený.';
+
+  @override
+  String get nastVychozi => 'predvolený';
+
+  @override
+  String get nastPridatTyp => 'Pridať typ';
+
+  @override
+  String get nastUpravitTyp => 'Upraviť typ';
+
+  @override
+  String get nastNovyTyp => 'Nový typ záznamu';
+
+  @override
+  String get nastTypHint => 'Názov typu (napr. Servis, Výkup...)';
+
+  @override
+  String get nastLongPress => 'Dlhé stlačenie = nastaviť ako predvolený.';
+
+  @override
+  String get nastOsobni => 'Osobné nastavenia';
+
+  @override
+  String get nastPrizpusobitListu => 'Prispôsobiť spodnú lištu';
+
+  @override
+  String get nastPrizpusobitListuSub =>
+      'Pridajte zástupce alebo zmeňte poradie.';
+
+  @override
+  String get nastListaPopis =>
+      'Môžete mať aktívnych 2 až 5 záložiek. Ťahaním zmeníte poradie.';
+
+  @override
+  String get nastMenuNelzeOdebrat => 'Menu nemožno odstrániť';
+
+  @override
+  String get nastVybrModul => 'Vyberte modul pre lištu';
+
+  @override
+  String get nastPridatZalozku => 'Pridať ďalšiu záložku (max 5)';
+
+  @override
+  String get nastTmavyRezim => 'Vynútiť tmavý režim';
+
+  @override
+  String get nastTmavyRezimSub => 'Aplikácia bude tmavá bez ohľadu na systém.';
+
+  @override
+  String get nastBiometrie => 'Biometrické prihlásenie';
+
+  @override
+  String get nastBiometrieSub =>
+      'Face ID / odtlačok prsta pri každom spustení.';
+
+  @override
+  String get nastBiometricReason =>
+      'Potvrďte svoju totožnosť pre zapnutie biometrického prihlásenia';
+
+  @override
+  String get nastLeVaci => 'Režim pre ľavákov';
+
+  @override
+  String get nastLeVaciSub =>
+      'Spúšť fotoaparátu vľavo, keď je zariadenie na šírku.';
+
+  @override
+  String get nastJazyk => 'Jazyk aplikácie';
+
+  @override
+  String get nastSystJazyk => 'Systémový jazyk';
+
+  @override
+  String get nastModPrijem => 'Príjem vozidla';
+
+  @override
+  String get nastModHistorie => 'História príjmov';
+
+  @override
+  String get nastModMenu => 'Menu (Ostatné moduly)';
+
+  @override
+  String get nastModVozidla => 'Vozidlá';
+
+  @override
+  String get nastModUkony => 'Úkony';
+
+  @override
+  String get nastModZakaznici => 'Zákazníci';
+
+  @override
+  String get nastModTym => 'Tím a práva';
+
+  @override
+  String get nastModStatistiky => 'Štatistiky';
+
+  @override
+  String get nastModNastaveni => 'Nastavenia';
+
+  @override
+  String get nastModVin => 'VIN dekodér';
+
+  @override
+  String nastFormatTitle(String typ) {
+    return 'Formát čísla pre: $typ';
+  }
+
+  @override
+  String get nastNahledLabel => 'Náhľad budúceho dokladu:';
+
+  @override
+  String nastInternaMaska(String maska) {
+    return 'Interná maska: $maska';
+  }
+
+  @override
+  String get nastPrefix => 'Prefix (Značka)';
+
+  @override
+  String get nastOddelovac => 'Oddeľovač';
+
+  @override
+  String get nastOddelovacPomlcka => 'Pomlčka (-)';
+
+  @override
+  String get nastOddelovacLomitko => 'Lomítko (/)';
+
+  @override
+  String get nastOddelovacPodtrzitko => 'Podčiarkovník (_)';
+
+  @override
+  String get nastOddelovacBez => 'Bez oddeľovača';
+
+  @override
+  String get nastRokFormat => 'Formát roka';
+
+  @override
+  String get nastRok4 => '4 cifry (2026)';
+
+  @override
+  String get nastRok2 => '2 cifry (26)';
+
+  @override
+  String get nastBezRoku => 'Bez roka';
+
+  @override
+  String get nastMesicFormat => 'Formát mesiaca';
+
+  @override
+  String get nastMesic2 => '2 cifry (04)';
+
+  @override
+  String get nastBezMesice => 'Bez mesiaca';
+
+  @override
+  String nastDelkaCitadla(int n) {
+    return 'Dĺžka poradového čísla na konci: $n';
+  }
+
+  @override
+  String get nastInfoZmenaFormatu =>
+      'Ak zmeníte formát v priebehu roka, existujúce doklady zostanú nedotknuté a nová rad bude pokračovať od aktuálneho čísla v databáze.';
+
+  @override
+  String get nastUlozitFormat => 'ULOŽIŤ FORMÁT';
+
+  @override
+  String get nastFormatUlozen => 'Formát číslovania bol úspešne uložený.';
+
+  @override
+  String get nastTrialVyprselo => 'Skúšobná doba vypršala';
+
+  @override
+  String get nastTrialAktivni => 'Skúšobná doba zadarmo';
+
+  @override
+  String nastPlanNazev(String plan) {
+    return 'Plán $plan';
+  }
+
+  @override
+  String get nastTrialVyberPlan => 'Vyberte plán pre pokračovanie';
+
+  @override
+  String nastTrialZbyva(int n, String slovo) {
+    return 'Zostáva $n $slovo · bez záväzku';
+  }
+
+  @override
+  String nastPlatnostDo(String datum) {
+    return 'Platnosť do $datum';
+  }
+
+  @override
+  String get nastAktivni => 'Aktívny';
+
+  @override
+  String get nastVybratPlan => 'Vybrať plán';
+
+  @override
+  String get nastZobrazitPlany => 'Zobraziť plány';
+
+  @override
+  String get nastDayJeden => 'deň';
+
+  @override
+  String get nastDayNeco => 'dni';
+
+  @override
+  String get nastDayMnogo => 'dní';
 }

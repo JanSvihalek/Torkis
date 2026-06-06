@@ -2094,4 +2094,343 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get histPodpisNedostupny => 'Unterschrift nicht verfügbar';
+
+  @override
+  String get nastUlozit => 'SPEICHERN';
+
+  @override
+  String get nastUlozeno => 'Einstellungen gespeichert.';
+
+  @override
+  String nastChyba(String chyba) {
+    return 'Fehler: $chyba';
+  }
+
+  @override
+  String get nastZrusit => 'Abbrechen';
+
+  @override
+  String get nastUlozitBtn => 'Speichern';
+
+  @override
+  String get nastZavrit => 'SCHLIEẞEN';
+
+  @override
+  String get nastHotovo => 'FERTIG';
+
+  @override
+  String get nastTitulAdmin => 'Firmeneinstellungen';
+
+  @override
+  String get nastTitulUzivatel => 'Mein Profil';
+
+  @override
+  String get nastPodtitulAdmin => 'Servicedaten und Preisliste verwalten.';
+
+  @override
+  String get nastPodtitulUzivatel => 'Grundeinstellungen Ihres Kontos.';
+
+  @override
+  String get nastFiremniUdaje => 'Firmendaten';
+
+  @override
+  String get nastObchodniJmeno => 'Firmenname / Servicename';
+
+  @override
+  String get nastIco => 'Steuernummer';
+
+  @override
+  String get nastDic => 'USt-IdNr.';
+
+  @override
+  String get nastRejstrik => 'Handelsregistereintrag';
+
+  @override
+  String get nastSidloKontakt => 'Adresse & Kontakt';
+
+  @override
+  String get nastUlice => 'Straße und Hausnummer';
+
+  @override
+  String get nastMesto => 'Stadt';
+
+  @override
+  String get nastPsc => 'PLZ';
+
+  @override
+  String get nastTelefon => 'Servicetelefon';
+
+  @override
+  String get nastEmail => 'E-Mail für Kommunikation';
+
+  @override
+  String get nastCislovani => 'Nummerierung & Automatisierung';
+
+  @override
+  String get nastFormatZakazek => 'Format der Auftragsnummer';
+
+  @override
+  String get nastAutoEmail => 'E-Mails automatisch senden';
+
+  @override
+  String get nastAutoEmailSub =>
+      'Voreinstellt das Senden von PDF-Angeboten und Rechnungen.';
+
+  @override
+  String get nastAutoCislo => 'Auftragsnummer automatisch generieren';
+
+  @override
+  String get nastAutoCisloSub =>
+      'Bei Fahrzeugannahme wird die Auftragsnummer automatisch ausgefüllt. Deaktivieren für manuelle Eingabe.';
+
+  @override
+  String get nastPodpisPovolen => 'Kundenunterschrift erforderlich';
+
+  @override
+  String get nastPodpisPovolenSub =>
+      'Wenn deaktiviert, wird der Unterschriftsschritt ohne Unterschriftsfeld angezeigt.';
+
+  @override
+  String get nastSpzPovinne => 'Kennzeichen erforderlich';
+
+  @override
+  String get nastSpzPovinneSub =>
+      'Wenn deaktiviert, kann die Annahme ohne Kennzeichen abgeschlossen werden.';
+
+  @override
+  String get nastSablony => 'Nachrichtenvorlagen';
+
+  @override
+  String get nastSablonyPopis =>
+      'Voreingestellte Texte, die beim Schreiben einer Nachricht als Chips angezeigt werden.';
+
+  @override
+  String get nastSablonyPrazdne => 'Noch keine Vorlagen. Erste hinzufügen.';
+
+  @override
+  String get nastPridatSablonu => 'Vorlage hinzufügen';
+
+  @override
+  String get nastUpravitSablonu => 'Vorlage bearbeiten';
+
+  @override
+  String get nastNovaSablona => 'Neue Vorlage';
+
+  @override
+  String get nastSablonaHint => 'Nachrichtentext...';
+
+  @override
+  String get nastTypyZaznamu => 'Eintragstypen';
+
+  @override
+  String get nastTypyZaznamuPopis =>
+      'Eintragstypen unterscheiden den Aufnahmetyp (z. B. Service, Ankauf). Der zuerst hinzugefügte Typ ist Standard.';
+
+  @override
+  String get nastVychozi => 'Standard';
+
+  @override
+  String get nastPridatTyp => 'Typ hinzufügen';
+
+  @override
+  String get nastUpravitTyp => 'Typ bearbeiten';
+
+  @override
+  String get nastNovyTyp => 'Neuer Eintragstyp';
+
+  @override
+  String get nastTypHint => 'Typname (z. B. Service, Ankauf...)';
+
+  @override
+  String get nastLongPress => 'Lang drücken = als Standard festlegen.';
+
+  @override
+  String get nastOsobni => 'Persönliche Einstellungen';
+
+  @override
+  String get nastPrizpusobitListu => 'Untere Leiste anpassen';
+
+  @override
+  String get nastPrizpusobitListuSub =>
+      'Verknüpfungen hinzufügen oder Reihenfolge ändern.';
+
+  @override
+  String get nastListaPopis =>
+      'Sie können 2 bis 5 aktive Tabs haben. Ziehen zum Neuanordnen.';
+
+  @override
+  String get nastMenuNelzeOdebrat => 'Menü kann nicht entfernt werden';
+
+  @override
+  String get nastVybrModul => 'Modul für Leiste auswählen';
+
+  @override
+  String get nastPridatZalozku => 'Weiteren Tab hinzufügen (max. 5)';
+
+  @override
+  String get nastTmavyRezim => 'Dunkelmodus erzwingen';
+
+  @override
+  String get nastTmavyRezimSub => 'App ist unabhängig vom System dunkel.';
+
+  @override
+  String get nastBiometrie => 'Biometrische Anmeldung';
+
+  @override
+  String get nastBiometrieSub => 'Face ID / Fingerabdruck bei jedem Start.';
+
+  @override
+  String get nastBiometricReason =>
+      'Bestätigen Sie Ihre Identität zum Aktivieren der biometrischen Anmeldung';
+
+  @override
+  String get nastLeVaci => 'Linkshänder-Modus';
+
+  @override
+  String get nastLeVaciSub => 'Kameraauslöser links im Querformat.';
+
+  @override
+  String get nastJazyk => 'App-Sprache';
+
+  @override
+  String get nastSystJazyk => 'Systemsprache';
+
+  @override
+  String get nastModPrijem => 'Fahrzeugannahme';
+
+  @override
+  String get nastModHistorie => 'Annahmehistorie';
+
+  @override
+  String get nastModMenu => 'Menü (Weitere Module)';
+
+  @override
+  String get nastModVozidla => 'Fahrzeuge';
+
+  @override
+  String get nastModUkony => 'Aufgaben';
+
+  @override
+  String get nastModZakaznici => 'Kunden';
+
+  @override
+  String get nastModTym => 'Team & Rechte';
+
+  @override
+  String get nastModStatistiky => 'Statistiken';
+
+  @override
+  String get nastModNastaveni => 'Einstellungen';
+
+  @override
+  String get nastModVin => 'FIN-Decoder';
+
+  @override
+  String nastFormatTitle(String typ) {
+    return 'Nummernformat für: $typ';
+  }
+
+  @override
+  String get nastNahledLabel => 'Vorschau des zukünftigen Dokuments:';
+
+  @override
+  String nastInternaMaska(String maska) {
+    return 'Interne Maske: $maska';
+  }
+
+  @override
+  String get nastPrefix => 'Präfix (Kürzel)';
+
+  @override
+  String get nastOddelovac => 'Trennzeichen';
+
+  @override
+  String get nastOddelovacPomlcka => 'Bindestrich (-)';
+
+  @override
+  String get nastOddelovacLomitko => 'Schrägstrich (/)';
+
+  @override
+  String get nastOddelovacPodtrzitko => 'Unterstrich (_)';
+
+  @override
+  String get nastOddelovacBez => 'Kein Trennzeichen';
+
+  @override
+  String get nastRokFormat => 'Jahresformat';
+
+  @override
+  String get nastRok4 => '4 Ziffern (2026)';
+
+  @override
+  String get nastRok2 => '2 Ziffern (26)';
+
+  @override
+  String get nastBezRoku => 'Ohne Jahr';
+
+  @override
+  String get nastMesicFormat => 'Monatsformat';
+
+  @override
+  String get nastMesic2 => '2 Ziffern (04)';
+
+  @override
+  String get nastBezMesice => 'Ohne Monat';
+
+  @override
+  String nastDelkaCitadla(int n) {
+    return 'Länge der laufenden Nummer: $n';
+  }
+
+  @override
+  String get nastInfoZmenaFormatu =>
+      'Wenn Sie das Format im Laufe des Jahres ändern, bleiben vorhandene Dokumente unverändert und die neue Reihe setzt ab der aktuellen Nummer fort.';
+
+  @override
+  String get nastUlozitFormat => 'FORMAT SPEICHERN';
+
+  @override
+  String get nastFormatUlozen => 'Nummerierungsformat erfolgreich gespeichert.';
+
+  @override
+  String get nastTrialVyprselo => 'Testzeitraum abgelaufen';
+
+  @override
+  String get nastTrialAktivni => 'Kostenloser Testzeitraum';
+
+  @override
+  String nastPlanNazev(String plan) {
+    return 'Plan $plan';
+  }
+
+  @override
+  String get nastTrialVyberPlan => 'Plan auswählen um fortzufahren';
+
+  @override
+  String nastTrialZbyva(int n, String slovo) {
+    return 'Noch $n $slovo · kein Abonnement';
+  }
+
+  @override
+  String nastPlatnostDo(String datum) {
+    return 'Gültig bis $datum';
+  }
+
+  @override
+  String get nastAktivni => 'Aktiv';
+
+  @override
+  String get nastVybratPlan => 'Plan auswählen';
+
+  @override
+  String get nastZobrazitPlany => 'Pläne anzeigen';
+
+  @override
+  String get nastDayJeden => 'Tag';
+
+  @override
+  String get nastDayNeco => 'Tage';
+
+  @override
+  String get nastDayMnogo => 'Tage';
 }

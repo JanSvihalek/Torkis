@@ -3913,6 +3913,636 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Podpis není k dispozici'**
   String get histPodpisNedostupny;
+
+  /// No description provided for @nastUlozit.
+  ///
+  /// In cs, this message translates to:
+  /// **'ULOŽIT'**
+  String get nastUlozit;
+
+  /// No description provided for @nastUlozeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nastavení uloženo.'**
+  String get nastUlozeno;
+
+  /// No description provided for @nastChyba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba: {chyba}'**
+  String nastChyba(String chyba);
+
+  /// No description provided for @nastZrusit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zrušit'**
+  String get nastZrusit;
+
+  /// No description provided for @nastUlozitBtn.
+  ///
+  /// In cs, this message translates to:
+  /// **'Uložit'**
+  String get nastUlozitBtn;
+
+  /// No description provided for @nastZavrit.
+  ///
+  /// In cs, this message translates to:
+  /// **'ZAVŘÍT'**
+  String get nastZavrit;
+
+  /// No description provided for @nastHotovo.
+  ///
+  /// In cs, this message translates to:
+  /// **'HOTOVO'**
+  String get nastHotovo;
+
+  /// No description provided for @nastTitulAdmin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Firemní nastavení'**
+  String get nastTitulAdmin;
+
+  /// No description provided for @nastTitulUzivatel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Můj profil'**
+  String get nastTitulUzivatel;
+
+  /// No description provided for @nastPodtitulAdmin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Správa údajů servisu a ceníku.'**
+  String get nastPodtitulAdmin;
+
+  /// No description provided for @nastPodtitulUzivatel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Základní nastavení vašeho účtu.'**
+  String get nastPodtitulUzivatel;
+
+  /// No description provided for @nastFiremniUdaje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Firemní údaje'**
+  String get nastFiremniUdaje;
+
+  /// No description provided for @nastObchodniJmeno.
+  ///
+  /// In cs, this message translates to:
+  /// **'Obchodní jméno / Název servisu'**
+  String get nastObchodniJmeno;
+
+  /// No description provided for @nastIco.
+  ///
+  /// In cs, this message translates to:
+  /// **'IČO'**
+  String get nastIco;
+
+  /// No description provided for @nastDic.
+  ///
+  /// In cs, this message translates to:
+  /// **'DIČ'**
+  String get nastDic;
+
+  /// No description provided for @nastRejstrik.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zápis v rejstříku (spisová značka)'**
+  String get nastRejstrik;
+
+  /// No description provided for @nastSidloKontakt.
+  ///
+  /// In cs, this message translates to:
+  /// **'Sídlo a kontakt'**
+  String get nastSidloKontakt;
+
+  /// No description provided for @nastUlice.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ulice a č.p.'**
+  String get nastUlice;
+
+  /// No description provided for @nastMesto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Město'**
+  String get nastMesto;
+
+  /// No description provided for @nastPsc.
+  ///
+  /// In cs, this message translates to:
+  /// **'PSČ'**
+  String get nastPsc;
+
+  /// No description provided for @nastTelefon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Telefon servisu'**
+  String get nastTelefon;
+
+  /// No description provided for @nastEmail.
+  ///
+  /// In cs, this message translates to:
+  /// **'E-mail pro komunikaci'**
+  String get nastEmail;
+
+  /// No description provided for @nastCislovani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Číslování a automatizace'**
+  String get nastCislovani;
+
+  /// No description provided for @nastFormatZakazek.
+  ///
+  /// In cs, this message translates to:
+  /// **'Formát čísla zakázek'**
+  String get nastFormatZakazek;
+
+  /// No description provided for @nastAutoEmail.
+  ///
+  /// In cs, this message translates to:
+  /// **'Automaticky zasílat e-maily'**
+  String get nastAutoEmail;
+
+  /// No description provided for @nastAutoEmailSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přednastaví odesílání PDF nabídek a faktur.'**
+  String get nastAutoEmailSub;
+
+  /// No description provided for @nastAutoCislo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Automaticky generovat číslo zakázky'**
+  String get nastAutoCislo;
+
+  /// No description provided for @nastAutoCisloSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při příjmu vozidla se číslo zakázky předvyplní automaticky. Vypnutím umožníte ruční zadání.'**
+  String get nastAutoCisloSub;
+
+  /// No description provided for @nastPodpisPovolen.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyžadovat podpis zákazníka'**
+  String get nastPodpisPovolen;
+
+  /// No description provided for @nastPodpisPovolenSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při vypnutí se krok s podpisem v příjmu zobrazí bez podpisového plátna.'**
+  String get nastPodpisPovolenSub;
+
+  /// No description provided for @nastSpzPovinne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Povinná SPZ vozidla'**
+  String get nastSpzPovinne;
+
+  /// No description provided for @nastSpzPovinneSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při vypnutí lze příjem odeslat i bez vyplněné SPZ (např. vozidla bez registrace).'**
+  String get nastSpzPovinneSub;
+
+  /// No description provided for @nastSablony.
+  ///
+  /// In cs, this message translates to:
+  /// **'Šablony zpráv'**
+  String get nastSablony;
+
+  /// No description provided for @nastSablonyPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přednastavené texty zobrazené jako chipy při psaní zprávy zákazníkovi.'**
+  String get nastSablonyPopis;
+
+  /// No description provided for @nastSablonyPrazdne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím žádné šablony. Přidejte první.'**
+  String get nastSablonyPrazdne;
+
+  /// No description provided for @nastPridatSablonu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat šablonu'**
+  String get nastPridatSablonu;
+
+  /// No description provided for @nastUpravitSablonu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Upravit šablonu'**
+  String get nastUpravitSablonu;
+
+  /// No description provided for @nastNovaSablona.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nová šablona'**
+  String get nastNovaSablona;
+
+  /// No description provided for @nastSablonaHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Text zprávy...'**
+  String get nastSablonaHint;
+
+  /// No description provided for @nastTypyZaznamu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typy záznamu'**
+  String get nastTypyZaznamu;
+
+  /// No description provided for @nastTypyZaznamuPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Typy záznamu slouží k rozlišení příjmu vozidla (např. Servis, Výkup). První přidaný typ je výchozí.'**
+  String get nastTypyZaznamuPopis;
+
+  /// No description provided for @nastVychozi.
+  ///
+  /// In cs, this message translates to:
+  /// **'výchozí'**
+  String get nastVychozi;
+
+  /// No description provided for @nastPridatTyp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat typ'**
+  String get nastPridatTyp;
+
+  /// No description provided for @nastUpravitTyp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Upravit typ'**
+  String get nastUpravitTyp;
+
+  /// No description provided for @nastNovyTyp.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nový typ záznamu'**
+  String get nastNovyTyp;
+
+  /// No description provided for @nastTypHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Název typu (např. Servis, Výkup...)'**
+  String get nastTypHint;
+
+  /// No description provided for @nastLongPress.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dlouhý stisk = nastavit jako výchozí.'**
+  String get nastLongPress;
+
+  /// No description provided for @nastOsobni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Osobní nastavení'**
+  String get nastOsobni;
+
+  /// No description provided for @nastPrizpusobitListu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přizpůsobit spodní lištu'**
+  String get nastPrizpusobitListu;
+
+  /// No description provided for @nastPrizpusobitListuSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidejte si zástupce nebo změňte pořadí.'**
+  String get nastPrizpusobitListuSub;
+
+  /// No description provided for @nastListaPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Můžete mít aktivních 2 až 5 záložek. Přetažením změníte pořadí.'**
+  String get nastListaPopis;
+
+  /// No description provided for @nastMenuNelzeOdebrat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Menu nelze odebrat'**
+  String get nastMenuNelzeOdebrat;
+
+  /// No description provided for @nastVybrModul.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyberte modul pro lištu'**
+  String get nastVybrModul;
+
+  /// No description provided for @nastPridatZalozku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat další záložku (max 5)'**
+  String get nastPridatZalozku;
+
+  /// No description provided for @nastTmavyRezim.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vynutit tmavý režim'**
+  String get nastTmavyRezim;
+
+  /// No description provided for @nastTmavyRezimSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Aplikace bude tmavá bez ohledu na systém.'**
+  String get nastTmavyRezimSub;
+
+  /// No description provided for @nastBiometrie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Biometrické přihlášení'**
+  String get nastBiometrie;
+
+  /// No description provided for @nastBiometrieSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Face ID / otisk prstu při každém spuštění.'**
+  String get nastBiometrieSub;
+
+  /// No description provided for @nastBiometricReason.
+  ///
+  /// In cs, this message translates to:
+  /// **'Potvrďte svou totožnost pro zapnutí biometrického přihlášení'**
+  String get nastBiometricReason;
+
+  /// No description provided for @nastLeVaci.
+  ///
+  /// In cs, this message translates to:
+  /// **'Režim pro leváky'**
+  String get nastLeVaci;
+
+  /// No description provided for @nastLeVaciSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Spoušť fotoaparátu vlevo, když je zařízení na šířku.'**
+  String get nastLeVaciSub;
+
+  /// No description provided for @nastJazyk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Jazyk aplikace'**
+  String get nastJazyk;
+
+  /// No description provided for @nastSystJazyk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Systémový jazyk'**
+  String get nastSystJazyk;
+
+  /// No description provided for @nastModPrijem.
+  ///
+  /// In cs, this message translates to:
+  /// **'Příjem vozidla'**
+  String get nastModPrijem;
+
+  /// No description provided for @nastModHistorie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Historie příjmů'**
+  String get nastModHistorie;
+
+  /// No description provided for @nastModMenu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Menu (Ostatní moduly)'**
+  String get nastModMenu;
+
+  /// No description provided for @nastModVozidla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidla'**
+  String get nastModVozidla;
+
+  /// No description provided for @nastModUkony.
+  ///
+  /// In cs, this message translates to:
+  /// **'Úkony'**
+  String get nastModUkony;
+
+  /// No description provided for @nastModZakaznici.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazníci'**
+  String get nastModZakaznici;
+
+  /// No description provided for @nastModTym.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tým a práva'**
+  String get nastModTym;
+
+  /// No description provided for @nastModStatistiky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Statistiky'**
+  String get nastModStatistiky;
+
+  /// No description provided for @nastModNastaveni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nastavení'**
+  String get nastModNastaveni;
+
+  /// No description provided for @nastModVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN dekodér'**
+  String get nastModVin;
+
+  /// No description provided for @nastFormatTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Formát čísla pro: {typ}'**
+  String nastFormatTitle(String typ);
+
+  /// No description provided for @nastNahledLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Náhled budoucího dokladu:'**
+  String get nastNahledLabel;
+
+  /// No description provided for @nastInternaMaska.
+  ///
+  /// In cs, this message translates to:
+  /// **'Interní maska: {maska}'**
+  String nastInternaMaska(String maska);
+
+  /// No description provided for @nastPrefix.
+  ///
+  /// In cs, this message translates to:
+  /// **'Prefix (Značka)'**
+  String get nastPrefix;
+
+  /// No description provided for @nastOddelovac.
+  ///
+  /// In cs, this message translates to:
+  /// **'Oddělovač'**
+  String get nastOddelovac;
+
+  /// No description provided for @nastOddelovacPomlcka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pomlčka (-)'**
+  String get nastOddelovacPomlcka;
+
+  /// No description provided for @nastOddelovacLomitko.
+  ///
+  /// In cs, this message translates to:
+  /// **'Lomítko (/)'**
+  String get nastOddelovacLomitko;
+
+  /// No description provided for @nastOddelovacPodtrzitko.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podtržítko (_)'**
+  String get nastOddelovacPodtrzitko;
+
+  /// No description provided for @nastOddelovacBez.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bez oddělovače'**
+  String get nastOddelovacBez;
+
+  /// No description provided for @nastRokFormat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Formát roku'**
+  String get nastRokFormat;
+
+  /// No description provided for @nastRok4.
+  ///
+  /// In cs, this message translates to:
+  /// **'4 cifry (2026)'**
+  String get nastRok4;
+
+  /// No description provided for @nastRok2.
+  ///
+  /// In cs, this message translates to:
+  /// **'2 cifry (26)'**
+  String get nastRok2;
+
+  /// No description provided for @nastBezRoku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bez roku'**
+  String get nastBezRoku;
+
+  /// No description provided for @nastMesicFormat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Formát měsíce'**
+  String get nastMesicFormat;
+
+  /// No description provided for @nastMesic2.
+  ///
+  /// In cs, this message translates to:
+  /// **'2 cifry (04)'**
+  String get nastMesic2;
+
+  /// No description provided for @nastBezMesice.
+  ///
+  /// In cs, this message translates to:
+  /// **'Bez měsíce'**
+  String get nastBezMesice;
+
+  /// No description provided for @nastDelkaCitadla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Délka pořadového čísla na konci: {n}'**
+  String nastDelkaCitadla(int n);
+
+  /// No description provided for @nastInfoZmenaFormatu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pokud změníte formát v průběhu roku, stávající doklady zůstanou nedotčeny a nová řada začne navazovat od aktuálního čísla v databázi.'**
+  String get nastInfoZmenaFormatu;
+
+  /// No description provided for @nastUlozitFormat.
+  ///
+  /// In cs, this message translates to:
+  /// **'ULOŽIT FORMÁT'**
+  String get nastUlozitFormat;
+
+  /// No description provided for @nastFormatUlozen.
+  ///
+  /// In cs, this message translates to:
+  /// **'Formát číslování byl úspěšně uložen.'**
+  String get nastFormatUlozen;
+
+  /// No description provided for @nastTrialVyprselo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zkušební doba vypršela'**
+  String get nastTrialVyprselo;
+
+  /// No description provided for @nastTrialAktivni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zkušební doba zdarma'**
+  String get nastTrialAktivni;
+
+  /// No description provided for @nastPlanNazev.
+  ///
+  /// In cs, this message translates to:
+  /// **'Plán {plan}'**
+  String nastPlanNazev(String plan);
+
+  /// No description provided for @nastTrialVyberPlan.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyberte plán pro pokračování'**
+  String get nastTrialVyberPlan;
+
+  /// No description provided for @nastTrialZbyva.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zbývá {n} {slovo} · bez závazku'**
+  String nastTrialZbyva(int n, String slovo);
+
+  /// No description provided for @nastPlatnostDo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Platnost do {datum}'**
+  String nastPlatnostDo(String datum);
+
+  /// No description provided for @nastAktivni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Aktivní'**
+  String get nastAktivni;
+
+  /// No description provided for @nastVybratPlan.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vybrat plán'**
+  String get nastVybratPlan;
+
+  /// No description provided for @nastZobrazitPlany.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zobrazit plány'**
+  String get nastZobrazitPlany;
+
+  /// No description provided for @nastDayJeden.
+  ///
+  /// In cs, this message translates to:
+  /// **'den'**
+  String get nastDayJeden;
+
+  /// No description provided for @nastDayNeco.
+  ///
+  /// In cs, this message translates to:
+  /// **'dny'**
+  String get nastDayNeco;
+
+  /// No description provided for @nastDayMnogo.
+  ///
+  /// In cs, this message translates to:
+  /// **'dní'**
+  String get nastDayMnogo;
 }
 
 class _AppLocalizationsDelegate

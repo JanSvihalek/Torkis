@@ -2067,4 +2067,342 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get histPodpisNedostupny => 'Signature not available';
+
+  @override
+  String get nastUlozit => 'SAVE';
+
+  @override
+  String get nastUlozeno => 'Settings saved.';
+
+  @override
+  String nastChyba(String chyba) {
+    return 'Error: $chyba';
+  }
+
+  @override
+  String get nastZrusit => 'Cancel';
+
+  @override
+  String get nastUlozitBtn => 'Save';
+
+  @override
+  String get nastZavrit => 'CLOSE';
+
+  @override
+  String get nastHotovo => 'DONE';
+
+  @override
+  String get nastTitulAdmin => 'Company settings';
+
+  @override
+  String get nastTitulUzivatel => 'My profile';
+
+  @override
+  String get nastPodtitulAdmin => 'Manage service details and price list.';
+
+  @override
+  String get nastPodtitulUzivatel => 'Basic settings of your account.';
+
+  @override
+  String get nastFiremniUdaje => 'Company details';
+
+  @override
+  String get nastObchodniJmeno => 'Business name / Service name';
+
+  @override
+  String get nastIco => 'Company ID';
+
+  @override
+  String get nastDic => 'Tax ID';
+
+  @override
+  String get nastRejstrik => 'Registry entry (file number)';
+
+  @override
+  String get nastSidloKontakt => 'Address & contact';
+
+  @override
+  String get nastUlice => 'Street and number';
+
+  @override
+  String get nastMesto => 'City';
+
+  @override
+  String get nastPsc => 'Postal code';
+
+  @override
+  String get nastTelefon => 'Service phone';
+
+  @override
+  String get nastEmail => 'E-mail for communication';
+
+  @override
+  String get nastCislovani => 'Numbering & automation';
+
+  @override
+  String get nastFormatZakazek => 'Order number format';
+
+  @override
+  String get nastAutoEmail => 'Automatically send emails';
+
+  @override
+  String get nastAutoEmailSub => 'Pre-sets sending of PDF offers and invoices.';
+
+  @override
+  String get nastAutoCislo => 'Auto-generate order number';
+
+  @override
+  String get nastAutoCisloSub =>
+      'At vehicle intake, the order number is filled in automatically. Disable to allow manual entry.';
+
+  @override
+  String get nastPodpisPovolen => 'Require customer signature';
+
+  @override
+  String get nastPodpisPovolenSub =>
+      'When disabled, the signature step is shown without the signature canvas.';
+
+  @override
+  String get nastSpzPovinne => 'Plate number required';
+
+  @override
+  String get nastSpzPovinneSub =>
+      'When disabled, intake can be submitted without a plate number (e.g. unregistered vehicles).';
+
+  @override
+  String get nastSablony => 'Message templates';
+
+  @override
+  String get nastSablonyPopis =>
+      'Preset texts displayed as chips when writing a message to the customer.';
+
+  @override
+  String get nastSablonyPrazdne => 'No templates yet. Add the first one.';
+
+  @override
+  String get nastPridatSablonu => 'Add template';
+
+  @override
+  String get nastUpravitSablonu => 'Edit template';
+
+  @override
+  String get nastNovaSablona => 'New template';
+
+  @override
+  String get nastSablonaHint => 'Message text...';
+
+  @override
+  String get nastTypyZaznamu => 'Record types';
+
+  @override
+  String get nastTypyZaznamuPopis =>
+      'Record types distinguish intake type (e.g. Service, Purchase). The first added type is the default.';
+
+  @override
+  String get nastVychozi => 'default';
+
+  @override
+  String get nastPridatTyp => 'Add type';
+
+  @override
+  String get nastUpravitTyp => 'Edit type';
+
+  @override
+  String get nastNovyTyp => 'New record type';
+
+  @override
+  String get nastTypHint => 'Type name (e.g. Service, Purchase...)';
+
+  @override
+  String get nastLongPress => 'Long press = set as default.';
+
+  @override
+  String get nastOsobni => 'Personal settings';
+
+  @override
+  String get nastPrizpusobitListu => 'Customise bottom bar';
+
+  @override
+  String get nastPrizpusobitListuSub => 'Add shortcuts or change order.';
+
+  @override
+  String get nastListaPopis =>
+      'You can have 2 to 5 active tabs. Drag to reorder.';
+
+  @override
+  String get nastMenuNelzeOdebrat => 'Menu cannot be removed';
+
+  @override
+  String get nastVybrModul => 'Select module for bar';
+
+  @override
+  String get nastPridatZalozku => 'Add another tab (max 5)';
+
+  @override
+  String get nastTmavyRezim => 'Force dark mode';
+
+  @override
+  String get nastTmavyRezimSub => 'App will be dark regardless of system.';
+
+  @override
+  String get nastBiometrie => 'Biometric login';
+
+  @override
+  String get nastBiometrieSub => 'Face ID / fingerprint at every launch.';
+
+  @override
+  String get nastBiometricReason =>
+      'Confirm your identity to enable biometric login';
+
+  @override
+  String get nastLeVaci => 'Left-handed mode';
+
+  @override
+  String get nastLeVaciSub =>
+      'Camera shutter on the left when device is in landscape.';
+
+  @override
+  String get nastJazyk => 'App language';
+
+  @override
+  String get nastSystJazyk => 'System language';
+
+  @override
+  String get nastModPrijem => 'Vehicle intake';
+
+  @override
+  String get nastModHistorie => 'Intake history';
+
+  @override
+  String get nastModMenu => 'Menu (Other modules)';
+
+  @override
+  String get nastModVozidla => 'Vehicles';
+
+  @override
+  String get nastModUkony => 'Tasks';
+
+  @override
+  String get nastModZakaznici => 'Customers';
+
+  @override
+  String get nastModTym => 'Team & permissions';
+
+  @override
+  String get nastModStatistiky => 'Statistics';
+
+  @override
+  String get nastModNastaveni => 'Settings';
+
+  @override
+  String get nastModVin => 'VIN decoder';
+
+  @override
+  String nastFormatTitle(String typ) {
+    return 'Number format for: $typ';
+  }
+
+  @override
+  String get nastNahledLabel => 'Preview of future document:';
+
+  @override
+  String nastInternaMaska(String maska) {
+    return 'Internal mask: $maska';
+  }
+
+  @override
+  String get nastPrefix => 'Prefix (Code)';
+
+  @override
+  String get nastOddelovac => 'Separator';
+
+  @override
+  String get nastOddelovacPomlcka => 'Dash (-)';
+
+  @override
+  String get nastOddelovacLomitko => 'Slash (/)';
+
+  @override
+  String get nastOddelovacPodtrzitko => 'Underscore (_)';
+
+  @override
+  String get nastOddelovacBez => 'No separator';
+
+  @override
+  String get nastRokFormat => 'Year format';
+
+  @override
+  String get nastRok4 => '4 digits (2026)';
+
+  @override
+  String get nastRok2 => '2 digits (26)';
+
+  @override
+  String get nastBezRoku => 'No year';
+
+  @override
+  String get nastMesicFormat => 'Month format';
+
+  @override
+  String get nastMesic2 => '2 digits (04)';
+
+  @override
+  String get nastBezMesice => 'No month';
+
+  @override
+  String nastDelkaCitadla(int n) {
+    return 'Length of trailing counter: $n';
+  }
+
+  @override
+  String get nastInfoZmenaFormatu =>
+      'If you change the format mid-year, existing documents remain unchanged and the new series continues from the current number in the database.';
+
+  @override
+  String get nastUlozitFormat => 'SAVE FORMAT';
+
+  @override
+  String get nastFormatUlozen => 'Numbering format saved successfully.';
+
+  @override
+  String get nastTrialVyprselo => 'Trial period expired';
+
+  @override
+  String get nastTrialAktivni => 'Free trial period';
+
+  @override
+  String nastPlanNazev(String plan) {
+    return 'Plan $plan';
+  }
+
+  @override
+  String get nastTrialVyberPlan => 'Choose a plan to continue';
+
+  @override
+  String nastTrialZbyva(int n, String slovo) {
+    return '$n $slovo remaining · no commitment';
+  }
+
+  @override
+  String nastPlatnostDo(String datum) {
+    return 'Valid until $datum';
+  }
+
+  @override
+  String get nastAktivni => 'Active';
+
+  @override
+  String get nastVybratPlan => 'Choose plan';
+
+  @override
+  String get nastZobrazitPlany => 'View plans';
+
+  @override
+  String get nastDayJeden => 'day';
+
+  @override
+  String get nastDayNeco => 'days';
+
+  @override
+  String get nastDayMnogo => 'days';
 }
