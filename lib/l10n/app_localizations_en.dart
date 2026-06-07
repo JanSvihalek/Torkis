@@ -1526,6 +1526,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get predFeat10Uziv => '10 users max.';
 
   @override
+  String get predFeat60Vin => '60 VIN decodings/month';
+
+  @override
   String get predFeat75Vin => '75 VIN decodings/month';
 
   @override

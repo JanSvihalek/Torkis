@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.3.7';
+const String kAppVerze = '5.3.8';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -118,7 +118,7 @@ const Map<String, int?> kPlanPrijemLimit = {
 /// POZN.: musí zůstat v souladu s functions/index.js → VIN_LIMITS.
 const Map<String, int?> kPlanVinLimit = {
   'basic': 30,
-  'standard': 75,
+  'standard': 60,
   'pro': 150,
   'trial': 10,
   'custom': null,
@@ -126,11 +126,11 @@ const Map<String, int?> kPlanVinLimit = {
 
 /// Maximální počet zjištění tržní hodnoty za měsíc dle plánu (null = neomezeno).
 /// Počítají se pouze skutečná API volání (z_cache == false).
-/// Tržní hodnota je drahá (Vincario value balíček) — limity držíme nízko.
+/// Tržní hodnota je drahá (Vincario value balíček, min. 4 990 Kč/měsíc) — dostupná jen v Pro.
 /// POZN.: musí zůstat v souladu s functions/index.js → VALUE_LIMITS.
 const Map<String, int?> kPlanValueLimit = {
-  'basic': 1,
-  'standard': 3,
+  'basic': 0,
+  'standard': 0,
   'pro': 5,
   'trial': 0,
   'custom': null,

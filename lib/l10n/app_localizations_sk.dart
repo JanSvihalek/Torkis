@@ -1528,6 +1528,9 @@ class AppLocalizationsSk extends AppLocalizations {
   String get predFeat10Uziv => 'Max. 10 používateľov';
 
   @override
+  String get predFeat60Vin => '60 dekódovaní VIN/mesiac';
+
+  @override
   String get predFeat75Vin => '75 dekódovaní VIN/mesiac';
 
   @override

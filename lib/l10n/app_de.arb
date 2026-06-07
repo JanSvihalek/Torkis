@@ -519,6 +519,7 @@
   "predFeatSpravaTymu": "Teamverwaltung",
   "predFeat150Zaznamu": "150 Einträge/Monat",
   "predFeat10Uziv": "Max. 10 Benutzer",
+  "predFeat60Vin": "60 VIN-Dekodierungen/Monat",
   "predFeat75Vin": "75 VIN-Dekodierungen/Monat",
   "predFeat3TrzniHodnota": "3 Marktwertabfragen/Monat",
   "predFeatVseBasic": "Alles aus Basic",

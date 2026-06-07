@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>TORKIS — Rozbor marží předplatného</title>
+<style>
+  :root {
+    --ink: #0B1A2E;
+    --accent: #3B82F6;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --muted: #64748B;
+    --line: #E2E8F0;
+    --paper: #FFFFFF;
+    --surface: #F8FAFC;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--paper);
+    padding: 32px 40px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  /* HEADER */
+  .header { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid var(--ink); padding-bottom: 14px; margin-bottom: 28px; }
+  .header-brand { font-size: 22px; font-weight: 800; letter-spacing: 3px; color: var(--ink); }
+  .header-meta { text-align: right; color: var(--muted); font-size: 11px; line-height: 1.7; }
+  /* TITLES */
+  h1 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 24px 0 10px; }
+  h3 { font-size: 12px; font-weight: 600; color: var(--ink); margin: 14px 0 6px; }
+  /* ASSUMPTION BOX */
+  .assumptions {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 22px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+  }
+  .assumption-item { font-size: 11.5px; }
+  .assumption-item .label { color: var(--muted); margin-bottom: 3px; }
+  .assumption-item .value { font-weight: 600; font-size: 13px; }
+  /* PLAN CARDS */
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .plan-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px;
+    background: var(--surface);
+  }
+  .plan-card.featured { background: var(--ink); color: white; border-color: var(--ink); }
+  .plan-card.featured .plan-muted { color: #94A3B8; }
+  .plan-card.featured .cost-label { color: #94A3B8; }
+  .plan-name { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent); margin-bottom: 4px; }
+  .plan-card.featured .plan-name { color: #60A5FA; }
+  .plan-price { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+  .plan-czk { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .plan-card.featured .plan-czk { color: #94A3B8; }
+  .plan-limits { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
+  .plan-card.featured .plan-limits { border-color: #1E3A5F; }
+  .limit-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11.5px; }
+  .limit-val { font-weight: 600; }
+  .plan-muted { color: var(--muted); }
+  /* COST TABLES */
+  .scenarios { margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 16px; }
+  thead { background: var(--ink); color: white; }
+  thead th { padding: 8px 10px; text-align: left; font-weight: 600; font-size: 11px; letter-spacing: 0.3px; }
+  thead th:not(:first-child) { text-align: center; }
+  tbody tr { border-bottom: 1px solid var(--line); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 7px 10px; }
+  tbody td:not(:first-child) { text-align: center; font-variant-numeric: tabular-nums; }
+  tbody tr.subtotal td { font-weight: 600; background: var(--surface); }
+  tbody tr.result td { font-weight: 700; font-size: 13px; background: #F0FDF4; }
+  tbody tr.result-warn td { font-weight: 700; font-size: 13px; background: #FFF7ED; }
+  tbody tr.result-loss td { font-weight: 700; font-size: 13px; background: #FFF1F2; }
+  .good { color: var(--success); font-weight: 700; }
+  .warn { color: var(--warning); font-weight: 700; }
+  .bad { color: var(--danger); font-weight: 700; }
+  /* BREAKEVEN */
+  .breakeven-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+  .breakeven-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .be-plan { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; color: var(--muted); margin-bottom: 6px; }
+  .be-num { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; margin-bottom: 2px; }
+  .be-limit { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .be-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .badge-ok { background: #DCFCE7; color: #166534; }
+  .badge-warn { background: #FEF9C3; color: #854D0E; }
+  .badge-bad { background: #FFE4E6; color: #9F1239; }
+  /* ANNUAL */
+  .annual-table { margin-bottom: 24px; }
+  /* RECOMMENDATIONS */
+  .recs { margin-bottom: 24px; }
+  .rec-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .rec-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .rec-title { font-weight: 700; font-size: 12.5px; margin-bottom: 2px; }
+  .rec-text { color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+  .rec-highlight { background: #FFF7ED; border-color: #FED7AA; }
+  .rec-alert { background: #FFF1F2; border-color: #FECDD3; }
+  /* SECTION DIVIDER */
+  .section-divider { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
+  /* FOOTER */
+  .footer { color: var(--muted); font-size: 10.5px; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; display: flex; justify-content: space-between; }
+  /* PRINT */
+  @media print {
+    body { padding: 20px 28px; font-size: 12px; }
+    .plan-price { font-size: 22px; }
+    .be-num { font-size: 24px; }
+    @page { margin: 1.5cm; size: A4; }
+    .plans, .breakeven-grid, .assumptions { page-break-inside: avoid; }
+  }
+  /* SCENARIO KEY */
+  .key { display: flex; gap: 18px; margin-bottom: 8px; font-size: 11px; }
+  .key-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+  .key-min { background: #22C55E; }
+  .key-real { background: #3B82F6; }
+  .key-max { background: #EF4444; }
+  /* NOTE */
+  .note { font-size: 10.5px; color: var(--muted); font-style: italic; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">TORKIS</div>
+  <div class="header-meta">
+    Rozbor marží předplatného<br>
+    Vincario API · Firebase · App Store<br>
+    Červen 2026
+  </div>
+</div>
+
+<h1>Analýza nákladů a marží</h1>
+<p style="color:var(--muted);font-size:12px;margin-top:4px;margin-bottom:20px;">
+  Rozbor profitability jednotlivých plánů s ohledem na variabilní náklady Vincario API a infrastrukturu Firebase.
+</p>
+
+<!-- ASSUMPTIONS -->
+<h2>Vstupní předpoklady</h2>
+<div class="assumptions">
+  <div class="assumption-item">
+    <div class="label">Kurz USD/CZK</div>
+    <div class="value">1 USD = 23 Kč</div>
+  </div>
+  <div class="assumption-item">
+    <div class="label">VIN dekodér (Vincario)</div>
+    <div class="value">8 Kč / request</div>
+  </div>
+  <div class="assumption-item">
+    <div class="label">Tržní hodnota (Vincario)</div>
+    <div class="value">30 Kč / request</div>
+  </div>
+  <div class="assumption-item">
+    <div class="label">Provize App Store / Google Play</div>
+    <div class="value">15 % (small business)</div>
+  </div>
+  <div class="assumption-item">
+    <div class="label">Firebase infrastruktura</div>
+    <div class="value">odhad z logiky aplikace</div>
+  </div>
+  <div class="assumption-item">
+    <div class="label">RevenueCat poplatek</div>
+    <div class="value">zdarma (pod $2 500 MRR)</div>
+  </div>
+</div>
+
+<!-- PLAN OVERVIEW -->
+<h2>Přehled plánů a limitů</h2>
+<div class="plans">
+
+  <div class="plan-card">
+    <div class="plan-name">BASIC</div>
+    <div class="plan-price">$20</div>
+    <div class="plan-czk">≈ 460 Kč / měsíc</div>
+    <div class="plan-limits">
+      <div class="limit-row"><span class="plan-muted">Záznamy</span><span class="limit-val">50 / měsíc</span></div>
+      <div class="limit-row"><span class="plan-muted">Uživatelé</span><span class="limit-val">3 max.</span></div>
+      <div class="limit-row"><span class="plan-muted">VIN dekodér</span><span class="limit-val">30 / měsíc</span></div>
+      <div class="limit-row"><span class="plan-muted">Tržní hodnota</span><span class="limit-val">1 / měsíc</span></div>
+    </div>
+    <div class="plan-limits" style="margin-top:8px;">
+      <div class="limit-row"><span class="plan-muted">Max. Vincario náklad</span><span class="limit-val bad">270 Kč</span></div>
+    </div>
+  </div>
+
+  <div class="plan-card featured">
+    <div class="plan-name">STANDARD</div>
+    <div class="plan-price">$30</div>
+    <div class="plan-czk">≈ 690 Kč / měsíc</div>
+    <div class="plan-limits">
+      <div class="limit-row"><span class="plan-muted">Záznamy</span><span class="limit-val">150 / měsíc</span></div>
+      <div class="limit-row"><span class="plan-muted">Uživatelé</span><span class="limit-val">10 max.</span></div>
+      <div class="limit-row"><span class="plan-muted">VIN dekodér</span><span class="limit-val">75 / měsíc</span></div>
+      <div class="limit-row"><span class="plan-muted">Tržní hodnota</span><span class="limit-val">3 / měsíc</span></div>
+    </div>
+    <div class="plan-limits" style="margin-top:8px;">
+      <div class="limit-row"><span class="plan-muted">Max. Vincario náklad</span><span class="limit-val" style="color:#F87171;">690 Kč</span></div>
+    </div>
+  </div>
+
+  <div class="plan-card">
+    <div class="plan-name">PRO</div>
+    <div class="plan-price">$60</div>
+    <div class="plan-czk">≈ 1 380 Kč / měsíc</div>
+    <div class="plan-limits">
+      <div class="limit-row"><span class="plan-muted">Záznamy</span><span class="limit-val">∞</span></div>
+      <div class="limit-row"><span class="plan-muted">Uživatelé</span><span class="limit-val">∞</span></div>
+      <div class="limit-row"><span class="plan-muted">VIN dekodér</span><span class="limit-val">150 / měsíc</span></div>
+      <div class="limit-row"><span class="plan-muted">Tržní hodnota</span><span class="limit-val">5 / měsíc</span></div>
+    </div>
+    <div class="plan-limits" style="margin-top:8px;">
+      <div class="limit-row"><span class="plan-muted">Max. Vincario náklad</span><span class="limit-val bad">1 350 Kč</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SCENARIO ANALYSIS -->
+<h2>Analýza marže dle scénáře využití limitů</h2>
+<div class="key">
+  <span><span class="key-dot key-min"></span>Minimální (0 % limitů)</span>
+  <span><span class="key-dot key-real"></span>Reálný (60 % VIN, 30 % tržní hodnota)</span>
+  <span><span class="key-dot key-max"></span>Maximální (100 % limitů)</span>
+</div>
+<p class="note" style="margin-bottom:12px;">Všechny částky jsou v Kč. Firebase náklady jsou odhad na jednoho zákazníka/měsíc.</p>
+
+<!-- BASIC TABLE -->
+<h3>Basic — $20 / měsíc (460 Kč)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Položka</th>
+      <th>Min (0 %)</th>
+      <th>Reálný (60/30 %)</th>
+      <th>Max (100 %)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Příjem od zákazníka</td><td>460 Kč</td><td>460 Kč</td><td>460 Kč</td></tr>
+    <tr><td>Provize App Store/GP (−15 %)</td><td>−69 Kč</td><td>−69 Kč</td><td>−69 Kč</td></tr>
+    <tr class="subtotal"><td>Čistý příjem</td><td>391 Kč</td><td>391 Kč</td><td>391 Kč</td></tr>
+    <tr><td>Firebase (Firestore, Storage, Functions)</td><td>−3 Kč</td><td>−3 Kč</td><td>−3 Kč</td></tr>
+    <tr><td>VIN dekodér (max 30 × 8 Kč)</td><td>0 Kč</td><td>−144 Kč <span style="color:var(--muted);font-size:10px">18 req.</span></td><td>−240 Kč</td></tr>
+    <tr><td>Tržní hodnota (max 1 × 30 Kč)</td><td>0 Kč</td><td>−9 Kč <span style="color:var(--muted);font-size:10px">0,3 req.</span></td><td>−30 Kč</td></tr>
+    <tr class="result"><td><strong>Hrubá marže</strong></td><td class="good">388 Kč (84 %)</td><td class="good">235 Kč (51 %)</td><td class="good">118 Kč (26 %)</td></tr>
+  </tbody>
+</table>
+
+<!-- STANDARD TABLE -->
+<h3>Standard — $30 / měsíc (690 Kč)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Položka</th>
+      <th>Min (0 %)</th>
+      <th>Reálný (60/30 %)</th>
+      <th>Max (100 %)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Příjem od zákazníka</td><td>690 Kč</td><td>690 Kč</td><td>690 Kč</td></tr>
+    <tr><td>Provize App Store/GP (−15 %)</td><td>−104 Kč</td><td>−104 Kč</td><td>−104 Kč</td></tr>
+    <tr class="subtotal"><td>Čistý příjem</td><td>586 Kč</td><td>586 Kč</td><td>586 Kč</td></tr>
+    <tr><td>Firebase</td><td>−6 Kč</td><td>−6 Kč</td><td>−6 Kč</td></tr>
+    <tr><td>VIN dekodér (max 75 × 8 Kč)</td><td>0 Kč</td><td>−360 Kč <span style="color:var(--muted);font-size:10px">45 req.</span></td><td>−600 Kč</td></tr>
+    <tr><td>Tržní hodnota (max 3 × 30 Kč)</td><td>0 Kč</td><td>−27 Kč <span style="color:var(--muted);font-size:10px">0,9 req.</span></td><td>−90 Kč</td></tr>
+    <tr class="result-warn"><td><strong>Hrubá marže</strong></td><td class="good">580 Kč (84 %)</td><td class="warn">193 Kč (28 %)</td><td class="bad">−110 Kč (−16 %) ⚠</td></tr>
+  </tbody>
+</table>
+
+<!-- PRO TABLE -->
+<h3>Pro — $60 / měsíc (1 380 Kč)</h3>
+<table>
+  <thead>
+    <tr>
+      <th>Položka</th>
+      <th>Min (0 %)</th>
+      <th>Reálný (60/30 %)</th>
+      <th>Max (100 %)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Příjem od zákazníka</td><td>1 380 Kč</td><td>1 380 Kč</td><td>1 380 Kč</td></tr>
+    <tr><td>Provize App Store/GP (−15 %)</td><td>−207 Kč</td><td>−207 Kč</td><td>−207 Kč</td></tr>
+    <tr class="subtotal"><td>Čistý příjem</td><td>1 173 Kč</td><td>1 173 Kč</td><td>1 173 Kč</td></tr>
+    <tr><td>Firebase</td><td>−14 Kč</td><td>−14 Kč</td><td>−14 Kč</td></tr>
+    <tr><td>VIN dekodér (max 150 × 8 Kč)</td><td>0 Kč</td><td>−720 Kč <span style="color:var(--muted);font-size:10px">90 req.</span></td><td>−1 200 Kč</td></tr>
+    <tr><td>Tržní hodnota (max 5 × 30 Kč)</td><td>0 Kč</td><td>−45 Kč <span style="color:var(--muted);font-size:10px">1,5 req.</span></td><td>−150 Kč</td></tr>
+    <tr class="result-loss"><td><strong>Hrubá marže</strong></td><td class="good">1 159 Kč (84 %)</td><td class="warn">394 Kč (29 %)</td><td class="bad">−191 Kč (−14 %) ⚠</td></tr>
+  </tbody>
+</table>
+
+<!-- BREAKEVEN -->
+<hr class="section-divider">
+<h2>Bod zvratu — maximální počet VIN requestů pro nulovou marži</h2>
+<p style="font-size:11.5px;color:var(--muted);margin-bottom:12px;">Při jakém počtu VIN dekodování se plán stane nerentabilním? (Počítáno bez využití tržní hodnoty.)</p>
+
+<div class="breakeven-grid">
+  <div class="breakeven-card">
+    <div class="be-plan">BASIC</div>
+    <div class="be-num" style="color:var(--success)">48</div>
+    <div class="be-limit">VIN dekodování → zisk = 0 Kč</div>
+    <div><span class="be-badge badge-ok">Limit: 30 ✓ Bezpečný</span></div>
+    <p style="font-size:10.5px;color:var(--muted);margin-top:6px;">(391 − 3) Kč ÷ 8 Kč = 48 VINů<br>Limit je o 37 % pod hranicí.</p>
+  </div>
+  <div class="breakeven-card">
+    <div class="be-plan">STANDARD</div>
+    <div class="be-num" style="color:var(--warning)">72</div>
+    <div class="be-limit">VIN dekodování → zisk = 0 Kč</div>
+    <div><span class="be-badge badge-warn">Limit: 75 ⚠ Rizikový</span></div>
+    <p style="font-size:10.5px;color:var(--muted);margin-top:6px;">(586 − 6) Kč ÷ 8 Kč = 72 VINů<br>Limit překračuje o 3 VINy (4 %)!</p>
+  </div>
+  <div class="breakeven-card">
+    <div class="be-plan">PRO</div>
+    <div class="be-num" style="color:var(--danger)">144</div>
+    <div class="be-limit">VIN dekodování → zisk = 0 Kč</div>
+    <div><span class="be-badge badge-bad">Limit: 150 ✗ Ztrátový</span></div>
+    <p style="font-size:10.5px;color:var(--muted);margin-top:6px;">(1 173 − 14) Kč ÷ 8 Kč = 144 VINů<br>Limit překračuje o 6 VINů (4 %)!</p>
+  </div>
+</div>
+
+<!-- ANNUAL PLANS -->
+<hr class="section-divider">
+<h2>Roční plány — dopad slevy −19 %</h2>
+<p style="font-size:11.5px;color:var(--muted);margin-bottom:10px;">Roční sleva snižuje efektivní měsíční příjem — náklady Vincario zůstávají stejné.</p>
+
+<table class="annual-table">
+  <thead>
+    <tr>
+      <th>Plán</th>
+      <th>Měsíční cena</th>
+      <th>Roční (−19 %) eff. / měsíc</th>
+      <th>Bod zvratu VIN (roční)</th>
+      <th>Limit VIN</th>
+      <th>Stav</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Basic</strong></td>
+      <td>$20 / 460 Kč</td>
+      <td>$16,20 / 373 Kč</td>
+      <td><strong>38 VINů</strong></td>
+      <td>30</td>
+      <td class="good">✓ Bezpečný (+21 %)</td>
+    </tr>
+    <tr>
+      <td><strong>Standard</strong></td>
+      <td>$30 / 690 Kč</td>
+      <td>$24,30 / 559 Kč</td>
+      <td><strong>56 VINů</strong></td>
+      <td>75</td>
+      <td class="bad">✗ Ztrátový nad 56 req.</td>
+    </tr>
+    <tr>
+      <td><strong>Pro</strong></td>
+      <td>$60 / 1 380 Kč</td>
+      <td>$48,60 / 1 118 Kč</td>
+      <td><strong>113 VINů</strong></td>
+      <td>150</td>
+      <td class="bad">✗ Ztrátový nad 113 req.</td>
+    </tr>
+  </tbody>
+</table>
+<p class="note">⚠ Zákazník s ročním plánem Standard, který plně využívá VIN limit, generuje ztrátu <strong>~152 Kč/měsíc</strong>.</p>
+
+<!-- FIREBASE DETAIL -->
+<hr class="section-divider">
+<h2>Firebase náklady — odhad na zákazníka / měsíc</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Služba</th>
+      <th>Ceník</th>
+      <th>Basic (50 zakázek)</th>
+      <th>Standard (150 zakázek)</th>
+      <th>Pro (300+ zakázek)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Firestore reads</td>
+      <td>$0,06 / 100K</td>
+      <td>~15 K reads → 1 Kč</td>
+      <td>~50 K reads → 3 Kč</td>
+      <td>~120 K reads → 7 Kč</td>
+    </tr>
+    <tr>
+      <td>Firestore writes</td>
+      <td>$0,18 / 100K</td>
+      <td>~1 500 writes → 0,3 Kč</td>
+      <td>~4 000 writes → 1 Kč</td>
+      <td>~10 000 writes → 2 Kč</td>
+    </tr>
+    <tr>
+      <td>Cloud Storage (foto, podpisy)</td>
+      <td>$0,026 / GB</td>
+      <td>~0,5 GB → 0,5 Kč</td>
+      <td>~2 GB → 1 Kč</td>
+      <td>~5 GB → 3 Kč</td>
+    </tr>
+    <tr>
+      <td>Cloud Functions</td>
+      <td>2M inv. / měsíc zdarma</td>
+      <td>~300 inv. → 0 Kč</td>
+      <td>~600 inv. → 0 Kč</td>
+      <td>~1 500 inv. → 0 Kč</td>
+    </tr>
+    <tr>
+      <td>Firebase Auth</td>
+      <td>Zdarma</td>
+      <td>0 Kč</td>
+      <td>0 Kč</td>
+      <td>0 Kč</td>
+    </tr>
+    <tr class="subtotal">
+      <td><strong>Celkem Firebase / měsíc</strong></td>
+      <td></td>
+      <td><strong>~2–4 Kč</strong></td>
+      <td><strong>~5–8 Kč</strong></td>
+      <td><strong>~12–16 Kč</strong></td>
+    </tr>
+  </tbody>
+</table>
+<p class="note">Firebase je relativně levná — dominantní variabilní náklad je výhradně Vincario API.</p>
+
+<!-- RECOMMENDATIONS -->
+<hr class="section-divider">
+<h2>Doporučení</h2>
+<div class="recs">
+
+  <div class="rec-item rec-alert">
+    <div class="rec-icon">🔴</div>
+    <div>
+      <div class="rec-title">Kritické: Standard a Pro plán jsou při plném využití limitů ztrátové</div>
+      <div class="rec-text">
+        Standard (75 VINů/měsíc) překračuje bod zvratu o 4 %. Pro (150 VINů/měsíc) o 4 %.
+        Při ročním plánu se situace dále zhoršuje — Standard je ztrátový nad 56 VINů/měsíc.
+        Jeden zákazník na ročním Standard plánu, který plně využívá VIN limit, může generovat ztrátu přes <strong>1 800 Kč/rok</strong>.
+      </div>
+    </div>
+  </div>
+
+  <div class="rec-item rec-highlight">
+    <div class="rec-icon">💰</div>
+    <div>
+      <div class="rec-title">Navýšit ceny nebo snížit limity — nejdůležitější krok</div>
+      <div class="rec-text">
+        <strong>Možnost A — navýšení cen:</strong> Standard $30 → $40 (+33 %), Pro $60 → $80 (+33 %).
+        Nový bod zvratu Standard: 103 VINů (limit 75 → bezpečný). Pro: 190 VINů (limit 150 → bezpečný).<br>
+        <strong>Možnost B — snížení VIN limitů:</strong> Standard 75 → 50, Pro 150 → 100. Bod zvratu zůstane stejný.
+      </div>
+    </div>
+  </div>
+
+  <div class="rec-item">
+    <div class="rec-icon">📉</div>
+    <div>
+      <div class="rec-title">Přehodnotit slevu na roční plány (−19 %)</div>
+      <div class="rec-text">
+        Roční sleva zhoršuje situaci pro Standard a Pro. Zvažte snížení slevy na −10 % nebo
+        zavedení jiné motivace (2 měsíce zdarma při zachování původní měsíční sazby),
+        která neúměrně nesníží efektivní příjem.
+      </div>
+    </div>
+  </div>
+
+  <div class="rec-item">
+    <div class="rec-icon">🤝</div>
+    <div>
+      <div class="rec-title">Vyjednat objemové ceny u Vincario</div>
+      <div class="rec-text">
+        Při větším počtu zákazníků zvažte bulk balíček nebo prepaid kredit u Vincario.
+        I 20–30% sleva (VIN: 6 Kč, tržní hodnota: 21 Kč) by výrazně zlepšila marže:
+        Pro by se stal ziskovým až do ~192 VINů / měsíc.
+      </div>
+    </div>
+  </div>
+
+  <div class="rec-item">
+    <div class="rec-icon">📊</div>
+    <div>
+      <div class="rec-title">Sledovat skutečné využití limitů v Firebase Analytics / RevenueCat</div>
+      <div class="rec-text">
+        Reálná marže závisí na tom, kolik procent limitů zákazníci skutečně využívají.
+        Pokud průměrný zákazník čerpá jen 30–40 % VIN limitu, jsou marže zdravé.
+        Doporučuji nastavit monitoring průměrného čerpání na zákazníka a plán.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SUMMARY TABLE -->
+<hr class="section-divider">
+<h2>Souhrnná tabulka scénářů</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Plán</th>
+      <th>Hrubá marže (0 %)</th>
+      <th>Hrubá marže (reálná)</th>
+      <th>Hrubá marže (max. limit)</th>
+      <th>Hodnocení</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Basic $20</strong></td>
+      <td class="good">388 Kč (84 %)</td>
+      <td class="good">235 Kč (51 %)</td>
+      <td class="good">118 Kč (26 %)</td>
+      <td class="good">✓ Stabilní</td>
+    </tr>
+    <tr>
+      <td><strong>Standard $30</strong></td>
+      <td class="good">580 Kč (84 %)</td>
+      <td class="warn">193 Kč (28 %)</td>
+      <td class="bad">−110 Kč (−16 %)</td>
+      <td class="bad">✗ Rizikový</td>
+    </tr>
+    <tr>
+      <td><strong>Pro $60</strong></td>
+      <td class="good">1 159 Kč (84 %)</td>
+      <td class="warn">394 Kč (29 %)</td>
+      <td class="bad">−191 Kč (−14 %)</td>
+      <td class="bad">✗ Rizikový</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- FOOTER -->
+<div class="footer">
+  <span>TORKIS — interní analýza · Červen 2026</span>
+  <span>Ceny Vincario: 8 Kč/VIN, 30 Kč/tržní hodnota · App Store: 15 % · Firebase: odhad · Kurz: 23 CZK/USD</span>
+</div>
+
+</body>
+</html>

@@ -595,6 +595,7 @@
   "predFeatSpravaTymu": "Správa týmu",
   "predFeat150Zaznamu": "150 záznamů/měsíc",
   "predFeat10Uziv": "10 uživatelů max.",
+  "predFeat60Vin": "60 dekodovaných VIN měsíčně",
   "predFeat75Vin": "75 dekodovaných VIN měsíčně",
   "predFeat3TrzniHodnota": "3 zjištění tržní hodnoty měsíčně",
   "predFeatVseBasic": "Vše z Basic",

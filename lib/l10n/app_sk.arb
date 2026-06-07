@@ -519,6 +519,7 @@
   "predFeatSpravaTymu": "Správa tímu",
   "predFeat150Zaznamu": "150 záznamov/mesiac",
   "predFeat10Uziv": "Max. 10 používateľov",
+  "predFeat60Vin": "60 dekódovaní VIN/mesiac",
   "predFeat75Vin": "75 dekódovaní VIN/mesiac",
   "predFeat3TrzniHodnota": "3 zistenia trhovej hodnoty/mesiac",
   "predFeatVseBasic": "Všetko z Basic",

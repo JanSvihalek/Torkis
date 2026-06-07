@@ -163,7 +163,6 @@ class _PredplatnePageState extends State<PredplatnePage> {
                           l10n.predFeat50Zaznamu,
                           l10n.predFeat3Uziv,
                           l10n.predFeat30Vin,
-                          l10n.predFeat1TrzniHodnota,
                           l10n.predFeatNeomezStk,
                           l10n.predFeatFotodok,
                           l10n.predFeatEvidZak,
@@ -183,8 +182,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
                         features: [
                           l10n.predFeat150Zaznamu,
                           l10n.predFeat10Uziv,
-                          l10n.predFeat75Vin,
-                          l10n.predFeat3TrzniHodnota,
+                          l10n.predFeat60Vin,
                           l10n.predFeatNeomezStk,
                           l10n.predFeatVseBasic,
                           l10n.predFeatReporty,

@@ -48,8 +48,8 @@ const REGION = "europe-west3";
 
 // Měsíční limity dle plánu (null = neomezeno).
 // MUSÍ zůstat v souladu s lib/core/constants.dart (kPlanVinLimit / kPlanValueLimit).
-const VIN_LIMITS = {basic: 30, standard: 75, pro: 150, trial: 10, custom: null};
-const VALUE_LIMITS = {basic: 1, standard: 3, pro: 5, trial: 0, custom: null};
+const VIN_LIMITS = {basic: 30, standard: 60, pro: 150, trial: 10, custom: null};
+const VALUE_LIMITS = {basic: 0, standard: 0, pro: 5, trial: 0, custom: null};
 
 /** Kontrolní součet Vincaria: prvních 10 znaků SHA1 z "{VIN}|{id}|{KEY}|{SECRET}". */
 function controlSum(vin, id, apiKey, secret) {
