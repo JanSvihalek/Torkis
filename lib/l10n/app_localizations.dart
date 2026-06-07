@@ -1292,6 +1292,30 @@ abstract class AppLocalizations {
   /// **'Záznam'**
   String get prijemRekapZaznam;
 
+  /// No description provided for @prijemKonceptTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Neodeslaná zakázka'**
+  String get prijemKonceptTitle;
+
+  /// No description provided for @prijemKonceptText.
+  ///
+  /// In cs, this message translates to:
+  /// **'Máte rozpracovanou neodeslanou zakázku. Chcete pokračovat tam, kde jste skončili?'**
+  String get prijemKonceptText;
+
+  /// No description provided for @prijemKonceptObnovit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Obnovit'**
+  String get prijemKonceptObnovit;
+
+  /// No description provided for @prijemKonceptZahodit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zahodit'**
+  String get prijemKonceptZahodit;
+
   /// No description provided for @prijemPodpisEmailToggle.
   ///
   /// In cs, this message translates to:
@@ -2161,6 +2185,24 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Evropský trh · Vincario Market Value'**
   String get vinTrzniZdroj;
+
+  /// No description provided for @vinTrzniNajezdLabel.
+  ///
+  /// In cs, this message translates to:
+  /// **'Najeté km vozidla'**
+  String get vinTrzniNajezdLabel;
+
+  /// No description provided for @vinTrzniOdhad.
+  ///
+  /// In cs, this message translates to:
+  /// **'Odhad podle nájezdu'**
+  String get vinTrzniOdhad;
+
+  /// No description provided for @vinTrzniOdhadVysvetleni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Orientační odhad zůstatkové hodnoty vypočtený z rozsahu cen a nájezdů ve vzorku.'**
+  String get vinTrzniOdhadVysvetleni;
 
   /// No description provided for @vinHistorieNadpis.
   ///
@@ -4285,6 +4327,18 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Spoušť fotoaparátu vlevo, když je zařízení na šířku.'**
   String get nastLeVaciSub;
+
+  /// No description provided for @nastUlozitDoZarizeniTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ukládat fotky i do zařízení'**
+  String get nastUlozitDoZarizeniTitle;
+
+  /// No description provided for @nastUlozitDoZarizeniSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při odeslání se fotky z příjmu uloží také do galerie tohoto zařízení.'**
+  String get nastUlozitDoZarizeniSub;
 
   /// No description provided for @nastJazyk.
   ///

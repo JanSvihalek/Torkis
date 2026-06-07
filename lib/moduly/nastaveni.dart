@@ -46,6 +46,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
   bool _spoustVlevo = false;
+  bool _ukladatDoZarizeni = false;
   String? _jazyk; // null = systémový jazyk
 
   bool _isLoading = true;
@@ -98,6 +99,8 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _biometricAvailable = canBio;
         _biometricEnabled = prefs.getBool('biometric_enabled') ?? false;
+        _ukladatDoZarizeni =
+            prefs.getBool(kPrefUkladatFotoDoZarizeni) ?? false;
       });
 
       if (_isAdmin && globalServisId != null) {
@@ -274,6 +277,13 @@ class _SettingsPageState extends State<SettingsPage> {
           .set({'kamera_spoust_vlevo': value}, SetOptions(merge: true));
     }
     if (mounted) setState(() => _spoustVlevo = value);
+  }
+
+  /// Přepne osobní (per-zařízení) volbu ukládání fotek z příjmu i do galerie.
+  Future<void> _toggleUkladatDoZarizeni(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(kPrefUkladatFotoDoZarizeni, value);
+    if (mounted) setState(() => _ukladatDoZarizeni = value);
   }
 
   Future<void> _ulozitSablony() async {
@@ -1063,6 +1073,26 @@ class _SettingsPageState extends State<SettingsPage> {
                       value: _spoustVlevo,
                       activeColor: Colors.blue,
                       onChanged: _toggleSpoustVlevo,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? TokColors.darkSurface : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.grey.withOpacity(0.2)),
+                    ),
+                    child: SwitchListTile(
+                      secondary: const Icon(Icons.photo_library_outlined,
+                          color: Colors.blue),
+                      title: Text(l10n.nastUlozitDoZarizeniTitle,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text(l10n.nastUlozitDoZarizeniSub,
+                          style: const TextStyle(fontSize: 11)),
+                      value: _ukladatDoZarizeni,
+                      activeColor: Colors.blue,
+                      onChanged: _toggleUkladatDoZarizeni,
                     ),
                   ),
                   const SizedBox(height: 10),

@@ -653,6 +653,19 @@ class AppLocalizationsDe extends AppLocalizations {
   String get prijemRekapZaznam => 'Datensatz';
 
   @override
+  String get prijemKonceptTitle => 'Nicht gesendeter Auftrag';
+
+  @override
+  String get prijemKonceptText =>
+      'Sie haben einen nicht gesendeten Auftrag in Bearbeitung. Möchten Sie dort fortfahren, wo Sie aufgehört haben?';
+
+  @override
+  String get prijemKonceptObnovit => 'Wiederherstellen';
+
+  @override
+  String get prijemKonceptZahodit => 'Verwerfen';
+
+  @override
   String get prijemPodpisEmailToggle =>
       'Kopie des Protokolls per E-Mail senden';
 
@@ -1140,6 +1153,16 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get vinTrzniZdroj => 'Europäischer Markt · Vincario Market Value';
+
+  @override
+  String get vinTrzniNajezdLabel => 'Laufleistung des Fahrzeugs (km)';
+
+  @override
+  String get vinTrzniOdhad => 'Schätzung nach Laufleistung';
+
+  @override
+  String get vinTrzniOdhadVysvetleni =>
+      'Ungefährer Restwert, geschätzt aus Preis- und Laufleistungsspanne der Stichprobe.';
 
   @override
   String get vinHistorieNadpis => 'Scanverlauf';
@@ -2291,6 +2314,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get nastLeVaciSub => 'Kameraauslöser links im Querformat.';
+
+  @override
+  String get nastUlozitDoZarizeniTitle => 'Fotos auch auf Gerät speichern';
+
+  @override
+  String get nastUlozitDoZarizeniSub =>
+      'Beim Senden werden Annahmefotos auch in der Galerie dieses Geräts gespeichert.';
 
   @override
   String get nastJazyk => 'App-Sprache';

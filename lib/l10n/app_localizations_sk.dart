@@ -649,6 +649,19 @@ class AppLocalizationsSk extends AppLocalizations {
   String get prijemRekapZaznam => 'Záznam';
 
   @override
+  String get prijemKonceptTitle => 'Neodoslaná zákazka';
+
+  @override
+  String get prijemKonceptText =>
+      'Máte rozpracovanú neodoslanú zákazku. Chcete pokračovať tam, kde ste skončili?';
+
+  @override
+  String get prijemKonceptObnovit => 'Obnoviť';
+
+  @override
+  String get prijemKonceptZahodit => 'Zahodiť';
+
+  @override
   String get prijemPodpisEmailToggle => 'Odoslať kópiu protokolu e-mailom';
 
   @override
@@ -1130,6 +1143,16 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get vinTrzniZdroj => 'Európsky trh · Vincario Market Value';
+
+  @override
+  String get vinTrzniNajezdLabel => 'Najazdené km vozidla';
+
+  @override
+  String get vinTrzniOdhad => 'Odhad podľa najazdených km';
+
+  @override
+  String get vinTrzniOdhadVysvetleni =>
+      'Orientačný odhad zostatkovej hodnoty vypočítaný z rozsahu cien a najazdených km vo vzorke.';
 
   @override
   String get vinHistorieNadpis => 'História skenov';
@@ -2270,6 +2293,13 @@ class AppLocalizationsSk extends AppLocalizations {
   @override
   String get nastLeVaciSub =>
       'Spúšť fotoaparátu vľavo, keď je zariadenie na šírku.';
+
+  @override
+  String get nastUlozitDoZarizeniTitle => 'Ukladať fotky aj do zariadenia';
+
+  @override
+  String get nastUlozitDoZarizeniSub =>
+      'Pri odoslaní sa fotky z príjmu uložia aj do galérie tohto zariadenia.';
 
   @override
   String get nastJazyk => 'Jazyk aplikácie';

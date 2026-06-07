@@ -651,6 +651,19 @@ class AppLocalizationsPl extends AppLocalizations {
   String get prijemRekapZaznam => 'Zapis';
 
   @override
+  String get prijemKonceptTitle => 'Niewysłane zlecenie';
+
+  @override
+  String get prijemKonceptText =>
+      'Masz rozpoczęte niewysłane zlecenie. Czy chcesz kontynuować od miejsca, w którym przerwano?';
+
+  @override
+  String get prijemKonceptObnovit => 'Przywróć';
+
+  @override
+  String get prijemKonceptZahodit => 'Odrzuć';
+
+  @override
   String get prijemPodpisEmailToggle => 'Wyślij kopię protokołu e-mailem';
 
   @override
@@ -1132,6 +1145,16 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get vinTrzniZdroj => 'Rynek europejski · Vincario Market Value';
+
+  @override
+  String get vinTrzniNajezdLabel => 'Przebieg pojazdu (km)';
+
+  @override
+  String get vinTrzniOdhad => 'Szacunek wg przebiegu';
+
+  @override
+  String get vinTrzniOdhadVysvetleni =>
+      'Orientacyjny szacunek wartości rezydualnej obliczony z zakresu cen i przebiegów w próbce.';
 
   @override
   String get vinHistorieNadpis => 'Historia skanów';
@@ -2279,6 +2302,13 @@ class AppLocalizationsPl extends AppLocalizations {
   @override
   String get nastLeVaciSub =>
       'Wyzwalacz aparatu po lewej stronie w orientacji poziomej.';
+
+  @override
+  String get nastUlozitDoZarizeniTitle => 'Zapisuj zdjęcia także na urządzeniu';
+
+  @override
+  String get nastUlozitDoZarizeniSub =>
+      'Przy wysyłaniu zdjęcia z przyjęcia są zapisywane również w galerii tego urządzenia.';
 
   @override
   String get nastJazyk => 'Język aplikacji';

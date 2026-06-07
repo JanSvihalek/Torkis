@@ -110,6 +110,8 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   VincarioMarketValue? _trzniHodnota;
   bool _loadingTrzni = false;
   String? _trzniError;
+  // Volitelný vstup nájezdu pro odhad zůstatkové hodnoty (lokální, bez API).
+  final _najezdKmCtrl = TextEditingController();
 
   StkResult? _stkResult;
   bool _loadingStk = false;
@@ -204,6 +206,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
   @override
   void dispose() {
     _vinCtrl.dispose();
+    _najezdKmCtrl.dispose();
     super.dispose();
   }
 
@@ -548,6 +551,7 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       _trzniHodnota = null;
       _dekovanyVin = vin;
       _logoUrl = null;
+      _najezdKmCtrl.clear();
     });
     try {
       // Cache i počítadlo řeší Cloud Function; vrací zda šlo o cache zásah.
@@ -1644,6 +1648,35 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
     );
   }
 
+  double _lerp(double x0, double x1, double y0, double y1, double x) {
+    if (x1 <= x0) return y0;
+    final t = ((x - x0) / (x1 - x0)).clamp(0.0, 1.0);
+    return y0 + (y1 - y0) * t;
+  }
+
+  /// Odhad zůstatkové hodnoty (v měně API, před přepočtem) pro zadaný nájezd.
+  /// Piecewise-lineární interpolace mezi kotvami nájezd↔cena: nižší nájezd =
+  /// vyšší cena (price_above), vyšší nájezd = nižší cena (price_below).
+  num? _odhadDleNajezdu(
+      Map<String, dynamic> eu, Map<String, dynamic>? odo, double km) {
+    if (odo == null) return null;
+    final oB = (odo['odometer_below'] as num?)?.toDouble();
+    final oM = (odo['odometer_median'] as num?)?.toDouble();
+    final oA = (odo['odometer_above'] as num?)?.toDouble();
+    final pB = (eu['price_below'] as num?)?.toDouble();
+    final pM = (eu['price_median'] as num?)?.toDouble();
+    final pA = (eu['price_above'] as num?)?.toDouble();
+    if (oB == null || oM == null || oA == null ||
+        pB == null || pM == null || pA == null) {
+      return null;
+    }
+    if (oA <= oB) return null;
+    if (km <= oB) return pA;
+    if (km >= oA) return pB;
+    if (km <= oM) return _lerp(oB, oM, pA, pM, km);
+    return _lerp(oM, oA, pM, pB, km);
+  }
+
   Widget _buildTrzniData(TorkisTokens tok, VincarioMarketValue data, AppLocalizations l10n) {
     if (_mena == 'CZK' && _kurz == null) {
       return const Padding(
@@ -1681,6 +1714,14 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
       }
       return buf.toString();
     }
+
+    // Odhad zůstatkové hodnoty podle zadaného nájezdu (lokálně, bez API).
+    final kmText = _najezdKmCtrl.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final kmInput = double.tryParse(kmText);
+    final odhadRaw = (kmInput != null && kmInput > 0)
+        ? _odhadDleNajezdu(eu, odo, kmInput)
+        : null;
+    final odhad = odhadRaw != null ? conv(odhadRaw) : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1728,6 +1769,64 @@ class _VinDekoderPageState extends State<VinDekoderPage> {
         if (data.periodFrom.isNotEmpty && data.periodTo.isNotEmpty)
           _buildTrzniRadek(
               tok, l10n.vinTrzniObdobiDat, '${data.periodFrom} – ${data.periodTo}'),
+        if (data.modelYear != null)
+          _buildTrzniRadek(tok, l10n.vinFieldRokVyroby, '${data.modelYear}'),
+
+        // Odhad zůstatkové hodnoty podle zadaného nájezdu
+        const SizedBox(height: TokSpace.sm),
+        Divider(height: 1, color: tok.line),
+        const SizedBox(height: TokSpace.sm),
+        Text(l10n.vinTrzniNajezdLabel,
+            style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: tok.textSecondary)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _najezdKmCtrl,
+          keyboardType: TextInputType.number,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            isDense: true,
+            suffixText: odomUnit,
+            hintText: odomAvg != null ? fmt(odomAvg) : null,
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(TokRadius.md)),
+          ),
+        ),
+        if (odhad != null) ...[
+          const SizedBox(height: TokSpace.sm),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(TokSpace.md),
+            decoration: BoxDecoration(
+              color: TokColors.accent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(TokRadius.md),
+              border:
+                  Border.all(color: TokColors.accent.withValues(alpha: 0.25)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.vinTrzniOdhad,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: tok.textSecondary)),
+                const SizedBox(height: 2),
+                Text('${fmt(odhad)} $currency',
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: TokColors.accent)),
+                const SizedBox(height: 4),
+                Text(l10n.vinTrzniOdhadVysvetleni,
+                    style:
+                        TextStyle(fontSize: 9, color: tok.textSecondary)),
+              ],
+            ),
+          ),
+        ],
 
         // Zdroj dat
         const SizedBox(height: TokSpace.sm),

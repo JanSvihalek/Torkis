@@ -647,6 +647,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prijemRekapZaznam => 'Record';
 
   @override
+  String get prijemKonceptTitle => 'Unsent record';
+
+  @override
+  String get prijemKonceptText =>
+      'You have an unsent record in progress. Do you want to continue where you left off?';
+
+  @override
+  String get prijemKonceptObnovit => 'Restore';
+
+  @override
+  String get prijemKonceptZahodit => 'Discard';
+
+  @override
   String get prijemPodpisEmailToggle => 'Send copy of protocol by e-mail';
 
   @override
@@ -1127,6 +1140,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get vinTrzniZdroj => 'European market · Vincario Market Value';
+
+  @override
+  String get vinTrzniNajezdLabel => 'Vehicle mileage (km)';
+
+  @override
+  String get vinTrzniOdhad => 'Estimate by mileage';
+
+  @override
+  String get vinTrzniOdhadVysvetleni =>
+      'Approximate residual value estimated from the sample\'s price and mileage range.';
 
   @override
   String get vinHistorieNadpis => 'Scan history';
@@ -2263,6 +2286,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get nastLeVaciSub =>
       'Camera shutter on the left when device is in landscape.';
+
+  @override
+  String get nastUlozitDoZarizeniTitle => 'Also save photos to device';
+
+  @override
+  String get nastUlozitDoZarizeniSub =>
+      'When submitting, intake photos are also saved to this device\'s gallery.';
 
   @override
   String get nastJazyk => 'App language';

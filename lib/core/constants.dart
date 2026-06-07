@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.3.4';
+const String kAppVerze = '5.3.5';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -14,6 +14,9 @@ final ValueNotifier<Locale?> localeNotifier = ValueNotifier(null);
 // Osobní nastavení uživatele — klíč v SharedPreferences pro režim pro leváky
 // (spoušť fotoaparátu na levé straně, když je zařízení na šířku).
 const String kPrefKameraSpoustVlevo = 'kamera_spoust_vlevo';
+
+// Osobní (per-zařízení) volba: ukládat fotky z příjmu i do galerie zařízení.
+const String kPrefUkladatFotoDoZarizeni = 'ukladat_foto_do_zarizeni';
 
 // Seznam dostupných stavů zakázky
 const List<String> stavyZakazky = [

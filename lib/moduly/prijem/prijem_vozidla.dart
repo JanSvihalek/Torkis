@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
+import 'package:gal/gal.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -20,6 +23,7 @@ import '../../core/vincario_service.dart';
 import '../auth_gate.dart';
 import 'prijem_vozidla_vyber_zakaznika.dart';
 import 'prijem_vozidla_kamera.dart';
+import 'koncept_zakazky.dart';
 import 'ocr_camera_page.dart';
 import 'prijem_vozidla_step_vozidlo.dart';
 import 'prijem_vozidla_step_zakaznik.dart';
@@ -179,6 +183,175 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _nactiNastaveni();
     _nactiUkonyZDatabaze();
     _nactiDatabaziZnacek();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _zkusObnovitKoncept());
+  }
+
+  // ── Trvalá záloha rozdělané zakázky (koncept) ─────────────────────────────
+
+  /// Snapshot formuláře pro uložení do konceptu.
+  Map<String, dynamic> _snapshotFormulare() => {
+        'jmeno': _jmenoController.text,
+        'ico': _icoController.text,
+        'ulice': _uliceController.text,
+        'mesto': _mestoController.text,
+        'psc': _pscController.text,
+        'telefon': _telefonController.text,
+        'emailZ': _emailZController.text,
+        'zakazka': _zakazkaController.text,
+        'spz': _spzController.text,
+        'vin': _vinController.text,
+        'motorizace': _motorizaceController.text,
+        'poznamkyCtrl': _poznamkyController.text,
+        'znacka': _znackaController.text,
+        'model': _modelController.text,
+        'rokVyroby': _rokVyrobyController.text,
+        'tachometr': _tachometrController.text,
+        'stkMesic': _stkMesicController.text,
+        'stkRok': _stkRokController.text,
+        'pneuLP': _pneuLPController.text,
+        'pneuPP': _pneuPPController.text,
+        'pneuLZ': _pneuLZController.text,
+        'pneuPZ': _pneuPZController.text,
+        'poznamky': _poskozeniController.text,
+        'pozadavky': _pozadavkyControllers.map((c) => c.text).toList(),
+        'telPredvolba': _telPredvolba,
+        'pravniForma': _pravniForma,
+        'typZaznamu': _typZaznamu,
+        'vybranePalivo': _vybranePalivo,
+        'vybranaPrevodovka': _vybranaPrevodovka,
+        'typKaroserie': _typKaroserie,
+        'zemeRegistrace': _zemeRegistrace,
+        'vybranaZnackaString': _vybranaZnackaString,
+        'stavNadrze': _stavNadrze,
+        'vybranePoskozeni': List<String>.from(_vybranePoskozeni),
+        'odeslatEmail': _odeslatEmail,
+      };
+
+  /// Naplní formulář zpět z uloženého snapshotu.
+  void _obnovFormular(Map<String, dynamic> m) {
+    String s(String k) => (m[k] ?? '').toString();
+    _jmenoController.text = s('jmeno');
+    _icoController.text = s('ico');
+    _uliceController.text = s('ulice');
+    _mestoController.text = s('mesto');
+    _pscController.text = s('psc');
+    _telefonController.text = s('telefon');
+    _emailZController.text = s('emailZ');
+    _zakazkaController.text = s('zakazka');
+    _spzController.text = s('spz');
+    _vinController.text = s('vin');
+    _motorizaceController.text = s('motorizace');
+    _poznamkyController.text = s('poznamkyCtrl');
+    _znackaController.text = s('znacka');
+    _modelController.text = s('model');
+    _rokVyrobyController.text = s('rokVyroby');
+    _tachometrController.text = s('tachometr');
+    _stkMesicController.text = s('stkMesic');
+    _stkRokController.text = s('stkRok');
+    _pneuLPController.text = s('pneuLP');
+    _pneuPPController.text = s('pneuPP');
+    _pneuLZController.text = s('pneuLZ');
+    _pneuPZController.text = s('pneuPZ');
+    _poskozeniController.text = s('poznamky');
+
+    if (s('telPredvolba').isNotEmpty) _telPredvolba = s('telPredvolba');
+    if (s('pravniForma').isNotEmpty) _pravniForma = s('pravniForma');
+    if (s('typZaznamu').isNotEmpty) _typZaznamu = s('typZaznamu');
+    if (s('vybranePalivo').isNotEmpty) _vybranePalivo = s('vybranePalivo');
+    if (s('vybranaPrevodovka').isNotEmpty) {
+      _vybranaPrevodovka = s('vybranaPrevodovka');
+    }
+    if (s('typKaroserie').isNotEmpty) _typKaroserie = s('typKaroserie');
+    if (s('zemeRegistrace').isNotEmpty) _zemeRegistrace = s('zemeRegistrace');
+    _vybranaZnackaString = s('vybranaZnackaString');
+    _stavNadrze = (m['stavNadrze'] as num?)?.toDouble() ?? 50.0;
+    _vybranePoskozeni
+      ..clear()
+      ..addAll(List<String>.from(m['vybranePoskozeni'] ?? const []));
+    _odeslatEmail = m['odeslatEmail'] == true;
+
+    for (final c in _pozadavkyControllers) {
+      c.dispose();
+    }
+    _pozadavkyControllers.clear();
+    final poz = List<String>.from(m['pozadavky'] ?? const []);
+    if (poz.isEmpty) {
+      _pozadavkyControllers.add(TextEditingController());
+    } else {
+      for (final p in poz) {
+        _pozadavkyControllers.add(TextEditingController(text: p));
+      }
+    }
+  }
+
+  /// Uloží aktuální stav (formulář + cesty fotek + schéma) do trvalého konceptu.
+  Future<void> _persistKoncept() async {
+    try {
+      final fotky = <String, List<String>>{};
+      _categoryImages.forEach((kat, list) {
+        fotky[kat] = list.map((x) => x.path).toList();
+      });
+      String? schemaPath;
+      if (_schemaKresba != null) {
+        schemaPath = await KonceptService.ulozSchema(_schemaKresba!);
+      }
+      await KonceptService.ulozKoncept(KonceptZakazky(
+        formular: _snapshotFormulare(),
+        fotkyDleKategorie: fotky,
+        schemaPath: schemaPath,
+      ));
+    } catch (e) {
+      debugPrint('Uložení konceptu selhalo: $e');
+    }
+  }
+
+  /// Při startu nabídne obnovení neodeslané zakázky, pokud existuje.
+  Future<void> _zkusObnovitKoncept() async {
+    final k = await KonceptService.nactiKoncept();
+    if (k == null || !mounted) return;
+    final l10n = AppLocalizations.of(context);
+    final obnovit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.prijemKonceptTitle),
+        content: Text(l10n.prijemKonceptText),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.prijemKonceptZahodit),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.prijemKonceptObnovit),
+          ),
+        ],
+      ),
+    );
+    if (obnovit == true) {
+      _obnovKoncept(k);
+    } else {
+      await KonceptService.smazKoncept();
+    }
+  }
+
+  void _obnovKoncept(KonceptZakazky k) {
+    _obnovFormular(k.formular);
+    _categoryImages.clear();
+    k.fotkyDleKategorie.forEach((kat, cesty) {
+      final existujici = cesty
+          .where((p) => File(p).existsSync())
+          .map((p) => XFile(p))
+          .toList();
+      if (existujici.isNotEmpty) _categoryImages[kat] = existujici;
+    });
+    if (k.schemaPath != null && File(k.schemaPath!).existsSync()) {
+      try {
+        _schemaKresba = File(k.schemaPath!).readAsBytesSync();
+      } catch (_) {}
+    }
+    if (mounted) setState(() {});
   }
 
   /// Načte katalog úkonů servisu — zobrazí se jako rychlé tipy na stránce 5 (Požadované práce).
@@ -1164,12 +1337,16 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
     setState(() => _isUploading = true);
     try {
+      // Pojistka proti ztrátě dat: uloží aktuální stav do konceptu těsně
+      // před odesláním (kdyby spadlo spojení / aplikace během uploadu).
+      await _persistKoncept();
       await _uploadToFirebase();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Zakázka úspěšně odeslána'),
             backgroundColor: Colors.green));
         _resetForm();
+        await KonceptService.smazKoncept();
       }
     } catch (e) {
       if (mounted) {
@@ -1195,6 +1372,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final Map<String, List<String>> imageUrlsByCategory = {};
     String zakazkaId = _zakazkaController.text.trim();
 
+    // Osobní volba: ukládat fotky i do galerie zařízení.
+    final prefs = await SharedPreferences.getInstance();
+    final ukladatDoZarizeni =
+        prefs.getBool(kPrefUkladatFotoDoZarizeni) ?? false;
+
     for (var entry in _categoryImages.entries) {
       final categoryKey = entry.key;
       final images = entry.value;
@@ -1211,6 +1393,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
             await compute(komprimujFoto, await image.readAsBytes());
         await ref.putData(komprimovane,
             SettableMetadata(contentType: 'image/jpeg'));
+        // Volitelná lokální kopie do galerie zařízení (stejná komprimovaná verze).
+        if (ukladatDoZarizeni) {
+          try {
+            await Gal.putImageBytes(komprimovane);
+          } catch (e) {
+            debugPrint('Uložení do galerie selhalo: $e');
+          }
+        }
         String downloadUrl = await ref.getDownloadURL();
         imageUrlsByCategory[categoryKey]!.add(downloadUrl);
       }
@@ -1513,10 +1703,12 @@ class _MainWizardPageState extends State<MainWizardPage> {
           maxWidth: 1920,
           maxHeight: 1920);
       if (photo != null) {
+        final trvala = XFile(await KonceptService.ulozFotku(photo, categoryKey));
         setState(() {
           _categoryImages[categoryKey] ??= [];
-          _categoryImages[categoryKey]!.add(photo);
+          _categoryImages[categoryKey]!.add(trvala);
         });
+        await _persistKoncept();
       }
       return;
     }
@@ -1525,10 +1717,15 @@ class _MainWizardPageState extends State<MainWizardPage> {
       MaterialPageRoute(builder: (_) => const MultiShotCameraPage()),
     );
     if (result != null && result.isNotEmpty) {
+      final trvale = <XFile>[];
+      for (final x in result) {
+        trvale.add(XFile(await KonceptService.ulozFotku(x, categoryKey)));
+      }
       setState(() {
         _categoryImages[categoryKey] ??= [];
-        _categoryImages[categoryKey]!.addAll(result);
+        _categoryImages[categoryKey]!.addAll(trvale);
       });
+      await _persistKoncept();
     }
   }
 
@@ -1536,11 +1733,16 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final List<XFile> photos = await _picker.pickMultiImage(
         imageQuality: 90, maxWidth: 1920, maxHeight: 1920);
     if (photos.isNotEmpty) {
+      final trvale = <XFile>[];
+      for (final x in photos) {
+        trvale.add(XFile(await KonceptService.ulozFotku(x, categoryKey)));
+      }
       setState(() {
         if (_categoryImages[categoryKey] == null)
           _categoryImages[categoryKey] = [];
-        _categoryImages[categoryKey]!.addAll(photos);
+        _categoryImages[categoryKey]!.addAll(trvale);
       });
+      await _persistKoncept();
     }
   }
 
@@ -2000,8 +2202,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
         categoryImages: _categoryImages,
         onPickFromGallery: _pickFromGallery,
         onTakePhotoSeries: _takePhotoSeries,
-        onRemovePhoto: (key, idx) =>
-            setState(() => _categoryImages[key]!.removeAt(idx)),
+        onRemovePhoto: (key, idx) {
+          setState(() => _categoryImages[key]!.removeAt(idx));
+          _persistKoncept();
+        },
       );
 
   // ── STRANA 5: Poždované práce ────────────────────

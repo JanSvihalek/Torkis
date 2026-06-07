@@ -32,6 +32,8 @@
 	<string>Aplikace potřebuje přístup ke kameře pro skenování čárových kódů dílů.</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Aplikace používá Face ID pro rychlé a bezpečné přihlášení.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Aplikace ukládá fotky z příjmu vozidla do vaší galerie, pokud tuto možnost zapnete v nastavení.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
