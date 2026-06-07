@@ -169,9 +169,17 @@ class VozidloInfoTab extends StatelessWidget {
           ),
           const SizedBox(width: TokSpace.lg),
           Expanded(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: _techCard(context, tok),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _techCard(context, tok),
+                  if (autoData['technicke_udaje'] is Map &&
+                      (autoData['technicke_udaje'] as Map).isNotEmpty) ...[
+                    const SizedBox(height: TokSpace.lg),
+                    _vinUdajeCard(context, tok),
+                  ],
+                ],
+              ),
             ),
           ),
           if (zakaznikId.isNotEmpty) ...[
@@ -203,6 +211,11 @@ class VozidloInfoTab extends StatelessWidget {
             child: Column(
               children: [
                 _techCard(context, tok),
+                if (autoData['technicke_udaje'] is Map &&
+                    (autoData['technicke_udaje'] as Map).isNotEmpty) ...[
+                  const SizedBox(height: TokSpace.lg),
+                  _vinUdajeCard(context, tok),
+                ],
                 if (zakaznikId.isNotEmpty) ...[
                   const SizedBox(height: TokSpace.lg),
                   _ownerCard(context, tok),
@@ -501,8 +514,53 @@ class VozidloInfoTab extends StatelessWidget {
         _infoRow(tok, l10n.vozidloRokVyroby, autoData['rok_vyroby']),
         _infoRow(tok, l10n.vozidloPalivo, autoData['palivo']),
         _infoRow(tok, l10n.vozidloPrevodovka, autoData['prevodovka']),
+        _infoRow(tok, l10n.vozidloBarva, autoData['barva']),
+        _infoRow(tok, l10n.vozidloVykon, _vykonValue),
+        _infoRow(tok, l10n.vozidloPocetMistDveri, _mistDveriValue),
+        _infoRow(tok, l10n.vozidloRozmery, _rozmeryValue),
         _infoRow(tok, l10n.vozidloTachometrLabel,
             tacho.isNotEmpty ? '${_formatKm(tacho)} km' : null),
+      ],
+    );
+  }
+
+  String? get _vykonValue {
+    final v = autoData['vykon_kw']?.toString() ?? '';
+    return v.isEmpty ? null : '$v kW';
+  }
+
+  String? get _mistDveriValue {
+    final mist = autoData['pocet_mist']?.toString() ?? '';
+    final dveri = autoData['pocet_dveri']?.toString() ?? '';
+    if (mist.isEmpty && dveri.isEmpty) return null;
+    final parts = <String>[
+      if (mist.isNotEmpty) '$mist míst',
+      if (dveri.isNotEmpty) '$dveri dveří',
+    ];
+    return parts.join(' · ');
+  }
+
+  String? get _rozmeryValue {
+    final d = autoData['delka_mm']?.toString() ?? '';
+    final s = autoData['sirka_mm']?.toString() ?? '';
+    final v = autoData['vyska_mm']?.toString() ?? '';
+    if (d.isEmpty && s.isEmpty && v.isEmpty) return null;
+    return '${d.isEmpty ? '?' : d} × ${s.isEmpty ? '?' : s} × ${v.isEmpty ? '?' : v} mm';
+  }
+
+  /// Read-only karta s kompletními technickými daty z VIN dekodéru.
+  Widget _vinUdajeCard(BuildContext context, TorkisTokens tok) {
+    final l10n = AppLocalizations.of(context);
+    final raw = autoData['technicke_udaje'];
+    if (raw is! Map || raw.isEmpty) return const SizedBox.shrink();
+    final udaje = Map<String, dynamic>.from(raw);
+    final klice = udaje.keys.toList()..sort();
+    return _sectionCard(
+      tok,
+      icon: Icons.fact_check_outlined,
+      title: l10n.vozidloUdajeZVin,
+      children: [
+        for (final k in klice) _infoRow(tok, k, udaje[k]),
       ],
     );
   }

@@ -113,6 +113,19 @@ class _MainWizardPageState extends State<MainWizardPage> {
   final _modelController = TextEditingController();
   final _rokVyrobyController = TextEditingController();
 
+  // Rozšířené (nepovinné) údaje o vozidle. Plní se z VIN dekodéru, ale lze je
+  // zadat i ručně. Sekce „Další údaje" v kroku 1.
+  final _barvaController = TextEditingController();
+  final _vykonController = TextEditingController();
+  final _mistController = TextEditingController();
+  final _dveriController = TextEditingController();
+  final _delkaController = TextEditingController();
+  final _sirkaController = TextEditingController();
+  final _vyskaController = TextEditingController();
+
+  // Kompletní dekódovaná data z VIN (label → hodnota). Read-only, jen z API.
+  Map<String, dynamic> _technickeUdaje = {};
+
   String _vybranePalivo = 'Benzín';
   final List<String> _moznostiPaliva = [
     'Benzín',
@@ -206,6 +219,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'znacka': _znackaController.text,
         'model': _modelController.text,
         'rokVyroby': _rokVyrobyController.text,
+        'barva': _barvaController.text,
+        'vykon': _vykonController.text,
+        'mist': _mistController.text,
+        'dveri': _dveriController.text,
+        'delka': _delkaController.text,
+        'sirka': _sirkaController.text,
+        'vyska': _vyskaController.text,
+        'technickeUdaje': _technickeUdaje,
         'tachometr': _tachometrController.text,
         'stkMesic': _stkMesicController.text,
         'stkRok': _stkRokController.text,
@@ -246,6 +267,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _znackaController.text = s('znacka');
     _modelController.text = s('model');
     _rokVyrobyController.text = s('rokVyroby');
+    _barvaController.text = s('barva');
+    _vykonController.text = s('vykon');
+    _mistController.text = s('mist');
+    _dveriController.text = s('dveri');
+    _delkaController.text = s('delka');
+    _sirkaController.text = s('sirka');
+    _vyskaController.text = s('vyska');
+    _technickeUdaje = Map<String, dynamic>.from(m['technickeUdaje'] ?? const {});
     _tachometrController.text = s('tachometr');
     _stkMesicController.text = s('stkMesic');
     _stkRokController.text = s('stkRok');
@@ -805,6 +834,47 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final prevod = v('Transmission');
     final karos = v('Body');
 
+    // Rozšířené (nepovinné) údaje — doplní se jen pokud je API vrátí.
+    final barva = v('Color');
+    final vykon = v('Engine Power (kW)');
+    final mist = v('Number of Seats');
+    final dveri = v('Number of Doors');
+    final delka = v('Length (mm)');
+    final sirka = v('Width (mm)');
+    final vyska = v('Height (mm)');
+
+    // Kompletní dump všech vrácených dvojic label→hodnota pro read-only přehled.
+    // Odfiltrujeme technické/odkazové položky, které v přehledu nedávají smysl.
+    const skipLabely = {
+      'Make Logo',
+      'Vehicle ID',
+      'Check Digit',
+      'Sequential Number',
+    };
+    final udaje = <String, dynamic>{};
+    final decode = data['decode'];
+    if (decode is List) {
+      for (final item in decode) {
+        if (item is Map) {
+          final label = item['label']?.toString() ?? '';
+          final value = item['value']?.toString() ?? '';
+          if (label.isNotEmpty &&
+              value.isNotEmpty &&
+              !skipLabely.contains(label)) {
+            udaje[label] = value;
+          }
+        }
+      }
+    } else if (decode is Map) {
+      decode.forEach((k, val) {
+        final label = k.toString();
+        final value = val?.toString() ?? '';
+        if (value.isNotEmpty && !skipLabely.contains(label)) {
+          udaje[label] = value;
+        }
+      });
+    }
+
     // Motorizace: "1199 ccm, 74 kW"
     final ccm = v('Engine Displacement (ccm)');
     final kw = v('Engine Power (kW)');
@@ -839,6 +909,15 @@ class _MainWizardPageState extends State<MainWizardPage> {
       if (model.isNotEmpty) _modelController.text = model;
       if (rok.isNotEmpty) _rokVyrobyController.text = rok;
       if (motor.isNotEmpty) _motorizaceController.text = motor;
+
+      if (barva.isNotEmpty) _barvaController.text = barva;
+      if (vykon.isNotEmpty) _vykonController.text = vykon;
+      if (mist.isNotEmpty) _mistController.text = mist;
+      if (dveri.isNotEmpty) _dveriController.text = dveri;
+      if (delka.isNotEmpty) _delkaController.text = delka;
+      if (sirka.isNotEmpty) _sirkaController.text = sirka;
+      if (vyska.isNotEmpty) _vyskaController.text = vyska;
+      if (udaje.isNotEmpty) _technickeUdaje = udaje;
 
       if (palivo.isNotEmpty) {
         final match = _moznostiPaliva.where((p) =>
@@ -898,6 +977,15 @@ class _MainWizardPageState extends State<MainWizardPage> {
       _vinController.text = vozidloData['vin']?.toString() ?? '';
       _rokVyrobyController.text = vozidloData['rok_vyroby']?.toString() ?? '';
       _motorizaceController.text = vozidloData['motorizace']?.toString() ?? '';
+      _barvaController.text = vozidloData['barva']?.toString() ?? '';
+      _vykonController.text = vozidloData['vykon_kw']?.toString() ?? '';
+      _mistController.text = vozidloData['pocet_mist']?.toString() ?? '';
+      _dveriController.text = vozidloData['pocet_dveri']?.toString() ?? '';
+      _delkaController.text = vozidloData['delka_mm']?.toString() ?? '';
+      _sirkaController.text = vozidloData['sirka_mm']?.toString() ?? '';
+      _vyskaController.text = vozidloData['vyska_mm']?.toString() ?? '';
+      _technickeUdaje =
+          Map<String, dynamic>.from(vozidloData['technicke_udaje'] ?? const {});
       _tachometrController.text = vozidloData['tachometr']?.toString() ?? '';
       _stkMesicController.text = vozidloData['stk_mesic']?.toString() ?? '';
       _stkRokController.text = vozidloData['stk_rok']?.toString() ?? '';
@@ -1077,6 +1165,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _znackaController.dispose();
     _modelController.dispose();
     _vinController.dispose();
+    _barvaController.dispose();
+    _vykonController.dispose();
+    _mistController.dispose();
+    _dveriController.dispose();
+    _delkaController.dispose();
+    _sirkaController.dispose();
+    _vyskaController.dispose();
     _jmenoController.dispose();
     _telefonController.dispose();
     _emailZController.dispose();
@@ -1517,6 +1612,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
         'palivo': _vybranePalivo,
         'prevodovka': _vybranaPrevodovka,
         'typ_karoserie': _typKaroserie,
+        'barva': _barvaController.text.trim(),
+        'vykon_kw': _vykonController.text.trim(),
+        'pocet_mist': _mistController.text.trim(),
+        'pocet_dveri': _dveriController.text.trim(),
+        'delka_mm': _delkaController.text.trim(),
+        'sirka_mm': _sirkaController.text.trim(),
+        'vyska_mm': _vyskaController.text.trim(),
+        if (_technickeUdaje.isNotEmpty) 'technicke_udaje': _technickeUdaje,
         'tachometr': _tachometrController.text.trim(),
         'stk_mesic': _stkMesicController.text.trim(),
         'stk_rok': _stkRokController.text.trim(),
@@ -1543,6 +1646,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'motorizace': _motorizaceController.text.trim(),
       'palivo_typ': _vybranePalivo,
       'prevodovka': _vybranaPrevodovka,
+      'barva': _barvaController.text.trim(),
+      'vykon_kw': _vykonController.text.trim(),
+      'pocet_mist': _mistController.text.trim(),
+      'pocet_dveri': _dveriController.text.trim(),
+      'delka_mm': _delkaController.text.trim(),
+      'sirka_mm': _sirkaController.text.trim(),
+      'vyska_mm': _vyskaController.text.trim(),
+      if (_technickeUdaje.isNotEmpty) 'technicke_udaje': _technickeUdaje,
       'stav_zakazky': 'Přijato',
       'zakaznik': {
         'id_zakaznika': zakaznikId,
@@ -1660,6 +1771,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
     _modelController.clear();
     _rokVyrobyController.clear();
     _motorizaceController.clear();
+    _barvaController.clear();
+    _vykonController.clear();
+    _mistController.clear();
+    _dveriController.clear();
+    _delkaController.clear();
+    _sirkaController.clear();
+    _vyskaController.clear();
+    _technickeUdaje = {};
     _vybranePalivo = 'Benzín';
     _vybranaPrevodovka = 'Manuální';
     _poznamkyController.clear();
@@ -2085,6 +2204,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
         modelController: _modelController,
         rokVyrobyController: _rokVyrobyController,
         motorizaceController: _motorizaceController,
+        barvaController: _barvaController,
+        vykonController: _vykonController,
+        mistController: _mistController,
+        dveriController: _dveriController,
+        delkaController: _delkaController,
+        sirkaController: _sirkaController,
+        vyskaController: _vyskaController,
         isLoadingSpz: _isLoadingSpz,
         onHledatSpz: _hledatPodleSpz,
         isLoadingVin: _isLoadingVin,

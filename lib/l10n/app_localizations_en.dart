@@ -295,6 +295,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get vozidloPrevodovka => 'Transmission';
 
   @override
+  String get vozidloBarva => 'Color';
+
+  @override
+  String get vozidloVykon => 'Power';
+
+  @override
+  String get vozidloPocetMistDveri => 'Seats / doors';
+
+  @override
+  String get vozidloRozmery => 'Dimensions';
+
+  @override
+  String get vozidloUdajeZVin => 'VIN data';
+
+  @override
   String get vozidloTachometrLabel => 'Odometer';
 
   @override
@@ -598,6 +613,37 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prijemVozidloAutomaticka => 'Automatic';
+
+  @override
+  String get prijemVozidloDalsiUdaje => 'Additional vehicle details';
+
+  @override
+  String get prijemVozidloDalsiUdajeSub =>
+      'Optional – filled from the VIN decoder';
+
+  @override
+  String get prijemVozidloBarva => 'Color';
+
+  @override
+  String get prijemVozidloVykon => 'Power (kW)';
+
+  @override
+  String get prijemVozidloPocetMist => 'Number of seats';
+
+  @override
+  String get prijemVozidloPocetDveri => 'Number of doors';
+
+  @override
+  String get prijemVozidloRozmery => 'Dimensions (L × W × H mm)';
+
+  @override
+  String get prijemVozidloDelka => 'Length';
+
+  @override
+  String get prijemVozidloSirka => 'Width';
+
+  @override
+  String get prijemVozidloVyska => 'Height';
 
   @override
   String get prijemPraceTitle => 'Required work';
@@ -1391,7 +1437,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authResetChyba => 'Error sending password reset email.';
 
   @override
-  String get authSubtitleLogin => 'Digital vehicle records';
+  String get authSubtitleLogin => 'Digital vehicle evidence';
 
   @override
   String get authSubtitleRegister => 'Register your garage';

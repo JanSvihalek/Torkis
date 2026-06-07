@@ -300,6 +300,21 @@ class AppLocalizationsPl extends AppLocalizations {
   String get vozidloPrevodovka => 'Skrzynia biegów';
 
   @override
+  String get vozidloBarva => 'Kolor';
+
+  @override
+  String get vozidloVykon => 'Moc';
+
+  @override
+  String get vozidloPocetMistDveri => 'Miejsca / drzwi';
+
+  @override
+  String get vozidloRozmery => 'Wymiary';
+
+  @override
+  String get vozidloUdajeZVin => 'Dane z VIN';
+
+  @override
   String get vozidloTachometrLabel => 'Licznik';
 
   @override
@@ -602,6 +617,37 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get prijemVozidloAutomaticka => 'Automatyczna';
+
+  @override
+  String get prijemVozidloDalsiUdaje => 'Dodatkowe dane pojazdu';
+
+  @override
+  String get prijemVozidloDalsiUdajeSub =>
+      'Opcjonalne – uzupełniane z dekodera VIN';
+
+  @override
+  String get prijemVozidloBarva => 'Kolor';
+
+  @override
+  String get prijemVozidloVykon => 'Moc (kW)';
+
+  @override
+  String get prijemVozidloPocetMist => 'Liczba miejsc';
+
+  @override
+  String get prijemVozidloPocetDveri => 'Liczba drzwi';
+
+  @override
+  String get prijemVozidloRozmery => 'Wymiary (Dł × Sz × Wys mm)';
+
+  @override
+  String get prijemVozidloDelka => 'Długość';
+
+  @override
+  String get prijemVozidloSirka => 'Szerokość';
+
+  @override
+  String get prijemVozidloVyska => 'Wysokość';
 
   @override
   String get prijemPraceTitle => 'Wymagane prace';

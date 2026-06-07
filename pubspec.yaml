@@ -1,8 +1,8 @@
 name: torkis
-description: "A new Flutter project."
+description: "TORKIS - Digital vehicle evidence"
 publish_to: 'none'
 
-version: 5.3.9
+version: 5.4.0
 
 
 environment:

@@ -47,6 +47,15 @@ class StepVozidlo extends StatefulWidget {
   final TextEditingController rokVyrobyController;
   final TextEditingController motorizaceController;
 
+  // Rozšířené (nepovinné) údaje — sekce „Další údaje o vozidle".
+  final TextEditingController barvaController;
+  final TextEditingController vykonController;
+  final TextEditingController mistController;
+  final TextEditingController dveriController;
+  final TextEditingController delkaController;
+  final TextEditingController sirkaController;
+  final TextEditingController vyskaController;
+
   final bool isLoadingSpz;
   final VoidCallback onHledatSpz;
   final bool isLoadingVin;
@@ -109,6 +118,13 @@ class StepVozidlo extends StatefulWidget {
     required this.modelController,
     required this.rokVyrobyController,
     required this.motorizaceController,
+    required this.barvaController,
+    required this.vykonController,
+    required this.mistController,
+    required this.dveriController,
+    required this.delkaController,
+    required this.sirkaController,
+    required this.vyskaController,
     required this.isLoadingSpz,
     required this.onHledatSpz,
     required this.isLoadingVin,
@@ -579,6 +595,116 @@ class _StepVozidloState extends State<StepVozidlo> {
     );
   }
 
+  /// Rozbalovací sekce s nepovinnými údaji. Plní se z VIN dekodéru, ale lze je
+  /// zadat i ručně. Sbalená ve výchozím stavu, aby nezahltila hlavní formulář.
+  Widget _buildDalsiUdajeSection(BuildContext context) {
+    final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: Container(
+        decoration: BoxDecoration(
+          color: tok.surface,
+          borderRadius: BorderRadius.circular(TokRadius.lg),
+          border: Border.all(
+            color: widget.isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : tok.line,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          tilePadding:
+              const EdgeInsets.symmetric(horizontal: TokSpace.lg, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(
+              TokSpace.lg, 0, TokSpace.lg, TokSpace.lg),
+          leading: const Icon(Icons.tune_rounded,
+              color: TokColors.accent, size: 20),
+          title: Text(
+            l10n.prijemVozidloDalsiUdaje,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: tok.textPrimary,
+            ),
+          ),
+          subtitle: Text(
+            l10n.prijemVozidloDalsiUdajeSub,
+            style: TextStyle(fontSize: 11, color: tok.textSecondary),
+          ),
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: buildInput(l10n.prijemVozidloBarva,
+                      Icons.palette_outlined, widget.barvaController,
+                      widget.isDark),
+                ),
+                const SizedBox(width: TokSpace.md),
+                Expanded(
+                  child: buildInput(l10n.prijemVozidloVykon,
+                      Icons.bolt_outlined, widget.vykonController, widget.isDark,
+                      numbersOnly: true),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: buildInput(l10n.prijemVozidloPocetMist,
+                      Icons.event_seat_outlined, widget.mistController,
+                      widget.isDark,
+                      numbersOnly: true),
+                ),
+                const SizedBox(width: TokSpace.md),
+                Expanded(
+                  child: buildInput(l10n.prijemVozidloPocetDveri,
+                      Icons.sensor_door_outlined, widget.dveriController,
+                      widget.isDark,
+                      numbersOnly: true),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, left: 2),
+              child: Text(l10n.prijemVozidloRozmery,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: tok.textSecondary,
+                      letterSpacing: 0.2)),
+            ),
+            Row(
+              children: [
+                Expanded(
+                  child: buildHalfInput(l10n.prijemVozidloDelka,
+                      Icons.straighten_outlined, widget.delkaController,
+                      widget.isDark, TextInputType.number),
+                ),
+                const SizedBox(width: TokSpace.sm),
+                Expanded(
+                  child: buildHalfInput(l10n.prijemVozidloSirka,
+                      Icons.straighten_outlined, widget.sirkaController,
+                      widget.isDark, TextInputType.number),
+                ),
+                const SizedBox(width: TokSpace.sm),
+                Expanded(
+                  child: buildHalfInput(l10n.prijemVozidloVyska,
+                      Icons.height_outlined, widget.vyskaController,
+                      widget.isDark, TextInputType.number),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
@@ -823,6 +949,8 @@ class _StepVozidloState extends State<StepVozidlo> {
                       widget.moznostiKaroserie,
                       widget.onKaroserieChanged,
                       widget.isDark),
+                  const SizedBox(height: 20),
+                  _buildDalsiUdajeSection(context),
                 ],
               ),
             ),

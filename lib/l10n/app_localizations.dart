@@ -626,6 +626,36 @@ abstract class AppLocalizations {
   /// **'Převodovka'**
   String get vozidloPrevodovka;
 
+  /// No description provided for @vozidloBarva.
+  ///
+  /// In cs, this message translates to:
+  /// **'Barva'**
+  String get vozidloBarva;
+
+  /// No description provided for @vozidloVykon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Výkon'**
+  String get vozidloVykon;
+
+  /// No description provided for @vozidloPocetMistDveri.
+  ///
+  /// In cs, this message translates to:
+  /// **'Místa / dveře'**
+  String get vozidloPocetMistDveri;
+
+  /// No description provided for @vozidloRozmery.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rozměry'**
+  String get vozidloRozmery;
+
+  /// No description provided for @vozidloUdajeZVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'Údaje z VIN'**
+  String get vozidloUdajeZVin;
+
   /// No description provided for @vozidloTachometrLabel.
   ///
   /// In cs, this message translates to:
@@ -1213,6 +1243,66 @@ abstract class AppLocalizations {
   /// In cs, this message translates to:
   /// **'Automatická'**
   String get prijemVozidloAutomaticka;
+
+  /// No description provided for @prijemVozidloDalsiUdaje.
+  ///
+  /// In cs, this message translates to:
+  /// **'Další údaje o vozidle'**
+  String get prijemVozidloDalsiUdaje;
+
+  /// No description provided for @prijemVozidloDalsiUdajeSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nepovinné – doplní se z VIN dekodéru'**
+  String get prijemVozidloDalsiUdajeSub;
+
+  /// No description provided for @prijemVozidloBarva.
+  ///
+  /// In cs, this message translates to:
+  /// **'Barva'**
+  String get prijemVozidloBarva;
+
+  /// No description provided for @prijemVozidloVykon.
+  ///
+  /// In cs, this message translates to:
+  /// **'Výkon (kW)'**
+  String get prijemVozidloVykon;
+
+  /// No description provided for @prijemVozidloPocetMist.
+  ///
+  /// In cs, this message translates to:
+  /// **'Počet míst'**
+  String get prijemVozidloPocetMist;
+
+  /// No description provided for @prijemVozidloPocetDveri.
+  ///
+  /// In cs, this message translates to:
+  /// **'Počet dveří'**
+  String get prijemVozidloPocetDveri;
+
+  /// No description provided for @prijemVozidloRozmery.
+  ///
+  /// In cs, this message translates to:
+  /// **'Rozměry (D × Š × V mm)'**
+  String get prijemVozidloRozmery;
+
+  /// No description provided for @prijemVozidloDelka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Délka'**
+  String get prijemVozidloDelka;
+
+  /// No description provided for @prijemVozidloSirka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Šířka'**
+  String get prijemVozidloSirka;
+
+  /// No description provided for @prijemVozidloVyska.
+  ///
+  /// In cs, this message translates to:
+  /// **'Výška'**
+  String get prijemVozidloVyska;
 
   /// No description provided for @prijemPraceTitle.
   ///

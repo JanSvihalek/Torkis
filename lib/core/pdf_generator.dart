@@ -30,6 +30,15 @@ class GlobalPdfGenerator {
     return "-";
   }
 
+  /// Složí rozměry vozidla (D×Š×V) z dat zakázky, pokud je aspoň jeden zadán.
+  static String _rozmeryPdf(Map<String, dynamic> data) {
+    final d = data['delka_mm']?.toString() ?? '';
+    final s = data['sirka_mm']?.toString() ?? '';
+    final v = data['vyska_mm']?.toString() ?? '';
+    if (d.isEmpty && s.isEmpty && v.isEmpty) return '';
+    return '${d.isEmpty ? '?' : d} × ${s.isEmpty ? '?' : s} × ${v.isEmpty ? '?' : v} mm';
+  }
+
   /// Převede číslo bankovního účtu ve formátu "123456/0100" na IBAN (CZ...).
   /// Výstupem je SPAYD řetězec pro QR kód platby, který se tiskne na fakturu.
   static String _generateSpayd(String banka, double amount, String vs) {
@@ -380,6 +389,12 @@ class GlobalPdfGenerator {
                 buildInfoRow('K zakázce:', puvodniCislo),
                 buildInfoRow('SPZ:', data['spz'] ?? ''),
                 buildInfoRow('VIN:', data['vin'] ?? '-'),
+                if ((data['barva']?.toString() ?? '').isNotEmpty)
+                  buildInfoRow('Barva:', data['barva'].toString()),
+                if ((data['vykon_kw']?.toString() ?? '').isNotEmpty)
+                  buildInfoRow('Výkon:', '${data['vykon_kw']} kW'),
+                if (_rozmeryPdf(data).isNotEmpty)
+                  buildInfoRow('Rozměry:', _rozmeryPdf(data)),
                 if (stavVozidla['tachometr'] != null && stavVozidla['tachometr'].toString().isNotEmpty)
                   buildInfoRow('Najeto:', '${stavVozidla['tachometr']} km'),
                 buildInfoRow('Přijato:', _formatDate(data['cas_prijeti'])),

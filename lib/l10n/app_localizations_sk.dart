@@ -298,6 +298,21 @@ class AppLocalizationsSk extends AppLocalizations {
   String get vozidloPrevodovka => 'Prevodovka';
 
   @override
+  String get vozidloBarva => 'Farba';
+
+  @override
+  String get vozidloVykon => 'Výkon';
+
+  @override
+  String get vozidloPocetMistDveri => 'Miesta / dvere';
+
+  @override
+  String get vozidloRozmery => 'Rozmery';
+
+  @override
+  String get vozidloUdajeZVin => 'Údaje z VIN';
+
+  @override
   String get vozidloTachometrLabel => 'Tachometer';
 
   @override
@@ -600,6 +615,37 @@ class AppLocalizationsSk extends AppLocalizations {
 
   @override
   String get prijemVozidloAutomaticka => 'Automatická';
+
+  @override
+  String get prijemVozidloDalsiUdaje => 'Ďalšie údaje o vozidle';
+
+  @override
+  String get prijemVozidloDalsiUdajeSub =>
+      'Nepovinné – doplnia sa z VIN dekodéra';
+
+  @override
+  String get prijemVozidloBarva => 'Farba';
+
+  @override
+  String get prijemVozidloVykon => 'Výkon (kW)';
+
+  @override
+  String get prijemVozidloPocetMist => 'Počet miest';
+
+  @override
+  String get prijemVozidloPocetDveri => 'Počet dverí';
+
+  @override
+  String get prijemVozidloRozmery => 'Rozmery (D × Š × V mm)';
+
+  @override
+  String get prijemVozidloDelka => 'Dĺžka';
+
+  @override
+  String get prijemVozidloSirka => 'Šírka';
+
+  @override
+  String get prijemVozidloVyska => 'Výška';
 
   @override
   String get prijemPraceTitle => 'Požadované práce';
