@@ -520,6 +520,7 @@
   "predFeat150Zaznamu": "150 wpisów/miesiąc",
   "predFeat10Uziv": "Maks. 10 użytkowników",
   "predFeat60Vin": "60 dekodowań VIN/miesiąc",
+  "predFeat120Vin": "120 dekodowań VIN/miesiąc",
   "predFeat75Vin": "75 dekodowań VIN/miesiąc",
   "predFeat3TrzniHodnota": "3 wyceny rynkowe/miesiąc",
   "predFeatVseBasic": "Wszystko z Basic",

@@ -2894,6 +2894,12 @@ abstract class AppLocalizations {
   /// **'60 dekodovaných VIN měsíčně'**
   String get predFeat60Vin;
 
+  /// No description provided for @predFeat120Vin.
+  ///
+  /// In cs, this message translates to:
+  /// **'120 dekodovaných VIN měsíčně'**
+  String get predFeat120Vin;
+
   /// No description provided for @predFeat75Vin.
   ///
   /// In cs, this message translates to:

@@ -226,6 +226,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           l10n.predFeatNeomezZaznamu,
                           l10n.predFeatNeomezUziv,
                           l10n.predFeatVseStandard,
+                          l10n.predFeat120Vin,
                           l10n.predFeat5TrzniHodnota,
                           l10n.predFeatPrioritniPodpora,
                           l10n.predFeatPokrocileStatistiky,

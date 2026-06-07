@@ -520,6 +520,7 @@
   "predFeat150Zaznamu": "150 records/month",
   "predFeat10Uziv": "10 users max.",
   "predFeat60Vin": "60 VIN decodings/month",
+  "predFeat120Vin": "120 VIN decodings/month",
   "predFeat75Vin": "75 VIN decodings/month",
   "predFeat3TrzniHodnota": "3 market value lookups/month",
   "predFeatVseBasic": "All Basic features",

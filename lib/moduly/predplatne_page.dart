@@ -202,7 +202,7 @@ class _PredplatnePageState extends State<PredplatnePage> {
                           l10n.predFeatNeomezZaznamu,
                           l10n.predFeatNeomezUziv,
                           l10n.predFeatVseStandard,
-                          l10n.predFeat150Vin,
+                          l10n.predFeat120Vin,
                           l10n.predFeat5TrzniHodnota,
                           l10n.predFeatNeomezStk,
                           l10n.predFeatPrioritniPodpora,

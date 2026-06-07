@@ -1552,6 +1552,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get predFeat60Vin => '60 VIN-Dekodierungen/Monat';
 
   @override
+  String get predFeat120Vin => '120 VIN-Dekodierungen/Monat';
+
+  @override
   String get predFeat75Vin => '75 VIN-Dekodierungen/Monat';
 
   @override

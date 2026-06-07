@@ -1531,6 +1531,9 @@ class AppLocalizationsCs extends AppLocalizations {
   String get predFeat60Vin => '60 dekodovaných VIN měsíčně';
 
   @override
+  String get predFeat120Vin => '120 dekodovaných VIN měsíčně';
+
+  @override
   String get predFeat75Vin => '75 dekodovaných VIN měsíčně';
 
   @override

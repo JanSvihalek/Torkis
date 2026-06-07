@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String kAppVerze = '5.3.8';
+const String kAppVerze = '5.3.9';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -119,7 +119,7 @@ const Map<String, int?> kPlanPrijemLimit = {
 const Map<String, int?> kPlanVinLimit = {
   'basic': 30,
   'standard': 60,
-  'pro': 150,
+  'pro': 120,
   'trial': 10,
   'custom': null,
 };
