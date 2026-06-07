@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<title>TORKIS — Komunikace s Firebase a Google Cloud (datový tok)</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1a2433; font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1,h2,h3 { color: #0B1A2E; line-height: 1.2; }
+  h1 { font-size: 25pt; margin: 0 0 4px; }
+  h2 { font-size: 15pt; margin: 24px 0 8px; padding-bottom: 5px; border-bottom: 2px solid #2563eb; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 14px 0 4px; color: #1d4ed8; page-break-after: avoid; }
+  p { margin: 6px 0; }
+  ul,ol { margin: 6px 0; padding-left: 20px; } li { margin: 3px 0; }
+  code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-family:"Consolas",monospace; font-size:9pt; color:#0f3a6b; }
+  pre { background:#0B1A2E; color:#e7eefb; padding:12px 14px; border-radius:8px; font-family:"Consolas",monospace; font-size:8.5pt; line-height:1.45; overflow:hidden; white-space:pre-wrap; }
+  .cover { background: linear-gradient(135deg,#0B1A2E,#16335c); color:#fff; padding:36px 32px; border-radius:14px; margin-bottom:8px; }
+  .cover h1 { color:#fff; } .cover .sub { font-size:13pt; color:#9ec1ff; margin-top:6px; }
+  .cover .meta { font-size:9.5pt; color:#c7d6ee; margin-top:16px; }
+  .badge { display:inline-block; background:#2563eb; color:#fff; font-size:9pt; padding:2px 10px; border-radius:20px; margin-bottom:12px; }
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:9pt; }
+  th,td { border:1px solid #d4dce6; padding:5px 8px; text-align:left; vertical-align:top; }
+  th { background:#eef2f7; color:#0B1A2E; }
+  .box { background:#f6f9fc; border:1px solid #d4dce6; border-left:4px solid #2563eb; border-radius:6px; padding:9px 13px; margin:10px 0; }
+  .box.warn { border-left-color:#e0a000; background:#fffaf0; }
+  .box.ok { border-left-color:#1f9d57; background:#f1faf4; }
+  .box.bad { border-left-color:#dc2626; background:#fdf2f2; }
+  .fig { text-align:center; margin:14px 0; page-break-inside:avoid; }
+  .fig svg { max-width:100%; height:auto; }
+  .figcap { font-size:8.5pt; color:#5b6b7e; margin-top:4px; font-style:italic; }
+  .nobreak { page-break-inside:avoid; }
+  .pagebreak { page-break-before:always; }
+  footer { margin-top:26px; padding-top:10px; border-top:1px solid #d4dce6; font-size:8pt; color:#8595a8; }
+  .tag { display:inline-block; font-size:7.5pt; font-weight:bold; padding:1px 6px; border-radius:10px; vertical-align:middle; }
+  .tag.r { background:#e7f0ff; color:#1d4ed8; }
+  .tag.w { background:#fdeede; color:#b4690e; }
+  .tag.rw { background:#ede7ff; color:#6b3ed4; }
+  .tag.s { background:#fdecec; color:#c2261f; }
+  .small { font-size:8.5pt; color:#5b6b7e; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="badge">Technický rozbor · architektura a datový tok</div>
+  <h1>TORKIS</h1>
+  <div class="sub">Jak aplikace komunikuje s Firebase a Google Cloud</div>
+  <div class="meta">Verze aplikace 5.3.2 · Stav k 6. 6. 2026 · Projekt Firebase <code>visto-51cb7</code> · Region funkcí <code>europe-west3</code></div>
+</div>
+
+<p>Tento dokument popisuje, s jakými službami aplikace TORKIS komunikuje, jaká data z nich <b>čte</b>, jaká do nich <b>zapisuje</b>, kudy tečou citlivé klíče a jak je vše zabezpečené. Je psaný tak, aby byl srozumitelný i bez znalosti zdrojového kódu.</p>
+
+<div class="box">
+  <b>Legenda značek u dat:</b>
+  <span class="tag r">ČTE</span> aplikace čte &nbsp;
+  <span class="tag w">ZAPISUJE</span> aplikace zapisuje &nbsp;
+  <span class="tag rw">ČTE+ZAPISUJE</span> &nbsp;
+  <span class="tag s">SERVER-ONLY</span> přístup jen ze serveru (Cloud Functions)
+</div>
+
+<h2>1. Přehled architektury</h2>
+<p>Aplikace je klient (Flutter — Android, iOS, web/Windows) a sama o sobě <b>neukládá žádná byznys data lokálně natrvalo</b> kromě drobných uživatelských preferencí. Veškerá data žijí v cloudu Google/Firebase. Drahá a citlivá volání (placená VIN API) nejdou z aplikace přímo, ale přes <b>Cloud Functions</b>, které jediné drží tajné klíče.</p>
+
+<div class="fig">
+<svg viewBox="0 0 720 360" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial" font-size="11">
+  <defs>
+    <marker id="arr" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#2563eb"/></marker>
+    <marker id="arrg" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#1f9d57"/></marker>
+  </defs>
+
+  <!-- Klient -->
+  <rect x="20" y="150" width="130" height="64" rx="10" fill="#0B1A2E"/>
+  <text x="85" y="178" text-anchor="middle" fill="#fff" font-weight="bold">Aplikace TORKIS</text>
+  <text x="85" y="195" text-anchor="middle" fill="#9ec1ff" font-size="9">Flutter · mobil/web</text>
+
+  <!-- Firebase box -->
+  <rect x="250" y="20" width="250" height="320" rx="12" fill="#f6f9fc" stroke="#9bb4d4" stroke-dasharray="4 3"/>
+  <text x="375" y="40" text-anchor="middle" fill="#5b6b7e" font-size="9" font-weight="bold">FIREBASE / GOOGLE CLOUD — projekt visto-51cb7</text>
+
+  <rect x="270" y="52" width="95" height="44" rx="8" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="317" y="72" text-anchor="middle" font-weight="bold" font-size="10">Auth</text>
+  <text x="317" y="86" text-anchor="middle" fill="#5b6b7e" font-size="8">identita</text>
+
+  <rect x="385" y="52" width="95" height="44" rx="8" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="432" y="72" text-anchor="middle" font-weight="bold" font-size="10">Firestore</text>
+  <text x="432" y="86" text-anchor="middle" fill="#5b6b7e" font-size="8">databáze</text>
+
+  <rect x="270" y="106" width="95" height="44" rx="8" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="317" y="126" text-anchor="middle" font-weight="bold" font-size="10">Storage</text>
+  <text x="317" y="140" text-anchor="middle" fill="#5b6b7e" font-size="8">foto, PDF</text>
+
+  <rect x="385" y="106" width="95" height="44" rx="8" fill="#0B1A2E"/>
+  <text x="432" y="126" text-anchor="middle" fill="#fff" font-weight="bold" font-size="10">Functions</text>
+  <text x="432" y="140" text-anchor="middle" fill="#9ec1ff" font-size="8">server logika</text>
+
+  <rect x="270" y="160" width="95" height="40" rx="8" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="317" y="184" text-anchor="middle" font-weight="bold" font-size="10">Hosting</text>
+
+  <rect x="385" y="160" width="95" height="40" rx="8" fill="#dbe7fb" stroke="#2563eb"/>
+  <text x="432" y="178" text-anchor="middle" font-weight="bold" font-size="9">Crashlytics</text>
+
+  <rect x="270" y="210" width="210" height="40" rx="8" fill="#eef7ef" stroke="#1f9d57"/>
+  <text x="375" y="230" text-anchor="middle" font-weight="bold" font-size="9.5">Trigger Email extension (maily)</text>
+
+  <rect x="270" y="260" width="210" height="64" rx="8" fill="#fff6e9" stroke="#e0a000"/>
+  <text x="375" y="280" text-anchor="middle" font-weight="bold" font-size="9">Server-only kolekce</text>
+  <text x="375" y="296" text-anchor="middle" fill="#7a5a10" font-size="8">pouziti · vin_cache · value_cache · stk_cache</text>
+  <text x="375" y="312" text-anchor="middle" fill="#7a5a10" font-size="8">(jen přes Admin SDK z Functions)</text>
+
+  <!-- Externí -->
+  <rect x="560" y="20" width="150" height="320" rx="12" fill="#f6f9fc" stroke="#9bb4d4" stroke-dasharray="4 3"/>
+  <text x="635" y="40" text-anchor="middle" fill="#5b6b7e" font-size="9" font-weight="bold">EXTERNÍ SLUŽBY</text>
+
+  <rect x="572" y="52" width="126" height="38" rx="7" fill="#fff" stroke="#c2261f"/>
+  <text x="635" y="68" text-anchor="middle" font-size="9" font-weight="bold">Vincario API</text>
+  <text x="635" y="81" text-anchor="middle" fill="#5b6b7e" font-size="8">VIN + tržní cena</text>
+
+  <rect x="572" y="98" width="126" height="38" rx="7" fill="#fff" stroke="#c2261f"/>
+  <text x="635" y="114" text-anchor="middle" font-size="9" font-weight="bold">dataovozidlech.cz</text>
+  <text x="635" y="127" text-anchor="middle" fill="#5b6b7e" font-size="8">STK / technika</text>
+
+  <rect x="572" y="144" width="126" height="34" rx="7" fill="#fff" stroke="#2563eb"/>
+  <text x="635" y="165" text-anchor="middle" font-size="9" font-weight="bold">ARES (IČO)</text>
+
+  <rect x="572" y="186" width="126" height="34" rx="7" fill="#fff" stroke="#2563eb"/>
+  <text x="635" y="207" text-anchor="middle" font-size="9" font-weight="bold">ČNB (kurzy)</text>
+
+  <rect x="572" y="228" width="126" height="34" rx="7" fill="#fff" stroke="#7c3aed"/>
+  <text x="635" y="249" text-anchor="middle" font-size="9" font-weight="bold">RevenueCat</text>
+
+  <rect x="572" y="270" width="126" height="54" rx="7" fill="#fff" stroke="#2563eb"/>
+  <text x="635" y="290" text-anchor="middle" font-size="9" font-weight="bold">Google / Apple</text>
+  <text x="635" y="304" text-anchor="middle" fill="#5b6b7e" font-size="8">přihlášení</text>
+
+  <!-- Šipky klient -> firebase -->
+  <line x1="150" y1="172" x2="268" y2="74" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="150" y1="178" x2="383" y2="78" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="150" y1="184" x2="268" y2="128" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arr)"/>
+  <line x1="150" y1="190" x2="383" y2="128" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arr)"/>
+
+  <!-- Functions -> externí + cache -->
+  <line x1="480" y1="120" x2="570" y2="71" stroke="#1f9d57" stroke-width="1.6" marker-end="url(#arrg)"/>
+  <line x1="480" y1="128" x2="570" y2="117" stroke="#1f9d57" stroke-width="1.6" marker-end="url(#arrg)"/>
+  <line x1="432" y1="150" x2="400" y2="258" stroke="#1f9d57" stroke-width="1.4" marker-end="url(#arrg)"/>
+
+  <!-- klient -> externí přímo -->
+  <line x1="150" y1="196" x2="570" y2="161" stroke="#2563eb" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+  <line x1="150" y1="202" x2="570" y2="245" stroke="#7c3aed" stroke-width="1.2" stroke-dasharray="3 2"/>
+</svg>
+<div class="figcap">Obr. 1 — Aplikace mluví hlavně s Firebase. Placená VIN/STK API a tajné klíče jsou schované za Cloud Functions; jen ARES, ČNB a přihlašovací poskytovatelé jdou z klienta přímo.</div>
+</div>
+
+<h2>2. Firebase projekt a platformy</h2>
+<table>
+  <tr><th>Položka</th><th>Hodnota</th></tr>
+  <tr><td>ID projektu</td><td><code>visto-51cb7</code></td></tr>
+  <tr><td>Platformy</td><td>Android, iOS, web, Windows, macOS (konfigurace v <code>lib/firebase_options.dart</code>)</td></tr>
+  <tr><td>Region Cloud Functions</td><td><code>europe-west3</code> (Frankfurt)</td></tr>
+  <tr><td>Hosting</td><td>web build (<code>build/web</code>) + zákaznický portál na cestě <code>/zakazka/**</code></td></tr>
+</table>
+
+<h2>3. Použité služby Firebase</h2>
+<table>
+  <tr><th>Služba</th><th>K čemu slouží v TORKIS</th></tr>
+  <tr><td><b>Authentication</b></td><td>Identita uživatele. Metody: e-mail+heslo, Google, Apple a <b>anonymní</b> přihlášení pro zákaznický portál.</td></tr>
+  <tr><td><b>Cloud Firestore</b></td><td>Hlavní databáze — všechna byznys data (zakázky, vozidla, zákazníci, ceník, nastavení, předplatné…).</td></tr>
+  <tr><td><b>Cloud Storage</b></td><td>Binární soubory — fotky z příjmu, schéma poškození, vygenerované PDF protokoly, podpis.</td></tr>
+  <tr><td><b>Cloud Functions</b></td><td>Serverový kód — placená VIN/STK API, webhook plateb, mazání účtů. Drží tajné klíče.</td></tr>
+  <tr><td><b>Crashlytics</b></td><td>Hlášení pádů a fatálních chyb (mimo web). Odesílá technická data o pádu, ne byznys obsah.</td></tr>
+  <tr><td><b>Hosting</b></td><td>Webová verze aplikace + veřejná stránka zákaznického portálu (<code>zakazka.html</code>).</td></tr>
+  <tr><td><b>Trigger Email (extension)</b></td><td>Rozšíření, které z dokumentů v kolekci <code>maily</code> rozesílá e-maily zákazníkům.</td></tr>
+</table>
+
+<h2 class="pagebreak">4. Datový model — kolekce Firestore</h2>
+<p>Každý záznam servisu nese pole <code>servis_id</code>. Pravidla zajišťují, že uživatel vidí <b>jen data svého servisu</b> (viz kap. 8). Níže je přehled, co aplikace z jednotlivých kolekcí čte a co do nich zapisuje.</p>
+
+<table>
+  <tr><th>Kolekce</th><th>Obsah</th><th>Přístup aplikace</th></tr>
+  <tr><td><code>uzivatele</code></td><td>Profil uživatele: uid, e-mail, jméno, role (admin/zaměstnanec), <code>servis_id</code>, oprávnění modulů (<code>prava</code>), osobní nastavení.</td><td><span class="tag rw">ČTE+ZAPISUJE</span> <span class="small">smazání člena přes funkci</span></td></tr>
+  <tr><td><code>nastaveni_servisu</code></td><td>Firemní nastavení: název, IČO/DIČ, adresa, formát čísla zakázky, typy záznamu, přepínače (podpis, SPZ, auto-číslo).</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>predplatne</code></td><td>Plán (basic/standard/pro/trial) a platnost. Určuje serverové limity.</td><td><span class="tag r">ČTE</span> <span class="small">zápis jen „trial" / server</span></td></tr>
+  <tr><td><code>zakazky</code></td><td>Protokoly příjmu vozidla: zákazník, vozidlo, stav vozu, požadované úkony, odkazy na fotky a PDF, podpis, <code>portal_token</code>.</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>zakazky/&hellip;/zakaznik_zpravy</code></td><td>Komunikace servis ↔ zákazník přes portál, schvalování nacenění.</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>vozidla</code></td><td>Kartotéka vozidel servisu (SPZ, VIN, značka, technika, historie návštěv).</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>zakaznici</code></td><td>Kartotéka zákazníků (jméno, kontakt, IČO/DIČ, adresa).</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>ukony</code></td><td>Ceník prací/úkonů (název, cena, čas, kategorie).</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>faktury</code></td><td>Vystavené faktury (číslování, položky).</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>vin_skeny</code></td><td>Historie VIN dekódů uložená v kartotéce servisu.</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>value_skeny</code></td><td>Historie zjištění tržní hodnoty.</td><td><span class="tag rw">ČTE+ZAPISUJE</span></td></tr>
+  <tr><td><code>znacka</code></td><td>Sdílená referenční loga značek vozidel.</td><td><span class="tag r">ČTE</span> <span class="small">zápis jen vlastník</span></td></tr>
+  <tr><td><code>maily</code></td><td>Fronta odchozích e-mailů pro Trigger Email extension.</td><td><span class="tag w">ZAPISUJE</span> <span class="small">založení e-mailu</span></td></tr>
+  <tr><td><code>chybove_logy</code></td><td>Aplikační chybové logy.</td><td><span class="tag w">ZAPISUJE</span> <span class="small">čte jen vlastník</span></td></tr>
+</table>
+
+<h3>Server-only kolekce (aplikace na ně nesmí)</h3>
+<table>
+  <tr><th>Kolekce</th><th>Obsah</th><th>Přístup</th></tr>
+  <tr><td><code>pouziti</code></td><td>Měsíční počítadla spotřeby placených API (limity dle plánu).</td><td><span class="tag s">SERVER-ONLY</span></td></tr>
+  <tr><td><code>vin_cache</code></td><td>Mezipaměť výsledků VIN dekódu (šetří placená volání).</td><td><span class="tag s">SERVER-ONLY</span></td></tr>
+  <tr><td><code>value_cache</code></td><td>Mezipaměť tržních hodnot.</td><td><span class="tag s">SERVER-ONLY</span></td></tr>
+  <tr><td><code>stk_cache</code></td><td>Mezipaměť STK dat (platnost 24 hodin).</td><td><span class="tag s">SERVER-ONLY</span></td></tr>
+</table>
+
+<h2>5. Cloud Storage — binární soubory</h2>
+<p>Soubory se ukládají do stromu podle servisu a zakázky:</p>
+<pre>servisy/{servis_id}/zakazky/{cislo_zakazky}/
+   ├── &lt;kategorie&gt;_&lt;n&gt;.jpg      <span style="color:#7fa8e0">— fotografie z příjmu (interiér, poškození, VIN…)</span>
+   ├── schema_poskozeni.png      <span style="color:#7fa8e0">— nákres poškození</span>
+   └── protokol_{cislo}.pdf      <span style="color:#7fa8e0">— vygenerovaný protokol o příjmu</span></pre>
+<p>Aplikace soubory <b>nahrává</b> (foto, PDF, schéma) a později <b>čte</b> jejich veřejné odkazy, které ukládá do dokumentu zakázky (<code>fotografie_urls</code>, <code>podpis_url</code>). Zákaznický portál pak fotky a PDF zobrazuje z těchto odkazů.</p>
+
+<h2 class="pagebreak">6. Cloud Functions — serverová logika</h2>
+<p>Funkce běží v regionu <code>europe-west3</code>. Jsou jediným místem, kde žijí <b>tajné klíče</b> (Firebase Secrets) — v aplikaci nikdy nejsou.</p>
+
+<table>
+  <tr><th>Funkce</th><th>Typ</th><th>Co dělá / čte / zapisuje</th></tr>
+  <tr><td><code>decodeVin</code></td><td>callable</td><td>Dekóduje VIN přes <b>Vincario</b>. Ověří uživatele → <code>servis_id</code> → plán. Čte/zapisuje <code>vin_cache</code>, rezervuje slot v <code>pouziti</code> (měsíční limit). Při cache-zásahu API nevolá.</td></tr>
+  <tr><td><code>marketValueVin</code></td><td>callable</td><td>Zjistí tržní hodnotu vozu přes <b>Vincario</b>. Stejná logika, cache <code>value_cache</code>, limit <code>pouziti</code>.</td></tr>
+  <tr><td><code>stkVin</code></td><td>callable</td><td>Načte STK a technická data z <b>api.dataovozidlech.cz</b>. Cache <code>stk_cache</code> na 24 h. Bez měsíčního limitu, jen ověření přihlášení.</td></tr>
+  <tr><td><code>revenuecatWebhook</code></td><td>HTTP</td><td>Přijímá události o nákupu/obnově od <b>RevenueCat</b> a zapisuje důvěryhodný plán do <code>predplatne</code>. Chráněno tajným tokenem v hlavičce.</td></tr>
+  <tr><td><code>deleteZamestnanec</code></td><td>callable</td><td>Úplné odstranění člena týmu — smaže Auth účet i profil v <code>uzivatele</code>. Ověří, že volající je správce stejného servisu a nemaže sám sebe.</td></tr>
+</table>
+
+<div class="box">
+  <b>Tajné klíče (Firebase Secrets), jen na serveru:</b>
+  <code>VINCARIO_API_KEY</code>, <code>VINCARIO_SECRET</code>, <code>DATAOVOZIDLECH_API_KEY</code>, <code>REVENUECAT_WEBHOOK_AUTH</code>.
+</div>
+
+<div class="box ok">
+  <b>Proč přes server?</b> Vincario je placené za volání. Kdyby klíč byl v aplikaci, šel by z dekompilované aplikace vytáhnout a zneužít. Server navíc <b>tvrdě vynucuje měsíční limity</b> dle plánu a cachuje výsledky, takže stejné VIN se neplatí dvakrát.
+</div>
+
+<h2>7. Externí služby (mimo Firebase)</h2>
+<table>
+  <tr><th>Služba</th><th>Jak se volá</th><th>Co táhneme / posíláme</th></tr>
+  <tr><td><b>Vincario</b></td><td>přes Cloud Functions</td><td>Posíláme VIN; čteme technické údaje vozidla a tržní hodnotu.</td></tr>
+  <tr><td><b>dataovozidlech.cz</b></td><td>přes Cloud Functions</td><td>Posíláme VIN; čteme STK a technická data.</td></tr>
+  <tr><td><b>ARES</b> (ares.gov.cz)</td><td>přímo z aplikace</td><td>Posíláme IČO; čteme název firmy a adresu (předvyplnění zákazníka/servisu).</td></tr>
+  <tr><td><b>ČNB</b> (api.cnb.cz)</td><td>přímo z aplikace</td><td>Čteme denní kurz EUR→CZK pro přepočet tržní hodnoty. Veřejné, bez klíče.</td></tr>
+  <tr><td><b>RevenueCat</b></td><td>SDK + webhook</td><td>Správa předplatného: nákupy, obnovy, nabídky. Plán pak potvrzuje webhook do <code>predplatne</code>.</td></tr>
+  <tr><td><b>Google / Apple Sign-In</b></td><td>SDK</td><td>Federované přihlášení (token identity). Žádná byznys data.</td></tr>
+  <tr><td><b>Google ML Kit</b> (OCR)</td><td>na zařízení</td><td>Rozpoznání VIN/SPZ z fotky. <b>Běží lokálně</b> — neodesílá fotku na server.</td></tr>
+</table>
+
+<h2>8. Bezpečnostní model (shrnutí)</h2>
+<p>Detailní rozbor je v samostatném dokumentu <i>„Bezpečnostní pravidla Firestore"</i>. Klíčové zásady:</p>
+<ul>
+  <li><b>Vše zakázáno, dokud pravidlo výslovně nepovolí</b> (deny by default). Server-only kolekce nemají žádné povolení pro klienta.</li>
+  <li><b>Izolace servisů</b> — každý dotaz i zápis prochází kontrolou <code>servis_id</code>; uživatel nevidí cizí servis.</li>
+  <li><b>Oprávnění modulů</b> — člen týmu má v profilu <code>prava</code> a aplikace mu zpřístupní jen povolené moduly.</li>
+  <li><b>Citlivá pole se nedají podvrhnout</b> — uživatel si nesmí přepsat <code>servis_id</code>, <code>role</code> ani <code>prava</code>; placený plán zapisuje jen RevenueCat webhook.</li>
+  <li><b>Zákaznický portál</b> běží na <b>anonymním</b> přihlášení a vidí jen jednu zakázku přes její <code>portal_token</code>; smí přidat zprávu a schválit/zamítnout nacenění, nic víc.</li>
+</ul>
+
+<h2 class="pagebreak">9. Příklady toku dat</h2>
+
+<h3>9.1 Příjem vozidla (vytvoření zakázky)</h3>
+<ol>
+  <li>Mechanik vyfotí vůz → ML Kit lokálně přečte VIN/SPZ (bez odeslání fotky).</li>
+  <li>Volitelně <code>decodeVin</code> / <code>stkVin</code> doplní technická data (přes funkce, s cache a limity).</li>
+  <li>IČO zákazníka se ověří v <b>ARES</b> (přímo).</li>
+  <li>Fotky, schéma a vygenerované PDF se nahrají do <b>Storage</b>.</li>
+  <li>Vznikne dokument v <code>zakazky</code> (+ aktualizace <code>vozidla</code> a <code>zakaznici</code>).</li>
+  <li>Při zapnutém odesílání e-mailu se založí dokument v <code>maily</code> → extension odešle protokol zákazníkovi.</li>
+</ol>
+
+<h3>9.2 VIN dekodér</h3>
+<p>Aplikace zavolá <code>decodeVin</code>. Funkce nejdřív zkusí <code>vin_cache</code>; při zásahu vrací data zdarma. Jinak rezervuje slot v <code>pouziti</code> (kontrola limitu plánu), zavolá Vincario tajným klíčem, výsledek uloží do cache a vrátí. Historie se ukládá do <code>vin_skeny</code>.</p>
+
+<h3>9.3 Předplatné</h3>
+<p>Nákup probíhá přes RevenueCat SDK v aplikaci. Skutečný plán ale do <code>predplatne</code> zapisuje až <b>server</b> přes <code>revenuecatWebhook</code> — aplikace plán „povýšit" nemůže. Limity API se pak odvozují z tohoto důvěryhodného plánu.</p>
+
+<h3>9.4 Zákaznický portál</h3>
+<p>Zákazník otevře odkaz <code>/zakazka/&lt;token&gt;</code> na Hostingu, aplikace ho přihlásí <b>anonymně</b> a podle <code>portal_token</code> načte jednu zakázku. Může číst stav a zprávy, přidat dotaz a schválit/zamítnout nacenění (subkolekce <code>zakaznik_zpravy</code>).</p>
+
+<h2>10. Co opouští zařízení — rychlý souhrn</h2>
+<table>
+  <tr><th>Data</th><th>Kam jdou</th><th>Poznámka</th></tr>
+  <tr><td>Přihlašovací identita</td><td>Firebase Auth / Google / Apple</td><td>Token, ne heslo v otevřené podobě.</td></tr>
+  <tr><td>Byznys data (zakázky, vozidla, zákazníci, ceník…)</td><td>Firestore</td><td>Izolováno per <code>servis_id</code>.</td></tr>
+  <tr><td>Fotky, PDF, podpis</td><td>Cloud Storage</td><td>Odkazy uložené u zakázky.</td></tr>
+  <tr><td>VIN, IČO</td><td>Vincario/dataovozidlech (přes server), ARES (přímo)</td><td>VIN přes funkce; klíče na serveru.</td></tr>
+  <tr><td>Fotka vozidla pro OCR</td><td>nikam — zpracuje se na zařízení</td><td>ML Kit běží lokálně.</td></tr>
+  <tr><td>Údaje o pádu aplikace</td><td>Crashlytics</td><td>Technická diagnostika, ne byznys obsah.</td></tr>
+  <tr><td>E-mail zákazníkovi</td><td>Trigger Email extension</td><td>Spouští se zápisem do <code>maily</code>.</td></tr>
+</table>
+
+<footer>
+  TORKIS — interní technická dokumentace · Komunikace s Firebase a Google Cloud · Verze aplikace 5.3.2 · Stav k 6. 6. 2026 · Projekt <code>visto-51cb7</code>.
+  Dokument popisuje stav podle zdrojového kódu a souborů <code>firestore.rules</code>, <code>functions/index.js</code> a <code>firebase.json</code>.
+</footer>
+
+</body>
+</html>

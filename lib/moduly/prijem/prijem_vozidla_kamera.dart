@@ -49,7 +49,9 @@ class _MultiShotCameraPageState extends State<MultiShotCameraPage> {
       );
       _controller = CameraController(
         camera,
-        ResolutionPreset.high,
+        // 1080p kvůli čitelnosti detailů (škrábance, VIN). Finální zmenšení
+        // a komprese probíhá jednotně až při uploadu (viz komprimujFoto).
+        ResolutionPreset.veryHigh,
         imageFormatGroup: ImageFormatGroup.jpeg,
         enableAudio: false,
       );

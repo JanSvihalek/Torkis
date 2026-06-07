@@ -9,6 +9,7 @@ import 'package:signature/signature.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
 import '../../core/design_tokens.dart';
@@ -28,6 +29,25 @@ import 'prijem_vozidla_step_photo.dart';
 import 'prijem_vozidla_step_prace.dart';
 import 'prijem_vozidla_step_podpis.dart';
 import 'prijem_vozidla_tablet_layout.dart';
+
+// Cílový profil fotodokumentace: vyvážení detailu (škrábance) a velikosti
+// ve Firebase Storage. Delší strana max 1920 px, JPEG kvalita 80 (~300–500 kB).
+const int kFotoMaxStrana = 1920;
+const int kFotoKvalita = 80;
+
+/// Zmenší a překóduje foto na jednotný profil. Běží v isolate přes [compute],
+/// aby dekódování/kódování neblokovalo UI. Při chybě dekódování vrátí originál.
+Uint8List komprimujFoto(Uint8List vstup) {
+  final decoded = img.decodeImage(vstup);
+  if (decoded == null) return vstup;
+  img.Image out = decoded;
+  if (decoded.width > kFotoMaxStrana || decoded.height > kFotoMaxStrana) {
+    out = decoded.width >= decoded.height
+        ? img.copyResize(decoded, width: kFotoMaxStrana)
+        : img.copyResize(decoded, height: kFotoMaxStrana);
+  }
+  return img.encodeJpg(out, quality: kFotoKvalita);
+}
 
 // Formulář příjmu vozidla — 6stránkový průvodce (PageView).
 // Stránky: 1) Vozidlo, 2) Zákazník, 3) Fotodokumentace, 4) Stav při příjmu,
@@ -1186,7 +1206,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
         Reference ref = FirebaseStorage.instance
             .ref()
             .child('servisy/$_sId/zakazky/$zakazkaId/$fileName');
-        await ref.putData(await image.readAsBytes());
+        // Jednotná komprese (1920 px / JPEG 80) v isolate, ať neblokuje UI.
+        final Uint8List komprimovane =
+            await compute(komprimujFoto, await image.readAsBytes());
+        await ref.putData(komprimovane,
+            SettableMetadata(contentType: 'image/jpeg'));
         String downloadUrl = await ref.getDownloadURL();
         imageUrlsByCategory[categoryKey]!.add(downloadUrl);
       }
@@ -1485,9 +1509,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
       // Web nemĂˇ pĹ™Ă­mĂ˝ pĹ™Ă­stup ke kameĹ™e pĹ™es camera package â€” pouĹľijeme image_picker
       final XFile? photo = await _picker.pickImage(
           source: ImageSource.camera,
-          imageQuality: 60,
-          maxWidth: 1280,
-          maxHeight: 1280);
+          imageQuality: 90,
+          maxWidth: 1920,
+          maxHeight: 1920);
       if (photo != null) {
         setState(() {
           _categoryImages[categoryKey] ??= [];
@@ -1510,7 +1534,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   Future<void> _pickFromGallery(String categoryKey) async {
     final List<XFile> photos = await _picker.pickMultiImage(
-        imageQuality: 60, maxWidth: 1280, maxHeight: 1280);
+        imageQuality: 90, maxWidth: 1920, maxHeight: 1920);
     if (photos.isNotEmpty) {
       setState(() {
         if (_categoryImages[categoryKey] == null)
