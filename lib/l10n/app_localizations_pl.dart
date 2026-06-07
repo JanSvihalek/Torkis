@@ -1590,6 +1590,75 @@ class AppLocalizationsPl extends AppLocalizations {
   String get predFeatPrioritniSla => 'Wsparcie priorytetowe z SLA';
 
   @override
+  String get paywallTitle => 'Wybierz plan';
+
+  @override
+  String get paywallSubtitleTrialEnding =>
+      'Twój okres próbny wkrótce się kończy. Wybierz plan, aby kontynuować.';
+
+  @override
+  String get paywallSubtitleTrialExpired =>
+      'Twój okres próbny dobiegł końca. Wybierz plan odpowiedni dla Twojego serwisu.';
+
+  @override
+  String paywallTrialZbyva(int n, String slovo) {
+    return 'Pozostało $n $slovo okresu próbnego';
+  }
+
+  @override
+  String get paywallBezpeci =>
+      'Twoje dane są bezpieczne. Przywrócimy wszystko po wyborze planu.';
+
+  @override
+  String get paywallZadnePredplatne => 'Nie znaleziono aktywnej subskrypcji.';
+
+  @override
+  String paywallChybaObnoveni(String chyba) {
+    return 'Błąd przywracania: $chyba';
+  }
+
+  @override
+  String get paywallObnovitNakupy => 'Przywróć zakupy';
+
+  @override
+  String get predPeriodMesic => 'miesięcznie';
+
+  @override
+  String get predPeriodRoc => 'rocznie';
+
+  @override
+  String get predCenaNaMiru => 'Cena na miarę';
+
+  @override
+  String get predDoporucujeme => 'POLECAMY';
+
+  @override
+  String get predAktualniPlanPill => 'OBECNY PLAN';
+
+  @override
+  String get predAktualneAktivni => 'Obecnie aktywny';
+
+  @override
+  String get predMamZajem => 'Jestem zainteresowany';
+
+  @override
+  String predVybrat(String name) {
+    return 'Wybierz $name';
+  }
+
+  @override
+  String get paywallTrust1Title => 'Dostępność 99,9%';
+
+  @override
+  String get paywallTrust1Sub => 'Gwarantowany SLA dostępności';
+
+  @override
+  String get paywallTrust2Title => 'Bezpłatny eksport danych';
+
+  @override
+  String get paywallTrust2Sub => 'Twoje dane zawsze należą do Ciebie';
+
+  @override
   String get onbAresChybaIco => 'Wprowadź prawidłowy 8-cyfrowy numer ID firmy.';
 
   @override

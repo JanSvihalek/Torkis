@@ -538,6 +538,35 @@
   "predFeatNeomezTrzni": "Neobmedzená trhová hodnota vozidiel",
   "predFeatPrioritniSla": "Prioritná podpora s SLA",
 
+  "paywallTitle": "Vyberte plán",
+  "paywallSubtitleTrialEnding": "Vaše skúšobné obdobie čoskoro končí. Vyberte plán pre pokračovanie.",
+  "paywallSubtitleTrialExpired": "Vaše skúšobné obdobie skončilo. Vyberte plán zodpovedajúci veľkosti servisu.",
+  "paywallTrialZbyva": "Zostáva {n} {slovo} skúšobného obdobia",
+  "@paywallTrialZbyva": {
+    "placeholders": {
+      "n": { "type": "int" },
+      "slovo": { "type": "String" }
+    }
+  },
+  "paywallBezpeci": "Vaše dáta sú v bezpečí. Po výbere plánu všetko obnovíme.",
+  "paywallZadnePredplatne": "Nenájdené žiadne aktívne predplatné.",
+  "paywallChybaObnoveni": "Chyba obnovenia: {chyba}",
+  "@paywallChybaObnoveni": { "placeholders": { "chyba": { "type": "String" } } },
+  "paywallObnovitNakupy": "Obnoviť nákupy",
+  "predPeriodMesic": "mesačne",
+  "predPeriodRoc": "ročne",
+  "predCenaNaMiru": "Cena na mieru",
+  "predDoporucujeme": "ODPORÚČAME",
+  "predAktualniPlanPill": "AKTUÁLNY PLÁN",
+  "predAktualneAktivni": "Aktuálne aktívny",
+  "predMamZajem": "Mám záujem",
+  "predVybrat": "Vybrať {name}",
+  "@predVybrat": { "placeholders": { "name": { "type": "String" } } },
+  "paywallTrust1Title": "99,9 % dostupnosť",
+  "paywallTrust1Sub": "Garantovaná uptime SLA",
+  "paywallTrust2Title": "Export dát zadarmo",
+  "paywallTrust2Sub": "Vaše dáta sú vždy vaše",
+
   "onbAresChybaIco": "Zadajte platné 8-miestne IČO.",
   "onbAresNacteno": "Údaje z registra boli načítané.",
   "onbAresNenalezeno": "Zadané IČO nebolo v registri nájdené.",

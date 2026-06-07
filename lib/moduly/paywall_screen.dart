@@ -7,6 +7,7 @@ import '../core/constants.dart';
 import '../core/design_tokens.dart';
 import '../core/subscription_service.dart';
 import '../core/torkis_ui.dart';
+import '../l10n/app_localizations.dart';
 import 'auth_gate.dart';
 
 class PaywallScreen extends StatefulWidget {
@@ -57,7 +58,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       final ok = await SubscriptionService.purchasePackage(package);
       if (ok && mounted) _restartApp();
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Nákup se nepodařil: $e');
+      if (mounted) setState(() => _errorMessage = AppLocalizations.of(context).predChybaNakup(e.toString()));
     } finally {
       if (mounted) setState(() => _purchasing = false);
     }
@@ -75,11 +76,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
           _restartApp();
         } else {
           setState(
-              () => _errorMessage = 'Nenalezeno žádné aktivní předplatné.');
+              () => _errorMessage = AppLocalizations.of(context).paywallZadnePredplatne);
         }
       }
     } catch (e) {
-      if (mounted) setState(() => _errorMessage = 'Chyba obnovení: $e');
+      if (mounted) setState(() => _errorMessage = AppLocalizations.of(context).paywallChybaObnoveni(e.toString()));
     } finally {
       if (mounted) setState(() => _purchasing = false);
     }
@@ -111,8 +112,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
       await launchUrl(uri);
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Nepodařilo se otevřít e-mailového klienta.')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context).predChybaEmailKlient)),
       );
     }
   }
@@ -125,6 +126,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final jeTrialAktivni = (widget.zbyvajiciDniTrialu ?? 0) > 0;
 
     return Scaffold(
@@ -140,10 +142,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     TokSpace.xl, TokSpace.lg, TokSpace.xl, 4),
               ),
               TorkisPageTitle(
-                title: 'Vyberte plán',
+                title: l10n.paywallTitle,
                 subtitle: jeTrialAktivni
-                    ? 'Vaše zkušební období brzy končí. Vyberte plán pro pokračování.'
-                    : 'Vaše zkušební období skončilo. Vyberte plán odpovídající velikosti servisu.',
+                    ? l10n.paywallSubtitleTrialEnding
+                    : l10n.paywallSubtitleTrialExpired,
               ),
               const SizedBox(height: TokSpace.sm),
               Padding(
@@ -156,10 +158,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ? TokColors.warning
                       : TokColors.accent,
                   title: jeTrialAktivni
-                      ? 'Zbývá ${widget.zbyvajiciDniTrialu} ${_dayWord(widget.zbyvajiciDniTrialu!)} zkušebního období'
-                      : 'Zkušební období vypršelo',
-                  subtitle:
-                      'Vaše data jsou v bezpečí. Po výběru plánu vše obnovíme.',
+                      ? l10n.paywallTrialZbyva(widget.zbyvajiciDniTrialu!, _dayWord(widget.zbyvajiciDniTrialu!))
+                      : l10n.nastTrialVyprselo,
+                  subtitle: l10n.paywallBezpeci,
                 ),
               ),
               const SizedBox(height: TokSpace.lg),
@@ -167,9 +168,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 child: TorkisSegmented<_Period>(
                   selected: _period,
                   onChanged: (p) => setState(() => _period = p),
-                  options: const [
-                    (value: _Period.monthly, label: 'Měsíčně', badge: null),
-                    (value: _Period.yearly, label: 'Ročně', badge: '−19 %'),
+                  options: [
+                    (value: _Period.monthly, label: l10n.predMesicne, badge: null),
+                    (value: _Period.yearly, label: l10n.predRocne, badge: '−19 %'),
                   ],
                 ),
               ),
@@ -186,14 +187,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     children: [
                       PaywallPlanCard(
                         name: 'Basic',
-                        description: 'Pro malé autoservisy a OSVČ.',
-                        features: const [
-                          '50 záznamů/měsíc',
-                          '3 uživatelé max.',
-                          'Fotodokumentace',
-                          'Evidence zákazníků a vozidel',
-                          'Historie záznamů',
-                          'Správa týmu',
+                        description: l10n.predBasicDesc,
+                        features: [
+                          l10n.predFeat50Zaznamu,
+                          l10n.predFeat3Uziv,
+                          l10n.predFeatFotodok,
+                          l10n.predFeatEvidZak,
+                          l10n.predFeatHistorie,
+                          l10n.predFeatSpravaTymu,
                         ],
                         package: _packageFor('basic'),
                         periodMonthly: _period == _Period.monthly,
@@ -203,16 +204,15 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       PaywallPlanCard(
                         name: 'Standard',
-                        description:
-                            'Pro střední servisy do 150 zakázek měsíčně.',
+                        description: l10n.predStandardDesc,
                         featured: true,
-                        features: const [
-                          '150 záznamů/měsíc',
-                          '10 uživatelů max.',
-                          'Vše z Basic',
-                          'Reporty a statistiky',
-                          'Chat se zákazníkem',
-                          'Webový portál pro správu vozidel a zákazníků',
+                        features: [
+                          l10n.predFeat150Zaznamu,
+                          l10n.predFeat10Uziv,
+                          l10n.predFeatVseBasic,
+                          l10n.predFeatReporty,
+                          l10n.predFeatChat,
+                          l10n.predFeatWebPortal,
                         ],
                         package: _packageFor('standard'),
                         periodMonthly: _period == _Period.monthly,
@@ -221,15 +221,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       PaywallPlanCard(
                         name: 'Pro',
-                        description:
-                            'Pro velké servisy a sítě bez limitu záznamů.',
-                        features: const [
-                          'Neomezené záznamy',
-                          'Neomezený počet uživatelů',
-                          'Vše ze Standard',
-                          'Prioritní podpora',
-                          'Pokročilé statistiky',
-                          'Vícenásobná pracoviště',
+                        description: l10n.predProDesc,
+                        features: [
+                          l10n.predFeatNeomezZaznamu,
+                          l10n.predFeatNeomezUziv,
+                          l10n.predFeatVseStandard,
+                          l10n.predFeatPrioritniPodpora,
+                          l10n.predFeatPokrocileStatistiky,
+                          l10n.predFeatVicenasobinaVzd,
                         ],
                         package: _packageFor('pro'),
                         periodMonthly: _period == _Period.monthly,
@@ -238,12 +237,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ),
                       PaywallPlanCard(
                         name: 'Custom',
-                        description:
-                            'Individuální úprava pro speciální požadavky a integrace.',
-                        features: const [
-                          'Napojení na vaše ERP/DMS',
-                          'API dekodér VIN pro automatické rozpoznání vozidel',
-                          'Prioritní podpora s SLA',
+                        description: l10n.predCustomDesc,
+                        features: [
+                          l10n.predFeatErp,
+                          l10n.predFeatNeomezVin,
+                          l10n.predFeatPrioritniSla,
                         ],
                         package: null,
                         periodMonthly: _period == _Period.monthly,
@@ -277,7 +275,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 child: TextButton(
                   onPressed: _purchasing ? null : _restore,
                   child: Text(
-                    'Obnovit nákupy',
+                    l10n.paywallObnovitNakupy,
                     style: TextStyle(
                       color: tok.textSecondary,
                       fontSize: 13,
@@ -289,7 +287,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 child: TextButton(
                   onPressed: () => FirebaseAuth.instance.signOut(),
                   child: Text(
-                    'Odhlásit se',
+                    l10n.mainOdhlasitSe,
                     style: TextStyle(
                       color: tok.textMuted,
                       fontSize: 12,
@@ -300,7 +298,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               const SizedBox(height: TokSpace.sm),
               Center(
                 child: Text(
-                  'Bez závazku · Zrušení kdykoli · Ceny bez DPH',
+                  l10n.predFootnote,
                   style: TextStyle(
                     fontSize: 11,
                     color: tok.textMuted,
@@ -315,9 +313,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   String _dayWord(int n) {
-    if (n == 1) return 'den';
-    if (n >= 2 && n <= 4) return 'dny';
-    return 'dní';
+    final l10n = AppLocalizations.of(context);
+    if (n == 1) return l10n.nastDayJeden;
+    if (n >= 2 && n <= 4) return l10n.nastDayNeco;
+    return l10n.nastDayMnogo;
   }
 }
 
@@ -356,12 +355,13 @@ class PaywallPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     final bg = featured ? TokColors.ink : tok.surface;
     final fg = featured ? Colors.white : tok.textPrimary;
     final subFg = featured ? TokColors.steelSoft : tok.textSecondary;
     final accentLabel = featured ? TokColors.accent : tok.textSecondary;
 
-    final periodLabel = periodMonthly ? 'měsíčně' : 'ročně';
+    final periodLabel = periodMonthly ? l10n.predPeriodMesic : l10n.predPeriodRoc;
 
     return Stack(
       children: [
@@ -388,7 +388,7 @@ class PaywallPlanCard extends StatelessWidget {
               const SizedBox(height: 8),
               if (isCustom)
                 Text(
-                  'Cena na míru',
+                  l10n.predCenaNaMiru,
                   style: TextStyle(
                     fontFamily: 'IBMPlexMono',
                     fontSize: 24,
@@ -449,7 +449,7 @@ class PaywallPlanCard extends StatelessWidget {
             top: 14,
             right: 14,
             child: _Pill(
-              text: 'DOPORUČUJEME',
+              text: l10n.predDoporucujeme,
               bg: TokColors.accent,
               fg: Colors.white,
             ),
@@ -459,7 +459,7 @@ class PaywallPlanCard extends StatelessWidget {
             top: 14,
             right: 14,
             child: _Pill(
-              text: currentPlanLabel ?? 'AKTUÁLNÍ PLÁN',
+              text: currentPlanLabel ?? l10n.predAktualniPlanPill,
               bg: TokColors.success,
               fg: Colors.white,
             ),
@@ -469,6 +469,7 @@ class PaywallPlanCard extends StatelessWidget {
   }
 
   Widget _buildCta(BuildContext context, TorkisTokens tok, Color fg) {
+    final l10n = AppLocalizations.of(context);
     if (isCurrentPlan) {
       return ElevatedButton(
         onPressed: null,
@@ -483,8 +484,8 @@ class PaywallPlanCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(TokRadius.md),
           ),
         ),
-        child: const Text('Aktuálně aktivní',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        child: Text(l10n.predAktualneAktivni,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
       );
     }
 
@@ -506,9 +507,8 @@ class PaywallPlanCard extends StatelessWidget {
           children: [
             const Icon(Icons.mail_outline_rounded, size: 16),
             const SizedBox(width: 6),
-            const Text('Mám zájem',
-                style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+            Text(l10n.predMamZajem,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
           ],
         ),
       );
@@ -538,7 +538,7 @@ class PaywallPlanCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Vybrat $name',
+                Text(l10n.predVybrat(name),
                     style: const TextStyle(
                         fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(width: 6),
@@ -583,6 +583,7 @@ class PaywallTrustStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tok = context.tok;
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(
           horizontal: TokSpace.md, vertical: TokSpace.md),
@@ -592,20 +593,20 @@ class PaywallTrustStrip extends StatelessWidget {
         borderRadius: BorderRadius.circular(TokRadius.xl),
       ),
       child: Row(
-        children: const [
+        children: [
           Expanded(
             child: _TrustItem(
               icon: Icons.cloud_done_outlined,
-              title: '99,9 % dostupnost',
-              subtitle: 'Garantovaná uptime SLA',
+              title: l10n.paywallTrust1Title,
+              subtitle: l10n.paywallTrust1Sub,
             ),
           ),
-          _TrustDivider(),
+          const _TrustDivider(),
           Expanded(
             child: _TrustItem(
               icon: Icons.download_done_rounded,
-              title: 'Export dat zdarma',
-              subtitle: 'Vaše data jsou vždy vaše',
+              title: l10n.paywallTrust2Title,
+              subtitle: l10n.paywallTrust2Sub,
             ),
           ),
         ],

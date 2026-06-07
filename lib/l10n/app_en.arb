@@ -538,6 +538,35 @@
   "predFeatNeomezTrzni": "Unlimited vehicle market values",
   "predFeatPrioritniSla": "Priority support with SLA",
 
+  "paywallTitle": "Choose a plan",
+  "paywallSubtitleTrialEnding": "Your trial is ending soon. Choose a plan to continue.",
+  "paywallSubtitleTrialExpired": "Your trial has ended. Choose a plan that suits your garage.",
+  "paywallTrialZbyva": "{n} {slovo} of trial remaining",
+  "@paywallTrialZbyva": {
+    "placeholders": {
+      "n": { "type": "int" },
+      "slovo": { "type": "String" }
+    }
+  },
+  "paywallBezpeci": "Your data is safe. We'll restore everything once you choose a plan.",
+  "paywallZadnePredplatne": "No active subscription found.",
+  "paywallChybaObnoveni": "Restore error: {chyba}",
+  "@paywallChybaObnoveni": { "placeholders": { "chyba": { "type": "String" } } },
+  "paywallObnovitNakupy": "Restore purchases",
+  "predPeriodMesic": "monthly",
+  "predPeriodRoc": "yearly",
+  "predCenaNaMiru": "Custom pricing",
+  "predDoporucujeme": "RECOMMENDED",
+  "predAktualniPlanPill": "CURRENT PLAN",
+  "predAktualneAktivni": "Currently active",
+  "predMamZajem": "I'm interested",
+  "predVybrat": "Choose {name}",
+  "@predVybrat": { "placeholders": { "name": { "type": "String" } } },
+  "paywallTrust1Title": "99.9% uptime",
+  "paywallTrust1Sub": "Guaranteed uptime SLA",
+  "paywallTrust2Title": "Free data export",
+  "paywallTrust2Sub": "Your data is always yours",
+
   "onbAresChybaIco": "Please enter a valid 8-digit company ID.",
   "onbAresNacteno": "Company data loaded from registry.",
   "onbAresNenalezeno": "The entered ID was not found in the registry.",

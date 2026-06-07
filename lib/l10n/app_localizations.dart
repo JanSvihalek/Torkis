@@ -2996,6 +2996,126 @@ abstract class AppLocalizations {
   /// **'Prioritní podpora s SLA'**
   String get predFeatPrioritniSla;
 
+  /// No description provided for @paywallTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyberte plán'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallSubtitleTrialEnding.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vaše zkušební období brzy končí. Vyberte plán pro pokračování.'**
+  String get paywallSubtitleTrialEnding;
+
+  /// No description provided for @paywallSubtitleTrialExpired.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vaše zkušební období skončilo. Vyberte plán odpovídající velikosti servisu.'**
+  String get paywallSubtitleTrialExpired;
+
+  /// No description provided for @paywallTrialZbyva.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zbývá {n} {slovo} zkušebního období'**
+  String paywallTrialZbyva(int n, String slovo);
+
+  /// No description provided for @paywallBezpeci.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vaše data jsou v bezpečí. Po výběru plánu vše obnovíme.'**
+  String get paywallBezpeci;
+
+  /// No description provided for @paywallZadnePredplatne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nenalezeno žádné aktivní předplatné.'**
+  String get paywallZadnePredplatne;
+
+  /// No description provided for @paywallChybaObnoveni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Chyba obnovení: {chyba}'**
+  String paywallChybaObnoveni(String chyba);
+
+  /// No description provided for @paywallObnovitNakupy.
+  ///
+  /// In cs, this message translates to:
+  /// **'Obnovit nákupy'**
+  String get paywallObnovitNakupy;
+
+  /// No description provided for @predPeriodMesic.
+  ///
+  /// In cs, this message translates to:
+  /// **'měsíčně'**
+  String get predPeriodMesic;
+
+  /// No description provided for @predPeriodRoc.
+  ///
+  /// In cs, this message translates to:
+  /// **'ročně'**
+  String get predPeriodRoc;
+
+  /// No description provided for @predCenaNaMiru.
+  ///
+  /// In cs, this message translates to:
+  /// **'Cena na míru'**
+  String get predCenaNaMiru;
+
+  /// No description provided for @predDoporucujeme.
+  ///
+  /// In cs, this message translates to:
+  /// **'DOPORUČUJEME'**
+  String get predDoporucujeme;
+
+  /// No description provided for @predAktualniPlanPill.
+  ///
+  /// In cs, this message translates to:
+  /// **'AKTUÁLNÍ PLÁN'**
+  String get predAktualniPlanPill;
+
+  /// No description provided for @predAktualneAktivni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Aktuálně aktivní'**
+  String get predAktualneAktivni;
+
+  /// No description provided for @predMamZajem.
+  ///
+  /// In cs, this message translates to:
+  /// **'Mám zájem'**
+  String get predMamZajem;
+
+  /// No description provided for @predVybrat.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vybrat {name}'**
+  String predVybrat(String name);
+
+  /// No description provided for @paywallTrust1Title.
+  ///
+  /// In cs, this message translates to:
+  /// **'99,9 % dostupnost'**
+  String get paywallTrust1Title;
+
+  /// No description provided for @paywallTrust1Sub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Garantovaná uptime SLA'**
+  String get paywallTrust1Sub;
+
+  /// No description provided for @paywallTrust2Title.
+  ///
+  /// In cs, this message translates to:
+  /// **'Export dat zdarma'**
+  String get paywallTrust2Title;
+
+  /// No description provided for @paywallTrust2Sub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vaše data jsou vždy vaše'**
+  String get paywallTrust2Sub;
+
   /// No description provided for @onbAresChybaIco.
   ///
   /// In cs, this message translates to:

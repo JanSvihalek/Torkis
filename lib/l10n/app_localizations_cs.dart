@@ -1583,6 +1583,75 @@ class AppLocalizationsCs extends AppLocalizations {
   String get predFeatPrioritniSla => 'Prioritní podpora s SLA';
 
   @override
+  String get paywallTitle => 'Vyberte plán';
+
+  @override
+  String get paywallSubtitleTrialEnding =>
+      'Vaše zkušební období brzy končí. Vyberte plán pro pokračování.';
+
+  @override
+  String get paywallSubtitleTrialExpired =>
+      'Vaše zkušební období skončilo. Vyberte plán odpovídající velikosti servisu.';
+
+  @override
+  String paywallTrialZbyva(int n, String slovo) {
+    return 'Zbývá $n $slovo zkušebního období';
+  }
+
+  @override
+  String get paywallBezpeci =>
+      'Vaše data jsou v bezpečí. Po výběru plánu vše obnovíme.';
+
+  @override
+  String get paywallZadnePredplatne => 'Nenalezeno žádné aktivní předplatné.';
+
+  @override
+  String paywallChybaObnoveni(String chyba) {
+    return 'Chyba obnovení: $chyba';
+  }
+
+  @override
+  String get paywallObnovitNakupy => 'Obnovit nákupy';
+
+  @override
+  String get predPeriodMesic => 'měsíčně';
+
+  @override
+  String get predPeriodRoc => 'ročně';
+
+  @override
+  String get predCenaNaMiru => 'Cena na míru';
+
+  @override
+  String get predDoporucujeme => 'DOPORUČUJEME';
+
+  @override
+  String get predAktualniPlanPill => 'AKTUÁLNÍ PLÁN';
+
+  @override
+  String get predAktualneAktivni => 'Aktuálně aktivní';
+
+  @override
+  String get predMamZajem => 'Mám zájem';
+
+  @override
+  String predVybrat(String name) {
+    return 'Vybrat $name';
+  }
+
+  @override
+  String get paywallTrust1Title => '99,9 % dostupnost';
+
+  @override
+  String get paywallTrust1Sub => 'Garantovaná uptime SLA';
+
+  @override
+  String get paywallTrust2Title => 'Export dat zdarma';
+
+  @override
+  String get paywallTrust2Sub => 'Vaše data jsou vždy vaše';
+
+  @override
   String get onbAresChybaIco => 'Zadejte platné 8místné IČO.';
 
   @override

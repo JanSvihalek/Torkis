@@ -538,6 +538,35 @@
   "predFeatNeomezTrzni": "Unbegrenzte Fahrzeugmarktwerte",
   "predFeatPrioritniSla": "Prioritätssupport mit SLA",
 
+  "paywallTitle": "Plan auswählen",
+  "paywallSubtitleTrialEnding": "Ihre Testphase endet bald. Wählen Sie einen Plan, um fortzufahren.",
+  "paywallSubtitleTrialExpired": "Ihre Testphase ist abgelaufen. Wählen Sie einen Plan, der zu Ihrer Werkstatt passt.",
+  "paywallTrialZbyva": "Noch {n} {slovo} der Testphase",
+  "@paywallTrialZbyva": {
+    "placeholders": {
+      "n": { "type": "int" },
+      "slovo": { "type": "String" }
+    }
+  },
+  "paywallBezpeci": "Ihre Daten sind sicher. Wir stellen alles wieder her, sobald Sie einen Plan gewählt haben.",
+  "paywallZadnePredplatne": "Kein aktives Abonnement gefunden.",
+  "paywallChybaObnoveni": "Fehler beim Wiederherstellen: {chyba}",
+  "@paywallChybaObnoveni": { "placeholders": { "chyba": { "type": "String" } } },
+  "paywallObnovitNakupy": "Käufe wiederherstellen",
+  "predPeriodMesic": "monatlich",
+  "predPeriodRoc": "jährlich",
+  "predCenaNaMiru": "Individueller Preis",
+  "predDoporucujeme": "EMPFOHLEN",
+  "predAktualniPlanPill": "AKTUELLER PLAN",
+  "predAktualneAktivni": "Aktuell aktiv",
+  "predMamZajem": "Ich bin interessiert",
+  "predVybrat": "{name} wählen",
+  "@predVybrat": { "placeholders": { "name": { "type": "String" } } },
+  "paywallTrust1Title": "99,9 % Verfügbarkeit",
+  "paywallTrust1Sub": "Garantierte Verfügbarkeits-SLA",
+  "paywallTrust2Title": "Kostenloser Datenexport",
+  "paywallTrust2Sub": "Ihre Daten gehören immer Ihnen",
+
   "onbAresChybaIco": "Bitte geben Sie eine gültige 8-stellige Unternehmens-ID ein.",
   "onbAresNacteno": "Unternehmensdaten aus dem Register geladen.",
   "onbAresNenalezeno": "Die eingegebene ID wurde im Register nicht gefunden.",

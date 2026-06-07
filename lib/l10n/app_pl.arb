@@ -538,6 +538,35 @@
   "predFeatNeomezTrzni": "Nieograniczone wyceny rynkowe pojazdów",
   "predFeatPrioritniSla": "Wsparcie priorytetowe z SLA",
 
+  "paywallTitle": "Wybierz plan",
+  "paywallSubtitleTrialEnding": "Twój okres próbny wkrótce się kończy. Wybierz plan, aby kontynuować.",
+  "paywallSubtitleTrialExpired": "Twój okres próbny dobiegł końca. Wybierz plan odpowiedni dla Twojego serwisu.",
+  "paywallTrialZbyva": "Pozostało {n} {slovo} okresu próbnego",
+  "@paywallTrialZbyva": {
+    "placeholders": {
+      "n": { "type": "int" },
+      "slovo": { "type": "String" }
+    }
+  },
+  "paywallBezpeci": "Twoje dane są bezpieczne. Przywrócimy wszystko po wyborze planu.",
+  "paywallZadnePredplatne": "Nie znaleziono aktywnej subskrypcji.",
+  "paywallChybaObnoveni": "Błąd przywracania: {chyba}",
+  "@paywallChybaObnoveni": { "placeholders": { "chyba": { "type": "String" } } },
+  "paywallObnovitNakupy": "Przywróć zakupy",
+  "predPeriodMesic": "miesięcznie",
+  "predPeriodRoc": "rocznie",
+  "predCenaNaMiru": "Cena na miarę",
+  "predDoporucujeme": "POLECAMY",
+  "predAktualniPlanPill": "OBECNY PLAN",
+  "predAktualneAktivni": "Obecnie aktywny",
+  "predMamZajem": "Jestem zainteresowany",
+  "predVybrat": "Wybierz {name}",
+  "@predVybrat": { "placeholders": { "name": { "type": "String" } } },
+  "paywallTrust1Title": "Dostępność 99,9%",
+  "paywallTrust1Sub": "Gwarantowany SLA dostępności",
+  "paywallTrust2Title": "Bezpłatny eksport danych",
+  "paywallTrust2Sub": "Twoje dane zawsze należą do Ciebie",
+
   "onbAresChybaIco": "Wprowadź prawidłowy 8-cyfrowy numer ID firmy.",
   "onbAresNacteno": "Dane firmy zostały załadowane z rejestru.",
   "onbAresNenalezeno": "Podany numer nie został znaleziony w rejestrze.",
