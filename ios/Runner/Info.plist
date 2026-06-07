@@ -34,6 +34,8 @@
 	<string>Aplikace používá Face ID pro rychlé a bezpečné přihlášení.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Aplikace ukládá fotky z příjmu vozidla do vaší galerie, pokud tuto možnost zapnete v nastavení.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aplikace přistupuje k fotkám, aby mohla fotografie z příjmu vozidla uložit do vaší galerie, pokud tuto možnost zapnete v nastavení.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
