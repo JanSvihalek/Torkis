@@ -2235,6 +2235,31 @@ class AppLocalizationsSk extends AppLocalizations {
   String get nastZrusit => 'Zrušiť';
 
   @override
+  String get nastExportTitle => 'Export dát';
+
+  @override
+  String get nastExportPopis =>
+      'Stiahnite záznamy vo formáte CSV (Excel) alebo JSON.';
+
+  @override
+  String get nastExportZakaznici => 'Zákazníci';
+
+  @override
+  String get nastExportVozidla => 'Vozidlá';
+
+  @override
+  String get nastExportZakazky => 'Príjmy / Zákazky';
+
+  @override
+  String get nastExportFormatTitle => 'Formát exportu';
+
+  @override
+  String get nastExportFormatPopis => 'Vyberte formát súboru:';
+
+  @override
+  String get nastExportCsv => 'CSV (Excel)';
+
+  @override
   String get nastUlozitBtn => 'Uložiť';
 
   @override

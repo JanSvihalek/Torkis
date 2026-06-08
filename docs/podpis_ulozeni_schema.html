@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TORKIS — Jak se ukládá podpis</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });</script>
+<style>
+  :root { --ink:#0B1A2E; --blue:#2563EB; --line:#E5E7EB; --muted:#6B7280; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--ink); max-width: 960px; margin: 0 auto; padding: 32px 28px 64px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--line); }
+  .sub { color: var(--muted); margin: 0 0 24px; }
+  .diagram { border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin: 14px 0; background: #fff; }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin: 12px 0; }
+  .legend div { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+  .legend b { color: var(--blue); }
+  .note { background: #F0F6FF; border-left: 4px solid var(--blue); padding: 12px 16px; border-radius: 8px; margin: 14px 0; font-size: 14px; }
+  .key { background: #FFF7ED; border-left: 4px solid #F59E0B; padding: 12px 16px; border-radius: 8px; margin: 14px 0; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; vertical-align: top; }
+  th { background: #F8FAFC; }
+  code { background: #F3F4F6; padding: 1px 6px; border-radius: 5px; font-size: 13px; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 12px; }
+  @media print {
+    body { padding: 0 8px; }
+    h2 { page-break-after: avoid; }
+    .diagram { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>TORKIS — Jak se ukládá podpis</h1>
+<p class="sub">Dynamický biometrický podpis s tamper-evident pečetí (AES-ekvivalent): plátno · Firebase Storage · Cloud Firestore</p>
+
+<h2>Co všechno se zaznamenává</h2>
+<div class="legend">
+  <div><b>Obrázek podpisu</b> — PNG vykreslené z tahů; slouží do PDF protokolu a pro náhled.</div>
+  <div><b>Biometrie tahu</b> — každý bod: souřadnice, čas, tlak a poloměr dotyku (dynamika podpisu).</div>
+  <div><b>Metadata prostředí</b> — model zařízení, OS a verze, verze aplikace, jazyk, čas (UTC).</div>
+  <div><b>Pečeť (SHA-256)</b> — hash obsahu zakázky + textu souhlasu; váže podpis na přesný dokument.</div>
+</div>
+
+<h2>1. Tok dat při dokončení příjmu</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart TD
+    P([Zákazník podepíše<br/>na plátně]) --> CAP[BiometricSignaturePad<br/>zaznamená každý bod tahu]
+    CAP --> BS[BiometricSignature<br/>tahy + metadata zařízení/času]
+    BS --> PNG[/podpis_*.png/]
+    BS --> JSON[/podpis_biometrie_*.json/]
+    BS --> SEAL[SignatureSeal<br/>SHA-256 hash + metadata]
+    DOC[Obsah zakázky<br/>vozidlo · stav · zákazník · úkony] --> SEAL
+
+    PNG --> ST[(Firebase Storage)]
+    JSON --> ST
+    SEAL --> FS[(Cloud Firestore<br/>dokument zakázky)]
+
+    style ST fill:#F0FDFA,stroke:#0D9488
+    style FS fill:#FFFBEB,stroke:#D97706
+    style SEAL fill:#FEF2F2,stroke:#DC2626
+</pre>
+</div>
+<div class="note">Vznikají <b>tři artefakty na dvou místech</b>: PNG a JSON jako soubory ve Storage, pečeť přímo v dokumentu zakázky ve Firestore. Pečeť navíc vstřebá obsah zakázky, který zákazník stvrdil.</div>
+
+<h2>2. Kde přesně to leží</h2>
+<p><b>Firebase Storage</b> — binární soubory v cestě:</p>
+<table>
+  <tr><th>Soubor</th><th>Cesta</th></tr>
+  <tr><td>Obrázek podpisu</td><td><code>servisy/{servisId}/zakazky/{zakazkaId}/podpis_{timestamp}.png</code></td></tr>
+  <tr><td>Biometrie tahu</td><td><code>servisy/{servisId}/zakazky/{zakazkaId}/podpis_biometrie_{timestamp}.json</code></td></tr>
+</table>
+<p><b>Cloud Firestore</b> — dokument <code>zakazky/{servisId}_{zakazkaId}</code>, tři nová pole:</p>
+<table>
+  <tr><th>Pole</th><th>Obsah</th></tr>
+  <tr><td><code>podpis_url</code></td><td>Odkaz na PNG ve Storage</td></tr>
+  <tr><td><code>podpis_data_url</code></td><td>Odkaz na JSON biometrii ve Storage</td></tr>
+  <tr><td><code>podpis_seal</code></td><td>Vnořená mapa s hashi a metadaty (viz část 3)</td></tr>
+</table>
+
+<h2>3. Obsah jednotlivých částí</h2>
+<p><b>Pečeť</b> — <code>podpis_seal</code> ve Firestore (rychlý audit bez stahování souborů):</p>
+<table>
+  <tr><th>Klíč</th><th>Význam</th></tr>
+  <tr><td><code>dokument_hash</code></td><td>SHA-256 obsahu, který zákazník stvrdil</td></tr>
+  <tr><td><code>biometrie_hash</code></td><td>SHA-256 biometrických dat tahu</td></tr>
+  <tr><td><code>souhlas_text</code></td><td>Přesné znění souhlasu zobrazené při podpisu</td></tr>
+  <tr><td><code>podepsano_at</code></td><td>Čas podpisu (epoch ms, UTC)</td></tr>
+  <tr><td><code>algo</code></td><td>Použitý algoritmus („SHA-256")</td></tr>
+  <tr><td><code>zarizeni</code> · <code>platforma</code> · <code>app_verze</code></td><td>Prostředí podpisu</td></tr>
+  <tr><td><code>pocet_tahu</code> · <code>pocet_bodu</code> · <code>trvani_ms</code> · <code>ma_tlak</code></td><td>Souhrnné metriky podpisu</td></tr>
+</table>
+
+<p><b>Biometrie</b> — <code>podpis_biometrie_*.json</code> ve Storage (důkazní materiál):</p>
+<table>
+  <tr><th>Klíč</th><th>Význam</th></tr>
+  <tr><td><code>tahy[].body[]</code></td><td>Body tahu — <code>x</code>, <code>y</code> (px), <code>t</code> (ms od začátku), <code>p</code> (tlak 0–1, jen stylus), <code>r</code> (poloměr dotyku)</td></tr>
+  <tr><td><code>canvas {w, h}</code></td><td>Rozměr plátna — pro reprodukovatelnost souřadnic</td></tr>
+  <tr><td><code>metriky</code></td><td>Počet tahů/bodů, trvání, příznak reálného tlaku</td></tr>
+  <tr><td><code>zarizeni</code> · <code>platforma</code> · <code>app_verze</code> · <code>jazyk</code></td><td>Prostředí podpisu</td></tr>
+  <tr><td><code>zachyceno_at</code></td><td>Čas dokončení (epoch ms, UTC)</td></tr>
+</table>
+
+<h2>4. Jak pečeť chrání před změnou</h2>
+<div class="diagram">
+<pre class="mermaid">
+flowchart LR
+    A[Obsah zakázky<br/>+ text souhlasu<br/>+ biometrie_hash + čas] --> B[Kanonický JSON<br/>rekurzivně seřazené klíče]
+    B --> C[SHA-256]
+    C --> D[(dokument_hash<br/>uložen ve Firestore)]
+    D -. při sporu .-> E{Přepočítat z aktuální<br/>zakázky a porovnat}
+    E -- shoda --> OK[Dokument nezměněn]
+    E -- neshoda --> KO[Změna prokázána]
+    style OK fill:#F0FDF4,stroke:#16A34A
+    style KO fill:#FEF2F2,stroke:#DC2626
+</pre>
+</div>
+<div class="key"><b>Kanonický JSON:</b> klíče se rekurzivně řadí, takže stejný obsah dá vždy stejný hash bez ohledu na pořadí vložení. Bez toho by drobná změna serializace falešně „rozbila" pečeť.</div>
+<div class="note"><b>Ověření při sporu:</b> obsah zakázky (km, požadavky, poškození…) se znovu složí stejným způsobem, spočítá se SHA-256 a porovná s uloženým <code>dokument_hash</code>. Pokud se cokoli změnilo, hashe nesednou → změna je prokazatelná. Biometrii lze nezávisle ověřit proti <code>biometrie_hash</code>.</div>
+
+<h2>5. Plnění kritérií AES (eIDAS)</h2>
+<table>
+  <tr><th>Kritérium</th><th>Jak je splněno</th></tr>
+  <tr><td><b>Jednoznačná vazba na podepisujícího</b></td><td>Dynamika tahu — rytmus, rychlost, časování, tlak (u stylusu)</td></tr>
+  <tr><td><b>Schopnost identifikace</b></td><td>Biometrický profil + metadata zařízení a času</td></tr>
+  <tr><td><b>Detekce změny dokumentu</b></td><td>SHA-256 <code>dokument_hash</code> vázaný na stvrzený obsah</td></tr>
+  <tr><td><b>Výhradní kontrola podepisujícího</b></td><td>Splněno přibližně (data tahu pod fyzickou kontrolou); plné kritérium by vyžadovalo PKI pečeť servisu</td></tr>
+</table>
+<div class="key"><b>Pozn. k tlaku:</b> kapacitní displeje telefonů reálný tlak neměří — konstantu se filtruje a <code>ma_tlak</code> je pak <code>false</code>. Skutečnou hodnotu přinese aktivní stylus (Apple Pencil, S-Pen).</div>
+
+<h2>Shrnutí — kde je co</h2>
+<div class="legend">
+  <div><b>Obrázek podpisu</b> — Storage <code>podpis_*.png</code>, odkaz v poli <code>podpis_url</code>.</div>
+  <div><b>Biometrie tahu</b> — Storage <code>podpis_biometrie_*.json</code>, odkaz v <code>podpis_data_url</code>.</div>
+  <div><b>Pečeť a metadata</b> — Firestore pole <code>podpis_seal</code> v dokumentu zakázky.</div>
+  <div><b>Integrita</b> — <code>dokument_hash</code> + <code>biometrie_hash</code>; přepočítatelné a ověřitelné kdykoli později.</div>
+</div>
+
+<footer>TORKIS · interní dokumentace · biometric_signature.dart + biometric_signature_pad.dart + prijem_vozidla.dart · vygenerováno pro tisk do PDF (Tisk → Uložit jako PDF)</footer>
+
+</body>
+</html>

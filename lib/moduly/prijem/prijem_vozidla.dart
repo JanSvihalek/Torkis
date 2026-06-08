@@ -8,13 +8,16 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:signature/signature.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image/image.dart' as img;
 import 'package:intl/intl.dart';
 import '../../core/constants.dart';
+import '../../core/biometric_signature.dart';
+import '../../core/biometric_signature_pad.dart';
 import '../../core/design_tokens.dart';
 import '../../core/torkis_ui.dart';
 import '../../l10n/app_localizations.dart';
@@ -186,10 +189,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
   String _vybranaZnackaString = '';
   int _autocompleteResetKey = 0;
 
-  final SignatureController _signatureController = SignatureController(
+  final BiometricSignatureController _signatureController =
+      BiometricSignatureController(
     penStrokeWidth: 3,
     penColor: Colors.black,
-    exportBackgroundColor: Colors.white,
   );
 
   @override
@@ -1458,6 +1461,41 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
+  /// Sestaví biometrická data podpisu včetně metadat o zařízení, verzi
+  /// aplikace a jazyku. Selhání zjištění metadat nesmí shodit uložení.
+  Future<BiometricSignature> _zachytBiometriiPodpisu() async {
+    String deviceModel = 'neznámé';
+    String platform = kIsWeb ? 'web' : defaultTargetPlatform.name;
+    if (!kIsWeb) {
+      try {
+        final info = DeviceInfoPlugin();
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          final a = await info.androidInfo;
+          deviceModel = '${a.manufacturer} ${a.model}';
+          platform = 'Android ${a.version.release} (SDK ${a.version.sdkInt})';
+        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+          final i = await info.iosInfo;
+          deviceModel = i.utsname.machine;
+          platform = '${i.systemName} ${i.systemVersion}';
+        }
+      } catch (_) {/* metadata jsou „best effort" */}
+    }
+    String appVersion = '';
+    try {
+      final pkg = await PackageInfo.fromPlatform();
+      appVersion = '${pkg.version}+${pkg.buildNumber}';
+    } catch (_) {/* ignore */}
+    final locale =
+        WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag();
+
+    return _signatureController.buildBiometricSignature(
+      deviceModel: deviceModel,
+      platform: platform,
+      appVersion: appVersion,
+      locale: locale,
+    );
+  }
+
   String _generatePortalToken(String docId) {
     final rand = DateTime.now().millisecondsSinceEpoch;
     final extra = docId.hashCode.abs();
@@ -1468,6 +1506,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
   Future<void> _uploadToFirebase() async {
     if (_sId == null) throw Exception('Nejste přiřazeni k žádnému servisu!');
     final user = FirebaseAuth.instance.currentUser;
+    // Přesné znění souhlasu, které zákazník při podpisu viděl — vstupuje do
+    // pečeti, proto ho čteme z kontextu před prvním awaitem.
+    final String podpisSouhlasText =
+        AppLocalizations.of(context).prijemPodpisSouhlas;
     final Map<String, List<String>> imageUrlsByCategory = {};
     String zakazkaId = _zakazkaController.text.trim();
 
@@ -1515,14 +1557,28 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
 
     String? podpisUrl;
+    String? podpisDataUrl;
+    BiometricSignature? podpisBiometrie;
     if (_signatureController.isNotEmpty) {
+      final BiometricSignature biometrie = await _zachytBiometriiPodpisu();
+      podpisBiometrie = biometrie;
+      final int tsPodpis = DateTime.now().millisecondsSinceEpoch;
+      // Obrázek podpisu (PNG) — pro PDF a náhled.
       final Uint8List? signatureBytes = await _signatureController.toPngBytes();
       if (signatureBytes != null) {
-        Reference ref = FirebaseStorage.instance.ref().child(
-            'servisy/$_sId/zakazky/$zakazkaId/podpis_${DateTime.now().millisecondsSinceEpoch}.png');
-        await ref.putData(signatureBytes);
+        final Reference ref = FirebaseStorage.instance.ref().child(
+            'servisy/$_sId/zakazky/$zakazkaId/podpis_$tsPodpis.png');
+        await ref.putData(
+            signatureBytes, SettableMetadata(contentType: 'image/png'));
         podpisUrl = await ref.getDownloadURL();
       }
+      // Biometrická data tahu (JSON blob) — důkazní materiál podpisu.
+      final Reference dataRef = FirebaseStorage.instance.ref().child(
+          'servisy/$_sId/zakazky/$zakazkaId/podpis_biometrie_$tsPodpis.json');
+      await dataRef.putData(
+          Uint8List.fromList(utf8.encode(biometrie.encode())),
+          SettableMetadata(contentType: 'application/json'));
+      podpisDataUrl = await dataRef.getDownloadURL();
     }
 
     String zakaznikId = '';
@@ -1636,6 +1692,41 @@ class _MainWizardPageState extends State<MainWizardPage> {
         .where((text) => text.isNotEmpty)
         .toList();
 
+    // Tamper-evident pečeť: SHA-256 hash vázající podpis na přesný obsah
+    // dokumentu, který zákazník stvrdil. Slouží k pozdější detekci změny.
+    Map<String, dynamic>? podpisSeal;
+    if (podpisBiometrie != null) {
+      final dokumentObsah = <String, dynamic>{
+        'cislo_zakazky': zakazkaId,
+        'typ_zaznamu': _typZaznamu,
+        'spz': spz,
+        'vin': vinKod,
+        'znacka': _znackaController.text.trim(),
+        'model': _modelController.text.trim(),
+        'rok_vyroby': _rokVyrobyController.text.trim(),
+        'motorizace': _motorizaceController.text.trim(),
+        'tachometr': _tachometrController.text.trim(),
+        'nadrz': _stavNadrze,
+        'stk_mesic': _stkMesicController.text.trim(),
+        'stk_rok': _stkRokController.text.trim(),
+        'poskozeni': _vybranePoskozeni,
+        'zakaznik': {
+          'jmeno': _jmenoController.text.trim(),
+          'ico': _icoController.text.trim(),
+          'telefon': _plneTelCislo,
+          'email': _emailZController.text.trim(),
+          'adresa': kombinovanaAdresa,
+        },
+        'pozadavky': pozadovaneUkony,
+        'poznamky': _poskozeniController.text.trim(),
+      };
+      podpisSeal = SignatureSeal.create(
+        biometrics: podpisBiometrie,
+        documentContent: dokumentObsah,
+        consentText: podpisSouhlasText,
+      ).toJson();
+    }
+
     Map<String, dynamic> zakazkaData = {
       'servis_id': _sId,
       'zakaznik_id': zakaznikId,
@@ -1689,6 +1780,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'poznamky': _poskozeniController.text.trim(),
       'fotografie_urls': imageUrlsByCategory,
       'podpis_url': podpisUrl,
+      'podpis_data_url': podpisDataUrl,
+      if (podpisSeal != null) 'podpis_seal': podpisSeal,
       'provedene_prace': [],
       'cas_prijeti': FieldValue.serverTimestamp(),
       'prijal_uid': user?.uid,

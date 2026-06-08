@@ -1132,13 +1132,13 @@ class _SettingsPageState extends State<SettingsPage> {
               // ---------------------------------------------
               if (_isAdmin) ...[
                 _buildCard(
-                  title: 'Export dat',
+                  title: l10n.nastExportTitle,
                   icon: Icons.download_rounded,
                   color: Colors.teal,
                   isDark: isDark,
                   children: [
                     Text(
-                      'Stáhněte záznamy ve formátu CSV (Excel) nebo JSON.',
+                      l10n.nastExportPopis,
                       style: TextStyle(
                           fontSize: 12,
                           color: isDark ? Colors.grey[400] : Colors.grey[600]),
@@ -1146,21 +1146,21 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 12),
                     _buildExportTile(
                       icon: Icons.people_alt_rounded,
-                      label: 'Zákazníci',
+                      label: l10n.nastExportZakaznici,
                       color: Colors.blue,
                       isDark: isDark,
                       onTap: () => _spustExport(ExportEntity.zakaznici),
                     ),
                     _buildExportTile(
                       icon: Icons.directions_car_rounded,
-                      label: 'Vozidla',
+                      label: l10n.nastExportVozidla,
                       color: Colors.orange,
                       isDark: isDark,
                       onTap: () => _spustExport(ExportEntity.vozidla),
                     ),
                     _buildExportTile(
                       icon: Icons.assignment_rounded,
-                      label: 'Příjmy / Zakázky',
+                      label: l10n.nastExportZakazky,
                       color: Colors.green,
                       isDark: isDark,
                       onTap: () => _spustExport(ExportEntity.zakazky),
@@ -1315,15 +1315,16 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _spustExport(ExportEntity entity) async {
+    final l10n = AppLocalizations.of(context);
     final format = await showDialog<ExportFormat>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Formát exportu'),
-        content: const Text('Vyberte formát souboru:'),
+        title: Text(l10n.nastExportFormatTitle),
+        content: Text(l10n.nastExportFormatPopis),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, ExportFormat.csv),
-            child: const Text('CSV (Excel)'),
+            child: Text(l10n.nastExportCsv),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, ExportFormat.json),
@@ -1331,7 +1332,7 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Zrušit'),
+            child: Text(l10n.nastZrusit),
           ),
         ],
       ),

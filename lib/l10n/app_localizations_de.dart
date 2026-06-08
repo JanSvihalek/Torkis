@@ -2257,6 +2257,31 @@ class AppLocalizationsDe extends AppLocalizations {
   String get nastZrusit => 'Abbrechen';
 
   @override
+  String get nastExportTitle => 'Datenexport';
+
+  @override
+  String get nastExportPopis =>
+      'Datensätze im CSV- (Excel) oder JSON-Format herunterladen.';
+
+  @override
+  String get nastExportZakaznici => 'Kunden';
+
+  @override
+  String get nastExportVozidla => 'Fahrzeuge';
+
+  @override
+  String get nastExportZakazky => 'Annahmen / Aufträge';
+
+  @override
+  String get nastExportFormatTitle => 'Exportformat';
+
+  @override
+  String get nastExportFormatPopis => 'Dateiformat auswählen:';
+
+  @override
+  String get nastExportCsv => 'CSV (Excel)';
+
+  @override
   String get nastUlozitBtn => 'Speichern';
 
   @override

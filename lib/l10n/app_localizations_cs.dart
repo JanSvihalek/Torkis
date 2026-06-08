@@ -2234,6 +2234,31 @@ class AppLocalizationsCs extends AppLocalizations {
   String get nastZrusit => 'Zrušit';
 
   @override
+  String get nastExportTitle => 'Export dat';
+
+  @override
+  String get nastExportPopis =>
+      'Stáhněte záznamy ve formátu CSV (Excel) nebo JSON.';
+
+  @override
+  String get nastExportZakaznici => 'Zákazníci';
+
+  @override
+  String get nastExportVozidla => 'Vozidla';
+
+  @override
+  String get nastExportZakazky => 'Příjmy / Zakázky';
+
+  @override
+  String get nastExportFormatTitle => 'Formát exportu';
+
+  @override
+  String get nastExportFormatPopis => 'Vyberte formát souboru:';
+
+  @override
+  String get nastExportCsv => 'CSV (Excel)';
+
+  @override
   String get nastUlozitBtn => 'Uložit';
 
   @override

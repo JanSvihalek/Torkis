@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:signature/signature.dart';
+import '../../core/biometric_signature_pad.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Krok 6 – Shrnutí a podpis zákazníka.
@@ -43,7 +43,7 @@ class StepPodpis extends StatelessWidget {
   final bool odeslatEmail;
   final ValueChanged<bool?> onOdeslatEmailChanged;
 
-  final SignatureController signatureController;
+  final BiometricSignatureController signatureController;
   final bool podpisPovolen;
 
   const StepPodpis({
@@ -222,7 +222,7 @@ class StepPodpis extends StatelessWidget {
                       color: Colors.white),
                   child: ClipRRect(
                       borderRadius: BorderRadius.circular(13),
-                      child: Signature(
+                      child: BiometricSignaturePad(
                           controller: signatureController,
                           height: 250,
                           backgroundColor: Colors.white)),

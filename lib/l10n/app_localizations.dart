@@ -4208,6 +4208,54 @@ abstract class AppLocalizations {
   /// **'Zrušit'**
   String get nastZrusit;
 
+  /// No description provided for @nastExportTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Export dat'**
+  String get nastExportTitle;
+
+  /// No description provided for @nastExportPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Stáhněte záznamy ve formátu CSV (Excel) nebo JSON.'**
+  String get nastExportPopis;
+
+  /// No description provided for @nastExportZakaznici.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazníci'**
+  String get nastExportZakaznici;
+
+  /// No description provided for @nastExportVozidla.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidla'**
+  String get nastExportVozidla;
+
+  /// No description provided for @nastExportZakazky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Příjmy / Zakázky'**
+  String get nastExportZakazky;
+
+  /// No description provided for @nastExportFormatTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Formát exportu'**
+  String get nastExportFormatTitle;
+
+  /// No description provided for @nastExportFormatPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyberte formát souboru:'**
+  String get nastExportFormatPopis;
+
+  /// No description provided for @nastExportCsv.
+  ///
+  /// In cs, this message translates to:
+  /// **'CSV (Excel)'**
+  String get nastExportCsv;
+
   /// No description provided for @nastUlozitBtn.
   ///
   /// In cs, this message translates to:

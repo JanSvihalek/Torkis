@@ -2243,6 +2243,31 @@ class AppLocalizationsPl extends AppLocalizations {
   String get nastZrusit => 'Anuluj';
 
   @override
+  String get nastExportTitle => 'Eksport danych';
+
+  @override
+  String get nastExportPopis =>
+      'Pobierz rekordy w formacie CSV (Excel) lub JSON.';
+
+  @override
+  String get nastExportZakaznici => 'Klienci';
+
+  @override
+  String get nastExportVozidla => 'Pojazdy';
+
+  @override
+  String get nastExportZakazky => 'Przyjęcia / Zlecenia';
+
+  @override
+  String get nastExportFormatTitle => 'Format eksportu';
+
+  @override
+  String get nastExportFormatPopis => 'Wybierz format pliku:';
+
+  @override
+  String get nastExportCsv => 'CSV (Excel)';
+
+  @override
   String get nastUlozitBtn => 'Zapisz';
 
   @override

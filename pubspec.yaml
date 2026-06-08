@@ -2,7 +2,7 @@ name: torkis
 description: "TORKIS - Digital vehicle evidence"
 publish_to: 'none'
 
-version: 5.4.3
+version: 5.4.4
 
 
 environment:
@@ -24,7 +24,6 @@ dependencies:
   camera: ^0.11.0
   permission_handler: ^11.3.1
   http: ^1.2.2
-  signature: ^5.5.0
   google_mlkit_text_recognition: ^0.15.0
   image: ^4.2.0
   mobile_scanner: ^6.0.10
@@ -45,6 +44,8 @@ dependencies:
   path_provider: ^2.1.5
   share_plus: ^10.1.2
   archive: ^3.6.1
+  device_info_plus: ^12.4.0
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:

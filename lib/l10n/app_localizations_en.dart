@@ -2230,6 +2230,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nastZrusit => 'Cancel';
 
   @override
+  String get nastExportTitle => 'Data export';
+
+  @override
+  String get nastExportPopis =>
+      'Download records in CSV (Excel) or JSON format.';
+
+  @override
+  String get nastExportZakaznici => 'Customers';
+
+  @override
+  String get nastExportVozidla => 'Vehicles';
+
+  @override
+  String get nastExportZakazky => 'Intakes / Jobs';
+
+  @override
+  String get nastExportFormatTitle => 'Export format';
+
+  @override
+  String get nastExportFormatPopis => 'Choose the file format:';
+
+  @override
+  String get nastExportCsv => 'CSV (Excel)';
+
+  @override
   String get nastUlozitBtn => 'Save';
 
   @override
