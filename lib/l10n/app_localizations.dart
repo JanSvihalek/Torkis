@@ -4256,6 +4256,162 @@ abstract class AppLocalizations {
   /// **'CSV (Excel)'**
   String get nastExportCsv;
 
+  /// No description provided for @fotoTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Fotodokumentace'**
+  String get fotoTitle;
+
+  /// No description provided for @fotoPodtitul.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vyfoťte sérii fotek, nebo vyberte hromadně z galerie.'**
+  String get fotoPodtitul;
+
+  /// No description provided for @fotoPridatGalerie.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat z galerie'**
+  String get fotoPridatGalerie;
+
+  /// No description provided for @fotoSeriove.
+  ///
+  /// In cs, this message translates to:
+  /// **'Sériové focení'**
+  String get fotoSeriove;
+
+  /// No description provided for @fotoKatZvenku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Pohled zvenku (kolem vozu)'**
+  String get fotoKatZvenku;
+
+  /// No description provided for @fotoKatPoskozeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zjištěná poškození'**
+  String get fotoKatPoskozeni;
+
+  /// No description provided for @fotoKatDisky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Disky a kola'**
+  String get fotoKatDisky;
+
+  /// No description provided for @fotoKatStk.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nálepka STK'**
+  String get fotoKatStk;
+
+  /// No description provided for @fotoKatInterier.
+  ///
+  /// In cs, this message translates to:
+  /// **'Interiér vozu'**
+  String get fotoKatInterier;
+
+  /// No description provided for @fotoKatTachometr.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tachometr a palubní deska'**
+  String get fotoKatTachometr;
+
+  /// No description provided for @fotoKatVin.
+  ///
+  /// In cs, this message translates to:
+  /// **'VIN kód'**
+  String get fotoKatVin;
+
+  /// No description provided for @fotoKatOstatni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ostatní dokumentace'**
+  String get fotoKatOstatni;
+
+  /// No description provided for @anotTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Označení poškození'**
+  String get anotTitle;
+
+  /// No description provided for @anotZavritBezUlozeni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zavřít bez uložení'**
+  String get anotZavritBezUlozeni;
+
+  /// No description provided for @anotZrusitPosledni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zrušit poslední'**
+  String get anotZrusitPosledni;
+
+  /// No description provided for @anotSmazatVse.
+  ///
+  /// In cs, this message translates to:
+  /// **'Smazat vše'**
+  String get anotSmazatVse;
+
+  /// No description provided for @anotUlozit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Uložit'**
+  String get anotUlozit;
+
+  /// No description provided for @anotChybaNacteni.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nepodařilo se načíst fotografii.'**
+  String get anotChybaNacteni;
+
+  /// No description provided for @anotVolnaKresba.
+  ///
+  /// In cs, this message translates to:
+  /// **'Volná kresba'**
+  String get anotVolnaKresba;
+
+  /// No description provided for @anotElipsa.
+  ///
+  /// In cs, this message translates to:
+  /// **'Elipsa'**
+  String get anotElipsa;
+
+  /// No description provided for @anotObdelnik.
+  ///
+  /// In cs, this message translates to:
+  /// **'Obdélník'**
+  String get anotObdelnik;
+
+  /// No description provided for @anotSipka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Šipka'**
+  String get anotSipka;
+
+  /// No description provided for @anotPopisTitle.
+  ///
+  /// In cs, this message translates to:
+  /// **'Popis poškození'**
+  String get anotPopisTitle;
+
+  /// No description provided for @anotVzory.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vzory:'**
+  String get anotVzory;
+
+  /// No description provided for @anotVlastniPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nebo napište vlastní popis…'**
+  String get anotVlastniPopis;
+
+  /// No description provided for @anotZrusit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zrušit'**
+  String get anotZrusit;
+
   /// No description provided for @nastUlozitBtn.
   ///
   /// In cs, this message translates to:

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Krok 4 – Fotodokumentace.
 /// Zobrazuje seznam kategorií z [photoCategories]; ke každé lze přidat fotky
@@ -28,18 +29,18 @@ class StepPhoto extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(30),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Fotodokumentace',
+          Text(l10n.fotoTitle,
               style:
-                  TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                  const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
-          const Text(
-              'Vyfoťte sérii fotek, nebo vyberte hromadně z galerie.',
-              style: TextStyle(fontSize: 16, color: Colors.grey)),
+          Text(l10n.fotoPodtitul,
+              style: const TextStyle(fontSize: 16, color: Colors.grey)),
           const SizedBox(height: 20),
           Expanded(
             child: ListView.separated(
@@ -50,7 +51,7 @@ class StepPhoto extends StatelessWidget {
                 final key =
                     photoCategories.keys.elementAt(index);
                 final category = photoCategories[key]!;
-                final label = category['label'] as String;
+                final label = photoCategoryLabel(l10n, key);
                 final icon = category['icon'] as IconData;
                 final takenPhotos = categoryImages[key] ?? [];
 
@@ -87,14 +88,14 @@ class StepPhoto extends StatelessWidget {
                                 icon: const Icon(
                                     Icons.photo_library_rounded,
                                     color: Colors.blueGrey),
-                                tooltip: 'Přidat z galerie'),
+                                tooltip: l10n.fotoPridatGalerie),
                             IconButton(
                                 onPressed: () =>
                                     onTakePhotoSeries(key),
                                 icon: const Icon(
                                     Icons.add_a_photo_rounded,
                                     color: Colors.blue),
-                                tooltip: 'Sériové focení'),
+                                tooltip: l10n.fotoSeriove),
                           ],
                         ),
                         if (takenPhotos.isNotEmpty) ...[

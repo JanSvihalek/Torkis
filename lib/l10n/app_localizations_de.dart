@@ -2282,6 +2282,85 @@ class AppLocalizationsDe extends AppLocalizations {
   String get nastExportCsv => 'CSV (Excel)';
 
   @override
+  String get fotoTitle => 'Fotodokumentation';
+
+  @override
+  String get fotoPodtitul =>
+      'Machen Sie eine Fotoserie oder wählen Sie mehrere aus der Galerie.';
+
+  @override
+  String get fotoPridatGalerie => 'Aus Galerie hinzufügen';
+
+  @override
+  String get fotoSeriove => 'Serienaufnahme';
+
+  @override
+  String get fotoKatZvenku => 'Außenansicht (rund ums Fahrzeug)';
+
+  @override
+  String get fotoKatPoskozeni => 'Festgestellte Schäden';
+
+  @override
+  String get fotoKatDisky => 'Felgen und Räder';
+
+  @override
+  String get fotoKatStk => 'TÜV-Plakette';
+
+  @override
+  String get fotoKatInterier => 'Fahrzeuginnenraum';
+
+  @override
+  String get fotoKatTachometr => 'Tacho und Armaturenbrett';
+
+  @override
+  String get fotoKatVin => 'FIN-Code';
+
+  @override
+  String get fotoKatOstatni => 'Sonstige Dokumentation';
+
+  @override
+  String get anotTitle => 'Schadensmarkierung';
+
+  @override
+  String get anotZavritBezUlozeni => 'Ohne Speichern schließen';
+
+  @override
+  String get anotZrusitPosledni => 'Letztes rückgängig';
+
+  @override
+  String get anotSmazatVse => 'Alles löschen';
+
+  @override
+  String get anotUlozit => 'Speichern';
+
+  @override
+  String get anotChybaNacteni => 'Foto konnte nicht geladen werden.';
+
+  @override
+  String get anotVolnaKresba => 'Freihand';
+
+  @override
+  String get anotElipsa => 'Ellipse';
+
+  @override
+  String get anotObdelnik => 'Rechteck';
+
+  @override
+  String get anotSipka => 'Pfeil';
+
+  @override
+  String get anotPopisTitle => 'Schadensbeschreibung';
+
+  @override
+  String get anotVzory => 'Vorlagen:';
+
+  @override
+  String get anotVlastniPopis => 'Oder eigene Beschreibung eingeben…';
+
+  @override
+  String get anotZrusit => 'Abbrechen';
+
+  @override
   String get nastUlozitBtn => 'Speichern';
 
   @override

@@ -2255,6 +2255,85 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nastExportCsv => 'CSV (Excel)';
 
   @override
+  String get fotoTitle => 'Photo documentation';
+
+  @override
+  String get fotoPodtitul =>
+      'Take a series of photos, or pick several from the gallery.';
+
+  @override
+  String get fotoPridatGalerie => 'Add from gallery';
+
+  @override
+  String get fotoSeriove => 'Burst capture';
+
+  @override
+  String get fotoKatZvenku => 'Exterior view (around the car)';
+
+  @override
+  String get fotoKatPoskozeni => 'Identified damage';
+
+  @override
+  String get fotoKatDisky => 'Rims and wheels';
+
+  @override
+  String get fotoKatStk => 'Inspection sticker';
+
+  @override
+  String get fotoKatInterier => 'Vehicle interior';
+
+  @override
+  String get fotoKatTachometr => 'Odometer and dashboard';
+
+  @override
+  String get fotoKatVin => 'VIN code';
+
+  @override
+  String get fotoKatOstatni => 'Other documentation';
+
+  @override
+  String get anotTitle => 'Damage marking';
+
+  @override
+  String get anotZavritBezUlozeni => 'Close without saving';
+
+  @override
+  String get anotZrusitPosledni => 'Undo last';
+
+  @override
+  String get anotSmazatVse => 'Clear all';
+
+  @override
+  String get anotUlozit => 'Save';
+
+  @override
+  String get anotChybaNacteni => 'Failed to load the photo.';
+
+  @override
+  String get anotVolnaKresba => 'Freehand';
+
+  @override
+  String get anotElipsa => 'Ellipse';
+
+  @override
+  String get anotObdelnik => 'Rectangle';
+
+  @override
+  String get anotSipka => 'Arrow';
+
+  @override
+  String get anotPopisTitle => 'Damage description';
+
+  @override
+  String get anotVzory => 'Presets:';
+
+  @override
+  String get anotVlastniPopis => 'Or type your own description…';
+
+  @override
+  String get anotZrusit => 'Cancel';
+
+  @override
   String get nastUlozitBtn => 'Save';
 
   @override

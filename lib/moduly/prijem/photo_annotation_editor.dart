@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../l10n/app_localizations.dart';
 
 enum _DrawMode { freehand, circle, rectangle, arrow }
 
@@ -232,6 +233,7 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bgColor =
         widget.isDark ? const Color(0xFF0B1A2E) : Colors.grey[100]!;
     final iconColor = widget.isDark ? Colors.white70 : Colors.grey[700];
@@ -240,22 +242,25 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
       backgroundColor: bgColor,
       appBar: AppBar(
         backgroundColor: bgColor,
+        // Vlastní křížek; bez tohoto by framework u fullscreenDialog vykreslil
+        // i vlastní tlačítko zpět a obě by se v rohu překrývala.
+        automaticallyImplyLeading: false,
         leading: IconButton(
           icon: const Icon(Icons.close),
-          tooltip: 'Zavřít bez uložení',
+          tooltip: l10n.anotZavritBezUlozeni,
           onPressed: () => Navigator.of(context).pop(null),
         ),
-        title: const Text('Označení poškození'),
+        title: Text(l10n.anotTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.undo, size: 20),
-            tooltip: 'Zrušit poslední',
+            tooltip: l10n.anotZrusitPosledni,
             color: iconColor,
             onPressed: _annotations.isEmpty ? null : _undo,
           ),
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 20),
-            tooltip: 'Smazat vše',
+            tooltip: l10n.anotSmazatVse,
             color: iconColor,
             onPressed: _annotations.isEmpty ? null : _clear,
           ),
@@ -270,7 +275,7 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
                       height: 16,
                       child:
                           CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Uložit'),
+                  : Text(l10n.anotUlozit),
             ),
           ),
         ],
@@ -278,8 +283,7 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _image == null
-              ? const Center(
-                  child: Text('Nepodařilo se načíst fotografii.'))
+              ? Center(child: Text(l10n.anotChybaNacteni))
               : Column(
                   children: [
                     Expanded(
@@ -360,6 +364,7 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
   /// Plovoucí panel v pravém horním rohu — výběr typu značení i barvy
   /// na jednom místě.
   Widget _buildToolPanel() {
+    final l10n = AppLocalizations.of(context);
     final panelBg = widget.isDark
         ? Colors.black.withValues(alpha: 0.55)
         : Colors.white.withValues(alpha: 0.92);
@@ -376,10 +381,10 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _modeBtn(_DrawMode.freehand, Icons.edit_outlined, 'Volná kresba'),
-          _modeBtn(_DrawMode.circle, Icons.circle_outlined, 'Elipsa'),
-          _modeBtn(_DrawMode.rectangle, Icons.crop_square_outlined, 'Obdélník'),
-          _modeBtn(_DrawMode.arrow, Icons.arrow_forward_rounded, 'Šipka'),
+          _modeBtn(_DrawMode.freehand, Icons.edit_outlined, l10n.anotVolnaKresba),
+          _modeBtn(_DrawMode.circle, Icons.circle_outlined, l10n.anotElipsa),
+          _modeBtn(_DrawMode.rectangle, Icons.crop_square_outlined, l10n.anotObdelnik),
+          _modeBtn(_DrawMode.arrow, Icons.arrow_forward_rounded, l10n.anotSipka),
           Container(
             height: 1,
             width: 28,
@@ -512,15 +517,16 @@ class _LabelDialog extends StatefulWidget {
 class _LabelDialogState extends State<_LabelDialog> {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: const Text('Popis poškození'),
+      title: Text(l10n.anotPopisTitle),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.predefinedLabels.isNotEmpty) ...[
-            const Text('Vzory:',
-                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(l10n.anotVzory,
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const SizedBox(height: 6),
             Wrap(
               spacing: 6,
@@ -544,8 +550,8 @@ class _LabelDialogState extends State<_LabelDialog> {
             controller: widget.controller,
             autofocus: widget.predefinedLabels.isEmpty,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              hintText: 'Nebo napište vlastní popis…',
+            decoration: InputDecoration(
+              hintText: l10n.anotVlastniPopis,
               isDense: true,
             ),
             onSubmitted: (v) {
@@ -558,14 +564,14 @@ class _LabelDialogState extends State<_LabelDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(null),
-          child: const Text('Zrušit'),
+          child: Text(l10n.anotZrusit),
         ),
         ElevatedButton(
           onPressed: () {
             final t = widget.controller.text.trim();
             if (t.isNotEmpty) Navigator.of(context).pop(t);
           },
-          child: const Text('Uložit'),
+          child: Text(l10n.anotUlozit),
         ),
       ],
     );

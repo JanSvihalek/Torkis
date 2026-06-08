@@ -2260,6 +2260,85 @@ class AppLocalizationsSk extends AppLocalizations {
   String get nastExportCsv => 'CSV (Excel)';
 
   @override
+  String get fotoTitle => 'Fotodokumentácia';
+
+  @override
+  String get fotoPodtitul =>
+      'Odfoťte sériu fotiek alebo vyberte hromadne z galérie.';
+
+  @override
+  String get fotoPridatGalerie => 'Pridať z galérie';
+
+  @override
+  String get fotoSeriove => 'Sériové fotenie';
+
+  @override
+  String get fotoKatZvenku => 'Pohľad zvonku (okolo vozidla)';
+
+  @override
+  String get fotoKatPoskozeni => 'Zistené poškodenia';
+
+  @override
+  String get fotoKatDisky => 'Disky a kolesá';
+
+  @override
+  String get fotoKatStk => 'Nálepka STK';
+
+  @override
+  String get fotoKatInterier => 'Interiér vozidla';
+
+  @override
+  String get fotoKatTachometr => 'Tachometer a palubná doska';
+
+  @override
+  String get fotoKatVin => 'VIN kód';
+
+  @override
+  String get fotoKatOstatni => 'Ostatná dokumentácia';
+
+  @override
+  String get anotTitle => 'Označenie poškodenia';
+
+  @override
+  String get anotZavritBezUlozeni => 'Zavrieť bez uloženia';
+
+  @override
+  String get anotZrusitPosledni => 'Zrušiť posledné';
+
+  @override
+  String get anotSmazatVse => 'Zmazať všetko';
+
+  @override
+  String get anotUlozit => 'Uložiť';
+
+  @override
+  String get anotChybaNacteni => 'Fotografiu sa nepodarilo načítať.';
+
+  @override
+  String get anotVolnaKresba => 'Voľná kresba';
+
+  @override
+  String get anotElipsa => 'Elipsa';
+
+  @override
+  String get anotObdelnik => 'Obdĺžnik';
+
+  @override
+  String get anotSipka => 'Šípka';
+
+  @override
+  String get anotPopisTitle => 'Popis poškodenia';
+
+  @override
+  String get anotVzory => 'Vzory:';
+
+  @override
+  String get anotVlastniPopis => 'Alebo napíšte vlastný popis…';
+
+  @override
+  String get anotZrusit => 'Zrušiť';
+
+  @override
   String get nastUlozitBtn => 'Uložiť';
 
   @override

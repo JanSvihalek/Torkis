@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 
-const String kAppVerze = '5.4.4';
+const String kAppVerze = '5.4.5';
 const String kKontaktEmail = 'podpora@torkis.cz';
 const String kKontaktTelefon = '+420 731 901 003';
 const String kKontaktWeb = 'torkis.cz';
@@ -60,6 +61,32 @@ final Map<String, Map<String, dynamic>> photoCategories = {
   'vin': {'label': 'VIN kód', 'icon': Icons.confirmation_number},
   'ostatni': {'label': 'Ostatní dokumentace', 'icon': Icons.camera_alt},
 };
+
+/// Lokalizovaný název fotokategorie podle jejího klíče. Klíče zůstávají
+/// stabilní (slouží jako cesty ve Storage), lokalizuje se jen popisek.
+/// Fallback na český `label` z [photoCategories] pro neznámé klíče.
+String photoCategoryLabel(AppLocalizations l10n, String key) {
+  switch (key) {
+    case 'zvenku':
+      return l10n.fotoKatZvenku;
+    case 'poskozeni':
+      return l10n.fotoKatPoskozeni;
+    case 'disky':
+      return l10n.fotoKatDisky;
+    case 'stk':
+      return l10n.fotoKatStk;
+    case 'interier':
+      return l10n.fotoKatInterier;
+    case 'tachometr':
+      return l10n.fotoKatTachometr;
+    case 'vin':
+      return l10n.fotoKatVin;
+    case 'ostatni':
+      return l10n.fotoKatOstatni;
+    default:
+      return photoCategories[key]?['label'] as String? ?? key;
+  }
+}
 
 // ============================================================
 // PŘEDPLATNÉ — výchozí moduly podle plánu

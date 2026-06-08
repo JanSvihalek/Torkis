@@ -136,6 +136,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
       return;
     }
 
+    final l10n = AppLocalizations.of(context);
     setState(() => _isExportingFotek = true);
     try {
       final archive = Archive();
@@ -144,9 +145,8 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
       for (final entry in fotoUrls.entries) {
         final kategorie = entry.key;
         final urls = (entry.value as List<dynamic>).cast<String>();
-        // Použij český label pro název složky, pokud existuje
-        final slozka = photoCategories[kategorie]?['label'] as String? ??
-            kategorie;
+        // Lokalizovaný název složky podle klíče kategorie.
+        final slozka = photoCategoryLabel(l10n, kategorie);
 
         for (int i = 0; i < urls.length; i++) {
           final response = await http.get(Uri.parse(urls[i]));
