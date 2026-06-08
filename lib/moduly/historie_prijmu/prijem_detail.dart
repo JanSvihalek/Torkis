@@ -1,11 +1,16 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
-import 'package:printing/printing.dart';
+import 'dart:io';
 import 'dart:typed_data';
-import '../../core/pdf_generator.dart';
-import '../../core/design_tokens.dart';
+import 'package:archive/archive.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/constants.dart';
+import '../../core/design_tokens.dart';
+import '../../core/pdf_generator.dart';
 import '../../l10n/app_localizations.dart';
 import '../vozidla/vozidlo_detail.dart';
 import '../zakaznici/zakaznik_detail.dart';
@@ -23,6 +28,7 @@ class PrijemDetailScreen extends StatefulWidget {
 
 class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
   bool _isTisku = false;
+  bool _isExportingFotek = false;
 
   String _formatDate(dynamic timestamp) {
     if (timestamp == null) return '-';
@@ -119,6 +125,72 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
     }
   }
 
+  Future<void> _exportFotodokumentace() async {
+    final fotoUrls =
+        widget.data['fotografie_urls'] as Map<String, dynamic>? ?? {};
+    if (fotoUrls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Tato zakázka nemá žádnou fotodokumentaci.'),
+        backgroundColor: Colors.orange,
+      ));
+      return;
+    }
+
+    setState(() => _isExportingFotek = true);
+    try {
+      final archive = Archive();
+      int celkem = 0;
+
+      for (final entry in fotoUrls.entries) {
+        final kategorie = entry.key;
+        final urls = (entry.value as List<dynamic>).cast<String>();
+        // Použij český label pro název složky, pokud existuje
+        final slozka = photoCategories[kategorie]?['label'] as String? ??
+            kategorie;
+
+        for (int i = 0; i < urls.length; i++) {
+          final response = await http.get(Uri.parse(urls[i]));
+          if (response.statusCode != 200) continue;
+          final bytes = response.bodyBytes;
+          // Struktura v ZIPu: <label kategorie>/<index+1>.jpg
+          archive.addFile(ArchiveFile(
+            '$slozka/${i + 1}.jpg',
+            bytes.length,
+            bytes,
+          ));
+          celkem++;
+        }
+      }
+
+      if (celkem == 0) throw Exception('Žádné fotky se nepodařilo stáhnout.');
+
+      final zipData = ZipEncoder().encode(archive);
+      if (zipData == null) throw Exception('ZIP se nepodařilo sestavit.');
+
+      final dir = await getTemporaryDirectory();
+      final cislo =
+          widget.data['cislo_zakazky']?.toString() ?? widget.docId;
+      final path = '${dir.path}/fotodokumentace_$cislo.zip';
+      await File(path).writeAsBytes(zipData);
+
+      if (!mounted) return;
+      setState(() => _isExportingFotek = false);
+
+      await Share.shareXFiles(
+        [XFile(path)],
+        subject: 'Fotodokumentace $cislo',
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isExportingFotek = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Export fotek selhal: $e'),
+          backgroundColor: Colors.red,
+        ));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -136,6 +208,16 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
         backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: _isExportingFotek
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Icon(Icons.photo_library_outlined),
+            tooltip: 'Exportovat fotodokumentaci (ZIP)',
+            onPressed: _isExportingFotek ? null : _exportFotodokumentace,
+          ),
           IconButton(
             icon: const Icon(Icons.visibility_outlined),
             tooltip: l10n.histZobrazitProtokol,

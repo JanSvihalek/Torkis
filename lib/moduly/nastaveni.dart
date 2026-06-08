@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../core/constants.dart';
 import '../core/design_tokens.dart';
+import '../core/export_service.dart';
 import '../l10n/app_localizations.dart';
 import 'auth_gate.dart'; // Kvůli globalUserRole a globalServisId
 import 'main_screen.dart'; // Kvůli navOrderNotifier
@@ -38,6 +39,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _podpisPovolen = true;
   bool _spzPovinne = true;
   List<String> _sablonyZprav = [];
+  List<String> _vzoryPoskozeni = [];
   List<String> _typyZaznamu = ['Servis', 'Výkup'];
   String _defaultTypZaznamu = 'Servis';
 
@@ -125,6 +127,7 @@ class _SettingsPageState extends State<SettingsPage> {
             _podpisPovolen = data['podpis_povolen'] as bool? ?? true;
             _spzPovinne = data['spz_povinne'] as bool? ?? true;
             _sablonyZprav = List<String>.from(data['sablony_zprav'] ?? []);
+            _vzoryPoskozeni = List<String>.from(data['vzory_poskozeni'] ?? []);
             _typyZaznamu = List<String>.from(
                 data['typy_zaznamu'] ?? ['Servis', 'Výkup']);
             if (_typyZaznamu.isEmpty) _typyZaznamu = ['Servis', 'Výkup'];
@@ -284,6 +287,62 @@ class _SettingsPageState extends State<SettingsPage> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(kPrefUkladatFotoDoZarizeni, value);
     if (mounted) setState(() => _ukladatDoZarizeni = value);
+  }
+
+  Future<void> _ulozitVzoryPoskozeni() async {
+    if (globalServisId == null) return;
+    await FirebaseFirestore.instance
+        .collection('nastaveni_servisu')
+        .doc(globalServisId)
+        .set({'vzory_poskozeni': _vzoryPoskozeni}, SetOptions(merge: true));
+  }
+
+  void _otevritDialogVzoru({String? initialText, int? editIndex}) {
+    final ctrl = TextEditingController(text: initialText ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
+        title: Text(editIndex != null ? 'Upravit vzor' : 'Nový vzor poškození'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: 'Např. Škrábanec, Promáčklina…',
+            filled: true,
+            fillColor:
+                isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Zrušit'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                if (editIndex != null) {
+                  _vzoryPoskozeni[editIndex] = text;
+                } else {
+                  _vzoryPoskozeni.add(text);
+                }
+              });
+              await _ulozitVzoryPoskozeni();
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Uložit'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _ulozitSablony() async {
@@ -891,6 +950,86 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
 
               _buildCard(
+                title: 'Vzory popisů poškození',
+                icon: Icons.car_crash_outlined,
+                color: Colors.deepOrange,
+                isDark: isDark,
+                children: [
+                  const Text(
+                    'Předdefinované popisy, ze kterých uživatel vybírá při značení poškození ve fotodokumentaci.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  if (_vzoryPoskozeni.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Zatím žádné vzory. Přidejte první.',
+                        style: TextStyle(
+                            color: Colors.grey[400], fontSize: 13),
+                      ),
+                    ),
+                  for (int i = 0; i < _vzoryPoskozeni.length; i++)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? TokColors.darkSurface
+                            : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.grey[700]!
+                                : Colors.grey[200]!),
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 14),
+                        title: Text(_vzoryPoskozeni[i],
+                            style: const TextStyle(fontSize: 13)),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined,
+                                  size: 18, color: Colors.blue),
+                              onPressed: () => _otevritDialogVzoru(
+                                  initialText: _vzoryPoskozeni[i],
+                                  editIndex: i),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline,
+                                  size: 18, color: Colors.redAccent),
+                              onPressed: () async {
+                                setState(
+                                    () => _vzoryPoskozeni.removeAt(i));
+                                await _ulozitVzoryPoskozeni();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _otevritDialogVzoru(),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('Přidat vzor'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.deepOrange,
+                        side: const BorderSide(color: Colors.deepOrange),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              _buildCard(
                 title: l10n.nastTypyZaznamu,
                 icon: Icons.label_outline,
                 color: Colors.indigo,
@@ -987,6 +1126,48 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+
+              // ---------------------------------------------
+              // EXPORT DAT (pouze admin)
+              // ---------------------------------------------
+              if (_isAdmin) ...[
+                _buildCard(
+                  title: 'Export dat',
+                  icon: Icons.download_rounded,
+                  color: Colors.teal,
+                  isDark: isDark,
+                  children: [
+                    Text(
+                      'Stáhněte záznamy ve formátu CSV (Excel) nebo JSON.',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildExportTile(
+                      icon: Icons.people_alt_rounded,
+                      label: 'Zákazníci',
+                      color: Colors.blue,
+                      isDark: isDark,
+                      onTap: () => _spustExport(ExportEntity.zakaznici),
+                    ),
+                    _buildExportTile(
+                      icon: Icons.directions_car_rounded,
+                      label: 'Vozidla',
+                      color: Colors.orange,
+                      isDark: isDark,
+                      onTap: () => _spustExport(ExportEntity.vozidla),
+                    ),
+                    _buildExportTile(
+                      icon: Icons.assignment_rounded,
+                      label: 'Příjmy / Zakázky',
+                      color: Colors.green,
+                      isDark: isDark,
+                      onTap: () => _spustExport(ExportEntity.zakazky),
+                    ),
+                  ],
+                ),
+              ],
 
               // ---------------------------------------------
               // SEKCE PRO VŠECHNY UŽIVATELE (VZHLED A ODHLÁŠENÍ)
@@ -1130,6 +1311,71 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _spustExport(ExportEntity entity) async {
+    final format = await showDialog<ExportFormat>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Formát exportu'),
+        content: const Text('Vyberte formát souboru:'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ExportFormat.csv),
+            child: const Text('CSV (Excel)'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ExportFormat.json),
+            child: const Text('JSON'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('Zrušit'),
+          ),
+        ],
+      ),
+    );
+    if (format == null || !mounted) return;
+    await ExportService.export(
+      context: context,
+      servisId: globalServisId!,
+      entity: entity,
+      format: format,
+    );
+  }
+
+  Widget _buildExportTile({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return Card(
+      color: isDark ? TokColors.darkSurface : Colors.white,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.2)),
+      ),
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600, fontSize: 14)),
+        trailing: const Icon(Icons.download_rounded,
+            size: 18, color: Colors.grey),
+        onTap: onTap,
+      ),
     );
   }
 

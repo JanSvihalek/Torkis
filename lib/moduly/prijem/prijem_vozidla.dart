@@ -146,6 +146,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
 
   final Map<String, List<XFile>> _categoryImages = {};
   final ImagePicker _picker = ImagePicker();
+  List<String> _vzoryPoskozeni = [];
 
   final List<String> _vybranePoskozeni = [];
   final List<String> _poskozeniMoznosti = [
@@ -537,6 +538,8 @@ class _MainWizardPageState extends State<MainWizardPage> {
               _defaultTypZaznamu =
                   data['default_typ_zaznamu']?.toString() ?? _typyZaznamu.first;
               _typZaznamu = _defaultTypZaznamu;
+              _vzoryPoskozeni =
+                  List<String>.from(data['vzory_poskozeni'] ?? []);
             });
           }
         }
@@ -1872,7 +1875,11 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bytes = await PhotoAnnotationEditor.open(
-        context, photos[photoIndex], isDark);
+      context,
+      photos[photoIndex],
+      isDark,
+      predefinedLabels: _vzoryPoskozeni,
+    );
     if (bytes == null || !mounted) return;
 
     // Uloží anotovanou verzi vedle originálu ve složce konceptu

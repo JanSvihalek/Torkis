@@ -1,53 +1,70 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_picker/image_picker.dart';
 
+enum _DrawMode { freehand, circle, rectangle, arrow }
+
 class _Annotation {
   final List<Offset> points; // normalizované 0..1
+  // freehand: všechny body tahu; tvary: [start, end]
   final Color color;
   final String label;
   final int number;
+  final _DrawMode mode;
 
   _Annotation({
     required this.points,
     required this.color,
     required this.label,
     required this.number,
+    required this.mode,
   });
 
-  Offset get centroid {
+  /// Pravý horní roh ohraničujícího obdélníku — pin se zobrazí vedle.
+  Offset get pinAnchor {
     if (points.isEmpty) return Offset.zero;
-    double x = 0, y = 0;
+    double minY = double.infinity;
+    double maxX = -double.infinity;
     for (final p in points) {
-      x += p.dx;
-      y += p.dy;
+      if (p.dy < minY) minY = p.dy;
+      if (p.dx > maxX) maxX = p.dx;
     }
-    return Offset(x / points.length, y / points.length);
+    return Offset(maxX, minY);
   }
 }
 
 /// Full-screen editor pro kreslení anotací poškození přímo na fotografii.
-/// Vrací [Uint8List] s PNG obrázkem, do kterého jsou anotace vypáleny,
-/// nebo null pokud uživatel editor zavřel bez uložení.
+/// Podporuje volnou kresbu, elipsu, obdélník a šipku.
+/// Vrací [Uint8List] s PNG s vypálenými anotacemi, nebo null při zavření.
 class PhotoAnnotationEditor extends StatefulWidget {
   final XFile photo;
   final bool isDark;
+  final List<String> predefinedLabels;
 
   const PhotoAnnotationEditor({
     super.key,
     required this.photo,
     required this.isDark,
+    this.predefinedLabels = const [],
   });
 
   static Future<Uint8List?> open(
-      BuildContext context, XFile photo, bool isDark) {
+    BuildContext context,
+    XFile photo,
+    bool isDark, {
+    List<String> predefinedLabels = const [],
+  }) {
     return Navigator.of(context).push<Uint8List>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) =>
-            PhotoAnnotationEditor(photo: photo, isDark: isDark),
+        builder: (_) => PhotoAnnotationEditor(
+          photo: photo,
+          isDark: isDark,
+          predefinedLabels: predefinedLabels,
+        ),
       ),
     );
   }
@@ -60,21 +77,29 @@ class PhotoAnnotationEditor extends StatefulWidget {
 class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
   final GlobalKey _repaintKey = GlobalKey();
   final List<_Annotation> _annotations = [];
+
+  // Freehand stav
   List<Offset>? _currentStroke;
+
+  // Stav pro tvary (normalizované 0..1)
+  Offset? _shapeStart;
+  Offset? _shapeEnd;
+
+  _DrawMode _drawMode = _DrawMode.freehand;
+  Color _penColor = Colors.red;
   bool _isExporting = false;
 
-  Uint8List? _imageBytes;
+  ui.Image? _image;
   Size? _imageSize;
   bool _loading = true;
 
-  Color _penColor = Colors.red;
+  final _labelCtrl = TextEditingController();
+
   static const List<Color> _colors = [
     Colors.red,
     Colors.orange,
     Colors.yellow,
   ];
-
-  final _labelCtrl = TextEditingController();
 
   @override
   void initState() {
@@ -96,7 +121,7 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
       final img = frame.image;
       if (mounted) {
         setState(() {
-          _imageBytes = bytes;
+          _image = img;
           _imageSize =
               Size(img.width.toDouble(), img.height.toDouble());
           _loading = false;
@@ -112,57 +137,70 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
         pos.dy.clamp(0.0, canvas.height) / canvas.height,
       );
 
+  // ── Gesture handlers ──────────────────────────────────────────────────────
+
   void _onPanStart(DragStartDetails d, Size canvas) {
-    setState(
-        () => _currentStroke = [_normalize(d.localPosition, canvas)]);
+    final norm = _normalize(d.localPosition, canvas);
+    if (_drawMode == _DrawMode.freehand) {
+      setState(() => _currentStroke = [norm]);
+    } else {
+      setState(() {
+        _shapeStart = norm;
+        _shapeEnd = norm;
+      });
+    }
   }
 
   void _onPanUpdate(DragUpdateDetails d, Size canvas) {
-    if (_currentStroke == null) return;
-    setState(
-        () => _currentStroke!.add(_normalize(d.localPosition, canvas)));
+    final norm = _normalize(d.localPosition, canvas);
+    if (_drawMode == _DrawMode.freehand) {
+      if (_currentStroke == null) return;
+      setState(() => _currentStroke!.add(norm));
+    } else {
+      setState(() => _shapeEnd = norm);
+    }
   }
 
   Future<void> _onPanEnd(DragEndDetails _) async {
-    final stroke = _currentStroke;
-    setState(() => _currentStroke = null);
-    if (stroke == null || stroke.length < 2) return;
+    if (_drawMode == _DrawMode.freehand) {
+      final stroke = _currentStroke;
+      setState(() => _currentStroke = null);
+      if (stroke == null || stroke.length < 2) return;
+      await _promptLabel(stroke, _DrawMode.freehand);
+    } else {
+      final start = _shapeStart;
+      final end = _shapeEnd;
+      setState(() {
+        _shapeStart = null;
+        _shapeEnd = null;
+      });
+      if (start == null || end == null) return;
+      // Ignoruj příliš malé tahy (klepnutí bez pohybu)
+      final dx = (end.dx - start.dx).abs();
+      final dy = (end.dy - start.dy).abs();
+      if (dx < 0.01 && dy < 0.01) return;
+      await _promptLabel([start, end], _drawMode);
+    }
+  }
 
+  Future<void> _promptLabel(
+      List<Offset> points, _DrawMode mode) async {
     _labelCtrl.clear();
     final label = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Popis poškození'),
-        content: TextField(
-          controller: _labelCtrl,
-          autofocus: true,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            hintText: 'Popište poškození...',
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Zrušit'),
-          ),
-          ElevatedButton(
-            onPressed: () =>
-                Navigator.pop(ctx, _labelCtrl.text.trim()),
-            child: const Text('Uložit'),
-          ),
-        ],
+      builder: (ctx) => _LabelDialog(
+        controller: _labelCtrl,
+        predefinedLabels: widget.predefinedLabels,
       ),
     );
-
     if (label == null || label.isEmpty) return;
     setState(() => _annotations.add(_Annotation(
-          points: stroke,
+          points: points,
           color: _penColor,
           label: label,
           number: _annotations.length + 1,
+          mode: mode,
         )));
   }
 
@@ -189,6 +227,8 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
       if (mounted) setState(() => _isExporting = false);
     }
   }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -263,11 +303,13 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _imageBytes == null
-              ? const Center(child: Text('Nepodařilo se načíst fotografii.'))
+          : _image == null
+              ? const Center(
+                  child: Text('Nepodařilo se načíst fotografii.'))
               : Column(
                   children: [
                     Expanded(child: _buildCanvas()),
+                    _buildModeToolbar(),
                     if (_annotations.isNotEmpty) _buildLegend(),
                   ],
                 ),
@@ -302,8 +344,8 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
                           height: canvasH,
                           fit: BoxFit.fill,
                         )
-                      : Image.memory(
-                          _imageBytes!,
+                      : RawImage(
+                          image: _image,
                           width: canvasW,
                           height: canvasH,
                           fit: BoxFit.fill,
@@ -312,7 +354,10 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
                     size: canvasSize,
                     painter: _AnnotationPainter(
                       annotations: _annotations,
-                      currentStroke: _currentStroke,
+                      currentFreehandStroke: _currentStroke,
+                      shapeStart: _shapeStart,
+                      shapeEnd: _shapeEnd,
+                      drawMode: _drawMode,
                       currentColor: _penColor,
                     ),
                   ),
@@ -325,11 +370,57 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
     });
   }
 
-  Widget _buildLegend() {
-    final bg =
-        widget.isDark ? const Color(0xFF1E3A5F) : Colors.white;
+  Widget _buildModeToolbar() {
+    final bg = widget.isDark ? const Color(0xFF1E3A5F) : Colors.white;
     return Container(
-      constraints: const BoxConstraints(maxHeight: 150),
+      color: bg,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _modeBtn(_DrawMode.freehand, Icons.edit_outlined, 'Volná kresba'),
+          _modeBtn(_DrawMode.circle, Icons.circle_outlined, 'Elipsa'),
+          _modeBtn(_DrawMode.rectangle, Icons.crop_square_outlined, 'Obdélník'),
+          _modeBtn(_DrawMode.arrow, Icons.arrow_forward_rounded, 'Šipka'),
+        ],
+      ),
+    );
+  }
+
+  Widget _modeBtn(_DrawMode mode, IconData icon, String tooltip) {
+    final selected = _drawMode == mode;
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: () => setState(() => _drawMode = mode),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            color: selected
+                ? _penColor.withValues(alpha: 0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? _penColor
+                  : Colors.grey.withValues(alpha: 0.35),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Icon(icon,
+              size: 22,
+              color: selected ? _penColor : Colors.grey[500]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLegend() {
+    final bg = widget.isDark ? const Color(0xFF1E3A5F) : Colors.white;
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 140),
       color: bg,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       child: ListView.separated(
@@ -347,10 +438,9 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
                 child: Text(
                   '${a.number}',
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(width: 10),
@@ -358,11 +448,10 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
                 child: Text(
                   a.label,
                   style: TextStyle(
-                    fontSize: 13,
-                    color: widget.isDark
-                        ? Colors.white
-                        : Colors.black87,
-                  ),
+                      fontSize: 13,
+                      color: widget.isDark
+                          ? Colors.white
+                          : Colors.black87),
                 ),
               ),
             ],
@@ -374,71 +463,267 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
 }
 
 // ---------------------------------------------------------------------------
+// Dialog pro zadání popisu
+// ---------------------------------------------------------------------------
+
+class _LabelDialog extends StatefulWidget {
+  final TextEditingController controller;
+  final List<String> predefinedLabels;
+
+  const _LabelDialog({
+    required this.controller,
+    required this.predefinedLabels,
+  });
+
+  @override
+  State<_LabelDialog> createState() => _LabelDialogState();
+}
+
+class _LabelDialogState extends State<_LabelDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Popis poškození'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.predefinedLabels.isNotEmpty) ...[
+            const Text('Vzory:',
+                style: TextStyle(fontSize: 12, color: Colors.grey)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: widget.predefinedLabels
+                  .map((label) => ActionChip(
+                        label: Text(label,
+                            style: const TextStyle(fontSize: 12)),
+                        onPressed: () =>
+                            Navigator.of(context).pop(label),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 0),
+                      ))
+                  .toList(),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+          ],
+          TextField(
+            controller: widget.controller,
+            autofocus: widget.predefinedLabels.isEmpty,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              hintText: 'Nebo napište vlastní popis…',
+              isDense: true,
+            ),
+            onSubmitted: (v) {
+              final t = v.trim();
+              if (t.isNotEmpty) Navigator.of(context).pop(t);
+            },
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(null),
+          child: const Text('Zrušit'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final t = widget.controller.text.trim();
+            if (t.isNotEmpty) Navigator.of(context).pop(t);
+          },
+          child: const Text('Uložit'),
+        ),
+      ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Painter
+// ---------------------------------------------------------------------------
 
 class _AnnotationPainter extends CustomPainter {
   final List<_Annotation> annotations;
-  final List<Offset>? currentStroke;
+  final List<Offset>? currentFreehandStroke;
+  final Offset? shapeStart;
+  final Offset? shapeEnd;
+  final _DrawMode drawMode;
   final Color currentColor;
 
   _AnnotationPainter({
     required this.annotations,
-    required this.currentStroke,
+    required this.currentFreehandStroke,
+    required this.shapeStart,
+    required this.shapeEnd,
+    required this.drawMode,
     required this.currentColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Hotové anotace
     for (final a in annotations) {
-      _drawStroke(canvas, size, a.points, a.color);
-      _drawPin(canvas, size, a.centroid, a.color, a.number);
+      _drawShape(canvas, size, a.points, a.color, a.mode);
+      _drawPin(canvas, size, a.pinAnchor, a.color, a.number, a.label);
     }
-    if (currentStroke != null && currentStroke!.length >= 2) {
-      _drawStroke(canvas, size, currentStroke!, currentColor);
+
+    // Průběžný náhled — freehand
+    if (currentFreehandStroke != null &&
+        currentFreehandStroke!.length >= 2) {
+      _drawFreehand(canvas, size, currentFreehandStroke!, currentColor);
+    }
+
+    // Průběžný náhled — tvar
+    if (shapeStart != null && shapeEnd != null) {
+      _drawShape(
+          canvas, size, [shapeStart!, shapeEnd!], currentColor, drawMode,
+          preview: true);
     }
   }
 
-  void _drawStroke(
+  void _drawShape(Canvas canvas, Size size, List<Offset> pts, Color color,
+      _DrawMode mode, {bool preview = false}) {
+    switch (mode) {
+      case _DrawMode.freehand:
+        _drawFreehand(canvas, size, pts, color);
+      case _DrawMode.circle:
+        if (pts.length >= 2) _drawEllipse(canvas, size, pts[0], pts[1], color);
+      case _DrawMode.rectangle:
+        if (pts.length >= 2) _drawRect(canvas, size, pts[0], pts[1], color);
+      case _DrawMode.arrow:
+        if (pts.length >= 2) _drawArrow(canvas, size, pts[0], pts[1], color);
+    }
+  }
+
+  Paint _strokePaint(Color color) => Paint()
+    ..color = color.withValues(alpha: 0.75)
+    ..strokeWidth = 4.0
+    ..strokeCap = StrokeCap.round
+    ..strokeJoin = StrokeJoin.round
+    ..style = PaintingStyle.stroke;
+
+  void _drawFreehand(
       Canvas canvas, Size size, List<Offset> pts, Color color) {
     if (pts.length < 2) return;
-    final paint = Paint()
-      ..color = color.withValues(alpha: 0.75)
-      ..strokeWidth = 4.0
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
     final path = Path()
       ..moveTo(pts.first.dx * size.width, pts.first.dy * size.height);
     for (int i = 1; i < pts.length; i++) {
       path.lineTo(pts[i].dx * size.width, pts[i].dy * size.height);
     }
+    canvas.drawPath(path, _strokePaint(color));
+  }
+
+  void _drawEllipse(Canvas canvas, Size size, Offset p0, Offset p1,
+      Color color) {
+    final rect = Rect.fromPoints(
+      Offset(p0.dx * size.width, p0.dy * size.height),
+      Offset(p1.dx * size.width, p1.dy * size.height),
+    );
+    canvas.drawOval(rect, _strokePaint(color));
+  }
+
+  void _drawRect(Canvas canvas, Size size, Offset p0, Offset p1,
+      Color color) {
+    final rect = Rect.fromPoints(
+      Offset(p0.dx * size.width, p0.dy * size.height),
+      Offset(p1.dx * size.width, p1.dy * size.height),
+    );
+    canvas.drawRect(rect, _strokePaint(color));
+  }
+
+  void _drawArrow(Canvas canvas, Size size, Offset p0, Offset p1,
+      Color color) {
+    final x0 = p0.dx * size.width;
+    final y0 = p0.dy * size.height;
+    final x1 = p1.dx * size.width;
+    final y1 = p1.dy * size.height;
+
+    final paint = _strokePaint(color);
+    canvas.drawLine(Offset(x0, y0), Offset(x1, y1), paint);
+
+    // Hrot šipky
+    final angle = math.atan2(y1 - y0, x1 - x0);
+    const headLen = 18.0;
+    const headAngle = 0.42; // radiány
+    final path = Path()
+      ..moveTo(x1, y1)
+      ..lineTo(
+          x1 - headLen * math.cos(angle - headAngle),
+          y1 - headLen * math.sin(angle - headAngle))
+      ..moveTo(x1, y1)
+      ..lineTo(
+          x1 - headLen * math.cos(angle + headAngle),
+          y1 - headLen * math.sin(angle + headAngle));
     canvas.drawPath(path, paint);
   }
 
-  void _drawPin(Canvas canvas, Size size, Offset norm, Color color,
-      int number) {
-    final cx = norm.dx * size.width;
-    final cy = norm.dy * size.height;
+  /// Pin s číslem a popisem vpravo/vlevo od kotevního bodu.
+  void _drawPin(Canvas canvas, Size size, Offset anchor, Color color,
+      int number, String label) {
     const r = 13.0;
+    const gap = 5.0;
 
-    // Bílý obrys pro kontrast s tmavým i světlým pozadím
+    final cx =
+        (anchor.dx * size.width + gap + r).clamp(r, size.width - r);
+    final cy =
+        (anchor.dy * size.height - gap - r).clamp(r, size.height - r);
+
     canvas.drawCircle(
         Offset(cx, cy), r + 2, Paint()..color = Colors.white);
     canvas.drawCircle(Offset(cx, cy), r, Paint()..color = color);
 
-    final tp = TextPainter(
+    final numTp = TextPainter(
       text: TextSpan(
         text: '$number',
         style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    tp.paint(
-        canvas, Offset(cx - tp.width / 2, cy - tp.height / 2));
+    numTp.paint(
+        canvas, Offset(cx - numTp.width / 2, cy - numTp.height / 2));
+
+    if (label.isEmpty) return;
+    const maxLen = 28;
+    final displayLabel = label.length > maxLen
+        ? '${label.substring(0, maxLen - 1)}…'
+        : label;
+
+    final labelTp = TextPainter(
+      text: TextSpan(
+        text: displayLabel,
+        style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w500),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: 180);
+
+    const padH = 6.0;
+    const padV = 3.0;
+    final bgW = labelTp.width + padH * 2;
+    final bgH = labelTp.height + padV * 2;
+
+    double bgLeft = cx + r + gap;
+    if (bgLeft + bgW > size.width - 2) bgLeft = cx - r - gap - bgW;
+    bgLeft = bgLeft.clamp(2.0, size.width - bgW - 2);
+    final bgTop = (cy - bgH / 2).clamp(2.0, size.height - bgH - 2);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(bgLeft, bgTop, bgW, bgH),
+        const Radius.circular(6),
+      ),
+      Paint()..color = Colors.black.withValues(alpha: 0.65),
+    );
+    labelTp.paint(canvas, Offset(bgLeft + padH, bgTop + padV));
   }
 
   @override
