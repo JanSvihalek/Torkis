@@ -19,6 +19,13 @@ jobs:
           channel: stable
           cache: true
 
+      # Pluginy projektu (Firebase, purchases_flutter, printing, …) jedou přes
+      # CocoaPods. Experimentální SPM integrace jen přidává flaky krok navíc
+      # (stahování Firebase SPM balíčků), který tu shodil build na výpadku sítě.
+      # Vypnutím se archivace drží stabilní CocoaPods cesty.
+      - name: Disable Swift Package Manager (use CocoaPods)
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Flutter pub get
         run: flutter pub get
 
