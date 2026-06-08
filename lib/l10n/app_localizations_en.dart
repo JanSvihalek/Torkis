@@ -872,6 +872,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prijemOdesilamMsg => 'Submitting order and protocol...';
 
   @override
+  String prijemNahravamFotky(int hotovo, int celkem) {
+    return 'Uploading photos $hotovo/$celkem';
+  }
+
+  @override
   String prijemKrokZ(int krok, int celkem) {
     return 'Step $krok of $celkem';
   }

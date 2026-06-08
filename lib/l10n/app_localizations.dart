@@ -1706,6 +1706,12 @@ abstract class AppLocalizations {
   /// **'Odesílám zakázku a protokol...'**
   String get prijemOdesilamMsg;
 
+  /// No description provided for @prijemNahravamFotky.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nahrávám fotky {hotovo}/{celkem}'**
+  String prijemNahravamFotky(int hotovo, int celkem);
+
   /// No description provided for @prijemKrokZ.
   ///
   /// In cs, this message translates to:

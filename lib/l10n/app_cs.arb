@@ -347,6 +347,8 @@
   "prijemDokoncit": "Dokončit a odeslat",
   "prijemPokracovat": "Pokračovat",
   "prijemOdesilamMsg": "Odesílám zakázku a protokol...",
+  "prijemNahravamFotky": "Nahrávám fotky {hotovo}/{celkem}",
+  "@prijemNahravamFotky": { "placeholders": { "hotovo": { "type": "int" }, "celkem": { "type": "int" } } },
   "prijemKrokZ": "Krok {krok} z {celkem}",
   "@prijemKrokZ": {
     "placeholders": {

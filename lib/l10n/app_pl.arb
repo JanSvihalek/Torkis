@@ -304,6 +304,7 @@
   "prijemDokoncit": "Zakończ i wyślij",
   "prijemPokracovat": "Dalej",
   "prijemOdesilamMsg": "Wysyłanie zlecenia i protokołu...",
+  "prijemNahravamFotky": "Przesyłanie zdjęć {hotovo}/{celkem}",
   "prijemKrokZ": "Krok {krok} z {celkem}",
   "prijemStepIdentifikace": "Identyfikacja pojazdu",
   "prijemStepZakaznik": "Klient",

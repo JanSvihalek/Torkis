@@ -304,6 +304,7 @@
   "prijemDokoncit": "Dokončiť a odoslať",
   "prijemPokracovat": "Pokračovať",
   "prijemOdesilamMsg": "Odosielam zákazku a protokol...",
+  "prijemNahravamFotky": "Nahrávam fotky {hotovo}/{celkem}",
   "prijemKrokZ": "Krok {krok} z {celkem}",
   "prijemStepIdentifikace": "Identifikácia vozidla",
   "prijemStepZakaznik": "Zákazník",

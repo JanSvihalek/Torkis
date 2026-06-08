@@ -875,6 +875,11 @@ class AppLocalizationsCs extends AppLocalizations {
   String get prijemOdesilamMsg => 'Odesílám zakázku a protokol...';
 
   @override
+  String prijemNahravamFotky(int hotovo, int celkem) {
+    return 'Nahrávám fotky $hotovo/$celkem';
+  }
+
+  @override
   String prijemKrokZ(int krok, int celkem) {
     return 'Krok $krok z $celkem';
   }

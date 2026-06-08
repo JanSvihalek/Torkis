@@ -304,6 +304,7 @@
   "prijemDokoncit": "Complete and submit",
   "prijemPokracovat": "Continue",
   "prijemOdesilamMsg": "Submitting order and protocol...",
+  "prijemNahravamFotky": "Uploading photos {hotovo}/{celkem}",
   "prijemKrokZ": "Step {krok} of {celkem}",
   "prijemStepIdentifikace": "Vehicle ID",
   "prijemStepZakaznik": "Customer",

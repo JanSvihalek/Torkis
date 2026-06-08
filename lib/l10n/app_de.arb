@@ -304,6 +304,7 @@
   "prijemDokoncit": "Abschließen und übermitteln",
   "prijemPokracovat": "Weiter",
   "prijemOdesilamMsg": "Auftrag und Protokoll werden übermittelt...",
+  "prijemNahravamFotky": "Fotos werden hochgeladen {hotovo}/{celkem}",
   "prijemKrokZ": "Schritt {krok} von {celkem}",
   "prijemStepIdentifikace": "Fahrzeugidentifikation",
   "prijemStepZakaznik": "Kunde",

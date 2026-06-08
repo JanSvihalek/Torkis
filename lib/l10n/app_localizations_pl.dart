@@ -877,6 +877,11 @@ class AppLocalizationsPl extends AppLocalizations {
   String get prijemOdesilamMsg => 'Wysyłanie zlecenia i protokołu...';
 
   @override
+  String prijemNahravamFotky(int hotovo, int celkem) {
+    return 'Przesyłanie zdjęć $hotovo/$celkem';
+  }
+
+  @override
   String prijemKrokZ(int krok, int celkem) {
     return 'Krok $krok z $celkem';
   }

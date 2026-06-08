@@ -76,6 +76,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
   int _currentPage = 0;
   final int _totalPages = 6;
   bool _isUploading = false;
+  // Průběh nahrávání fotek (pro overlay). Celkem 0 = ještě/už neběží.
+  int _uploadFotoHotovo = 0;
+  int _uploadFotoCelkem = 0;
   bool _isLoadingAres = false;
   bool _isCheckingZakazka = false;
   bool _isGeneratingCislo = false;
@@ -1457,7 +1460,13 @@ class _MainWizardPageState extends State<MainWizardPage> {
             backgroundColor: Colors.red));
       }
     } finally {
-      if (mounted) setState(() => _isUploading = false);
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadFotoCelkem = 0;
+          _uploadFotoHotovo = 0;
+        });
+      }
     }
   }
 
@@ -1518,33 +1527,68 @@ class _MainWizardPageState extends State<MainWizardPage> {
     final ukladatDoZarizeni =
         prefs.getBool(kPrefUkladatFotoDoZarizeni) ?? false;
 
-    for (var entry in _categoryImages.entries) {
-      final categoryKey = entry.key;
-      final images = entry.value;
-      imageUrlsByCategory[categoryKey] = [];
-      for (int i = 0; i < images.length; i++) {
-        final image = images[i];
-        String fileName =
-            '${categoryKey}_${DateTime.now().millisecondsSinceEpoch}_$i.jpg';
-        Reference ref = FirebaseStorage.instance
-            .ref()
-            .child('servisy/$_sId/zakazky/$zakazkaId/$fileName');
-        // Jednotná komprese (1920 px / JPEG 80) v isolate, ať neblokuje UI.
-        final Uint8List komprimovane =
-            await compute(komprimujFoto, await image.readAsBytes());
-        await ref.putData(komprimovane,
-            SettableMetadata(contentType: 'image/jpeg'));
-        // Volitelná lokální kopie do galerie zařízení (stejná komprimovaná verze).
-        if (ukladatDoZarizeni) {
-          try {
-            await Gal.putImageBytes(komprimovane);
-          } catch (e) {
-            debugPrint('Uložení do galerie selhalo: $e');
-          }
-        }
-        String downloadUrl = await ref.getDownloadURL();
-        imageUrlsByCategory[categoryKey]!.add(downloadUrl);
+    // Sesbírej všechny fotky napříč kategoriemi do plochého seznamu úloh.
+    // Cílové seznamy jsou předem nafouknuté na správnou délku — URL se ukládá
+    // zpět na svůj index, takže pořadí v kategorii zůstává zachované i při
+    // paralelním nahrávání.
+    final List<({String cat, int idx, XFile image})> fotoUlohy = [];
+    for (final entry in _categoryImages.entries) {
+      imageUrlsByCategory[entry.key] =
+          List<String>.filled(entry.value.length, '');
+      for (int i = 0; i < entry.value.length; i++) {
+        fotoUlohy.add((cat: entry.key, idx: i, image: entry.value[i]));
       }
+    }
+
+    if (fotoUlohy.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          _uploadFotoCelkem = fotoUlohy.length;
+          _uploadFotoHotovo = 0;
+        });
+      }
+
+      // Jednotné časové razítko pro celou dávku; unikátnost zajistí cat+idx.
+      final int tsBatch = DateTime.now().millisecondsSinceEpoch;
+      int dalsiUloha = 0;
+
+      // Worker: bere úlohy ze sdíleného indexu, dokud nějaké zbývají.
+      // Inkrement je synchronní (mezi čtením a ++ není await), takže i při
+      // více workerech nedojde k souběhu na stejné úloze.
+      Future<void> worker() async {
+        while (true) {
+          final int taskIndex = dalsiUloha++;
+          if (taskIndex >= fotoUlohy.length) break;
+          final t = fotoUlohy[taskIndex];
+          final fileName = '${t.cat}_${tsBatch}_${t.idx}.jpg';
+          final ref = FirebaseStorage.instance
+              .ref()
+              .child('servisy/$_sId/zakazky/$zakazkaId/$fileName');
+          // Komprese (1920 px / JPEG 80) v isolate, ať neblokuje UI vlákno.
+          final Uint8List komprimovane =
+              await compute(komprimujFoto, await t.image.readAsBytes());
+          await ref.putData(komprimovane,
+              SettableMetadata(contentType: 'image/jpeg'));
+          // Volitelná lokální kopie do galerie zařízení.
+          if (ukladatDoZarizeni) {
+            try {
+              await Gal.putImageBytes(komprimovane);
+            } catch (e) {
+              debugPrint('Uložení do galerie selhalo: $e');
+            }
+          }
+          imageUrlsByCategory[t.cat]![t.idx] = await ref.getDownloadURL();
+          if (mounted) setState(() => _uploadFotoHotovo++);
+        }
+      }
+
+      // Omezená souběžnost: víc uploadů přes sebe (skryje latenci i kompresi),
+      // ale ne všechny najednou — šetří paměť a nepřehltí spojení.
+      const int maxSoubeh = 4;
+      final int pocetWorkeru =
+          fotoUlohy.length < maxSoubeh ? fotoUlohy.length : maxSoubeh;
+      await Future.wait(
+          List.generate(pocetWorkeru, (_) => worker()));
     }
 
     String? schemaUrl;
@@ -2150,6 +2194,14 @@ class _MainWizardPageState extends State<MainWizardPage> {
                 const SizedBox(height: 20),
                 Text(l10n.prijemOdesilamMsg,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
+                if (_uploadFotoCelkem > 0) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.prijemNahravamFotky(
+                        _uploadFotoHotovo, _uploadFotoCelkem),
+                    style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                ],
               ],
             ),
           ),

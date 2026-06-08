@@ -885,6 +885,11 @@ class AppLocalizationsDe extends AppLocalizations {
   String get prijemOdesilamMsg => 'Auftrag und Protokoll werden übermittelt...';
 
   @override
+  String prijemNahravamFotky(int hotovo, int celkem) {
+    return 'Fotos werden hochgeladen $hotovo/$celkem';
+  }
+
+  @override
   String prijemKrokZ(int krok, int celkem) {
     return 'Schritt $krok von $celkem';
   }
