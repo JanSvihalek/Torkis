@@ -16,6 +16,10 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          # Verze přibitá natvrdo (NE "channel: stable") — buildy jsou tím
+          # reprodukovatelné a Flutter nemůže build samovolně rozbít novou
+          # verzí. Povyšuje se vědomě: změnit číslo, otestovat, commitnout.
+          flutter-version: 3.44.1
           channel: stable
           cache: true
 

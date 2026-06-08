@@ -240,18 +240,64 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        // Vlastní křížek; bez tohoto by framework u fullscreenDialog vykreslil
-        // i vlastní tlačítko zpět a obě by se v rohu překrývala.
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          tooltip: l10n.anotZavritBezUlozeni,
-          onPressed: () => Navigator.of(context).pop(null),
-        ),
-        title: Text(l10n.anotTitle),
-        actions: [
+      // Vlastní horní lišta (ne Material AppBar). Scaffold bez `appBar` nemůže
+      // z principu vykreslit žádné systémové tlačítko zpět, takže nemůže dojít
+      // k překryvu se zavíracím křížkem.
+      body: SafeArea(
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _image == null
+                ? Center(child: Text(l10n.anotChybaNacteni))
+                : Column(
+                    children: [
+                      _buildTopBar(l10n, bgColor, iconColor),
+                      Expanded(
+                        child: Stack(
+                          children: [
+                            // Plátno s RepaintBoundary (jen tohle se exportuje)
+                            Positioned.fill(child: _buildCanvas()),
+                            // Plovoucí panel nástrojů — MIMO RepaintBoundary,
+                            // takže se nevypálí do uložené fotky.
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: _buildToolPanel(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_annotations.isNotEmpty) _buildLegend(),
+                    ],
+                  ),
+      ),
+    );
+  }
+
+  /// Vlastní horní lišta editoru — křížek vlevo, akce (zpět/smazat/uložit)
+  /// vpravo. Záměrně bez Material AppBaru, aby nemohlo vzniknout systémové
+  /// tlačítko zpět.
+  Widget _buildTopBar(
+      AppLocalizations l10n, Color bgColor, Color? iconColor) {
+    return Container(
+      height: 56,
+      color: bgColor,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.close),
+            tooltip: l10n.anotZavritBezUlozeni,
+            color: iconColor,
+            onPressed: () => Navigator.of(context).pop(null),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              l10n.anotTitle,
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.undo, size: 20),
             tooltip: l10n.anotZrusitPosledni,
@@ -265,45 +311,19 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
             onPressed: _annotations.isEmpty ? null : _clear,
           ),
           Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
             child: ElevatedButton(
               onPressed: _isExporting ? null : _save,
               child: _isExporting
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child:
-                          CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : Text(l10n.anotUlozit),
             ),
           ),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _image == null
-              ? Center(child: Text(l10n.anotChybaNacteni))
-              : Column(
-                  children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          // Plátno s RepaintBoundary (jen tohle se exportuje)
-                          Positioned.fill(child: _buildCanvas()),
-                          // Plovoucí panel nástrojů — MIMO RepaintBoundary,
-                          // takže se nevypálí do uložené fotky.
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: _buildToolPanel(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (_annotations.isNotEmpty) _buildLegend(),
-                  ],
-                ),
     );
   }
 
