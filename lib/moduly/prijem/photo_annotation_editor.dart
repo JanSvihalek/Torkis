@@ -247,32 +247,6 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
         ),
         title: const Text('Označení poškození'),
         actions: [
-          ..._colors.map((c) => GestureDetector(
-                onTap: () => setState(() => _penColor = c),
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 4, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: c,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: _penColor == c
-                          ? Colors.white
-                          : Colors.transparent,
-                      width: 2.5,
-                    ),
-                    boxShadow: _penColor == c
-                        ? [
-                            BoxShadow(
-                                color: c.withValues(alpha: 0.5),
-                                blurRadius: 6)
-                          ]
-                        : [],
-                  ),
-                ),
-              )),
           IconButton(
             icon: const Icon(Icons.undo, size: 20),
             tooltip: 'Zrušit poslední',
@@ -308,8 +282,21 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
                   child: Text('Nepodařilo se načíst fotografii.'))
               : Column(
                   children: [
-                    Expanded(child: _buildCanvas()),
-                    _buildModeToolbar(),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          // Plátno s RepaintBoundary (jen tohle se exportuje)
+                          Positioned.fill(child: _buildCanvas()),
+                          // Plovoucí panel nástrojů — MIMO RepaintBoundary,
+                          // takže se nevypálí do uložené fotky.
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: _buildToolPanel(),
+                          ),
+                        ],
+                      ),
+                    ),
                     if (_annotations.isNotEmpty) _buildLegend(),
                   ],
                 ),
@@ -370,19 +357,62 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
     });
   }
 
-  Widget _buildModeToolbar() {
-    final bg = widget.isDark ? const Color(0xFF1E3A5F) : Colors.white;
+  /// Plovoucí panel v pravém horním rohu — výběr typu značení i barvy
+  /// na jednom místě.
+  Widget _buildToolPanel() {
+    final panelBg = widget.isDark
+        ? Colors.black.withValues(alpha: 0.55)
+        : Colors.white.withValues(alpha: 0.92);
     return Container(
-      color: bg,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      decoration: BoxDecoration(
+        color: panelBg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2), blurRadius: 8),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           _modeBtn(_DrawMode.freehand, Icons.edit_outlined, 'Volná kresba'),
           _modeBtn(_DrawMode.circle, Icons.circle_outlined, 'Elipsa'),
           _modeBtn(_DrawMode.rectangle, Icons.crop_square_outlined, 'Obdélník'),
           _modeBtn(_DrawMode.arrow, Icons.arrow_forward_rounded, 'Šipka'),
+          Container(
+            height: 1,
+            width: 28,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            color: Colors.grey.withValues(alpha: 0.4),
+          ),
+          ..._colors.map(_colorDot),
         ],
+      ),
+    );
+  }
+
+  Widget _colorDot(Color c) {
+    final selected = _penColor == c;
+    return GestureDetector(
+      onTap: () => setState(() => _penColor = c),
+      child: Container(
+        width: 26,
+        height: 26,
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        decoration: BoxDecoration(
+          color: c,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected
+                ? (widget.isDark ? Colors.white : Colors.black87)
+                : Colors.transparent,
+            width: 2.5,
+          ),
+          boxShadow: selected
+              ? [BoxShadow(color: c.withValues(alpha: 0.5), blurRadius: 6)]
+              : [],
+        ),
       ),
     );
   }
@@ -395,7 +425,7 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
         onTap: () => setState(() => _drawMode = mode),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.symmetric(horizontal: 8),
+          margin: const EdgeInsets.symmetric(vertical: 4),
           padding: const EdgeInsets.all(9),
           decoration: BoxDecoration(
             color: selected
