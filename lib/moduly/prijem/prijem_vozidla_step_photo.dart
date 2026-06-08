@@ -6,13 +6,15 @@ import '../../core/constants.dart';
 
 /// Krok 4 – Fotodokumentace.
 /// Zobrazuje seznam kategorií z [photoCategories]; ke každé lze přidat fotky
-/// z galerie nebo sériovým focením. Miniatury lze individuálně mazat.
+/// z galerie nebo sériovým focením. Miniatury lze individuálně mazat nebo
+/// otevřít v editoru pro označení poškození přímo na fotografii.
 class StepPhoto extends StatelessWidget {
   final bool isDark;
   final Map<String, List<XFile>> categoryImages;
   final void Function(String categoryKey) onPickFromGallery;
   final void Function(String categoryKey) onTakePhotoSeries;
   final void Function(String categoryKey, int photoIndex) onRemovePhoto;
+  final void Function(String categoryKey, int photoIndex) onAnnotatePhoto;
 
   const StepPhoto({
     super.key,
@@ -21,6 +23,7 @@ class StepPhoto extends StatelessWidget {
     required this.onPickFromGallery,
     required this.onTakePhotoSeries,
     required this.onRemovePhoto,
+    required this.onAnnotatePhoto,
   });
 
   @override
@@ -106,26 +109,57 @@ class StepPhoto extends StatelessWidget {
                                     takenPhotos[photoIndex];
                                 return Stack(
                                   children: [
-                                    Container(
-                                      margin: const EdgeInsets.only(
-                                          right: 10),
-                                      child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(
-                                                  10),
-                                          child: kIsWeb
-                                              ? Image.network(
-                                                  photo.path,
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover)
-                                              : Image.file(
-                                                  File(photo.path),
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit:
-                                                      BoxFit.cover)),
+                                    GestureDetector(
+                                      onTap: () => onAnnotatePhoto(
+                                          key, photoIndex),
+                                      child: Container(
+                                        margin:
+                                            const EdgeInsets.only(
+                                                right: 10),
+                                        child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(
+                                                    10),
+                                            child: kIsWeb
+                                                ? Image.network(
+                                                    photo.path,
+                                                    width: 80,
+                                                    height: 80,
+                                                    fit: BoxFit.cover)
+                                                : Image.file(
+                                                    File(photo.path),
+                                                    width: 80,
+                                                    height: 80,
+                                                    fit: BoxFit
+                                                        .cover)),
+                                      ),
                                     ),
+                                    // Tužka – označení poškození
+                                    Positioned(
+                                        bottom: 4,
+                                        left: 4,
+                                        child: GestureDetector(
+                                            onTap: () =>
+                                                onAnnotatePhoto(
+                                                    key, photoIndex),
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.all(
+                                                      3),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black
+                                                    .withValues(
+                                                        alpha: 0.5),
+                                                borderRadius:
+                                                    BorderRadius
+                                                        .circular(6),
+                                              ),
+                                              child: const Icon(
+                                                  Icons.edit_rounded,
+                                                  size: 14,
+                                                  color: Colors.white),
+                                            ))),
+                                    // Křížek – smazání
                                     Positioned(
                                         top: 4,
                                         right: 14,

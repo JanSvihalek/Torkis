@@ -30,6 +30,7 @@ import 'prijem_vozidla_step_zakaznik.dart';
 import 'prijem_vozidla_step_stav.dart';
 import 'car_blueprint_widget.dart';
 import 'prijem_vozidla_step_photo.dart';
+import 'photo_annotation_editor.dart';
 import 'prijem_vozidla_step_prace.dart';
 import 'prijem_vozidla_step_podpis.dart';
 import 'prijem_vozidla_tablet_layout.dart';
@@ -1865,6 +1866,25 @@ class _MainWizardPageState extends State<MainWizardPage> {
     }
   }
 
+  Future<void> _annotatePhoto(String categoryKey, int photoIndex) async {
+    final photos = _categoryImages[categoryKey];
+    if (photos == null || photoIndex >= photos.length) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bytes = await PhotoAnnotationEditor.open(
+        context, photos[photoIndex], isDark);
+    if (bytes == null || !mounted) return;
+
+    // Uloží anotovanou verzi vedle originálu ve složce konceptu
+    final dir = File(photos[photoIndex].path).parent.path;
+    final newPath =
+        '$dir/annotated_${DateTime.now().microsecondsSinceEpoch}.png';
+    await File(newPath).writeAsBytes(bytes);
+
+    setState(() => photos[photoIndex] = XFile(newPath));
+    await _persistKoncept();
+  }
+
   Future<String?> _openOcrCamera(String label,
       {bool numbersOnly = false}) async {
     if (kIsWeb) {
@@ -2332,6 +2352,7 @@ class _MainWizardPageState extends State<MainWizardPage> {
           setState(() => _categoryImages[key]!.removeAt(idx));
           _persistKoncept();
         },
+        onAnnotatePhoto: _annotatePhoto,
       );
 
   // ── STRANA 5: Poždované práce ────────────────────

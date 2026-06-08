@@ -144,7 +144,8 @@
 
 <h1>Analýza nákladů a marží předplatného</h1>
 <p style="color:var(--muted);font-size:12px;margin-top:4px;margin-bottom:20px;">
-  Aktualizovaná analýza po úpravě struktury plánů: Standard $35 / 60 VIN, tržní hodnota přesunuta výhradně do Pro.
+  Aktualizovaná analýza po úpravě struktury plánů: Standard $35 / 60 VIN, tržní hodnota výhradně v Pro;
+  Pro nově za $75 / 120 VIN — zvýšení marže z rizikových 4 % na bezpečných 34 % rezervy.
   Zahrnuje model Vincario jako fixního měsíčního předplatného a jeho vliv na profitabilitu podle počtu zákazníků.
 </p>
 
@@ -198,16 +199,16 @@
 
   <div class="plan-card">
     <div class="plan-name">PRO</div>
-    <div class="plan-price">$60</div>
-    <div class="plan-czk">≈ 1 380 Kč / měsíc</div>
+    <div class="plan-price">$75 <span class="badge-changed" style="font-size:9px;background:#d1fae5;color:#065f46">↑$60</span></div>
+    <div class="plan-czk">≈ 1 725 Kč / měsíc</div>
     <div class="plan-limits">
       <div class="limit-row"><span class="plan-muted">Záznamy</span><span class="limit-val">∞</span></div>
       <div class="limit-row"><span class="plan-muted">Uživatelé</span><span class="limit-val">∞</span></div>
-      <div class="limit-row"><span class="plan-muted">VIN dekodér</span><span class="limit-val">150 / měsíc</span></div>
+      <div class="limit-row"><span class="plan-muted">VIN dekodér</span><span class="limit-val">120 / měsíc <span class="badge-changed" style="background:#d1fae5;color:#065f46">↓150</span></span></div>
       <div class="limit-row"><span class="plan-muted">Tržní hodnota</span><span class="limit-val">5 / měsíc <span class="badge-new">jen Pro</span></span></div>
     </div>
     <div class="plan-limits" style="margin-top:8px;">
-      <div class="limit-row"><span class="plan-muted">Max. Vincario</span><span class="limit-val bad">1 450 Kč</span></div>
+      <div class="limit-row"><span class="plan-muted">Max. Vincario</span><span class="limit-val warn">1 210 Kč</span></div>
     </div>
   </div>
 
@@ -265,7 +266,7 @@
 
 <!-- SCALE EFFECT: VIN -->
 <h3>Vliv počtu zákazníků na náklad VIN / zákazník / měsíc</h3>
-<p style="font-size:11px;color:var(--muted);margin-bottom:8px;">Předpoklad: průměrné využití 60 % VIN limitu (Basic 18, Standard 36, Pro 90 req/měsíc).</p>
+<p style="font-size:11px;color:var(--muted);margin-bottom:8px;">Předpoklad: průměrné využití 60 % VIN limitu (Basic 18, Standard 36, Pro 72 req/měsíc). VIN náklady amortizovány na 8 Kč/req.</p>
 <table>
   <thead>
     <tr>
@@ -303,13 +304,13 @@
     </tr>
   </thead>
   <tbody>
-    <tr><td>1</td><td>1,5</td><td>100-pack</td><td>4 990 Kč</td><td class="bad">4 990 Kč</td><td class="bad">426 %</td></tr>
-    <tr><td>5</td><td>7,5</td><td>100-pack</td><td>4 990 Kč</td><td class="bad">998 Kč</td><td class="bad">85 %</td></tr>
-    <tr><td>10</td><td>15</td><td>100-pack</td><td>4 990 Kč</td><td class="warn">499 Kč</td><td class="warn">43 %</td></tr>
-    <tr><td>20</td><td>30</td><td>100-pack</td><td>4 990 Kč</td><td class="warn">250 Kč</td><td class="warn">21 %</td></tr>
-    <tr><td>35</td><td>52,5</td><td>100-pack</td><td>4 990 Kč</td><td>143 Kč</td><td>12 %</td></tr>
-    <tr><td>67</td><td>100</td><td>100-pack plný</td><td>4 990 Kč</td><td class="good">74 Kč</td><td class="good">6 %</td></tr>
-    <tr class="subtotal"><td colspan="4">Bod rentability tržní hodnoty (overhead &lt; 15 % příjmu)</td><td colspan="2"><strong>~30–35 Pro zákazníků</strong></td></tr>
+    <tr><td>1</td><td>1,5</td><td>100-pack</td><td>4 990 Kč</td><td class="bad">4 990 Kč</td><td class="bad">340 %</td></tr>
+    <tr><td>5</td><td>7,5</td><td>100-pack</td><td>4 990 Kč</td><td class="bad">998 Kč</td><td class="bad">68 %</td></tr>
+    <tr><td>10</td><td>15</td><td>100-pack</td><td>4 990 Kč</td><td class="warn">499 Kč</td><td class="warn">34 %</td></tr>
+    <tr><td>20</td><td>30</td><td>100-pack</td><td>4 990 Kč</td><td class="warn">250 Kč</td><td class="warn">17 %</td></tr>
+    <tr><td>25</td><td>37,5</td><td>100-pack</td><td>4 990 Kč</td><td>200 Kč</td><td>14 %</td></tr>
+    <tr><td>67</td><td>100</td><td>100-pack plný</td><td>4 990 Kč</td><td class="good">74 Kč</td><td class="good">5 %</td></tr>
+    <tr class="subtotal"><td colspan="4">Bod rentability tržní hodnoty (overhead &lt; 15 % příjmu Pro)</td><td colspan="2"><strong>~23 Pro zákazníků</strong> <span style="font-size:10px;color:var(--muted)">(dříve ~30–35)</span></td></tr>
   </tbody>
 </table>
 <p class="note">⚠ Tržní hodnota je ekonomicky smysluplná až od ~30 Pro zákazníků. Do té doby je overhead 4 990 Kč/měsíc dominantní náklad.</p>
@@ -352,20 +353,20 @@
   </tbody>
 </table>
 
-<h3>Pro — $60 / měsíc (1 380 Kč)</h3>
+<h3>Pro — $75 / měsíc (1 725 Kč) <span class="badge-changed">upraveno</span></h3>
 <table>
   <thead><tr><th>Položka</th><th>Min (0 %)</th><th>Reálný (60 %/30 %)</th><th>Max (100 %)</th></tr></thead>
   <tbody>
-    <tr><td>Příjem od zákazníka</td><td>1 380 Kč</td><td>1 380 Kč</td><td>1 380 Kč</td></tr>
-    <tr><td>Provize App Store/GP (−15 %)</td><td>−207 Kč</td><td>−207 Kč</td><td>−207 Kč</td></tr>
-    <tr class="subtotal"><td>Čistý příjem</td><td>1 173 Kč</td><td>1 173 Kč</td><td>1 173 Kč</td></tr>
+    <tr><td>Příjem od zákazníka</td><td>1 725 Kč</td><td>1 725 Kč</td><td>1 725 Kč</td></tr>
+    <tr><td>Provize App Store/GP (−15 %)</td><td>−259 Kč</td><td>−259 Kč</td><td>−259 Kč</td></tr>
+    <tr class="subtotal"><td>Čistý příjem</td><td>1 466 Kč</td><td>1 466 Kč</td><td>1 466 Kč</td></tr>
     <tr><td>Firebase</td><td>−14 Kč</td><td>−14 Kč</td><td>−14 Kč</td></tr>
-    <tr><td>VIN dekodér (max 150 × 8 Kč)</td><td>0 Kč</td><td>−720 Kč <span style="color:var(--muted);font-size:10px">90 req</span></td><td>−1 200 Kč</td></tr>
+    <tr><td>VIN dekodér (max 120 × 8 Kč)</td><td>0 Kč</td><td>−576 Kč <span style="color:var(--muted);font-size:10px">72 req</span></td><td>−960 Kč</td></tr>
     <tr><td>Tržní hodnota (max 5 × 50 Kč)</td><td>0 Kč</td><td>−75 Kč <span style="color:var(--muted);font-size:10px">1,5 req</span></td><td>−250 Kč</td></tr>
-    <tr class="result-warn"><td><strong>Hrubá marže</strong></td><td class="good">1 159 Kč (84 %)</td><td class="warn">364 Kč (26 %)</td><td class="bad">−291 Kč (−21 %) ⚠</td></tr>
+    <tr class="result"><td><strong>Hrubá marže</strong></td><td class="good">1 452 Kč (84 %)</td><td class="good">801 Kč (46 %)</td><td class="good">242 Kč (17 %)</td></tr>
   </tbody>
 </table>
-<p class="note">⚠ Pro plán je při plném využití VIN limitu ztrátový — 150 × 8 Kč = 1 200 Kč překračuje čistý příjem 1 173 Kč. V praxi zákazníci nedosahují 100 % limitu.</p>
+<p class="note">Dříve ($60 / 150 VIN): reálná marže 26 %, max −21 % (ztrátové!). Nyní: reálná 46 %, max +17 %. Všechny scénáře jsou profitabilní.</p>
 
 <!-- BREAKEVEN -->
 <hr class="section-divider">
@@ -389,10 +390,10 @@
   </div>
   <div class="breakeven-card">
     <div class="be-plan">PRO</div>
-    <div class="be-num" style="color:var(--warning)">144</div>
+    <div class="be-num" style="color:var(--success)">181</div>
     <div class="be-limit">VIN dekodování → zisk = 0 Kč</div>
-    <div><span class="be-badge badge-warn">Limit: 150 ⚠ Rezerva 4 %</span></div>
-    <p style="font-size:10.5px;color:var(--muted);margin-top:6px;">(1 173 − 14) ÷ 8 = 144,9 VINů<br>Při přidání tržní hodnoty: rezerva záporná.</p>
+    <div><span class="be-badge badge-ok">Limit: 120 ✓ Rezerva 34 %</span></div>
+    <p style="font-size:10.5px;color:var(--muted);margin-top:6px;">(1 466 − 14) ÷ 8 = 181,5 VINů<br>Dříve: bod zvratu 144, limit 150, rezerva 4 %!</p>
   </div>
 </div>
 
@@ -423,17 +424,17 @@
       <td class="good">✓ Bezpečný (+13 %)</td>
     </tr>
     <tr>
-      <td><strong>Pro $60</strong></td>
-      <td>1 380 Kč</td>
-      <td>$48,60 / 1 118 Kč</td>
-      <td>950 Kč</td>
-      <td><strong>117 VINů</strong></td>
-      <td>150</td>
-      <td class="warn">⚠ Rizikový při VIN &gt;117</td>
+      <td><strong>Pro $75</strong></td>
+      <td>1 725 Kč</td>
+      <td>$60,75 / 1 397 Kč</td>
+      <td>1 187 Kč</td>
+      <td><strong>147 VINů</strong></td>
+      <td>120</td>
+      <td class="good">✓ Bezpečný (+18 %)</td>
     </tr>
   </tbody>
 </table>
-<p class="note">Standard roční je nyní bezpečný. Dříve při $30/75 VIN byl roční plán ztrátový nad 56 VINů.</p>
+<p class="note">Dříve roční Pro ($60 / 150 VIN): bod zvratu 117 VINů při limitu 150 — hraničně. Nyní: bod zvratu 147 VINů při limitu 120 — bezpečných 18 % rezerva.</p>
 
 <!-- MINIMUM CUSTOMER COUNT -->
 <hr class="section-divider">
@@ -457,56 +458,65 @@
   <tbody>
     <tr>
       <td>6 (2/2/2)</td>
-      <td>4 439 Kč</td>
-      <td>1 290 Kč</td>
+      <td>5 082 Kč</td>
+      <td>2 016 Kč</td>
       <td>4 990 Kč</td>
       <td>55 Kč</td>
-      <td class="bad">−1 896 Kč</td>
-      <td class="bad">−43 %</td>
+      <td class="bad">−1 979 Kč</td>
+      <td class="bad">−39 %</td>
+    </tr>
+    <tr>
+      <td>9 (3/3/3)</td>
+      <td>7 623 Kč</td>
+      <td>3 024 Kč</td>
+      <td>4 990 Kč</td>
+      <td>82 Kč</td>
+      <td class="warn">−473 Kč</td>
+      <td class="warn">−6 %</td>
     </tr>
     <tr>
       <td>12 (4/4/4)</td>
-      <td>8 878 Kč</td>
-      <td>3 990 Kč</td>
+      <td>10 164 Kč</td>
+      <td>4 032 Kč</td>
       <td>4 990 Kč</td>
       <td>110 Kč</td>
-      <td class="warn">−212 Kč</td>
-      <td class="warn">−2 %</td>
+      <td class="good">+1 032 Kč</td>
+      <td class="good">10 %</td>
     </tr>
     <tr>
       <td>15 (5/5/5)</td>
-      <td>11 098 Kč</td>
-      <td>3 990 Kč</td>
+      <td>12 705 Kč</td>
+      <td>5 040 Kč</td>
       <td>4 990 Kč</td>
       <td>138 Kč</td>
-      <td class="good">+1 980 Kč</td>
-      <td class="good">18 %</td>
+      <td class="good">+2 537 Kč</td>
+      <td class="good">20 %</td>
     </tr>
     <tr>
       <td>24 (8/8/8)</td>
-      <td>17 757 Kč</td>
-      <td>5 280 Kč</td>
+      <td>20 328 Kč</td>
+      <td>8 064 Kč</td>
       <td>4 990 Kč</td>
       <td>220 Kč</td>
-      <td class="good">+7 267 Kč</td>
-      <td class="good">41 %</td>
+      <td class="good">+7 054 Kč</td>
+      <td class="good">35 %</td>
     </tr>
     <tr>
       <td>36 (12/12/12)</td>
-      <td>26 635 Kč</td>
-      <td>7 980 Kč</td>
+      <td>30 492 Kč</td>
+      <td>12 096 Kč</td>
       <td>4 990 Kč</td>
       <td>330 Kč</td>
-      <td class="good">+13 335 Kč</td>
-      <td class="good">50 %</td>
+      <td class="good">+13 076 Kč</td>
+      <td class="good">43 %</td>
     </tr>
     <tr class="subtotal">
       <td colspan="5"><strong>Bod zvratu celkové profitability</strong></td>
-      <td colspan="2"><strong>~13–14 zákazníků</strong></td>
+      <td colspan="2"><strong>~10–11 zákazníků</strong> <span style="font-size:10px;color:var(--muted)">(dříve ~13–14)</span></td>
     </tr>
   </tbody>
 </table>
-<p class="note">Dominantní překážkou v počátcích je fixní overhead tržní hodnoty (4 990 Kč/měsíc). Bez Pro zákazníků tento náklad nevzniká.</p>
+<p class="note">VIN náklady = (18×Basic + 36×Std + 72×Pro) × počet zákazníků × 8 Kč/req. TV = fixní 4 990 Kč, aktivuje se prvním Pro zákazníkem. Bez Pro zákazníka TV overhead nevzniká.</p>
 
 <!-- FIREBASE -->
 <hr class="section-divider">
@@ -554,14 +564,14 @@
     </div>
   </div>
 
-  <div class="rec-item rec-alert">
-    <div class="rec-icon">⚠️</div>
+  <div class="rec-item rec-done">
+    <div class="rec-icon">✅</div>
     <div>
-      <div class="rec-title">OTEVŘENÉ: Pro plán je stále rizikový při plném využití VIN</div>
+      <div class="rec-title">HOTOVO: Pro upraven — $75 a VIN limit 120</div>
       <div class="rec-text">
-        Bod zvratu Pro je 144 VINů, limit je 150 — rezerva jen 4 %. Při přidání tržní hodnoty
-        (100-pack = 4 990 Kč při malém počtu Pro zákazníků) se marže dále snižuje.
-        Zvažte buď VIN limit Pro snížit na 120, nebo cenu navýšit na $75–80.
+        Bod zvratu Pro: ze 144 VINů (limit 150, rezerva 4 %) na 181 VINů (limit 120, <strong>rezerva 34 %</strong>).
+        Reálná marže z 26 % na 46 %. Max scénář z −21 % na +17 % — Pro je nyní profitabilní ve všech scénářích.
+        Aktualizovat cenu v RevenueCat Dashboard ($60 → $75). Nasadit <code>firebase deploy --only functions</code>.
       </div>
     </div>
   </div>
@@ -631,10 +641,10 @@
     <tr>
       <td><strong>Pro</strong></td>
       <td>$60 / 150 VIN / 5 TV</td>
-      <td>$60 / 150 VIN / 5 TV</td>
-      <td class="warn">26 %</td>
-      <td class="bad">−21 %</td>
-      <td class="warn">⚠ Rizikový (VIN limit)</td>
+      <td>$75 / 120 VIN / 5 TV</td>
+      <td class="good">46 %</td>
+      <td class="good">17 %</td>
+      <td class="good">✓ Výrazně zlepšeno</td>
     </tr>
   </tbody>
 </table>
