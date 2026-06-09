@@ -107,10 +107,11 @@ class _SignatureCaptureScreenState extends State<SignatureCaptureScreen> {
               _buildTopBar(l10n, bg, iconColor),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: _buildPad(),
                 ),
               ),
+              _buildBottomBar(l10n, bg),
             ],
           ),
         ),
@@ -138,30 +139,59 @@ class _SignatureCaptureScreenState extends State<SignatureCaptureScreen> {
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
           ),
-          AnimatedBuilder(
-            animation: widget.controller,
-            builder: (_, __) => TextButton.icon(
-              onPressed: widget.controller.isEmpty
-                  ? null
-                  : () => widget.controller.clear(),
-              icon: const Icon(Icons.clear, size: 18, color: Colors.red),
-              label: Text(l10n.prijemPodpisSmazat,
-                  style: const TextStyle(color: Colors.red)),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-            child: AnimatedBuilder(
-              animation: widget.controller,
-              builder: (_, __) => ElevatedButton.icon(
-                onPressed: widget.controller.isEmpty ? null : _hotovo,
-                icon: const Icon(Icons.check, size: 18),
-                label: Text(l10n.prijemPodpisHotovo),
-              ),
-            ),
-          ),
         ],
       ),
+    );
+  }
+
+  /// Spodní lišta s hlavními akcemi – velké, vždy viditelné tlačítko „Hotovo".
+  Widget _buildBottomBar(AppLocalizations l10n, Color bg) {
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (_, __) {
+        final prazdny = widget.controller.isEmpty;
+        return Container(
+          color: bg,
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: prazdny ? null : () => widget.controller.clear(),
+                  icon: const Icon(Icons.clear, size: 20),
+                  label: Text(l10n.prijemPodpisSmazat),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.red,
+                    side: BorderSide(
+                        color: prazdny ? Colors.grey : Colors.red),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: prazdny ? null : _hotovo,
+                  icon: const Icon(Icons.check, size: 22),
+                  label: Text(l10n.prijemPodpisHotovo),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    textStyle: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.bold),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

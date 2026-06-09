@@ -2,7 +2,7 @@ name: torkis
 description: "TORKIS - Digital vehicle evidence"
 publish_to: 'none'
 
-version: 5.4.13
+version: 5.4.14
 
 
 environment:

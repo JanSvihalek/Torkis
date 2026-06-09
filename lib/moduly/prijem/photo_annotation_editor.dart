@@ -267,8 +267,40 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
                         ),
                       ),
                       if (_annotations.isNotEmpty) _buildLegend(),
+                      _buildBottomBar(l10n, bgColor),
                     ],
                   ),
+      ),
+    );
+  }
+
+  /// Spodní lišta s hlavní akcí – velké, vždy viditelné tlačítko „Uložit".
+  Widget _buildBottomBar(AppLocalizations l10n, Color bgColor) {
+    return Container(
+      color: bgColor,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: _isExporting ? null : _save,
+          icon: _isExporting
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white))
+              : const Icon(Icons.check, size: 22),
+          label: Text(l10n.anotUlozit),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            textStyle:
+                const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
       ),
     );
   }
@@ -337,18 +369,6 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
             tooltip: l10n.anotSmazatVse,
             color: iconColor,
             onPressed: _annotations.isEmpty ? null : _clear,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-            child: ElevatedButton(
-              onPressed: _isExporting ? null : _save,
-              child: _isExporting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : Text(l10n.anotUlozit),
-            ),
           ),
         ],
       ),
