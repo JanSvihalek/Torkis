@@ -1925,6 +1925,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onbTypyHint => 'Long press = set as default.';
 
   @override
+  String get onbVzoryNadpis => 'Damage description presets';
+
+  @override
+  String get onbVzoryPopis =>
+      'Predefined descriptions the technician picks from when marking damage in the photo documentation.';
+
+  @override
+  String get onbVzoryPrazdne => 'No presets yet. Add the first one.';
+
+  @override
+  String get onbPridatVzor => 'Add preset';
+
+  @override
+  String get onbDialogNovyVzor => 'New damage preset';
+
+  @override
+  String get onbDialogUpravitVzor => 'Edit preset';
+
+  @override
+  String get onbVzorHint => 'E.g. Scratch, Dent…';
+
+  @override
   String get onbOsobniNadpis => 'Personal settings';
 
   @override

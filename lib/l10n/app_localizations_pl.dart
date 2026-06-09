@@ -1935,6 +1935,28 @@ class AppLocalizationsPl extends AppLocalizations {
   String get onbTypyHint => 'Długie naciśnięcie = ustaw jako domyślny.';
 
   @override
+  String get onbVzoryNadpis => 'Szablony opisów uszkodzeń';
+
+  @override
+  String get onbVzoryPopis =>
+      'Predefiniowane opisy, z których technik wybiera podczas oznaczania uszkodzeń w dokumentacji zdjęciowej.';
+
+  @override
+  String get onbVzoryPrazdne => 'Brak szablonów. Dodaj pierwszy.';
+
+  @override
+  String get onbPridatVzor => 'Dodaj szablon';
+
+  @override
+  String get onbDialogNovyVzor => 'Nowy szablon uszkodzenia';
+
+  @override
+  String get onbDialogUpravitVzor => 'Edytuj szablon';
+
+  @override
+  String get onbVzorHint => 'Np. Zarysowanie, Wgniecenie…';
+
+  @override
   String get onbOsobniNadpis => 'Ustawienia osobiste';
 
   @override

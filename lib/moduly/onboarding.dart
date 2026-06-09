@@ -84,11 +84,17 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
   bool _spzPovinne = true;
   final List<String> _typyZaznamu = ['Servis', 'Výkup'];
   String _defaultTypZaznamu = 'Servis';
+  // Předdefinované popisy poškození pro značení ve fotodokumentaci.
+  final List<String> _vzoryPoskozeni = [];
+  // Checklist příjmu (panel při příjmu na tabletu).
+  bool _checklistPovolen = false;
+  final List<String> _checklistPolozky = [];
 
   // KROK 2: Osobní nastavení
   bool _biometricEnabled = false;
   bool _biometricAvailable = false;
   bool _spoustVlevo = false;
+  bool _ukladatDoZarizeni = false;
 
   // KROK 3: Předpřipravené úkony
   final List<_UkonData> _ukony = [];
@@ -267,6 +273,107 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
     );
   }
 
+  /// Dialog pro přidání/úpravu vzoru popisu poškození.
+  void _otevritDialogVzoru({String? initialText, int? editIndex}) {
+    final l10n = AppLocalizations.of(context);
+    final ctrl = TextEditingController(text: initialText ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        title: Text(
+            editIndex != null ? l10n.onbDialogUpravitVzor : l10n.onbDialogNovyVzor),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: l10n.onbVzorHint,
+            filled: true,
+            fillColor:
+                isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.onbZrusit),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                if (editIndex != null) {
+                  _vzoryPoskozeni[editIndex] = text;
+                } else {
+                  _vzoryPoskozeni.add(text);
+                }
+              });
+              Navigator.pop(ctx);
+            },
+            child: Text(l10n.onbUlozit),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Dialog pro přidání/úpravu položky checklistu příjmu.
+  void _otevritDialogChecklistu({String? initialText, int? editIndex}) {
+    final l10n = AppLocalizations.of(context);
+    final ctrl = TextEditingController(text: initialText ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E3A5F) : Colors.white,
+        title: Text(editIndex != null
+            ? l10n.nastUpravitChecklistPolozku
+            : l10n.nastNovaChecklistPolozka),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: l10n.nastChecklistPolozkaHint,
+            filled: true,
+            fillColor:
+                isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey[100],
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.onbZrusit),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                if (editIndex != null) {
+                  _checklistPolozky[editIndex] = text;
+                } else {
+                  _checklistPolozky.add(text);
+                }
+              });
+              Navigator.pop(ctx);
+            },
+            child: Text(l10n.onbUlozit),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _dokoncitNastaveni() async {
     final l10n = AppLocalizations.of(context);
     setState(() => _isSaving = true);
@@ -308,6 +415,9 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
               'spz_povinne': _spzPovinne,
               'typy_zaznamu': _typyZaznamu,
               'default_typ_zaznamu': _defaultTypZaznamu,
+              'vzory_poskozeni': _vzoryPoskozeni,
+              'checklist_povolen': _checklistPovolen,
+              'checklist_polozky': _checklistPolozky,
               'tmavy_rezim': _tmavyRezim,
               'prvni_spusteni_dokonceno': true,
               'vytvoreno': FieldValue.serverTimestamp(),
@@ -370,6 +480,7 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('biometric_enabled', _biometricEnabled);
         await prefs.setBool(kPrefKameraSpoustVlevo, _spoustVlevo);
+        await prefs.setBool(kPrefUkladatFotoDoZarizeni, _ukladatDoZarizeni);
         await prefs.setBool('tmavy_rezim', _tmavyRezim);
 
         if (mounted) {
@@ -577,6 +688,41 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         value: value,
         activeColor: Colors.blue,
         onChanged: onChanged,
+      ),
+    );
+  }
+
+  // Řádek editovatelného seznamu (vzory poškození, položky checklistu).
+  Widget _buildSeznamPolozka(bool isDark,
+      {required String text,
+      required VoidCallback onEdit,
+      required VoidCallback onDelete}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E3A5F) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border:
+            Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+      ),
+      child: ListTile(
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+        title: Text(text, style: const TextStyle(fontSize: 14)),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blue),
+              onPressed: onEdit,
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline,
+                  size: 18, color: Colors.redAccent),
+              onPressed: onDelete,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1096,6 +1242,89 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
         const SizedBox(height: 20),
         const Divider(),
         const SizedBox(height: 20),
+        // ── Vzory popisů poškození ──────────────────────────────────────
+        Text(l10n.onbVzoryNadpis,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 5),
+        Text(l10n.onbVzoryPopis,
+            style: const TextStyle(fontSize: 13, color: Colors.grey)),
+        const SizedBox(height: 16),
+        if (_vzoryPoskozeni.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(l10n.onbVzoryPrazdne,
+                style: TextStyle(fontSize: 13, color: Colors.grey[400])),
+          ),
+        for (int i = 0; i < _vzoryPoskozeni.length; i++)
+          _buildSeznamPolozka(
+            isDark,
+            text: _vzoryPoskozeni[i],
+            onEdit: () => _otevritDialogVzoru(
+                initialText: _vzoryPoskozeni[i], editIndex: i),
+            onDelete: () => setState(() => _vzoryPoskozeni.removeAt(i)),
+          ),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _otevritDialogVzoru(),
+            icon: const Icon(Icons.add, size: 18),
+            label: Text(l10n.onbPridatVzor),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.deepOrange,
+              side: const BorderSide(color: Colors.deepOrange),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 20),
+        // ── Checklist příjmu ────────────────────────────────────────────
+        Text(l10n.nastChecklistTitul,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        _onbSwitch(isDark,
+            icon: Icons.checklist_rounded,
+            title: l10n.nastChecklistPovolen,
+            subtitle: l10n.nastChecklistPovolenSub,
+            value: _checklistPovolen,
+            onChanged: (v) => setState(() => _checklistPovolen = v)),
+        if (_checklistPovolen) ...[
+          if (_checklistPolozky.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(l10n.nastChecklistPrazdny,
+                  style: TextStyle(fontSize: 13, color: Colors.grey[400])),
+            ),
+          for (int i = 0; i < _checklistPolozky.length; i++)
+            _buildSeznamPolozka(
+              isDark,
+              text: _checklistPolozky[i],
+              onEdit: () => _otevritDialogChecklistu(
+                  initialText: _checklistPolozky[i], editIndex: i),
+              onDelete: () => setState(() => _checklistPolozky.removeAt(i)),
+            ),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _otevritDialogChecklistu(),
+              icon: const Icon(Icons.add, size: 18),
+              label: Text(l10n.nastPridatChecklistPolozku),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.green,
+                side: const BorderSide(color: Colors.green),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 20),
         Text(l10n.onbOsobniNadpis,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         const SizedBox(height: 16),
@@ -1112,6 +1341,12 @@ class _SetupWizardScreenState extends State<SetupWizardScreen> {
             subtitle: l10n.onbLevacSubtitle,
             value: _spoustVlevo,
             onChanged: (v) => setState(() => _spoustVlevo = v)),
+        _onbSwitch(isDark,
+            icon: Icons.photo_library_outlined,
+            title: l10n.nastUlozitDoZarizeniTitle,
+            subtitle: l10n.nastUlozitDoZarizeniSub,
+            value: _ukladatDoZarizeni,
+            onChanged: (v) => setState(() => _ukladatDoZarizeni = v)),
       ],
     );
   }

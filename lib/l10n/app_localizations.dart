@@ -3626,6 +3626,48 @@ abstract class AppLocalizations {
   /// **'Dlouhý stisk = nastavit jako výchozí.'**
   String get onbTypyHint;
 
+  /// No description provided for @onbVzoryNadpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vzory popisů poškození'**
+  String get onbVzoryNadpis;
+
+  /// No description provided for @onbVzoryPopis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Předdefinované popisy, ze kterých technik vybírá při značení poškození ve fotodokumentaci.'**
+  String get onbVzoryPopis;
+
+  /// No description provided for @onbVzoryPrazdne.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím žádné vzory. Přidejte první.'**
+  String get onbVzoryPrazdne;
+
+  /// No description provided for @onbPridatVzor.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat vzor'**
+  String get onbPridatVzor;
+
+  /// No description provided for @onbDialogNovyVzor.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nový vzor poškození'**
+  String get onbDialogNovyVzor;
+
+  /// No description provided for @onbDialogUpravitVzor.
+  ///
+  /// In cs, this message translates to:
+  /// **'Upravit vzor'**
+  String get onbDialogUpravitVzor;
+
+  /// No description provided for @onbVzorHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Např. Škrábanec, Promáčklina…'**
+  String get onbVzorHint;
+
   /// No description provided for @onbOsobniNadpis.
   ///
   /// In cs, this message translates to:

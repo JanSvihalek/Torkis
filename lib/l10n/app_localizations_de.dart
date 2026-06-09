@@ -1951,6 +1951,29 @@ class AppLocalizationsDe extends AppLocalizations {
   String get onbTypyHint => 'Lang drücken = als Standard setzen.';
 
   @override
+  String get onbVzoryNadpis => 'Vorlagen für Schadensbeschreibungen';
+
+  @override
+  String get onbVzoryPopis =>
+      'Vordefinierte Beschreibungen, aus denen der Techniker beim Markieren von Schäden in der Fotodokumentation auswählt.';
+
+  @override
+  String get onbVzoryPrazdne =>
+      'Noch keine Vorlagen. Fügen Sie die erste hinzu.';
+
+  @override
+  String get onbPridatVzor => 'Vorlage hinzufügen';
+
+  @override
+  String get onbDialogNovyVzor => 'Neue Schadensvorlage';
+
+  @override
+  String get onbDialogUpravitVzor => 'Vorlage bearbeiten';
+
+  @override
+  String get onbVzorHint => 'z. B. Kratzer, Delle…';
+
+  @override
   String get onbOsobniNadpis => 'Persönliche Einstellungen';
 
   @override

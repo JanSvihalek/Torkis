@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/biometric_signature_pad.dart';
+import '../../core/design_tokens.dart';
 import '../../core/signature_capture_screen.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -99,12 +100,14 @@ class StepPodpis extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(l10n.prijemPodpisTitle,
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: _tok.textPrimary)),
               const SizedBox(height: 30),
               // ── Rekapitulace příjmu ─────────────────────────────────
               _sekce(
                 icon: Icons.assignment_outlined,
-                color: Colors.indigo,
                 title: l10n.prijemRekapZaznam,
                 children: [
                   _infoRow(l10n.prijemVozidloCisloZaznamu, cisloZakazky),
@@ -113,7 +116,6 @@ class StepPodpis extends StatelessWidget {
               ),
               _sekce(
                 icon: Icons.directions_car,
-                color: Colors.blue,
                 title: l10n.histSekceVozidlo,
                 children: [
                   _infoRow(l10n.histPoleSPZ, spz.toUpperCase()),
@@ -127,7 +129,6 @@ class StepPodpis extends StatelessWidget {
               ),
               _sekce(
                 icon: Icons.fact_check_outlined,
-                color: Colors.orange,
                 title: l10n.histSekceStav,
                 children: [
                   _infoRow(l10n.histPoleTachometr,
@@ -142,7 +143,6 @@ class StepPodpis extends StatelessWidget {
               ),
               _sekce(
                 icon: Icons.person,
-                color: Colors.teal,
                 title: l10n.histSekceZakaznik,
                 children: [
                   _infoRow(l10n.histPoleJmeno, jmeno),
@@ -155,7 +155,6 @@ class StepPodpis extends StatelessWidget {
               if (validniPozadavky.isNotEmpty)
                 _sekce(
                   icon: Icons.build_circle_outlined,
-                  color: Colors.deepOrange,
                   title: l10n.prijemPodpisSjednaneUkony,
                   children: validniPozadavky
                       .map((c) => Padding(
@@ -163,12 +162,14 @@ class StepPodpis extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.chevron_right,
-                                    size: 18, color: Colors.deepOrange),
+                                Icon(Icons.chevron_right,
+                                    size: 18, color: _tok.accent),
                                 const SizedBox(width: 6),
                                 Expanded(
                                     child: Text(c.text,
-                                        style: const TextStyle(fontSize: 15))),
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            color: _tok.textPrimary))),
                               ],
                             ),
                           ))
@@ -177,35 +178,36 @@ class StepPodpis extends StatelessWidget {
               if (poznamky.trim().isNotEmpty)
                 _sekce(
                   icon: Icons.notes,
-                  color: Colors.blueGrey,
                   title: l10n.histSekcePoznamky,
                   children: [
                     Text(poznamky.trim(),
-                        style: const TextStyle(fontSize: 14)),
+                        style: TextStyle(
+                            fontSize: 14, color: _tok.textPrimary)),
                   ],
                 ),
               const SizedBox(height: 15),
               // Checkbox – odeslat e-mail
               Container(
                 decoration: BoxDecoration(
-                    color: isDark
-                        ? const Color(0xFF1E3A5F)
-                        : Colors.blue.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(15),
-                    border:
-                        Border.all(color: Colors.blue.withValues(alpha: 0.3))),
+                    color: _tok.accentSoft,
+                    borderRadius: BorderRadius.circular(TokRadius.xl),
+                    border: Border.all(color: _tok.line)),
                 child: CheckboxListTile(
                   title: Text(l10n.prijemPodpisEmailToggle,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _tok.textPrimary)),
                   subtitle: Text(
                       email.isEmpty
                           ? l10n.prijemPodpisEmailChybi
                           : l10n.prijemPodpisEmailKam(email),
                       style: TextStyle(
-                          color: email.isEmpty ? Colors.red : Colors.grey,
+                          color: email.isEmpty
+                              ? TokColors.danger
+                              : _tok.textSecondary,
                           fontSize: 13)),
                   value: odeslatEmail,
-                  activeColor: Colors.blue,
+                  activeColor: _tok.accent,
                   checkColor: Colors.white,
                   onChanged: onOdeslatEmailChanged,
                   controlAffinity: ListTileControlAffinity.leading,
@@ -348,63 +350,77 @@ class StepPodpis extends StatelessWidget {
     return radek.isEmpty ? null : radek;
   }
 
+  TorkisTokens get _tok =>
+      TorkisTokens(isDark ? Brightness.dark : Brightness.light);
+
   Widget _infoRow(String label, String? value) {
     final val = value?.trim() ?? '';
     if (val.isEmpty) return const SizedBox.shrink();
+    final tok = _tok;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: TokSpace.sm),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 130,
             child: Text(label,
-                style: const TextStyle(color: Colors.grey, fontSize: 13)),
+                style: TextStyle(color: tok.textSecondary, fontSize: 13)),
           ),
           Expanded(
             child: Text(val,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w500, fontSize: 14)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                    color: tok.textPrimary)),
           ),
         ],
       ),
     );
   }
 
+  /// Sekce souhrnu — jednotný design (accent ikona, neutrální plocha a linka).
   Widget _sekce({
     required IconData icon,
-    required Color color,
     required String title,
     required List<Widget> children,
   }) {
     final hasContent = children.any((w) => w is! SizedBox);
     if (!hasContent) return const SizedBox.shrink();
+    final tok = _tok;
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: TokSpace.md),
+      padding: const EdgeInsets.all(TokSpace.lg),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E3A5F) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        color: tok.surface,
+        borderRadius: BorderRadius.circular(TokRadius.xl),
+        border: Border.all(color: tok.line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: tok.accentSoft,
+                  borderRadius: BorderRadius.circular(TokRadius.sm),
+                ),
+                child: Icon(icon, color: tok.accent, size: 18),
+              ),
+              const SizedBox(width: TokSpace.sm),
               Expanded(
                 child: Text(title,
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
-                        color: color)),
+                        color: tok.textPrimary)),
               ),
             ],
           ),
-          const Divider(height: 20),
+          Divider(height: 24, color: tok.line),
           ...children,
         ],
       ),

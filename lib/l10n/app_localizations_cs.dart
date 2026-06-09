@@ -1927,6 +1927,28 @@ class AppLocalizationsCs extends AppLocalizations {
   String get onbTypyHint => 'Dlouhý stisk = nastavit jako výchozí.';
 
   @override
+  String get onbVzoryNadpis => 'Vzory popisů poškození';
+
+  @override
+  String get onbVzoryPopis =>
+      'Předdefinované popisy, ze kterých technik vybírá při značení poškození ve fotodokumentaci.';
+
+  @override
+  String get onbVzoryPrazdne => 'Zatím žádné vzory. Přidejte první.';
+
+  @override
+  String get onbPridatVzor => 'Přidat vzor';
+
+  @override
+  String get onbDialogNovyVzor => 'Nový vzor poškození';
+
+  @override
+  String get onbDialogUpravitVzor => 'Upravit vzor';
+
+  @override
+  String get onbVzorHint => 'Např. Škrábanec, Promáčklina…';
+
+  @override
   String get onbOsobniNadpis => 'Osobní nastavení';
 
   @override
