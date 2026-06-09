@@ -761,6 +761,70 @@ class AppLocalizationsPl extends AppLocalizations {
   String get prijemPodpisZahodit => 'Odrzuć';
 
   @override
+  String get predaniTitul => 'Wydanie pojazdu';
+
+  @override
+  String get predaniTlacitko => 'Wydaj klientowi';
+
+  @override
+  String get predaniProvedenePrace => 'Wykonane prace';
+
+  @override
+  String get predaniPridatPraci => 'Dodaj pracę';
+
+  @override
+  String get predaniVybratZCeniku => 'Wybierz z cennika';
+
+  @override
+  String get predaniNazevPrace => 'Nazwa pracy';
+
+  @override
+  String get predaniCena => 'Cena';
+
+  @override
+  String get predaniCelkem => 'Razem do zapłaty';
+
+  @override
+  String get predaniBezPrace => 'Brak prac. Dodaj wykonane czynności.';
+
+  @override
+  String get predaniPorovnani => 'Porównanie stanu';
+
+  @override
+  String get predaniPriPrijmu => 'Przy przyjęciu';
+
+  @override
+  String get predaniPriPredani => 'Przy wydaniu';
+
+  @override
+  String get predaniTachometrPredani => 'Licznik przy wydaniu (km)';
+
+  @override
+  String get predaniFoto => 'Zdjęcia przy wydaniu';
+
+  @override
+  String get predaniPridatFoto => 'Dodaj zdjęcie';
+
+  @override
+  String get predaniPodpisPrevzeti => 'Podpis odbioru';
+
+  @override
+  String get predaniSouhlas =>
+      'Podpisując, klient potwierdza odbiór pojazdu i zgadza się z wykonanymi pracami oraz naliczoną kwotą.';
+
+  @override
+  String get predaniDokoncit => 'Zakończ wydanie';
+
+  @override
+  String get predaniHotovo => 'Pojazd został wydany klientowi.';
+
+  @override
+  String get predaniChybaPodpis => 'Klient musi złożyć podpis odbioru.';
+
+  @override
+  String get predaniProbiha => 'Zapisywanie wydania…';
+
+  @override
   String get prijemTabletPostup => 'POSTĘP';
 
   @override

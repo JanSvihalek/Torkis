@@ -759,6 +759,70 @@ class AppLocalizationsCs extends AppLocalizations {
   String get prijemPodpisZahodit => 'Zahodit';
 
   @override
+  String get predaniTitul => 'Předání vozidla';
+
+  @override
+  String get predaniTlacitko => 'Předat zákazníkovi';
+
+  @override
+  String get predaniProvedenePrace => 'Provedené práce';
+
+  @override
+  String get predaniPridatPraci => 'Přidat práci';
+
+  @override
+  String get predaniVybratZCeniku => 'Vybrat z ceníku';
+
+  @override
+  String get predaniNazevPrace => 'Název práce';
+
+  @override
+  String get predaniCena => 'Cena';
+
+  @override
+  String get predaniCelkem => 'Celkem k úhradě';
+
+  @override
+  String get predaniBezPrace => 'Zatím žádné práce. Přidejte provedené úkony.';
+
+  @override
+  String get predaniPorovnani => 'Porovnání stavu';
+
+  @override
+  String get predaniPriPrijmu => 'Při příjmu';
+
+  @override
+  String get predaniPriPredani => 'Při předání';
+
+  @override
+  String get predaniTachometrPredani => 'Tachometr při předání (km)';
+
+  @override
+  String get predaniFoto => 'Foto při předání';
+
+  @override
+  String get predaniPridatFoto => 'Přidat foto';
+
+  @override
+  String get predaniPodpisPrevzeti => 'Podpis převzetí';
+
+  @override
+  String get predaniSouhlas =>
+      'Zákazník svým podpisem stvrzuje převzetí vozidla a souhlasí s provedenými pracemi i výší účtované částky.';
+
+  @override
+  String get predaniDokoncit => 'Dokončit předání';
+
+  @override
+  String get predaniHotovo => 'Vozidlo bylo předáno zákazníkovi.';
+
+  @override
+  String get predaniChybaPodpis => 'Zákazník musí připojit podpis převzetí.';
+
+  @override
+  String get predaniProbiha => 'Ukládám předání…';
+
+  @override
   String get prijemTabletPostup => 'POSTUP';
 
   @override

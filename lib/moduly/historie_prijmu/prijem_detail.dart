@@ -12,6 +12,7 @@ import '../../core/constants.dart';
 import '../../core/design_tokens.dart';
 import '../../core/pdf_generator.dart';
 import '../../l10n/app_localizations.dart';
+import '../predani/predani_vozidla.dart';
 import '../vozidla/vozidlo_detail.dart';
 import '../zakaznici/zakaznik_detail.dart';
 
@@ -189,6 +190,18 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
         ));
       }
     }
+  }
+
+  Future<void> _predatZakaznikovi() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            PredaniVozidlaScreen(docId: widget.docId, data: widget.data),
+      ),
+    );
+    // Po úspěšném předání zavřeme detail — historie se přestreamuje s novým stavem.
+    if (result == true && mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -502,6 +515,26 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
           if (podpisUrl.isNotEmpty) ...[
             const SizedBox(height: 15),
             _buildPodpisSection(isDark, podpisUrl, l10n),
+          ],
+          if (stav != 'Dokončeno') ...[
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _predatZakaznikovi,
+                icon: const Icon(Icons.handshake_outlined),
+                label: Text(l10n.predaniTlacitko),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TokColors.success,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
           ],
           const SizedBox(height: 20),
           Row(

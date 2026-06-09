@@ -757,6 +757,72 @@ class AppLocalizationsEn extends AppLocalizations {
   String get prijemPodpisZahodit => 'Discard';
 
   @override
+  String get predaniTitul => 'Vehicle handover';
+
+  @override
+  String get predaniTlacitko => 'Hand over to customer';
+
+  @override
+  String get predaniProvedenePrace => 'Work performed';
+
+  @override
+  String get predaniPridatPraci => 'Add work';
+
+  @override
+  String get predaniVybratZCeniku => 'Pick from price list';
+
+  @override
+  String get predaniNazevPrace => 'Work name';
+
+  @override
+  String get predaniCena => 'Price';
+
+  @override
+  String get predaniCelkem => 'Total due';
+
+  @override
+  String get predaniBezPrace => 'No work yet. Add the performed tasks.';
+
+  @override
+  String get predaniPorovnani => 'State comparison';
+
+  @override
+  String get predaniPriPrijmu => 'At intake';
+
+  @override
+  String get predaniPriPredani => 'At handover';
+
+  @override
+  String get predaniTachometrPredani => 'Odometer at handover (km)';
+
+  @override
+  String get predaniFoto => 'Handover photos';
+
+  @override
+  String get predaniPridatFoto => 'Add photo';
+
+  @override
+  String get predaniPodpisPrevzeti => 'Handover signature';
+
+  @override
+  String get predaniSouhlas =>
+      'By signing, the customer confirms receipt of the vehicle and agrees with the work performed and the amount charged.';
+
+  @override
+  String get predaniDokoncit => 'Complete handover';
+
+  @override
+  String get predaniHotovo =>
+      'The vehicle has been handed over to the customer.';
+
+  @override
+  String get predaniChybaPodpis =>
+      'The customer must add the handover signature.';
+
+  @override
+  String get predaniProbiha => 'Saving handover…';
+
+  @override
   String get prijemTabletPostup => 'PROGRESS';
 
   @override

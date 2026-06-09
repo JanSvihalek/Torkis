@@ -1496,6 +1496,132 @@ abstract class AppLocalizations {
   /// **'Zahodit'**
   String get prijemPodpisZahodit;
 
+  /// No description provided for @predaniTitul.
+  ///
+  /// In cs, this message translates to:
+  /// **'Předání vozidla'**
+  String get predaniTitul;
+
+  /// No description provided for @predaniTlacitko.
+  ///
+  /// In cs, this message translates to:
+  /// **'Předat zákazníkovi'**
+  String get predaniTlacitko;
+
+  /// No description provided for @predaniProvedenePrace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Provedené práce'**
+  String get predaniProvedenePrace;
+
+  /// No description provided for @predaniPridatPraci.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat práci'**
+  String get predaniPridatPraci;
+
+  /// No description provided for @predaniVybratZCeniku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vybrat z ceníku'**
+  String get predaniVybratZCeniku;
+
+  /// No description provided for @predaniNazevPrace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Název práce'**
+  String get predaniNazevPrace;
+
+  /// No description provided for @predaniCena.
+  ///
+  /// In cs, this message translates to:
+  /// **'Cena'**
+  String get predaniCena;
+
+  /// No description provided for @predaniCelkem.
+  ///
+  /// In cs, this message translates to:
+  /// **'Celkem k úhradě'**
+  String get predaniCelkem;
+
+  /// No description provided for @predaniBezPrace.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím žádné práce. Přidejte provedené úkony.'**
+  String get predaniBezPrace;
+
+  /// No description provided for @predaniPorovnani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Porovnání stavu'**
+  String get predaniPorovnani;
+
+  /// No description provided for @predaniPriPrijmu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při příjmu'**
+  String get predaniPriPrijmu;
+
+  /// No description provided for @predaniPriPredani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Při předání'**
+  String get predaniPriPredani;
+
+  /// No description provided for @predaniTachometrPredani.
+  ///
+  /// In cs, this message translates to:
+  /// **'Tachometr při předání (km)'**
+  String get predaniTachometrPredani;
+
+  /// No description provided for @predaniFoto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Foto při předání'**
+  String get predaniFoto;
+
+  /// No description provided for @predaniPridatFoto.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat foto'**
+  String get predaniPridatFoto;
+
+  /// No description provided for @predaniPodpisPrevzeti.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podpis převzetí'**
+  String get predaniPodpisPrevzeti;
+
+  /// No description provided for @predaniSouhlas.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník svým podpisem stvrzuje převzetí vozidla a souhlasí s provedenými pracemi i výší účtované částky.'**
+  String get predaniSouhlas;
+
+  /// No description provided for @predaniDokoncit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Dokončit předání'**
+  String get predaniDokoncit;
+
+  /// No description provided for @predaniHotovo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Vozidlo bylo předáno zákazníkovi.'**
+  String get predaniHotovo;
+
+  /// No description provided for @predaniChybaPodpis.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zákazník musí připojit podpis převzetí.'**
+  String get predaniChybaPodpis;
+
+  /// No description provided for @predaniProbiha.
+  ///
+  /// In cs, this message translates to:
+  /// **'Ukládám předání…'**
+  String get predaniProbiha;
+
   /// No description provided for @prijemTabletPostup.
   ///
   /// In cs, this message translates to:

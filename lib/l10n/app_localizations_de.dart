@@ -764,6 +764,72 @@ class AppLocalizationsDe extends AppLocalizations {
   String get prijemPodpisZahodit => 'Verwerfen';
 
   @override
+  String get predaniTitul => 'Fahrzeugübergabe';
+
+  @override
+  String get predaniTlacitko => 'An Kunden übergeben';
+
+  @override
+  String get predaniProvedenePrace => 'Durchgeführte Arbeiten';
+
+  @override
+  String get predaniPridatPraci => 'Arbeit hinzufügen';
+
+  @override
+  String get predaniVybratZCeniku => 'Aus Preisliste wählen';
+
+  @override
+  String get predaniNazevPrace => 'Bezeichnung der Arbeit';
+
+  @override
+  String get predaniCena => 'Preis';
+
+  @override
+  String get predaniCelkem => 'Gesamtbetrag';
+
+  @override
+  String get predaniBezPrace =>
+      'Noch keine Arbeiten. Fügen Sie die durchgeführten Tätigkeiten hinzu.';
+
+  @override
+  String get predaniPorovnani => 'Zustandsvergleich';
+
+  @override
+  String get predaniPriPrijmu => 'Bei Annahme';
+
+  @override
+  String get predaniPriPredani => 'Bei Übergabe';
+
+  @override
+  String get predaniTachometrPredani => 'Kilometerstand bei Übergabe (km)';
+
+  @override
+  String get predaniFoto => 'Übergabefotos';
+
+  @override
+  String get predaniPridatFoto => 'Foto hinzufügen';
+
+  @override
+  String get predaniPodpisPrevzeti => 'Übergabeunterschrift';
+
+  @override
+  String get predaniSouhlas =>
+      'Mit seiner Unterschrift bestätigt der Kunde die Übernahme des Fahrzeugs und stimmt den durchgeführten Arbeiten sowie dem berechneten Betrag zu.';
+
+  @override
+  String get predaniDokoncit => 'Übergabe abschließen';
+
+  @override
+  String get predaniHotovo => 'Das Fahrzeug wurde an den Kunden übergeben.';
+
+  @override
+  String get predaniChybaPodpis =>
+      'Der Kunde muss die Übergabeunterschrift hinzufügen.';
+
+  @override
+  String get predaniProbiha => 'Übergabe wird gespeichert…';
+
+  @override
   String get prijemTabletPostup => 'VERLAUF';
 
   @override
