@@ -164,20 +164,28 @@ class BiometricSignaturePad extends StatelessWidget {
     return LayoutBuilder(builder: (context, constraints) {
       final size = Size(constraints.maxWidth, height);
       controller.canvasSize = size;
-      return Listener(
-        onPointerDown: (e) => controller.startStroke(
-          e.localPosition,
-          pressure: e.pressure,
-          radius: e.radiusMajor,
-        ),
-        onPointerMove: (e) => controller.appendPoint(
-          e.localPosition,
-          pressure: e.pressure,
-          radius: e.radiusMajor,
-        ),
-        onPointerUp: (_) => controller.endStroke(),
-        onPointerCancel: (_) => controller.endStroke(),
-        child: Container(
+      // GestureDetector obsadí gesture arena a zabrání ScrollView
+      // ve scrollování během kreslení podpisu.
+      // Listener níže stále dostává raw eventy včetně tlaku a poloměru.
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onPanStart: (_) {},
+        onPanUpdate: (_) {},
+        onPanEnd: (_) {},
+        child: Listener(
+          onPointerDown: (e) => controller.startStroke(
+            e.localPosition,
+            pressure: e.pressure,
+            radius: e.radiusMajor,
+          ),
+          onPointerMove: (e) => controller.appendPoint(
+            e.localPosition,
+            pressure: e.pressure,
+            radius: e.radiusMajor,
+          ),
+          onPointerUp: (_) => controller.endStroke(),
+          onPointerCancel: (_) => controller.endStroke(),
+          child: Container(
           width: size.width,
           height: height,
           color: backgroundColor,
@@ -189,7 +197,8 @@ class BiometricSignaturePad extends StatelessWidget {
             ),
           ),
         ),
-      );
+      ),
+    );
     });
   }
 }
