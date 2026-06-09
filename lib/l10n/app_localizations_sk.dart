@@ -823,6 +823,12 @@ class AppLocalizationsSk extends AppLocalizations {
   String get predaniProbiha => 'Ukladám odovzdanie…';
 
   @override
+  String get predaniDatum => 'Dátum odovzdania';
+
+  @override
+  String get predaniPredal => 'Odovzdal';
+
+  @override
   String get prijemTabletPostup => 'POSTUP';
 
   @override

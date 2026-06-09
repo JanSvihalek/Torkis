@@ -290,6 +290,8 @@
   "predaniHotovo": "Pojazd został wydany klientowi.",
   "predaniChybaPodpis": "Klient musi złożyć podpis odbioru.",
   "predaniProbiha": "Zapisywanie wydania…",
+  "predaniDatum": "Data wydania",
+  "predaniPredal": "Wydał",
   "prijemTabletPostup": "POSTĘP",
   "prijemTabletPosledniNavsteva": "OSTATNIA WIZYTA",
   "prijemTabletVozidlo": "Pojazd",

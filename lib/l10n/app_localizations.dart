@@ -1622,6 +1622,18 @@ abstract class AppLocalizations {
   /// **'Ukládám předání…'**
   String get predaniProbiha;
 
+  /// No description provided for @predaniDatum.
+  ///
+  /// In cs, this message translates to:
+  /// **'Datum předání'**
+  String get predaniDatum;
+
+  /// No description provided for @predaniPredal.
+  ///
+  /// In cs, this message translates to:
+  /// **'Předal'**
+  String get predaniPredal;
+
   /// No description provided for @prijemTabletPostup.
   ///
   /// In cs, this message translates to:

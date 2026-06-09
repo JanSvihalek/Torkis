@@ -290,6 +290,8 @@
   "predaniHotovo": "The vehicle has been handed over to the customer.",
   "predaniChybaPodpis": "The customer must add the handover signature.",
   "predaniProbiha": "Saving handover…",
+  "predaniDatum": "Handover date",
+  "predaniPredal": "Handed over by",
   "prijemTabletPostup": "PROGRESS",
   "prijemTabletPosledniNavsteva": "LAST VISIT",
   "prijemTabletVozidlo": "Vehicle",

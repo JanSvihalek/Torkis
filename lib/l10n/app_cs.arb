@@ -323,6 +323,8 @@
   "predaniHotovo": "Vozidlo bylo předáno zákazníkovi.",
   "predaniChybaPodpis": "Zákazník musí připojit podpis převzetí.",
   "predaniProbiha": "Ukládám předání…",
+  "predaniDatum": "Datum předání",
+  "predaniPredal": "Předal",
 
   "prijemTabletPostup": "POSTUP",
   "prijemTabletPosledniNavsteva": "POSLEDNÍ NÁVŠTĚVA",

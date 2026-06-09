@@ -290,6 +290,8 @@
   "predaniHotovo": "Das Fahrzeug wurde an den Kunden übergeben.",
   "predaniChybaPodpis": "Der Kunde muss die Übergabeunterschrift hinzufügen.",
   "predaniProbiha": "Übergabe wird gespeichert…",
+  "predaniDatum": "Übergabedatum",
+  "predaniPredal": "Übergeben von",
   "prijemTabletPostup": "VERLAUF",
   "prijemTabletPosledniNavsteva": "LETZTER BESUCH",
   "prijemTabletVozidlo": "Fahrzeug",

@@ -823,6 +823,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get predaniProbiha => 'Saving handover…';
 
   @override
+  String get predaniDatum => 'Handover date';
+
+  @override
+  String get predaniPredal => 'Handed over by';
+
+  @override
   String get prijemTabletPostup => 'PROGRESS';
 
   @override

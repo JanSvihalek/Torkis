@@ -825,6 +825,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get predaniProbiha => 'Zapisywanie wydania…';
 
   @override
+  String get predaniDatum => 'Data wydania';
+
+  @override
+  String get predaniPredal => 'Wydał';
+
+  @override
   String get prijemTabletPostup => 'POSTĘP';
 
   @override

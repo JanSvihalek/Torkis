@@ -830,6 +830,12 @@ class AppLocalizationsDe extends AppLocalizations {
   String get predaniProbiha => 'Übergabe wird gespeichert…';
 
   @override
+  String get predaniDatum => 'Übergabedatum';
+
+  @override
+  String get predaniPredal => 'Übergeben von';
+
+  @override
   String get prijemTabletPostup => 'VERLAUF';
 
   @override

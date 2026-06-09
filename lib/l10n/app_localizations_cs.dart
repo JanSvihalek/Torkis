@@ -823,6 +823,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get predaniProbiha => 'Ukládám předání…';
 
   @override
+  String get predaniDatum => 'Datum předání';
+
+  @override
+  String get predaniPredal => 'Předal';
+
+  @override
   String get prijemTabletPostup => 'POSTUP';
 
   @override

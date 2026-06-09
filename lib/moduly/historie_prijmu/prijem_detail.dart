@@ -516,6 +516,7 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
             const SizedBox(height: 15),
             _buildPodpisSection(isDark, podpisUrl, l10n),
           ],
+          ..._buildPredaniSekce(isDark, d, l10n),
           if (stav != 'Dokončeno') ...[
             const SizedBox(height: 20),
             SizedBox(
@@ -798,6 +799,189 @@ class _PrijemDetailScreenState extends State<PrijemDetailScreen> {
                     child: Text(l10n.histPodpisNedostupny,
                         style: const TextStyle(color: Colors.grey))),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Sekce s informacemi o předání — zobrazí se jen u dokončené zakázky.
+  List<Widget> _buildPredaniSekce(
+      bool isDark, Map<String, dynamic> d, AppLocalizations l10n) {
+    final casPredani = d['cas_predani'];
+    final podpisPredaniUrl = d['podpis_predani_url']?.toString() ?? '';
+    final hasPredani = casPredani != null || podpisPredaniUrl.isNotEmpty;
+    if (!hasPredani) return const [];
+
+    final provedene =
+        (d['provedene_prace'] as List<dynamic>? ?? []).cast<dynamic>();
+    final cenaCelkem = (d['cena_celkem'] as num?)?.toDouble() ?? 0;
+    final tachPredani = d['tachometr_predani']?.toString() ?? '';
+    final predal = d['predal_jmeno']?.toString() ?? '';
+    final fotoPredani =
+        (d['fotografie_predani_urls'] as List<dynamic>? ?? []).cast<String>();
+
+    return [
+      const SizedBox(height: 15),
+      _sectionCard(isDark,
+          icon: Icons.handshake_outlined,
+          color: Colors.green,
+          title: l10n.predaniTitul,
+          children: [
+            _infoRow(l10n.predaniDatum, _formatDate(casPredani)),
+            _infoRow(l10n.predaniPredal, predal),
+            _infoRow(l10n.predaniTachometrPredani,
+                tachPredani.isEmpty ? null : '$tachPredani km'),
+            if (provedene.isNotEmpty) ...[
+              const Divider(height: 20),
+              ...provedene.map((p) {
+                final m = (p as Map).cast<String, dynamic>();
+                final nazev = m['nazev']?.toString() ?? '';
+                final cena = (m['cena'] as num?)?.toDouble() ?? 0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check, size: 16, color: Colors.green),
+                      const SizedBox(width: 6),
+                      Expanded(child: Text(nazev)),
+                      Text('${cena.toStringAsFixed(0)} Kč',
+                          style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.grey[700])),
+                    ],
+                  ),
+                );
+              }),
+              const Divider(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(l10n.predaniCelkem,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text('${cenaCelkem.toStringAsFixed(0)} Kč',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.green)),
+                ],
+              ),
+            ],
+          ]),
+      if (fotoPredani.isNotEmpty) ...[
+        const SizedBox(height: 15),
+        _buildPredaniFoto(isDark, fotoPredani, l10n),
+      ],
+      if (podpisPredaniUrl.isNotEmpty) ...[
+        const SizedBox(height: 15),
+        _buildPredaniPodpis(isDark, podpisPredaniUrl, l10n),
+      ],
+    ];
+  }
+
+  Widget _buildPredaniFoto(
+      bool isDark, List<String> urls, AppLocalizations l10n) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? TokColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border:
+            Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.photo_camera_outlined,
+                  color: Colors.green, size: 20),
+              const SizedBox(width: 8),
+              Text(l10n.predaniFoto,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.green)),
+            ],
+          ),
+          const Divider(height: 20),
+          SizedBox(
+            height: 110,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: urls.length,
+              itemBuilder: (context, i) => GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => _FotoGalerie(urls: urls, startIndex: i),
+                  ),
+                ),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  width: 110,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: Image.network(urls[i],
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Center(
+                            child: Icon(Icons.broken_image,
+                                color: Colors.grey))),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPredaniPodpis(
+      bool isDark, String podpisUrl, AppLocalizations l10n) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? TokColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border:
+            Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.draw_outlined, color: Colors.green, size: 20),
+              const SizedBox(width: 8),
+              Text(l10n.predaniPodpisPrevzeti,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: Colors.green)),
+            ],
+          ),
+          const Divider(height: 20),
+          Container(
+            height: 130,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.grey[850] : Colors.grey[100],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(podpisUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Center(
+                      child: Text(l10n.histPodpisNedostupny,
+                          style: const TextStyle(color: Colors.grey)))),
             ),
           ),
         ],
