@@ -1442,6 +1442,60 @@ abstract class AppLocalizations {
   /// **'Podpis zákazníka je v nastavení servisu vypnut.'**
   String get prijemPodpisVypnut;
 
+  /// No description provided for @prijemPodpisOtevrit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podepsat'**
+  String get prijemPodpisOtevrit;
+
+  /// No description provided for @prijemPodpisZnovu.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podepsat znovu'**
+  String get prijemPodpisZnovu;
+
+  /// No description provided for @prijemPodpisHotovo.
+  ///
+  /// In cs, this message translates to:
+  /// **'Hotovo'**
+  String get prijemPodpisHotovo;
+
+  /// No description provided for @prijemPodpisZavrit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zavřít'**
+  String get prijemPodpisZavrit;
+
+  /// No description provided for @prijemPodpisHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podepište se prstem nebo perem'**
+  String get prijemPodpisHint;
+
+  /// No description provided for @prijemPodpisNahled.
+  ///
+  /// In cs, this message translates to:
+  /// **'Podpis zákazníka'**
+  String get prijemPodpisNahled;
+
+  /// No description provided for @prijemPodpisZahoditTitul.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zahodit podpis?'**
+  String get prijemPodpisZahoditTitul;
+
+  /// No description provided for @prijemPodpisZahoditPomoc.
+  ///
+  /// In cs, this message translates to:
+  /// **'Máte rozepsaný podpis. Opravdu ho zahodit?'**
+  String get prijemPodpisZahoditPomoc;
+
+  /// No description provided for @prijemPodpisZahodit.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zahodit'**
+  String get prijemPodpisZahodit;
+
   /// No description provided for @prijemTabletPostup.
   ///
   /// In cs, this message translates to:

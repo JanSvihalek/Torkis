@@ -733,6 +733,34 @@ class AppLocalizationsPl extends AppLocalizations {
       'Podpis klienta jest wyłączony w ustawieniach serwisu.';
 
   @override
+  String get prijemPodpisOtevrit => 'Podpisz';
+
+  @override
+  String get prijemPodpisZnovu => 'Podpisz ponownie';
+
+  @override
+  String get prijemPodpisHotovo => 'Gotowe';
+
+  @override
+  String get prijemPodpisZavrit => 'Zamknij';
+
+  @override
+  String get prijemPodpisHint => 'Podpisz palcem lub piórem';
+
+  @override
+  String get prijemPodpisNahled => 'Podpis klienta';
+
+  @override
+  String get prijemPodpisZahoditTitul => 'Odrzucić podpis?';
+
+  @override
+  String get prijemPodpisZahoditPomoc =>
+      'Masz niedokończony podpis. Na pewno odrzucić?';
+
+  @override
+  String get prijemPodpisZahodit => 'Odrzuć';
+
+  @override
   String get prijemTabletPostup => 'POSTĘP';
 
   @override

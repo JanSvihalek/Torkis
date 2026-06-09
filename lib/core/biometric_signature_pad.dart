@@ -96,6 +96,29 @@ class BiometricSignatureController extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ── Snapshot / obnova ────────────────────────────────────────────────────
+  // Umožní fullscreen podpisové obrazovce zahodit změny při zavření a vrátit
+  // stav přesně do podoby před otevřením (tahy + časování + velikost plátna).
+
+  SignatureSnapshot snapshot() => SignatureSnapshot._(
+        strokes: _strokes
+            .map((s) => SignatureStroke(points: List.of(s.points)))
+            .toList(),
+        captureSize: _captureSize,
+        startEpochMs: _startEpochMs,
+      );
+
+  void restore(SignatureSnapshot snap) {
+    _strokes
+      ..clear()
+      ..addAll(snap.strokes
+          .map((s) => SignatureStroke(points: List.of(s.points))));
+    _active = null;
+    _captureSize = snap.captureSize;
+    _startEpochMs = snap.startEpochMs;
+    notifyListeners();
+  }
+
   // ── Export ───────────────────────────────────────────────────────────────
 
   /// Sestaví biometrická data. [metadata] dodá volající (zařízení, verze…).
@@ -166,6 +189,19 @@ class BiometricSignatureController extends ChangeNotifier {
       canvas.drawPath(path, paint);
     }
   }
+}
+
+/// Neměnný snímek stavu podpisu pro zahození změn (viz [BiometricSignatureController.snapshot]).
+class SignatureSnapshot {
+  final List<SignatureStroke> strokes;
+  final Size captureSize;
+  final int? startEpochMs;
+
+  const SignatureSnapshot._({
+    required this.strokes,
+    required this.captureSize,
+    required this.startEpochMs,
+  });
 }
 
 /// Plátno pro biometrický podpis. Používá [Listener] (ne GestureDetector),
@@ -244,4 +280,57 @@ class _PadPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_PadPainter oldDelegate) => true;
+}
+
+/// Zobrazí hotový podpis jen pro náhled (bez interakce). Tahy proporčně
+/// zmenší tak, aby se vešly do dostupného místa (BoxFit.contain) – body jsou
+/// v souřadnicích plátna, na kterém vznikly, takže je nelze kreslit 1:1.
+class SignaturePreview extends StatelessWidget {
+  final BiometricSignatureController controller;
+
+  const SignaturePreview({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (_, __) => CustomPaint(
+        painter: _PreviewPainter(controller),
+        child: const SizedBox.expand(),
+      ),
+    );
+  }
+}
+
+class _PreviewPainter extends CustomPainter {
+  final BiometricSignatureController controller;
+  _PreviewPainter(this.controller) : super(repaint: controller);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final src = controller.effectiveSize;
+    if (src.width <= 0 || src.height <= 0) return;
+
+    final sx = size.width / src.width;
+    final sy = size.height / src.height;
+    final scale = sx < sy ? sx : sy; // contain – zachová poměr stran
+    final dx = (size.width - src.width * scale) / 2;
+    final dy = (size.height - src.height * scale) / 2;
+
+    canvas.save();
+    canvas.translate(dx, dy);
+    canvas.scale(scale);
+    final paint = Paint()
+      ..color = controller.penColor
+      ..strokeWidth = controller.penStrokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+    BiometricSignatureController._paintStrokes(
+        canvas, controller.visibleStrokes, paint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_PreviewPainter oldDelegate) => true;
 }

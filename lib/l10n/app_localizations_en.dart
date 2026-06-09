@@ -729,6 +729,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Customer signature is disabled in service settings.';
 
   @override
+  String get prijemPodpisOtevrit => 'Sign';
+
+  @override
+  String get prijemPodpisZnovu => 'Sign again';
+
+  @override
+  String get prijemPodpisHotovo => 'Done';
+
+  @override
+  String get prijemPodpisZavrit => 'Close';
+
+  @override
+  String get prijemPodpisHint => 'Sign with your finger or a pen';
+
+  @override
+  String get prijemPodpisNahled => 'Customer signature';
+
+  @override
+  String get prijemPodpisZahoditTitul => 'Discard signature?';
+
+  @override
+  String get prijemPodpisZahoditPomoc =>
+      'You have an unfinished signature. Discard it?';
+
+  @override
+  String get prijemPodpisZahodit => 'Discard';
+
+  @override
   String get prijemTabletPostup => 'PROGRESS';
 
   @override

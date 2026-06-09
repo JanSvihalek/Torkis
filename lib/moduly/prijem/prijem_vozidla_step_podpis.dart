@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/biometric_signature_pad.dart';
+import '../../core/signature_capture_screen.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Krok 6 – Shrnutí a podpis zákazníka.
@@ -215,26 +216,12 @@ class StepPodpis extends StatelessWidget {
                 Text(l10n.prijemPodpisSouhlas,
                     style: const TextStyle(color: Colors.grey, fontSize: 14)),
                 const SizedBox(height: 20),
-                Container(
-                  decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blue, width: 2),
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.white),
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.circular(13),
-                      child: BiometricSignaturePad(
-                          controller: signatureController,
-                          height: 250,
-                          backgroundColor: Colors.white)),
+                AnimatedBuilder(
+                  animation: signatureController,
+                  builder: (context, _) => signatureController.isEmpty
+                      ? _buildPodepsatButton(context, l10n)
+                      : _buildPodpisNahled(context, l10n),
                 ),
-                const SizedBox(height: 10),
-                Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                        onPressed: () => signatureController.clear(),
-                        icon: const Icon(Icons.clear, color: Colors.red),
-                        label: Text(l10n.prijemPodpisSmazat,
-                            style: const TextStyle(color: Colors.red)))),
               ] else ...[
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -261,6 +248,75 @@ class StepPodpis extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+
+  // ── Podpis ────────────────────────────────────────────────────────────
+
+  Future<void> _otevritPodpis(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    await SignatureCaptureScreen.open(context, signatureController, isDark);
+  }
+
+  /// Prázdný stav – velké tlačítko otevírající celoobrazovkové podepisování.
+  Widget _buildPodepsatButton(BuildContext context, AppLocalizations l10n) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _otevritPodpis(context),
+        icon: const Icon(Icons.draw_outlined),
+        label: Text(l10n.prijemPodpisOtevrit),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.blue,
+          side: const BorderSide(color: Colors.blue, width: 2),
+          padding: const EdgeInsets.symmetric(vertical: 22),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15)),
+          textStyle:
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
+  }
+
+  /// Stav s podpisem – náhled (klepnutím lze upravit) + akce smazat / znovu.
+  Widget _buildPodpisNahled(BuildContext context, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.prijemPodpisNahled,
+            style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _otevritPodpis(context),
+          child: Container(
+            height: 160,
+            decoration: BoxDecoration(
+                border: Border.all(color: Colors.blue, width: 2),
+                borderRadius: BorderRadius.circular(15),
+                color: Colors.white),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(13),
+              child: SignaturePreview(controller: signatureController),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            TextButton.icon(
+                onPressed: () => signatureController.clear(),
+                icon: const Icon(Icons.clear, color: Colors.red),
+                label: Text(l10n.prijemPodpisSmazat,
+                    style: const TextStyle(color: Colors.red))),
+            const Spacer(),
+            TextButton.icon(
+                onPressed: () => _otevritPodpis(context),
+                icon: const Icon(Icons.edit_outlined),
+                label: Text(l10n.prijemPodpisZnovu)),
+          ],
+        ),
+      ],
     );
   }
 

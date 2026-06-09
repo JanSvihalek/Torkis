@@ -736,6 +736,34 @@ class AppLocalizationsDe extends AppLocalizations {
       'Kundenunterschrift ist in den Serviceeinstellungen deaktiviert.';
 
   @override
+  String get prijemPodpisOtevrit => 'Unterschreiben';
+
+  @override
+  String get prijemPodpisZnovu => 'Erneut unterschreiben';
+
+  @override
+  String get prijemPodpisHotovo => 'Fertig';
+
+  @override
+  String get prijemPodpisZavrit => 'Schließen';
+
+  @override
+  String get prijemPodpisHint => 'Mit dem Finger oder Stift unterschreiben';
+
+  @override
+  String get prijemPodpisNahled => 'Unterschrift des Kunden';
+
+  @override
+  String get prijemPodpisZahoditTitul => 'Unterschrift verwerfen?';
+
+  @override
+  String get prijemPodpisZahoditPomoc =>
+      'Sie haben eine unfertige Unterschrift. Wirklich verwerfen?';
+
+  @override
+  String get prijemPodpisZahodit => 'Verwerfen';
+
+  @override
   String get prijemTabletPostup => 'VERLAUF';
 
   @override

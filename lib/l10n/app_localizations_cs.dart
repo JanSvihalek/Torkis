@@ -731,6 +731,34 @@ class AppLocalizationsCs extends AppLocalizations {
       'Podpis zákazníka je v nastavení servisu vypnut.';
 
   @override
+  String get prijemPodpisOtevrit => 'Podepsat';
+
+  @override
+  String get prijemPodpisZnovu => 'Podepsat znovu';
+
+  @override
+  String get prijemPodpisHotovo => 'Hotovo';
+
+  @override
+  String get prijemPodpisZavrit => 'Zavřít';
+
+  @override
+  String get prijemPodpisHint => 'Podepište se prstem nebo perem';
+
+  @override
+  String get prijemPodpisNahled => 'Podpis zákazníka';
+
+  @override
+  String get prijemPodpisZahoditTitul => 'Zahodit podpis?';
+
+  @override
+  String get prijemPodpisZahoditPomoc =>
+      'Máte rozepsaný podpis. Opravdu ho zahodit?';
+
+  @override
+  String get prijemPodpisZahodit => 'Zahodit';
+
+  @override
   String get prijemTabletPostup => 'POSTUP';
 
   @override

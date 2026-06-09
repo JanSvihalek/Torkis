@@ -731,6 +731,34 @@ class AppLocalizationsSk extends AppLocalizations {
       'Podpis zákazníka je v nastavení servisu vypnutý.';
 
   @override
+  String get prijemPodpisOtevrit => 'Podpísať';
+
+  @override
+  String get prijemPodpisZnovu => 'Podpísať znova';
+
+  @override
+  String get prijemPodpisHotovo => 'Hotovo';
+
+  @override
+  String get prijemPodpisZavrit => 'Zavrieť';
+
+  @override
+  String get prijemPodpisHint => 'Podpíšte sa prstom alebo perom';
+
+  @override
+  String get prijemPodpisNahled => 'Podpis zákazníka';
+
+  @override
+  String get prijemPodpisZahoditTitul => 'Zahodiť podpis?';
+
+  @override
+  String get prijemPodpisZahoditPomoc =>
+      'Máte rozpísaný podpis. Naozaj ho zahodiť?';
+
+  @override
+  String get prijemPodpisZahodit => 'Zahodiť';
+
+  @override
   String get prijemTabletPostup => 'POSTUP';
 
   @override
