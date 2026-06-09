@@ -2382,6 +2382,34 @@ class AppLocalizationsDe extends AppLocalizations {
   String get nastHotovo => 'FERTIG';
 
   @override
+  String get nastChecklistTitul => 'Annahme-Checkliste';
+
+  @override
+  String get nastChecklistPovolen => 'Checkliste bei der Annahme aktivieren';
+
+  @override
+  String get nastChecklistPovolenSub =>
+      'Ein Checklisten-Panel wird bei der Annahme auf dem Tablet angezeigt';
+
+  @override
+  String get nastChecklistPrazdny => 'Noch keine Einträge';
+
+  @override
+  String get nastPridatChecklistPolozku => 'Eintrag hinzufügen';
+
+  @override
+  String get nastNovaChecklistPolozka => 'Neuer Eintrag';
+
+  @override
+  String get nastUpravitChecklistPolozku => 'Eintrag bearbeiten';
+
+  @override
+  String get nastChecklistPolozkaHint => 'Name des Checklisteneintrags';
+
+  @override
+  String get checklistPanelTitul => 'Checkliste';
+
+  @override
   String get nastTitulAdmin => 'Firmeneinstellungen';
 
   @override

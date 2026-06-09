@@ -2359,6 +2359,34 @@ class AppLocalizationsCs extends AppLocalizations {
   String get nastHotovo => 'HOTOVO';
 
   @override
+  String get nastChecklistTitul => 'Checklist příjmu';
+
+  @override
+  String get nastChecklistPovolen => 'Aktivovat checklist při příjmu';
+
+  @override
+  String get nastChecklistPovolenSub =>
+      'Panel s checklistem se zobrazí při příjmu na tabletu';
+
+  @override
+  String get nastChecklistPrazdny => 'Zatím žádné položky';
+
+  @override
+  String get nastPridatChecklistPolozku => 'Přidat položku';
+
+  @override
+  String get nastNovaChecklistPolozka => 'Nová položka';
+
+  @override
+  String get nastUpravitChecklistPolozku => 'Upravit položku';
+
+  @override
+  String get nastChecklistPolozkaHint => 'Název položky checklistu';
+
+  @override
+  String get checklistPanelTitul => 'Checklist';
+
+  @override
   String get nastTitulAdmin => 'Firemní nastavení';
 
   @override

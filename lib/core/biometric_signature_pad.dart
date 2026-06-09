@@ -19,11 +19,26 @@ class BiometricSignatureController extends ChangeNotifier {
 
   final List<SignatureStroke> _strokes = [];
   SignatureStroke? _active;
+
+  /// Aktuální velikost plátna – nastavuje ji [LayoutBuilder] při každém buildu.
   Size canvasSize = Size.zero;
+
+  /// Velikost plátna uzamčená v okamžiku prvního tahu. Body podpisu jsou
+  /// absolutní souřadnice, takže export musí použít tutéž velikost, jakou mělo
+  /// plátno při kreslení – jinak by se podpis při pozdějším relayoutu (např.
+  /// během odesílání) zmenšil do rohu.
+  Size _captureSize = Size.zero;
   int? _startEpochMs;
 
   bool get isEmpty => _strokes.isEmpty && _active == null;
   bool get isNotEmpty => !isEmpty;
+
+  /// Velikost plátna pro export – uzamčená z kreslení, jinak aktuální, jinak default.
+  Size get effectiveSize {
+    if (_captureSize != Size.zero) return _captureSize;
+    if (canvasSize != Size.zero) return canvasSize;
+    return const Size(600, 250);
+  }
 
   /// Tahy pro vykreslení (hotové + právě kreslený).
   List<SignatureStroke> get visibleStrokes =>
@@ -31,14 +46,22 @@ class BiometricSignatureController extends ChangeNotifier {
 
   // ── Záznam ─────────────────────────────────────────────────────────────
 
+  void _lockCanvasSize() {
+    if (_captureSize == Size.zero && canvasSize != Size.zero) {
+      _captureSize = canvasSize;
+    }
+  }
+
   void startStroke(Offset pos, {double? pressure, double? radius}) {
     _startEpochMs ??= DateTime.now().millisecondsSinceEpoch;
+    _lockCanvasSize();
     _active = SignatureStroke(points: [_makePoint(pos, pressure, radius)]);
     notifyListeners();
   }
 
   void appendPoint(Offset pos, {double? pressure, double? radius}) {
     if (_active == null) return;
+    _lockCanvasSize();
     _active!.points.add(_makePoint(pos, pressure, radius));
     notifyListeners();
   }
@@ -69,6 +92,7 @@ class BiometricSignatureController extends ChangeNotifier {
     _strokes.clear();
     _active = null;
     _startEpochMs = null;
+    _captureSize = Size.zero;
     notifyListeners();
   }
 
@@ -85,8 +109,8 @@ class BiometricSignatureController extends ChangeNotifier {
       strokes: _strokes
           .map((s) => SignatureStroke(points: List.of(s.points)))
           .toList(),
-      canvasWidth: canvasSize.width,
-      canvasHeight: canvasSize.height,
+      canvasWidth: effectiveSize.width,
+      canvasHeight: effectiveSize.height,
       capturedAtMs: DateTime.now().toUtc().millisecondsSinceEpoch,
       deviceModel: deviceModel,
       platform: platform,
@@ -98,8 +122,7 @@ class BiometricSignatureController extends ChangeNotifier {
   /// Vyrenderuje podpis do PNG (bílé pozadí), kompatibilní s původním API.
   Future<Uint8List?> toPngBytes({double pixelRatio = 3.0}) async {
     if (isEmpty) return null;
-    final size =
-        canvasSize == Size.zero ? const Size(600, 250) : canvasSize;
+    final size = effectiveSize;
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(

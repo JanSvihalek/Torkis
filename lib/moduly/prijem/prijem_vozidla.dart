@@ -100,6 +100,9 @@ class _MainWizardPageState extends State<MainWizardPage> {
   bool _podpisPovolen = true;
   bool _spzPovinne = true;
   bool _isLoadingVincario = false;
+  bool _checklistPovolen = false;
+  List<String> _checklistPolozky = [];
+  List<bool> _checklistStav = [];
 
   String? _vybranyZakaznikId;
   List<Map<String, dynamic>> _nalezenaVozidla = [];
@@ -546,6 +549,12 @@ class _MainWizardPageState extends State<MainWizardPage> {
               _typZaznamu = _defaultTypZaznamu;
               _vzoryPoskozeni =
                   List<String>.from(data['vzory_poskozeni'] ?? []);
+              _checklistPovolen =
+                  data['checklist_povolen'] as bool? ?? false;
+              final polozky = List<String>.from(
+                  data['checklist_polozky'] ?? []);
+              _checklistPolozky = polozky;
+              _checklistStav = List.filled(polozky.length, false);
             });
           }
         }
@@ -1826,6 +1835,10 @@ class _MainWizardPageState extends State<MainWizardPage> {
       'podpis_url': podpisUrl,
       'podpis_data_url': podpisDataUrl,
       if (podpisSeal != null) 'podpis_seal': podpisSeal,
+      if (_checklistPovolen && _checklistPolozky.isNotEmpty) ...{
+        'checklist_polozky': _checklistPolozky,
+        'checklist_stav': _checklistStav,
+      },
       'provedene_prace': [],
       'cas_prijeti': FieldValue.serverTimestamp(),
       'prijal_uid': user?.uid,
@@ -2337,8 +2350,17 @@ class _MainWizardPageState extends State<MainWizardPage> {
                             children: _buildStepPages(isDark),
                           ),
                         ),
-                        // Náhled vozidla — zobrazí se jen po načtení vozidla
-                        if (_nalezenoVozidloInfo != null)
+                        // Pravý panel — checklist (pokud je zapnut) nebo náhled vozidla
+                        if (_checklistPovolen &&
+                            _checklistPolozky.isNotEmpty)
+                          PrijemChecklistPanel(
+                            polozky: _checklistPolozky,
+                            stav: _checklistStav,
+                            isDark: isDark,
+                            onToggle: (i) => setState(() =>
+                                _checklistStav[i] = !_checklistStav[i]),
+                          )
+                        else if (_nalezenoVozidloInfo != null)
                           PrijemVehiclePreviewPanel(
                             spz: _spzController.text,
                             vin: _vinController.text,

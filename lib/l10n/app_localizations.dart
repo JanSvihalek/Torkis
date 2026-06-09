@@ -4448,6 +4448,60 @@ abstract class AppLocalizations {
   /// **'HOTOVO'**
   String get nastHotovo;
 
+  /// No description provided for @nastChecklistTitul.
+  ///
+  /// In cs, this message translates to:
+  /// **'Checklist příjmu'**
+  String get nastChecklistTitul;
+
+  /// No description provided for @nastChecklistPovolen.
+  ///
+  /// In cs, this message translates to:
+  /// **'Aktivovat checklist při příjmu'**
+  String get nastChecklistPovolen;
+
+  /// No description provided for @nastChecklistPovolenSub.
+  ///
+  /// In cs, this message translates to:
+  /// **'Panel s checklistem se zobrazí při příjmu na tabletu'**
+  String get nastChecklistPovolenSub;
+
+  /// No description provided for @nastChecklistPrazdny.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zatím žádné položky'**
+  String get nastChecklistPrazdny;
+
+  /// No description provided for @nastPridatChecklistPolozku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Přidat položku'**
+  String get nastPridatChecklistPolozku;
+
+  /// No description provided for @nastNovaChecklistPolozka.
+  ///
+  /// In cs, this message translates to:
+  /// **'Nová položka'**
+  String get nastNovaChecklistPolozka;
+
+  /// No description provided for @nastUpravitChecklistPolozku.
+  ///
+  /// In cs, this message translates to:
+  /// **'Upravit položku'**
+  String get nastUpravitChecklistPolozku;
+
+  /// No description provided for @nastChecklistPolozkaHint.
+  ///
+  /// In cs, this message translates to:
+  /// **'Název položky checklistu'**
+  String get nastChecklistPolozkaHint;
+
+  /// No description provided for @checklistPanelTitul.
+  ///
+  /// In cs, this message translates to:
+  /// **'Checklist'**
+  String get checklistPanelTitul;
+
   /// No description provided for @nastTitulAdmin.
   ///
   /// In cs, this message translates to:

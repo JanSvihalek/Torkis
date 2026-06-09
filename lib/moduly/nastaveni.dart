@@ -40,6 +40,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _spzPovinne = true;
   List<String> _sablonyZprav = [];
   List<String> _vzoryPoskozeni = [];
+  bool _checklistPovolen = false;
+  List<String> _checklistPolozky = [];
   List<String> _typyZaznamu = ['Servis', 'Výkup'];
   String _defaultTypZaznamu = 'Servis';
 
@@ -128,6 +130,8 @@ class _SettingsPageState extends State<SettingsPage> {
             _spzPovinne = data['spz_povinne'] as bool? ?? true;
             _sablonyZprav = List<String>.from(data['sablony_zprav'] ?? []);
             _vzoryPoskozeni = List<String>.from(data['vzory_poskozeni'] ?? []);
+            _checklistPovolen = data['checklist_povolen'] as bool? ?? false;
+            _checklistPolozky = List<String>.from(data['checklist_polozky'] ?? []);
             _typyZaznamu = List<String>.from(
                 data['typy_zaznamu'] ?? ['Servis', 'Výkup']);
             if (_typyZaznamu.isEmpty) _typyZaznamu = ['Servis', 'Výkup'];
@@ -351,6 +355,68 @@ class _SettingsPageState extends State<SettingsPage> {
         .collection('nastaveni_servisu')
         .doc(globalServisId)
         .set({'sablony_zprav': _sablonyZprav}, SetOptions(merge: true));
+  }
+
+  Future<void> _ulozitChecklist() async {
+    if (globalServisId == null) return;
+    await FirebaseFirestore.instance
+        .collection('nastaveni_servisu')
+        .doc(globalServisId)
+        .set({
+      'checklist_povolen': _checklistPovolen,
+      'checklist_polozky': _checklistPolozky,
+    }, SetOptions(merge: true));
+  }
+
+  void _otevritDialogChecklistu({String? initialText, int? editIndex}) {
+    final ctrl = TextEditingController(text: initialText ?? '');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? TokColors.darkSurface : Colors.white,
+        title: Text(editIndex != null
+            ? l10n.nastUpravitChecklistPolozku
+            : l10n.nastNovaChecklistPolozka),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: l10n.nastChecklistPolozkaHint,
+            filled: true,
+            fillColor: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.grey[100],
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.nastZrusit),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final text = ctrl.text.trim();
+              if (text.isEmpty) return;
+              setState(() {
+                if (editIndex != null) {
+                  _checklistPolozky[editIndex] = text;
+                } else {
+                  _checklistPolozky.add(text);
+                }
+              });
+              await _ulozitChecklist();
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: Text(l10n.nastUlozitBtn),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _ulozitTypyZaznamu() async {
@@ -946,6 +1012,105 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                     ),
                   ),
+                ],
+              ),
+
+              _buildCard(
+                title: l10n.nastChecklistTitul,
+                icon: Icons.checklist_rounded,
+                color: Colors.green,
+                isDark: isDark,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                        color: isDark
+                            ? TokColors.darkSurface
+                            : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(10)),
+                    child: SwitchListTile(
+                      title: Text(l10n.nastChecklistPovolen,
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(l10n.nastChecklistPovolenSub,
+                          style: const TextStyle(fontSize: 12)),
+                      value: _checklistPovolen,
+                      activeColor: Colors.green,
+                      onChanged: (v) async {
+                        setState(() => _checklistPovolen = v);
+                        await _ulozitChecklist();
+                      },
+                    ),
+                  ),
+                  if (_checklistPovolen) ...[
+                    const SizedBox(height: 12),
+                    if (_checklistPolozky.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          l10n.nastChecklistPrazdny,
+                          style: TextStyle(
+                              color: Colors.grey[400], fontSize: 13),
+                        ),
+                      ),
+                    for (int i = 0; i < _checklistPolozky.length; i++)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? TokColors.darkSurface
+                              : Colors.grey[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: isDark
+                                  ? Colors.grey[700]!
+                                  : Colors.grey[200]!),
+                        ),
+                        child: ListTile(
+                          dense: true,
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 14),
+                          leading: const Icon(Icons.drag_handle_rounded,
+                              size: 18, color: Colors.grey),
+                          title: Text(_checklistPolozky[i],
+                              style: const TextStyle(fontSize: 13)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined,
+                                    size: 18, color: Colors.blue),
+                                onPressed: () => _otevritDialogChecklistu(
+                                    initialText: _checklistPolozky[i],
+                                    editIndex: i),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline,
+                                    size: 18, color: Colors.redAccent),
+                                onPressed: () async {
+                                  setState(
+                                      () => _checklistPolozky.removeAt(i));
+                                  await _ulozitChecklist();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 4),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _otevritDialogChecklistu(),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: Text(l10n.nastPridatChecklistPolozku),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green,
+                          side: const BorderSide(color: Colors.green),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
 

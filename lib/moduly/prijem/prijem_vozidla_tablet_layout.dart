@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/design_tokens.dart';
 import '../../l10n/app_localizations.dart';
 
+const double kChecklistPanelWidth = 240.0;
+
 const double kTabletBreakpoint = 800.0;
 const double kSidebarWidth = 210.0;
 const double kPreviewPanelWidth = 240.0;
@@ -593,6 +595,194 @@ class _PreviewRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Checklist Panel ───────────────────────────────────────────────────────────
+
+class PrijemChecklistPanel extends StatelessWidget {
+  final List<String> polozky;
+  final List<bool> stav;
+  final ValueChanged<int> onToggle;
+  final bool isDark;
+
+  const PrijemChecklistPanel({
+    super.key,
+    required this.polozky,
+    required this.stav,
+    required this.onToggle,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tok = TorkisTokens(isDark ? Brightness.dark : Brightness.light);
+    final l10n = AppLocalizations.of(context);
+    final hotovo = stav.where((v) => v).length;
+
+    return Container(
+      width: kChecklistPanelWidth,
+      decoration: BoxDecoration(
+        color: isDark ? TokColors.darkSurface : TokColors.bg,
+        border: Border(left: BorderSide(color: tok.line)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Záhlaví s počítadlem
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                TokSpace.lg, TokSpace.lg, TokSpace.lg, TokSpace.sm),
+            child: Row(
+              children: [
+                Text(
+                  l10n.checklistPanelTitul.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: tok.textSecondary,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: hotovo == polozky.length && polozky.isNotEmpty
+                        ? TokColors.success.withValues(alpha: 0.15)
+                        : TokColors.accentSoft,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$hotovo/${polozky.length}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: hotovo == polozky.length && polozky.isNotEmpty
+                          ? TokColors.success
+                          : TokColors.accent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Progress bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: TokSpace.lg),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: polozky.isEmpty ? 0 : hotovo / polozky.length,
+                minHeight: 4,
+                backgroundColor: tok.line,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  hotovo == polozky.length && polozky.isNotEmpty
+                      ? TokColors.success
+                      : TokColors.accent,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: TokSpace.md),
+          // Položky
+          Expanded(
+            child: polozky.isEmpty
+                ? Center(
+                    child: Text(
+                      l10n.nastChecklistPrazdny,
+                      style: TextStyle(
+                          fontSize: 12, color: tok.textSecondary),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: TokSpace.md),
+                    itemCount: polozky.length,
+                    itemBuilder: (ctx, i) => _ChecklistTile(
+                      label: polozky[i],
+                      checked: stav[i],
+                      onToggle: () => onToggle(i),
+                      tok: tok,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ChecklistTile extends StatelessWidget {
+  final String label;
+  final bool checked;
+  final VoidCallback onToggle;
+  final TorkisTokens tok;
+
+  const _ChecklistTile({
+    required this.label,
+    required this.checked,
+    required this.onToggle,
+    required this.tok,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: checked
+            ? TokColors.success.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(TokRadius.md),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(TokRadius.md),
+          onTap: onToggle,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: TokSpace.sm, vertical: 10),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: checked ? TokColors.success : Colors.transparent,
+                    border: Border.all(
+                      color: checked ? TokColors.success : tok.line,
+                      width: 1.5,
+                    ),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: checked
+                      ? const Icon(Icons.check_rounded,
+                          size: 13, color: Colors.white)
+                      : null,
+                ),
+                const SizedBox(width: TokSpace.sm),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: checked
+                          ? tok.textSecondary
+                          : tok.textPrimary,
+                      decoration: checked
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -2360,6 +2360,34 @@ class AppLocalizationsSk extends AppLocalizations {
   String get nastHotovo => 'HOTOVO';
 
   @override
+  String get nastChecklistTitul => 'Checklist príjmu';
+
+  @override
+  String get nastChecklistPovolen => 'Aktivovať checklist pri príjme';
+
+  @override
+  String get nastChecklistPovolenSub =>
+      'Panel s checklistom sa zobrazí pri príjme na tablete';
+
+  @override
+  String get nastChecklistPrazdny => 'Zatiaľ žiadne položky';
+
+  @override
+  String get nastPridatChecklistPolozku => 'Pridať položku';
+
+  @override
+  String get nastNovaChecklistPolozka => 'Nová položka';
+
+  @override
+  String get nastUpravitChecklistPolozku => 'Upraviť položku';
+
+  @override
+  String get nastChecklistPolozkaHint => 'Názov položky checklistu';
+
+  @override
+  String get checklistPanelTitul => 'Checklist';
+
+  @override
   String get nastTitulAdmin => 'Firemné nastavenia';
 
   @override

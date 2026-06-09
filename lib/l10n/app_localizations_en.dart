@@ -2355,6 +2355,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nastHotovo => 'DONE';
 
   @override
+  String get nastChecklistTitul => 'Intake checklist';
+
+  @override
+  String get nastChecklistPovolen => 'Enable intake checklist';
+
+  @override
+  String get nastChecklistPovolenSub =>
+      'A checklist panel will be shown during intake on tablet';
+
+  @override
+  String get nastChecklistPrazdny => 'No items yet';
+
+  @override
+  String get nastPridatChecklistPolozku => 'Add item';
+
+  @override
+  String get nastNovaChecklistPolozka => 'New item';
+
+  @override
+  String get nastUpravitChecklistPolozku => 'Edit item';
+
+  @override
+  String get nastChecklistPolozkaHint => 'Checklist item name';
+
+  @override
+  String get checklistPanelTitul => 'Checklist';
+
+  @override
   String get nastTitulAdmin => 'Company settings';
 
   @override

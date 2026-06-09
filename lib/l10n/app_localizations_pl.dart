@@ -2367,6 +2367,34 @@ class AppLocalizationsPl extends AppLocalizations {
   String get nastHotovo => 'GOTOWE';
 
   @override
+  String get nastChecklistTitul => 'Lista kontrolna przyjęcia';
+
+  @override
+  String get nastChecklistPovolen => 'Włącz listę kontrolną przy przyjęciu';
+
+  @override
+  String get nastChecklistPovolenSub =>
+      'Panel listy kontrolnej zostanie wyświetlony przy przyjęciu na tablecie';
+
+  @override
+  String get nastChecklistPrazdny => 'Brak pozycji';
+
+  @override
+  String get nastPridatChecklistPolozku => 'Dodaj pozycję';
+
+  @override
+  String get nastNovaChecklistPolozka => 'Nowa pozycja';
+
+  @override
+  String get nastUpravitChecklistPolozku => 'Edytuj pozycję';
+
+  @override
+  String get nastChecklistPolozkaHint => 'Nazwa pozycji listy kontrolnej';
+
+  @override
+  String get checklistPanelTitul => 'Lista kontrolna';
+
+  @override
   String get nastTitulAdmin => 'Ustawienia firmowe';
 
   @override
