@@ -2343,6 +2343,13 @@ class AppLocalizationsCs extends AppLocalizations {
   String get anotZrusit => 'Zrušit';
 
   @override
+  String get anotZahodi => 'Zahodit';
+
+  @override
+  String get anotNeulozenePomoc =>
+      'Máte neuložené označení poškození. Uložit je?';
+
+  @override
   String get nastUlozitBtn => 'Uložit';
 
   @override

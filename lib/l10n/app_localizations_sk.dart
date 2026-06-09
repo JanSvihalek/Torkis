@@ -2344,6 +2344,13 @@ class AppLocalizationsSk extends AppLocalizations {
   String get anotZrusit => 'Zrušiť';
 
   @override
+  String get anotZahodi => 'Zahodiť';
+
+  @override
+  String get anotNeulozenePomoc =>
+      'Máte neuložené označenie poškodenia. Uložiť ich?';
+
+  @override
   String get nastUlozitBtn => 'Uložiť';
 
   @override

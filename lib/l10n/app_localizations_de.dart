@@ -2366,6 +2366,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get anotZrusit => 'Abbrechen';
 
   @override
+  String get anotZahodi => 'Verwerfen';
+
+  @override
+  String get anotNeulozenePomoc =>
+      'Sie haben nicht gespeicherte Schadensmarkierungen. Speichern?';
+
+  @override
   String get nastUlozitBtn => 'Speichern';
 
   @override

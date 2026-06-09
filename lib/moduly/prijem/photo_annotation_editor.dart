@@ -288,7 +288,35 @@ class _PhotoAnnotationEditorState extends State<PhotoAnnotationEditor> {
             icon: const Icon(Icons.close),
             tooltip: l10n.anotZavritBezUlozeni,
             color: iconColor,
-            onPressed: () => Navigator.of(context).pop(null),
+            onPressed: () async {
+              if (_annotations.isEmpty) {
+                Navigator.of(context).pop(null);
+                return;
+              }
+              final save = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: Text(l10n.anotTitle),
+                  content: Text(l10n.anotNeulozenePomoc),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(false),
+                      child: Text(l10n.anotZahodi),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: Text(l10n.anotUlozit),
+                    ),
+                  ],
+                ),
+              );
+              if (!mounted) return;
+              if (save == true) {
+                await _save();
+              } else if (save == false) {
+                Navigator.of(context).pop(null);
+              }
+            },
           ),
           const SizedBox(width: 4),
           Expanded(

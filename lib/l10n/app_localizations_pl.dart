@@ -2351,6 +2351,13 @@ class AppLocalizationsPl extends AppLocalizations {
   String get anotZrusit => 'Anuluj';
 
   @override
+  String get anotZahodi => 'Odrzuć';
+
+  @override
+  String get anotNeulozenePomoc =>
+      'Masz niezapisane oznaczenia uszkodzeń. Zapisać je?';
+
+  @override
   String get nastUlozitBtn => 'Zapisz';
 
   @override

@@ -2339,6 +2339,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get anotZrusit => 'Cancel';
 
   @override
+  String get anotZahodi => 'Discard';
+
+  @override
+  String get anotNeulozenePomoc =>
+      'You have unsaved damage markings. Save them?';
+
+  @override
   String get nastUlozitBtn => 'Save';
 
   @override

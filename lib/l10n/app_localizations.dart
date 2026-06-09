@@ -4418,6 +4418,18 @@ abstract class AppLocalizations {
   /// **'Zrušit'**
   String get anotZrusit;
 
+  /// No description provided for @anotZahodi.
+  ///
+  /// In cs, this message translates to:
+  /// **'Zahodit'**
+  String get anotZahodi;
+
+  /// No description provided for @anotNeulozenePomoc.
+  ///
+  /// In cs, this message translates to:
+  /// **'Máte neuložené označení poškození. Uložit je?'**
+  String get anotNeulozenePomoc;
+
   /// No description provided for @nastUlozitBtn.
   ///
   /// In cs, this message translates to:
